@@ -1,6 +1,7 @@
 package db
 
 import (
+	"log"
 	"os"
 
 	"gorm.io/driver/postgres"
@@ -9,14 +10,14 @@ import (
 
 var db *gorm.DB
 
-func Connect() (err error) {
+func Connect() {
+	var err error
+
 	dsn := os.Getenv("DATABASE_URL")
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		log.Fatal("Connecting to database failed")
 	}
-
-	return
 }
 
 func Get() *gorm.DB {
