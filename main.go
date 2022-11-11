@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
 	"github.com/joho/godotenv"
 )
 
@@ -13,5 +12,9 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to load .env file")
 	}
-	fmt.Println(os.Getenv("ROUTER_PORT"))
+
+	err = db.Connect()
+	if err != nil {
+		log.Fatal("failed to laod database")
+	}
 }
