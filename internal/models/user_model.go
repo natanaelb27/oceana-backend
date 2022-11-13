@@ -7,7 +7,8 @@ import (
 )
 
 type User struct {
-	ID        int
+	ID        string
+	Role      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt

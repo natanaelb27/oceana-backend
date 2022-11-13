@@ -37,10 +37,20 @@ func Auth(c *gin.Context) {
 		return
 	}
 
+	role, err := utils.GetUserRoleById(claims.User.ID)
+	if err != nil {
+		utils.ResponseError(c, e.ErrUserNotFound)
+		c.Abort()
+		return
+	}
+
+	if !utils.RolePermissionToResource(role, c.Request.Method, c.Request.RequestURI) {
+		utils.ResponseError(c, e.ErrUnauthorized)
+		c.Abort()
+		return
+	}
+
 	c.Set("id", claims.User.ID)
 
-	// role filter here
-
 	c.Next()
-
 }

@@ -49,6 +49,7 @@ var (
 	ErrEmailAddressAlreadyExist = errors.New("email address is already registered")
 
 	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
+	ErrUserNotFound         = errors.New("user not found")
 	ErrForbidden            = errors.New("you don't have permission to access this resource")
 	ErrResourceDoesNotExist = errors.New("resource does not exist")
 
