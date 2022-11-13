@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
+	"git.garena.com/azmi-adhani/group-project-backend/cmd/middlewares"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +20,7 @@ func Init(h *handlers.Handler) {
 	r.Use(cors.New(config))
 
 	public := r.Group("/")
-	private := r.Group("/")
+	private := r.Group("/", middlewares.Auth)
 
 	role(public, private, h)
 

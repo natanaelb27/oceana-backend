@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func response(c *gin.Context, statusCode int, data any, metadata any, err any, message string) dtos.Response {
+func Response(c *gin.Context, statusCode int, data any, metadata any, err any, message string) dtos.Response {
 	response := dtos.Response{
 		Code:     statusCode,
 		Data:     data,
@@ -36,7 +36,7 @@ func ResponseError(c *gin.Context, err error) dtos.Response {
 		}
 	}
 
-	return response(c, e.GetStatusCode(err), data, nil, newErr, message)
+	return Response(c, e.GetStatusCode(err), data, nil, newErr, message)
 }
 
 func ResponseSuccess(c *gin.Context, data any, metadata any) dtos.Response {
@@ -44,5 +44,5 @@ func ResponseSuccess(c *gin.Context, data any, metadata any) dtos.Response {
 
 	message := "success"
 
-	return response(c, statusCode, data, metadata, nil, message)
+	return Response(c, statusCode, data, metadata, nil, message)
 }

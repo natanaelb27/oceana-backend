@@ -42,6 +42,7 @@ var (
 	ErrDataNotFound          = errors.New("data not found")
 	ErrInvalidRequest        = errors.New("invalid request")
 	ErrInvalidIdentifier     = errors.New("invalid identifier")
+	ErrInvalidToken          = errors.New("invalid token")
 
 	ErrWrongEmailAddress        = errors.New("wrong email address")
 	ErrWrongPassword            = errors.New("wrong password")
@@ -60,8 +61,9 @@ var (
 	ErrExceedEventCapacity      = errors.New("event has reached maximum capacity")
 	ErrExceedMerchandiseStock   = errors.New("merchandise has no stock left")
 
-	ErrInsertFailed            = errors.New("insert failed")
-	ErrDatabaseOperationFailed = errors.New("database operation failed")
+	ErrInsertFailed                  = errors.New("insert failed")
+	ErrDatabaseOperationFailed       = errors.New("database operation failed")
+	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -101,6 +103,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrDataNotFound) ||
+		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrInvalidRequest) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
