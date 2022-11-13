@@ -19,15 +19,9 @@ func Init(h *handlers.Handler) {
 	r.Use(cors.New(config))
 
 	public := r.Group("/")
+	private := r.Group("/")
 
-	rolePublic := public.Group("/roles")
-	{
-		rolePublic.GET("/", h.RoleGetAll)
-		rolePublic.GET("/:id", h.RoleGetById)
-		rolePublic.POST("", h.RoleCreate)
-		rolePublic.DELETE("/:id", h.RoleDelete)
-		rolePublic.PUT("/:id", h.RoleUpdate)
-	}
+	role(public, private, h)
 
 	err := r.Run(fmt.Sprintf(":%v", os.Getenv("ROUTER_PORT")))
 	if err != nil {
