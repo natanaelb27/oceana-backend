@@ -7,15 +7,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type ValidationError struct {
-	Field  string `json:"field"`
-	Reason string `json:"reason"`
-}
-
-func newValidationError(field string, reason string) ValidationError {
-	return ValidationError{Field: field, Reason: reason}
-}
-
 func newErrorMessage(ve validator.FieldError) (msg string) {
 	tag := ve.ActualTag()
 	switch tag {
@@ -28,25 +19,27 @@ func newErrorMessage(ve validator.FieldError) (msg string) {
 	case "email":
 		msg = "have incorrect format."
 	default:
-		msg = "is required."
+		msg = "is incorrect."
 	}
 	return
 }
 
-func TranslateError(err error) (errs []ValidationError) {
+func TranslateError(err error) (errors string) {
 	if err == nil {
-		return nil
+		return "-"
 	}
 
 	// check if err is coming from gin binding errors
 	if _, ok := err.(validator.ValidationErrors); !ok {
-		return
+		return "-"
 	}
 
 	// format error
-	for _, e := range err.(validator.ValidationErrors) {
-		msg := newValidationError(e.Field(), newErrorMessage(e))
-		errs = append(errs, msg)
+	for i, e := range err.(validator.ValidationErrors) {
+		errors += fmt.Sprintf("%s %s", e.Field(), newErrorMessage(e))
+		if i+1 < len(err.(validator.ValidationErrors)) {
+			errors += " "
+		}
 	}
 
 	return

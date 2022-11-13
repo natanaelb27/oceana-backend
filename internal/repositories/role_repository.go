@@ -46,9 +46,7 @@ func (r *roleRepository) Create(newModel *models.Role) (model *models.Role, err 
 }
 
 func (r *roleRepository) GetAll() (model []*models.Role, err error) {
-	var query *gorm.DB = r.db
-
-	queryResult := query.Find(&model)
+	queryResult := r.db.Find(&model)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
@@ -59,9 +57,9 @@ func (r *roleRepository) GetAll() (model []*models.Role, err error) {
 
 func (r *roleRepository) GetById(id uuid.UUID) (model *models.Role, err error) {
 	result := r.db.First(&model, id)
-
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
+		return
 	}
 
 	return
@@ -71,6 +69,7 @@ func (r *roleRepository) Update(id uuid.UUID, newModel *models.Role) (model *mod
 	result := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
+		return
 	}
 
 	model = newModel

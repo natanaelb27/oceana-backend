@@ -100,6 +100,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
+		errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrInvalidRequest) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||

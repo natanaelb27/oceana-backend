@@ -8,34 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func newStandardError(message string, data any) gin.H {
-	return gin.H{
-		"message": message,
-		"data":    data,
-	}
-}
-
-func formatError(err error) (standardErr gin.H) {
-	if err != nil {
-		newErr := TranslateError(err)
-		var message string
-		if len(newErr) > 0 {
-			message = "validation"
-		} else {
-			message = err.Error()
-		}
-		standardErr = newStandardError(message, newErr)
-	}
-	return
-}
-
-func response(c *gin.Context, statusCode int, data any, metadata any, err error, message string) dtos.Response {
-	standardErr := formatError(err)
-
+func response(c *gin.Context, statusCode int, data any, metadata any, err any, message string) dtos.Response {
 	response := dtos.Response{
 		Code:     statusCode,
 		Data:     data,
-		Error:    standardErr,
+		Error:    err,
 		Message:  message,
 		Metadata: metadata,
 	}
@@ -47,17 +24,25 @@ func response(c *gin.Context, statusCode int, data any, metadata any, err error,
 
 func ResponseError(c *gin.Context, err error) dtos.Response {
 	var data any
+	var message string
+	var newErr string
+	if err != nil {
+		message = TranslateError(err)
+		if message == "-" {
+			message = err.Error()
+			newErr = http.StatusText(e.GetStatusCode(err))
+		} else {
+			newErr = http.StatusText(http.StatusBadRequest)
+		}
+	}
 
-	message := "failed"
-
-	return response(c, e.GetStatusCode(err), data, nil, err, message)
+	return response(c, e.GetStatusCode(err), data, nil, newErr, message)
 }
 
 func ResponseSuccess(c *gin.Context, data any, metadata any) dtos.Response {
 	var statusCode int = http.StatusOK
-	var err error = nil
 
 	message := "success"
 
-	return response(c, statusCode, data, metadata, err, message)
+	return response(c, statusCode, data, metadata, nil, message)
 }
