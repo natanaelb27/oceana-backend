@@ -39,14 +39,17 @@ var (
 	ErrInvalidQuantity       = errors.New("invalid quantity")
 	ErrInvalidPrice          = errors.New("invalid price")
 	ErrInvalidEventID        = errors.New("invalid event id")
+	ErrDataNotFound          = errors.New("data not found")
+	ErrInvalidRequest        = errors.New("invalid request")
+	ErrInvalidIdentifier     = errors.New("invalid identifier")
 
 	ErrWrongEmailAddress        = errors.New("wrong email address")
 	ErrWrongPassword            = errors.New("wrong password")
 	ErrEmailAddressAlreadyExist = errors.New("email address is already registered")
 
-	ErrUnauthorized  = errors.New("access is denied due to invalid credentials")
-	ErrForbidden     = errors.New("you don't have permission to access this resource")
-	ErrRouteNotFound = errors.New("route does not exist")
+	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
+	ErrForbidden            = errors.New("you don't have permission to access this resource")
+	ErrResourceDoesNotExist = errors.New("resource does not exist")
 
 	ErrInsufficientBalance      = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked   = errors.New("event is already bookmarked")
@@ -57,151 +60,66 @@ var (
 	ErrExceedEventCapacity      = errors.New("event has reached maximum capacity")
 	ErrExceedMerchandiseStock   = errors.New("merchandise has no stock left")
 
+	ErrInsertFailed            = errors.New("insert failed")
+	ErrDatabaseOperationFailed = errors.New("database operation failed")
+
 	ErrUnknown = errors.New("unknown")
 )
 
 func GetStatusCode(err error) int {
-	if errors.Is(err, ErrEmptyEmailAddress) {
+	if errors.Is(err, ErrEmptyEmailAddress) ||
+		errors.Is(err, ErrEmptyPassword) ||
+		errors.Is(err, ErrEmptyAmount) ||
+		errors.Is(err, ErrEmptyMembershipID) ||
+		errors.Is(err, ErrEmptyName) ||
+		errors.Is(err, ErrEmptyImage) ||
+		errors.Is(err, ErrEmptyDescription) ||
+		errors.Is(err, ErrEmptyStartTime) ||
+		errors.Is(err, ErrEmptyDurationMinute) ||
+		errors.Is(err, ErrEmptyCapacity) ||
+		errors.Is(err, ErrEmptyStock) ||
+		errors.Is(err, ErrEmptyCategoryID) ||
+		errors.Is(err, ErrEmptyMerchandiseID) ||
+		errors.Is(err, ErrEmptyQuantity) ||
+		errors.Is(err, ErrEmptyPrice) ||
+		errors.Is(err, ErrEmptyEventID) ||
+		errors.Is(err, ErrInvalidEmailAddress) ||
+		errors.Is(err, ErrInvalidPassword) ||
+		errors.Is(err, ErrInvalidAmount) ||
+		errors.Is(err, ErrInvalidMembershipID) ||
+		errors.Is(err, ErrInvalidName) ||
+		errors.Is(err, ErrInvalidImage) ||
+		errors.Is(err, ErrInvalidDescription) ||
+		errors.Is(err, ErrInvalidStartTime) ||
+		errors.Is(err, ErrInvalidDurationMinute) ||
+		errors.Is(err, ErrInvalidCapacity) ||
+		errors.Is(err, ErrInvalidStock) ||
+		errors.Is(err, ErrInvalidCategoryID) ||
+		errors.Is(err, ErrInvalidMerchandiseID) ||
+		errors.Is(err, ErrInvalidQuantity) ||
+		errors.Is(err, ErrInvalidPrice) ||
+		errors.Is(err, ErrInvalidEventID) ||
+		errors.Is(err, ErrInvalidIdentifier) ||
+		errors.Is(err, ErrInvalidRequest) {
 		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyPassword) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyAmount) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyMembershipID) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyName) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyImage) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyDescription) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyStartTime) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyDurationMinute) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyCapacity) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyStock) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyCategoryID) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyMerchandiseID) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyQuantity) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyPrice) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrEmptyEventID) {
-		return http.StatusBadRequest
-	}
-
-	if errors.Is(err, ErrInvalidEmailAddress) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidPassword) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidAmount) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidMembershipID) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidName) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidImage) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidDescription) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidStartTime) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidDurationMinute) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidCapacity) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidStock) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidCategoryID) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidMerchandiseID) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidQuantity) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidPrice) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, ErrInvalidEventID) {
-		return http.StatusBadRequest
-	}
-
-	if errors.Is(err, ErrWrongEmailAddress) {
+	} else if errors.Is(err, ErrWrongEmailAddress) ||
+		errors.Is(err, ErrWrongPassword) ||
+		errors.Is(err, ErrUnauthorized) {
 		return http.StatusUnauthorized
-	}
-	if errors.Is(err, ErrWrongPassword) {
-		return http.StatusUnauthorized
-	}
-	if errors.Is(err, ErrEmailAddressAlreadyExist) {
+	} else if errors.Is(err, ErrEmailAddressAlreadyExist) {
 		return http.StatusConflict
-	}
-
-	if errors.Is(err, ErrUnauthorized) {
-		return http.StatusUnauthorized
-	}
-	if errors.Is(err, ErrForbidden) {
+	} else if errors.Is(err, ErrForbidden) {
 		return http.StatusForbidden
-	}
-
-	if errors.Is(err, ErrRouteNotFound) {
+	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound
-	}
-
-	if errors.Is(err, ErrInsufficientBalance) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrEventAlreadyBookmarked) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrEventAlreadyPaid) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrMerchandiseAlreadyPaid) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrEventHasNotBeenPaid) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrMerchandiseAlreadyInCart) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrExceedEventCapacity) {
-		return http.StatusUnprocessableEntity
-	}
-	if errors.Is(err, ErrExceedMerchandiseStock) {
+	} else if errors.Is(err, ErrInsufficientBalance) ||
+		errors.Is(err, ErrEventAlreadyBookmarked) ||
+		errors.Is(err, ErrEventAlreadyPaid) ||
+		errors.Is(err, ErrMerchandiseAlreadyPaid) ||
+		errors.Is(err, ErrEventHasNotBeenPaid) ||
+		errors.Is(err, ErrMerchandiseAlreadyInCart) ||
+		errors.Is(err, ErrExceedEventCapacity) ||
+		errors.Is(err, ErrExceedMerchandiseStock) {
 		return http.StatusUnprocessableEntity
 	}
 

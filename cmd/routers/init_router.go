@@ -5,11 +5,12 @@ import (
 	"log"
 	"os"
 
+	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouters() {
+func Init(h *handlers.Handler) {
 	r := gin.Default()
 
 	config := cors.DefaultConfig()
@@ -17,11 +18,16 @@ func InitRouters() {
 	config.AllowHeaders = []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"}
 	r.Use(cors.New(config))
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	public := r.Group("/")
+
+	rolePublic := public.Group("/roles")
+	{
+		rolePublic.GET("/", h.RoleGetAll)
+		rolePublic.GET("/:id", h.RoleGetById)
+		rolePublic.POST("", h.RoleCreate)
+		rolePublic.DELETE("/:id", h.RoleDelete)
+		rolePublic.PUT("/:id", h.RoleUpdate)
+	}
 
 	err := r.Run(fmt.Sprintf(":%v", os.Getenv("ROUTER_PORT")))
 	if err != nil {
