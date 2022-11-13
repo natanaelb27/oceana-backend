@@ -11,5 +11,6 @@ func main() {
 	utils.InitEnv()
 	db.Connect()
 	h := handlers.Init()
+	utils.RegisterTagName()
 	routers.Init(h)
 }
