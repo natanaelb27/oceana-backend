@@ -19,6 +19,8 @@ func Init(h *handlers.Handler) {
 	config.AllowHeaders = []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"}
 	r.Use(cors.New(config))
 
+	r.Static("/docs", "cmd/docs")
+
 	public := r.Group("/")
 	private := r.Group("/", middlewares.Auth)
 
