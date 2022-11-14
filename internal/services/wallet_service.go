@@ -3,6 +3,8 @@ package services
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -30,5 +32,9 @@ func (p *walletService) Activate(id uuid.UUID, requestModel *models.Wallet) (*mo
 		return newModel, err
 	}
 	newModel.IsActive = requestModel.IsActive
+	newModel.Pin, err = utils.Hash(requestModel.Pin)
+	if err != nil {
+		return nil, e.ErrHashingFailed
+	}
 	return p.walletRepository.Activate(id, newModel)
 }

@@ -65,6 +65,7 @@ var (
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
+	ErrHashingFailed                 = errors.New("hashing failed")
 
 	ErrUnknown = errors.New("unknown")
 )

@@ -45,7 +45,7 @@ func Test_walletService_Activate(t *testing.T) {
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
 				r.walletRepository.On("GetByUserId", mock.Anything).Return(modelBefore, nil)
-				r.walletRepository.On("Activate", mock.Anything, model).Return(model, nil)
+				r.walletRepository.On("Activate", mock.Anything, mock.Anything).Return(model, nil)
 			},
 			want: model,
 		},
