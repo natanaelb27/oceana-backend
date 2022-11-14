@@ -11,6 +11,6 @@ type JwtUser struct {
 
 func NewJwtUser(source *models.User) *JwtUser {
 	return &JwtUser{
-		ID: source.ID.String(),
+		ID: source.ID,
 	}
 }
