@@ -21,6 +21,10 @@ func New(c *HandlerConfig) *Handler {
 	}
 }
 
+func (h *Handler) Root(c *gin.Context) {
+	utils.ResponseSuccess(c, "Oceana API", nil)
+}
+
 func (h *Handler) NotFound(c *gin.Context) {
 	utils.ResponseError(c, e.ErrResourceDoesNotExist)
 }

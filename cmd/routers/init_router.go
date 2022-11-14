@@ -19,12 +19,15 @@ func Init(h *handlers.Handler) {
 	config.AllowHeaders = []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"}
 	r.Use(cors.New(config))
 
+	r.GET("/", h.Root)
 	r.Static("/docs", "cmd/docs")
 
 	public := r.Group("/")
 	private := r.Group("/", middlewares.Auth)
 
 	role(public, private, h)
+
+	r.NoRoute(h.NotFound)
 
 	err := r.Run(fmt.Sprintf(":%v", os.Getenv("ROUTER_PORT")))
 	if err != nil {
