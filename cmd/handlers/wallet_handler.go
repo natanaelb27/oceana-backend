@@ -1,0 +1,32 @@
+package handlers
+
+import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+func (h *Handler) WalletActivate(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		return
+	}
+
+	var request *dtos.WalletActivateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	requestModel := request.ToModel()
+
+	result, err := h.walletService.Activate(id, requestModel)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewWalletActivateResponse(result)
+	utils.ResponseSuccess(c, responseData, nil)
+}

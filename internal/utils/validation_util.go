@@ -13,6 +13,8 @@ func newErrorMessage(ve validator.FieldError) (msg string) {
 	case "required":
 		msg = "is required."
 	case "min":
+		msg = fmt.Sprintf("length must be at least %v.", ve.Param())
+	case "len":
 		msg = fmt.Sprintf("length must be %v.", ve.Param())
 	case "eqfield":
 		msg = fmt.Sprintf("must be equal to %v field.", strings.ToLower(ve.Param()))

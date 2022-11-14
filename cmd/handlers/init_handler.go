@@ -13,9 +13,16 @@ func Init() *Handler {
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
+	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
+		DB: db.Get(),
+	})
+	walletService := services.NewWalletService(&services.WalletServiceConfig{
+		WalletRepository: walletRepository,
+	})
 
 	h := New(&HandlerConfig{
-		RoleService: roleService,
+		RoleService:   roleService,
+		WalletService: walletService,
 	})
 
 	return h
