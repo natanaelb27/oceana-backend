@@ -13,9 +13,16 @@ func Init() *Handler {
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
+	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
+		DB: db.Get(),
+	})
+	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
+		CategoryRepository: categoryRepository,
+	})
 
 	h := New(&HandlerConfig{
-		RoleService: roleService,
+		RoleService:     roleService,
+		CategoryService: categoryService,
 	})
 
 	return h

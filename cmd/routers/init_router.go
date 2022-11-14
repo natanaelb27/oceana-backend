@@ -26,6 +26,7 @@ func Init(h *handlers.Handler) {
 	private := r.Group("/", middlewares.Auth)
 
 	role(public, private, h)
+	category(public, private, h)
 
 	r.NoRoute(h.NotFound)
 
