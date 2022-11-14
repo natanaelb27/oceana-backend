@@ -8,6 +8,7 @@ import (
 
 type CategoryRepository interface {
 	GetAllCategories() (model []*models.Category, err error)
+	GetAllSubCategoriesByParentID(ID int) (model []*models.Category, err error)
 }
 
 type categoryRepository struct {
@@ -26,6 +27,17 @@ func NewCategoryRepository(c *CategoryRepositoryConfig) CategoryRepository {
 
 func (r *categoryRepository) GetAllCategories() (model []*models.Category, err error) {
 	queryResult := r.db.Where("parent_id IS NULL").Find(&model)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *categoryRepository) GetAllSubCategoriesByParentID(ID int) (model []*models.Category, err error) {
+	queryResult := r.db.Where("parent_id = ?", ID).Find(&model)
 
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
