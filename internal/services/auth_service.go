@@ -5,6 +5,7 @@ import (
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
 type AuthService interface {
@@ -29,10 +30,14 @@ func NewAuthService(c *AuthServiceConfig) AuthService {
 }
 
 func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error) {
+	_, err := u.emailRepository.GetByEmail(userCreateRequest.Email)
+	if err != e.ErrDataNotFound {
+		return nil, e.ErrEmailAddressAlreadyExist
+	}
 	email := &models.Email{
 		Address: userCreateRequest.Email,
 	}
-	email, err := u.emailRepository.Create(email)
+	createdEmail, err := u.emailRepository.Create(email)
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +53,6 @@ func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.U
 		return nil, err
 	}
 	responseData := dtos.NewUserCreateResponse(createdUser)
-	responseData.Email = email.Address
+	responseData.Email = createdEmail.Address
 	return responseData, nil
 }

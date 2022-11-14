@@ -10,6 +10,7 @@ import (
 type EmailRepository interface {
 	Create(email *models.Email) (*models.Email, error)
 	GetById(id uuid.UUID) (model *models.Email, err error) 
+	GetByEmail(emailAddress string) (model *models.Email, err error)
 }
 
 type emailRepository struct {
@@ -42,6 +43,15 @@ func (e *emailRepository) Create(newModel *models.Email) (model *models.Email, e
 
 func (e *emailRepository) GetById(id uuid.UUID) (model *models.Email, err error) {
 	result := e.db.First(&model, id)
+	if result.RowsAffected == 0 {
+		err = er.ErrDataNotFound
+		return
+	}
+	return
+}
+
+func (e *emailRepository) GetByEmail(emailAddress string) (model *models.Email, err error) {
+	result := e.db.Model(&models.Email{}).Where("address = ?", emailAddress).Find(&model)
 	if result.RowsAffected == 0 {
 		err = er.ErrDataNotFound
 		return
