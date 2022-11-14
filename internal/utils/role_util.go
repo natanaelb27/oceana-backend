@@ -12,7 +12,7 @@ import (
 func GetUserRoleById(id string) (role string, err error) {
 	Db := db.Get()
 	user := &models.User{}
-	result := Db.First(&user, id)
+	result := Db.Where("id = ?", id).First(&user)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

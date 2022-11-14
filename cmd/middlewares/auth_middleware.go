@@ -37,7 +37,7 @@ func Auth(c *gin.Context) {
 		return
 	}
 
-	role, err := utils.GetUserRoleById(claims.User.ID)
+	role, err := utils.GetUserRoleById(claims.User.ID.String())
 	if err != nil {
 		utils.ResponseError(c, e.ErrUserNotFound)
 		c.Abort()
