@@ -116,7 +116,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUnauthorized) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
-		errors.Is(err, ErrWalletAlreadyActive) || 
+		errors.Is(err, ErrWalletAlreadyActive) ||
 		errors.Is(err, ErrUsernameAlreadyExist) ||
 		errors.Is(err, ErrPhoneNumberAlreadyExist) {
 		return http.StatusConflict

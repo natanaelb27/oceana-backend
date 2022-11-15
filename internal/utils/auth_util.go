@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
@@ -22,7 +22,7 @@ func AuthenticateUser(user *models.User, providedPassword string) (*internalDtos
 	}
 	userLoginResponse := &internalDtos.UserLoginData{
 		AccessToken: token,
-		Role: user.Role,
+		Role:        user.Role,
 	}
 	return userLoginResponse, nil
 }

@@ -1,11 +1,11 @@
 package services
 
 import (
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 

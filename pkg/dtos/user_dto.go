@@ -72,5 +72,5 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	Role         string `json:"role"`
+	Role string `json:"role"`
 }
