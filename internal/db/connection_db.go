@@ -25,6 +25,7 @@ func Connect() {
 		&models.User{},
 		&models.Email{},
 		&models.Wallet{},
+		&models.Category{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")

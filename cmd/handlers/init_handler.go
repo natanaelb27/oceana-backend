@@ -30,11 +30,19 @@ func Init() *Handler {
 		EmailRepository:  emailRepository,
 		WalletRepository: walletRepository,
 	})
+	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
+		DB: db.Get(),
+	})
+	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
+		CategoryRepository: categoryRepository,
+	})
 
 	h := New(&HandlerConfig{
-		RoleService:   roleService,
-		WalletService: walletService,
-		AuthService:   authService,
+		RoleService:     roleService,
+		WalletService:   walletService,
+		AuthService:     authService,
+		CategoryService: categoryService,
 	})
+
 	return h
 }
