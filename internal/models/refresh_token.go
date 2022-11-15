@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type RefreshToken struct {
@@ -12,4 +13,7 @@ type RefreshToken struct {
 	User      User
 	Code      string
 	ExpiresAt time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
 }
