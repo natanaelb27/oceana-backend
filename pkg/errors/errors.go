@@ -23,30 +23,32 @@ var (
 	ErrEmptyPrice          = errors.New("price should not be empty")
 	ErrEmptyEventID        = errors.New("event id should not be empty")
 
-	ErrInvalidEmailAddress   = errors.New("invalid email address")
-	ErrInvalidPassword       = errors.New("invalid password")
-	ErrInvalidAmount         = errors.New("invalid amount")
-	ErrInvalidMembershipID   = errors.New("invalid membership id")
-	ErrInvalidName           = errors.New("invalid name")
-	ErrInvalidImage          = errors.New("invalid image")
-	ErrInvalidDescription    = errors.New("invalid description")
-	ErrInvalidStartTime      = errors.New("invalid start time")
-	ErrInvalidDurationMinute = errors.New("invalid duration minute")
-	ErrInvalidCapacity       = errors.New("invalid capacity")
-	ErrInvalidStock          = errors.New("invalid stock")
-	ErrInvalidCategoryID     = errors.New("invalid category id")
-	ErrInvalidMerchandiseID  = errors.New("invalid merchandise id")
-	ErrInvalidQuantity       = errors.New("invalid quantity")
-	ErrInvalidPrice          = errors.New("invalid price")
-	ErrInvalidEventID        = errors.New("invalid event id")
-	ErrDataNotFound          = errors.New("data not found")
-	ErrInvalidRequest        = errors.New("invalid request")
-	ErrInvalidIdentifier     = errors.New("invalid identifier")
-	ErrInvalidToken          = errors.New("invalid token")
+	ErrInvalidEmailAddress            = errors.New("invalid email address")
+	ErrInvalidPassword                = errors.New("invalid password")
+	ErrInvalidAmount                  = errors.New("invalid amount")
+	ErrInvalidMembershipID            = errors.New("invalid membership id")
+	ErrInvalidName                    = errors.New("invalid name")
+	ErrInvalidImage                   = errors.New("invalid image")
+	ErrInvalidDescription             = errors.New("invalid description")
+	ErrInvalidStartTime               = errors.New("invalid start time")
+	ErrInvalidDurationMinute          = errors.New("invalid duration minute")
+	ErrInvalidCapacity                = errors.New("invalid capacity")
+	ErrInvalidStock                   = errors.New("invalid stock")
+	ErrInvalidCategoryID              = errors.New("invalid category id")
+	ErrInvalidMerchandiseID           = errors.New("invalid merchandise id")
+	ErrInvalidQuantity                = errors.New("invalid quantity")
+	ErrInvalidPrice                   = errors.New("invalid price")
+	ErrInvalidEventID                 = errors.New("invalid event id")
+	ErrDataNotFound                   = errors.New("data not found")
+	ErrInvalidRequest                 = errors.New("invalid request")
+	ErrInvalidIdentifier              = errors.New("invalid identifier")
+	ErrInvalidToken                   = errors.New("invalid token")
+	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
 
-	ErrWrongEmailAddress        = errors.New("wrong email address")
-	ErrWrongPassword            = errors.New("wrong password")
-	ErrEmailAddressAlreadyExist = errors.New("email address is already registered")
+	ErrWrongEmailAddress                   = errors.New("wrong email address")
+	ErrWrongPassword                       = errors.New("wrong password")
+	ErrEmailAddressAlreadyExist            = errors.New("email address is already registered")
+	ErrSealabsPayAccountNumberAlreadyExist = errors.New("account number is already registered")
 
 	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound         = errors.New("user not found")
@@ -105,13 +107,15 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrInvalidToken) ||
-		errors.Is(err, ErrInvalidRequest) {
+		errors.Is(err, ErrInvalidRequest) ||
+		errors.Is(err, ErrInvalidSealabsPayAccountNumber) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
 		errors.Is(err, ErrUnauthorized) {
 		return http.StatusUnauthorized
-	} else if errors.Is(err, ErrEmailAddressAlreadyExist) {
+	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
+		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) {
 		return http.StatusForbidden
