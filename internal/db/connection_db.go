@@ -23,6 +23,7 @@ func Connect() {
 	err = db.AutoMigrate(
 		&models.Role{},
 		&models.User{},
+		&models.Email{},
 		&models.Wallet{},
 	)
 	if err != nil {

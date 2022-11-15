@@ -19,11 +19,22 @@ func Init() *Handler {
 	walletService := services.NewWalletService(&services.WalletServiceConfig{
 		WalletRepository: walletRepository,
 	})
+	userRepository := repositories.NewUserRepository(&repositories.UserRepositoryConfig{
+		DB: db.Get(),
+	})
+	emailRepository := repositories.NewEmailRepository(&repositories.EmailRepositoryConfig{
+		DB: db.Get(),
+	})
+	authService := services.NewAuthService(&services.AuthServiceConfig{
+		UserRepository:   userRepository,
+		EmailRepository:  emailRepository,
+		WalletRepository: walletRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:   roleService,
 		WalletService: walletService,
+		AuthService:   authService,
 	})
-
 	return h
 }

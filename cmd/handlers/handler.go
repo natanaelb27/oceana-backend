@@ -10,17 +10,20 @@ import (
 type Handler struct {
 	roleService   services.RoleService
 	walletService services.WalletService
+	authService   services.AuthService
 }
 
 type HandlerConfig struct {
 	RoleService   services.RoleService
 	WalletService services.WalletService
+	AuthService   services.AuthService
 }
 
 func New(c *HandlerConfig) *Handler {
 	return &Handler{
 		roleService:   c.RoleService,
 		walletService: c.WalletService,
+		authService:   c.AuthService,
 	}
 }
 

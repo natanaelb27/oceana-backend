@@ -27,6 +27,7 @@ func Init(h *handlers.Handler) {
 
 	role(public, private, h)
 	profile(public, private, h)
+	auth(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

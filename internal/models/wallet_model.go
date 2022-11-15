@@ -9,9 +9,9 @@ import (
 
 type Wallet struct {
 	ID                    uuid.UUID
-	UserId                uuid.UUID
+	UserID                uuid.UUID
 	User                  User
-	Balance               int
+	Balance               uint
 	Pin                   string
 	IsActive              bool
 	InvalidPinCount       int
