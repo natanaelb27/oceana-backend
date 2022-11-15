@@ -10,6 +10,7 @@ import (
 type WalletRepository interface {
 	GetByUserId(id uuid.UUID) (model *models.Wallet, err error)
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
+	Create(newModel *models.Wallet) (model *models.Wallet, err error)
 }
 
 type walletRepository struct {
@@ -52,6 +53,19 @@ func (r *walletRepository) Activate(id uuid.UUID, newModel *models.Wallet) (mode
 	}
 
 	model = newModel
+	return
+}
 
+func (w *walletRepository) Create(newModel *models.Wallet) (model *models.Wallet, err error) {
+	queryResult := w.db.Create(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrInsertFailed
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	model = newModel
 	return
 }

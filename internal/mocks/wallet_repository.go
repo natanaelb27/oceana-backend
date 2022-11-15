@@ -37,6 +37,29 @@ func (_m *WalletRepository) Activate(id uuid.UUID, newModel *models.Wallet) (*mo
 	return r0, r1
 }
 
+// Create provides a mock function with given fields: newModel
+func (_m *WalletRepository) Create(newModel *models.Wallet) (*models.Wallet, error) {
+	ret := _m.Called(newModel)
+
+	var r0 *models.Wallet
+	if rf, ok := ret.Get(0).(func(*models.Wallet) *models.Wallet); ok {
+		r0 = rf(newModel)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Wallet)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*models.Wallet) error); ok {
+		r1 = rf(newModel)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByUserId provides a mock function with given fields: id
 func (_m *WalletRepository) GetByUserId(id uuid.UUID) (*models.Wallet, error) {
 	ret := _m.Called(id)

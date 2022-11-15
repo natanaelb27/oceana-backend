@@ -21,7 +21,7 @@ func (source *WalletActivateRequest) ToModel() (target *models.Wallet) {
 
 type WalletActivateResponse struct {
 	ID        uuid.UUID `json:"id"`
-	Balance   int       `json:"balance"`
+	Balance   uint      `json:"balance"`
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

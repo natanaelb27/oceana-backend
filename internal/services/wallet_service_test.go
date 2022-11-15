@@ -15,12 +15,12 @@ import (
 func Test_walletService_Activate(t *testing.T) {
 	modelBefore := &models.Wallet{
 		ID:       uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b851"),
-		UserId:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
+		UserID:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
 		IsActive: false,
 	}
 	model := &models.Wallet{
 		ID:       uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b851"),
-		UserId:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
+		UserID:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
 		IsActive: true,
 	}
 
@@ -44,7 +44,7 @@ func Test_walletService_Activate(t *testing.T) {
 				args2: model,
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
-				r.walletRepository.On("GetByUserId", mock.Anything).Return(modelBefore, nil)
+				r.walletRepository.On("GetByUserID", mock.Anything).Return(modelBefore, nil)
 				r.walletRepository.On("Activate", mock.Anything, mock.Anything).Return(model, nil)
 			},
 			want: model,
@@ -54,7 +54,7 @@ func Test_walletService_Activate(t *testing.T) {
 				args2: model,
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
-				r.walletRepository.On("GetByUserId", mock.Anything).Return(nil, e.ErrDatabaseOperationFailed)
+				r.walletRepository.On("GetByUserID", mock.Anything).Return(nil, e.ErrDatabaseOperationFailed)
 			},
 			wantErr: true,
 		},
@@ -62,12 +62,12 @@ func Test_walletService_Activate(t *testing.T) {
 			args: args{
 				args2: &models.Wallet{
 					ID:       uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b851"),
-					UserId:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
+					UserID:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
 					IsActive: true,
 				},
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
-				r.walletRepository.On("GetByUserId", mock.Anything).Return(a.args2, nil)
+				r.walletRepository.On("GetByUserID", mock.Anything).Return(a.args2, nil)
 			},
 			wantErr: true,
 		},

@@ -22,7 +22,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 
 	model := &models.Wallet{
 		ID:       uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b851"),
-		UserId:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
+		UserID:   uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b852"),
 		IsActive: true,
 	}
 
@@ -49,7 +49,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 					PinConfirmation: "123456",
 				})
 				r.Use(func(c *gin.Context) {
-					c.Set("id", model.UserId)
+					c.Set("id", model.UserID)
 					c.Next()
 				})
 				r.PATCH(endpoint, handler)
@@ -66,7 +66,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 				handler := h.WalletActivate
 				body = NewBody(dtos.WalletActivateRequest{})
 				r.Use(func(c *gin.Context) {
-					c.Set("id", model.UserId)
+					c.Set("id", model.UserID)
 					c.Next()
 				})
 				r.PATCH(endpoint, handler)
@@ -87,7 +87,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 					PinConfirmation: "123456",
 				})
 				r.Use(func(c *gin.Context) {
-					c.Set("id", model.UserId)
+					c.Set("id", model.UserID)
 					c.Next()
 				})
 				r.PATCH(endpoint, handler)
