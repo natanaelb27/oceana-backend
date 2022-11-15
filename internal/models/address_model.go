@@ -1,6 +1,9 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type Address struct {
 	ID            uuid.UUID
@@ -11,4 +14,9 @@ type Address struct {
 	SubDistrictID uint
 	SubDistrict   SubDistrict
 	IsDefault     bool
+}
+
+func (m *Address) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	return
 }
