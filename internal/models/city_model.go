@@ -9,7 +9,7 @@ import (
 type City struct {
 	ID         uint
 	Name       string
-	ProvinceId uint
+	ProvinceID uint
 	Province   Province
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

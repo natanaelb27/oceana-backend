@@ -9,7 +9,7 @@ import (
 type SubDistrict struct {
 	ID         uint
 	Name       string
-	DistrictId uint
+	DistrictID uint
 	District   District
 	ZipCode    string
 	CreatedAt  time.Time
