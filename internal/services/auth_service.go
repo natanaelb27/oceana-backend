@@ -10,25 +10,29 @@ import (
 
 type AuthService interface {
 	Register(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error)
+	Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.UserLoginResponse, error)
 }
 
 type authService struct {
-	userRepository   r.UserRepository
-	emailRepository  r.EmailRepository
-	walletRepository r.WalletRepository
+	userRepository         r.UserRepository
+	emailRepository        r.EmailRepository
+	walletRepository       r.WalletRepository
+	refreshTokenRepository r.RefreshTokenRepository
 }
 
 type AuthServiceConfig struct {
-	UserRepository   r.UserRepository
-	EmailRepository  r.EmailRepository
-	WalletRepository r.WalletRepository
+	UserRepository         r.UserRepository
+	EmailRepository        r.EmailRepository
+	WalletRepository       r.WalletRepository
+	RefreshTokenRepository r.RefreshTokenRepository
 }
 
 func NewAuthService(c *AuthServiceConfig) AuthService {
 	return &authService{
-		userRepository:   c.UserRepository,
-		emailRepository:  c.EmailRepository,
-		walletRepository: c.WalletRepository,
+		userRepository:         c.UserRepository,
+		emailRepository:        c.EmailRepository,
+		walletRepository:       c.WalletRepository,
+		refreshTokenRepository: c.RefreshTokenRepository,
 	}
 }
 
@@ -36,6 +40,14 @@ func (u *authService) Register(userCreateRequest *dtos.UserCreateRequest) (*dtos
 	_, err := u.emailRepository.GetByEmail(userCreateRequest.Email)
 	if err != e.ErrDataNotFound {
 		return nil, e.ErrEmailAddressAlreadyExist
+	}
+	_, err = u.userRepository.GetByUsername(userCreateRequest.Username)
+	if err != e.ErrDataNotFound {
+		return nil, e.ErrUsernameAlreadyExist
+	}
+	_, err = u.userRepository.GetByPhoneNumber(userCreateRequest.PhoneNumber)
+	if err != e.ErrDataNotFound {
+		return nil, e.ErrPhoneNumberAlreadyExist
 	}
 	email := &models.Email{
 		Address: userCreateRequest.Email,
@@ -57,7 +69,7 @@ func (u *authService) Register(userCreateRequest *dtos.UserCreateRequest) (*dtos
 		}
 		user.Photo = &imageUrl
 	}
-	hashedPassword, err := utils.HashPassword(userCreateRequest.Password)
+	hashedPassword, err := utils.Hash(userCreateRequest.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -80,4 +92,54 @@ func (u *authService) Register(userCreateRequest *dtos.UserCreateRequest) (*dtos
 	responseData := dtos.NewUserCreateResponse(createdUser)
 	responseData.Email = createdEmail.Address
 	return responseData, nil
+}
+
+func (u *authService) Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.UserLoginResponse, error) {
+	user, err := u.userRepository.GetByUsername(userLoginRequest.LoginCredentials)
+	if err == nil {
+		userLoginResponse, err := utils.AuthenticateUser(user, userLoginRequest.Password)
+		if err != nil {
+			return nil, err
+		}
+		refreshToken := utils.NewRefreshToken(user)
+		_, err = u.refreshTokenRepository.Create(refreshToken)
+		if err != nil {
+			return nil, err
+		}
+		userLoginResponse.RefreshToken = refreshToken.Code
+		return userLoginResponse, nil
+	}
+	user, err = u.userRepository.GetByPhoneNumber(userLoginRequest.LoginCredentials)
+	if err == nil {
+		userLoginResponse, err := utils.AuthenticateUser(user, userLoginRequest.Password)
+		if err != nil {
+			return nil, err
+		}
+		refreshToken := utils.NewRefreshToken(user)
+		_, err = u.refreshTokenRepository.Create(refreshToken)
+		if err != nil {
+			return nil, err
+		}
+		userLoginResponse.RefreshToken = refreshToken.Code
+		return userLoginResponse, nil
+	}
+	email, err := u.emailRepository.GetByEmail(userLoginRequest.LoginCredentials)
+	if err == nil {
+		user, err = u.userRepository.GetByEmailID(email.ID)
+		if err != nil {
+			return nil, err
+		}
+		userLoginResponse, err := utils.AuthenticateUser(user, userLoginRequest.Password)
+		if err != nil {
+			return nil, err
+		}
+		refreshToken := utils.NewRefreshToken(user)
+		_, err = u.refreshTokenRepository.Create(refreshToken)
+		if err != nil {
+			return nil, err
+		}
+		userLoginResponse.RefreshToken = refreshToken.Code
+		return userLoginResponse, nil
+	}
+	return nil, e.ErrUserNotFound
 }

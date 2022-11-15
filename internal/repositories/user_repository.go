@@ -3,11 +3,15 @@ package repositories
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type UserRepository interface {
 	Create(user *models.User) (*models.User, error)
+	GetByPhoneNumber(phoneNumber string) (model *models.User, err error)
+	GetByUsername(username string) (model *models.User, err error)
+	GetByEmailID(emailID uuid.UUID) (model *models.User, err error)
 }
 
 type userRepository struct {
@@ -34,6 +38,33 @@ func (u *userRepository) Create(newModel *models.User) (model *models.User, err 
 		err = e.ErrDatabaseOperationFailed
 		return
 	}
-	model = newModel 
+	model = newModel
+	return
+}
+
+func (u *userRepository) GetByPhoneNumber(phoneNumber string) (model *models.User, err error) {
+	result := u.db.Model(&models.User{}).Where("phone_number = ?", phoneNumber).Find(&model)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	return
+}
+
+func (u *userRepository) GetByUsername(username string) (model *models.User, err error) {
+	result := u.db.Model(&models.User{}).Where("username = ?", username).Find(&model)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	return
+}
+
+func (u *userRepository) GetByEmailID(emailID uuid.UUID) (model *models.User, err error) {
+	result := u.db.Model(&models.User{}).Where("email_id = ?", emailID).Find(&model)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
 	return
 }
