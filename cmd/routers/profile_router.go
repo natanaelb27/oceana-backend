@@ -7,5 +7,8 @@ import (
 
 func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
 	path := "/profile"
-	private.PATCH(path+"/wallet/activate", h.WalletActivate)
+	privateRoute := private.Group(path)
+	{
+		privateRoute.PATCH(path+"/wallet/activate", h.WalletActivate)
+	}
 }
