@@ -12,7 +12,7 @@ func (h *Handler) UserCreate(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	responseData, err := h.authService.Create(request)
+	responseData, err := h.authService.Register(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

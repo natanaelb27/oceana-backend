@@ -9,30 +9,30 @@ import (
 )
 
 type AuthService interface {
-	Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error)
+	Register(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error)
 }
 
 type authService struct {
-	userRepository  r.UserRepository
-	emailRepository r.EmailRepository
+	userRepository   r.UserRepository
+	emailRepository  r.EmailRepository
 	walletRepository r.WalletRepository
 }
 
 type AuthServiceConfig struct {
-	UserRepository  r.UserRepository
-	EmailRepository r.EmailRepository
+	UserRepository   r.UserRepository
+	EmailRepository  r.EmailRepository
 	WalletRepository r.WalletRepository
 }
 
 func NewAuthService(c *AuthServiceConfig) AuthService {
 	return &authService{
-		userRepository:  c.UserRepository,
-		emailRepository: c.EmailRepository,
+		userRepository:   c.UserRepository,
+		emailRepository:  c.EmailRepository,
 		walletRepository: c.WalletRepository,
 	}
 }
 
-func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error) {
+func (u *authService) Register(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error) {
 	_, err := u.emailRepository.GetByEmail(userCreateRequest.Email)
 	if err != e.ErrDataNotFound {
 		return nil, e.ErrEmailAddressAlreadyExist
@@ -67,10 +67,10 @@ func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.U
 		return nil, err
 	}
 	wallet := &models.Wallet{
-		UserID: createdUser.ID,
-		Balance: 0,
-		Pin: "",
-		IsActive: false,
+		UserID:          createdUser.ID,
+		Balance:         0,
+		Pin:             "",
+		IsActive:        false,
 		InvalidPinCount: 0,
 	}
 	_, err = u.walletRepository.Create(wallet)
