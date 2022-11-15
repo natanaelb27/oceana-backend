@@ -15,17 +15,20 @@ type AuthService interface {
 type authService struct {
 	userRepository  r.UserRepository
 	emailRepository r.EmailRepository
+	walletRepository r.WalletRepository
 }
 
 type AuthServiceConfig struct {
 	UserRepository  r.UserRepository
 	EmailRepository r.EmailRepository
+	WalletRepository r.WalletRepository
 }
 
 func NewAuthService(c *AuthServiceConfig) AuthService {
 	return &authService{
 		userRepository:  c.UserRepository,
 		emailRepository: c.EmailRepository,
+		walletRepository: c.WalletRepository,
 	}
 }
 
@@ -60,6 +63,17 @@ func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.U
 	}
 	user.Password = hashedPassword
 	createdUser, err := u.userRepository.Create(user)
+	if err != nil {
+		return nil, err
+	}
+	wallet := &models.Wallet{
+		UserID: createdUser.ID.String(),
+		Balance: 0,
+		Pin: "",
+		IsActive: false,
+		InvalidPinCount: 0,
+	}
+	_, err = u.walletRepository.Create(wallet)
 	if err != nil {
 		return nil, err
 	}
