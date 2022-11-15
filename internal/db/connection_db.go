@@ -27,6 +27,7 @@ func Connect() {
 		&models.City{},
 		&models.District{},
 		&models.SubDistrict{},
+		&models.Address{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
