@@ -5,7 +5,7 @@ import (
 )
 
 type CategoryGetResponse struct {
-	ID       int              `json:"id" gorm:"primary_key"`
+	ID       uint             `json:"id" gorm:"primary_key"`
 	Name     string           `json:"name"`
 	Level    int              `json:"level"`
 	Category []*dtos.Category `json:"category"`

@@ -7,9 +7,9 @@ import (
 )
 
 type Category struct {
-	ID        int `gorm:"primary_key"`
+	ID        uint `gorm:"primary_key"`
 	Name      string
-	ParentId  int
+	ParentId  uint
 	Category  *Category `gorm:"foreignKey:ParentId;references:ID"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
