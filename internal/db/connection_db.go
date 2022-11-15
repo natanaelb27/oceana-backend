@@ -28,6 +28,8 @@ func Connect() {
 		&models.District{},
 		&models.SubDistrict{},
 		&models.Address{},
+		&models.Email{},
+		&models.Wallet{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
