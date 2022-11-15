@@ -16,3 +16,8 @@ type SealabsPay struct {
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt
 }
+
+func (m *SealabsPay) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	return
+}
