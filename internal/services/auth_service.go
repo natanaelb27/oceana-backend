@@ -13,18 +13,18 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepository r.UserRepository
+	userRepository  r.UserRepository
 	emailRepository r.EmailRepository
 }
 
 type AuthServiceConfig struct {
-	UserRepository r.UserRepository
+	UserRepository  r.UserRepository
 	EmailRepository r.EmailRepository
 }
 
 func NewAuthService(c *AuthServiceConfig) AuthService {
 	return &authService{
-		userRepository: c.UserRepository,
+		userRepository:  c.UserRepository,
 		emailRepository: c.EmailRepository,
 	}
 }
@@ -43,6 +43,17 @@ func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.U
 	}
 	user := userCreateRequest.ToModel()
 	user.EmailID = email.ID.String()
+	if userCreateRequest.Photo != nil {
+		photoFile, err := userCreateRequest.Photo.Open()
+		if err != nil {
+			return nil, err
+		}
+		imageUrl, err := utils.UploadImage(photoFile)
+		if err != nil {
+			return nil, err
+		}
+		user.Photo = &imageUrl
+	}
 	hashedPassword, err := utils.HashPassword(userCreateRequest.Password)
 	if err != nil {
 		return nil, err
