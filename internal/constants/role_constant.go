@@ -4,4 +4,7 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/roles": {
 		"GET": "100",
 	},
+	"/profile/wallet/activate": {
+		"PATCH": "011",
+	},
 }
