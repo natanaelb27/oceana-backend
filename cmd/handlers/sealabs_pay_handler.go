@@ -21,15 +21,11 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 		return
 	}
 
-	model := request.ToModel(id)
-
-	result, err := h.sealabsPayService.Create(model)
+	response, err := h.sealabsPayService.Create(id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	responseData := dtos.NewSealabsPayCreateResponse(result)
-
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, response, nil)
 }

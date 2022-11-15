@@ -1,14 +1,15 @@
 package services
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 )
 
 type SealabsPayService interface {
-	Create(sealabsPay *models.SealabsPay) (*models.SealabsPay, error)
+	Create(id uuid.UUID, request *dtos.SealabsPayCreateRequest) (*dtos.SealabsPayCreateResponse, error)
 }
 
 type sealabsPayService struct {
@@ -25,10 +26,20 @@ func NewSealabsPayService(c *SealabsPayServiceConfig) SealabsPayService {
 	}
 }
 
-func (p *sealabsPayService) Create(model *models.SealabsPay) (*models.SealabsPay, error) {
+func (p *sealabsPayService) Create(id uuid.UUID, request *dtos.SealabsPayCreateRequest) (*dtos.SealabsPayCreateResponse, error) {
+	model := request.ToModel(id)
+
 	if !utils.ValidateSealabsPayAccountNumber(model.AccountNumber) {
 		return nil, e.ErrInvalidSealabsPayAccountNumber
 	}
 
-	return p.sealabsPayRepository.Create(model)
+	newModel, err := p.sealabsPayRepository.Create(model)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := dtos.NewSealabsPayCreateResponse(newModel)
+
+	return response, nil
 }
