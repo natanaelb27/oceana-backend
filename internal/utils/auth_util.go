@@ -2,12 +2,11 @@ package utils
 
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
-func AuthenticateUser(user *models.User, providedPassword string) (*dtos.UserLoginResponse, error) {
+func AuthenticateUser(user *models.User, providedPassword string) (*internalDtos.UserLoginData, error) {
 	err := CheckHash(user.Password, providedPassword)
 	if err != nil {
 		return nil, e.ErrInvalidPassword
@@ -21,8 +20,9 @@ func AuthenticateUser(user *models.User, providedPassword string) (*dtos.UserLog
 	if err != nil {
 		return nil, err
 	}
-	userLoginResponse := &dtos.UserLoginResponse{
+	userLoginResponse := &internalDtos.UserLoginData{
 		AccessToken: token,
+		Role: user.Role,
 	}
 	return userLoginResponse, nil
 }

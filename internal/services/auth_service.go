@@ -4,13 +4,14 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
 type AuthService interface {
-	Register(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error)
-	Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.UserLoginResponse, error)
+	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
+	Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
 }
 
 type authService struct {
@@ -36,7 +37,7 @@ func NewAuthService(c *AuthServiceConfig) AuthService {
 	}
 }
 
-func (u *authService) Register(userCreateRequest *dtos.UserCreateRequest) (*dtos.UserCreateResponse, error) {
+func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error) {
 	_, err := u.emailRepository.GetByEmail(userCreateRequest.Email)
 	if err != e.ErrDataNotFound {
 		return nil, e.ErrEmailAddressAlreadyExist
@@ -89,15 +90,15 @@ func (u *authService) Register(userCreateRequest *dtos.UserCreateRequest) (*dtos
 	if err != nil {
 		return nil, err
 	}
-	responseData := dtos.NewUserCreateResponse(createdUser)
+	responseData := externalDtos.NewUserCreateResponse(createdUser)
 	responseData.Email = createdEmail.Address
 	return responseData, nil
 }
 
-func (u *authService) Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.UserLoginResponse, error) {
+func (u *authService) Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error) {
 	user, err := u.userRepository.GetByUsername(userLoginRequest.LoginCredentials)
 	if err == nil {
-		userLoginResponse, err := utils.AuthenticateUser(user, userLoginRequest.Password)
+		userLoginData, err := utils.AuthenticateUser(user, userLoginRequest.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -106,12 +107,13 @@ func (u *authService) Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.User
 		if err != nil {
 			return nil, err
 		}
-		userLoginResponse.RefreshToken = refreshToken.Code
-		return userLoginResponse, nil
+		userLoginData.RefreshToken = refreshToken.Code
+		userLoginData.ExpiresAt = refreshToken.ExpiresAt
+		return userLoginData, nil
 	}
 	user, err = u.userRepository.GetByPhoneNumber(userLoginRequest.LoginCredentials)
 	if err == nil {
-		userLoginResponse, err := utils.AuthenticateUser(user, userLoginRequest.Password)
+		userLoginData, err := utils.AuthenticateUser(user, userLoginRequest.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -120,8 +122,9 @@ func (u *authService) Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.User
 		if err != nil {
 			return nil, err
 		}
-		userLoginResponse.RefreshToken = refreshToken.Code
-		return userLoginResponse, nil
+		userLoginData.RefreshToken = refreshToken.Code
+		userLoginData.ExpiresAt = refreshToken.ExpiresAt
+		return userLoginData, nil
 	}
 	email, err := u.emailRepository.GetByEmail(userLoginRequest.LoginCredentials)
 	if err == nil {
@@ -129,7 +132,7 @@ func (u *authService) Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.User
 		if err != nil {
 			return nil, err
 		}
-		userLoginResponse, err := utils.AuthenticateUser(user, userLoginRequest.Password)
+		userLoginData, err := utils.AuthenticateUser(user, userLoginRequest.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -138,8 +141,9 @@ func (u *authService) Login(userLoginRequest *dtos.UserLoginRequest) (*dtos.User
 		if err != nil {
 			return nil, err
 		}
-		userLoginResponse.RefreshToken = refreshToken.Code
-		return userLoginResponse, nil
+		userLoginData.RefreshToken = refreshToken.Code
+		userLoginData.ExpiresAt = refreshToken.ExpiresAt
+		return userLoginData, nil
 	}
 	return nil, e.ErrUserNotFound
 }
