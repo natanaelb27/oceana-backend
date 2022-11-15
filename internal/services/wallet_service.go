@@ -31,6 +31,9 @@ func (p *walletService) Activate(id uuid.UUID, requestModel *models.Wallet) (*mo
 	if err != nil {
 		return newModel, err
 	}
+	if newModel.IsActive {
+		return nil, e.ErrWalletAlreadyActive
+	}
 	newModel.IsActive = requestModel.IsActive
 	newModel.Pin, err = utils.Hash(requestModel.Pin)
 	if err != nil {
