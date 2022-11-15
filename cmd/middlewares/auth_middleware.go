@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -16,7 +15,6 @@ func Auth(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	fmt.Println(clientToken)
 
 	jwtWrapper, err := utils.NewJwtWrapper()
 	if err != nil {
