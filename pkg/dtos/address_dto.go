@@ -6,9 +6,10 @@ import (
 )
 
 type AddressCreateRequest struct {
-	Name          string `form:"name" json:"name" binding:"required"`
-	Detail        string `form:"detail" json:"detail" binding:"required"`
-	SubDistrictID uint   `form:"sub_district_id" json:"sub_district_id" binding:"required"`
+	UserID        uuid.UUID `json:"user_id" binding:"required"`
+	Name          string    `form:"name" json:"name" binding:"required"`
+	Detail        string    `form:"detail" json:"detail" binding:"required"`
+	SubDistrictID uint      `form:"sub_district_id" json:"sub_district_id" binding:"required"`
 }
 
 type AddressCreateResponse struct {
@@ -20,8 +21,9 @@ type AddressCreateResponse struct {
 	IsDefault     bool      `json:"is_default"`
 }
 
-func (source *AddressCreateRequest) ToModel() (target *models.Address) {
+func (source *AddressCreateRequest) ToModel(userID uuid.UUID) (target *models.Address) {
 	target = &models.Address{
+		UserID:        userID,
 		Name:          source.Name,
 		Detail:        source.Detail,
 		SubDistrictID: source.SubDistrictID,

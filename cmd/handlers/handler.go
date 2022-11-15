@@ -8,19 +8,22 @@ import (
 )
 
 type Handler struct {
-	roleService services.RoleService
-	authService services.AuthService
+	roleService    services.RoleService
+	authService    services.AuthService
+	addressService services.AddressService
 }
 
 type HandlerConfig struct {
-	RoleService services.RoleService
-	AuthService services.AuthService
+	RoleService    services.RoleService
+	AuthService    services.AuthService
+	AddressService services.AddressService
 }
 
 func New(c *HandlerConfig) *Handler {
 	return &Handler{
-		roleService: c.RoleService,
-		authService: c.AuthService,
+		roleService:    c.RoleService,
+		authService:    c.AuthService,
+		addressService: c.AddressService,
 	}
 }
 
