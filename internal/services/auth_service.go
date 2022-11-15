@@ -45,7 +45,7 @@ func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.U
 		return nil, err
 	}
 	user := userCreateRequest.ToModel()
-	user.EmailID = email.ID.String()
+	user.EmailID = email.ID
 	if userCreateRequest.Photo != nil {
 		photoFile, err := userCreateRequest.Photo.Open()
 		if err != nil {
@@ -67,7 +67,7 @@ func (u *authService) Create(userCreateRequest *dtos.UserCreateRequest) (*dtos.U
 		return nil, err
 	}
 	wallet := &models.Wallet{
-		UserID: createdUser.ID.String(),
+		UserID: createdUser.ID,
 		Balance: 0,
 		Pin: "",
 		IsActive: false,

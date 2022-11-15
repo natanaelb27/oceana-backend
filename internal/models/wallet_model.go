@@ -9,7 +9,7 @@ import (
 
 type Wallet struct {
 	ID                    uuid.UUID
-	UserID                string
+	UserID                uuid.UUID
 	User                  User
 	Balance               uint
 	Pin                   string

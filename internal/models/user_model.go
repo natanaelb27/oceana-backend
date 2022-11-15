@@ -11,7 +11,7 @@ type User struct {
 	ID          uuid.UUID
 	FullName    string
 	Username    string
-	EmailID     string
+	EmailID     uuid.UUID
 	Email       Email
 	Password    string
 	PhoneNumber string
