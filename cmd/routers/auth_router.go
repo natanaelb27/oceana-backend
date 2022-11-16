@@ -10,5 +10,6 @@ func auth(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	publicRoute := public.Group(path)
 	{
 		publicRoute.POST("/register", h.UserCreate)
+		publicRoute.POST("/login", h.UserLogin)
 	}
 }
