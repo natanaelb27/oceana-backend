@@ -24,5 +24,6 @@ func NewAddressService(c *AddressServiceConfig) AddressService {
 }
 
 func (a *addressService) Create(model *models.Address) (*models.Address, error) {
+	model.IsDefault = false
 	return a.addressRepository.Create(model)
 }
