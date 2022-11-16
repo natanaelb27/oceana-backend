@@ -14,8 +14,8 @@ type UserCreateRequest struct {
 	Email       string                `form:"email" json:"email" binding:"required,email"`
 	Password    string                `form:"password" json:"password" binding:"required"`
 	PhoneNumber string                `form:"phone_number" json:"phone_number" binding:"required"`
-	Gender      string                `form:"gender" json:"gender" binding:"required"`
-	Birthdate   time.Time             `form:"birthdate" json:"birthdate" binding:"required"`
+	Gender      string                `form:"gender" json:"gender"`
+	Birthdate   time.Time             `form:"birthdate" json:"birthdate"`
 	Photo       *multipart.FileHeader `form:"photo" json:"photo"`
 	GoogleID    *string               `form:"google_id" json:"google_id"`
 	Role        string                `form:"role" json:"role" binding:"required"`
