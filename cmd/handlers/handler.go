@@ -8,43 +8,27 @@ import (
 )
 
 type Handler struct {
-<<<<<<< HEAD
-	roleService    services.RoleService
-	authService    services.AuthService
-	addressService services.AddressService
-}
-
-type HandlerConfig struct {
-	RoleService    services.RoleService
-	AuthService    services.AuthService
-	AddressService services.AddressService
-=======
 	roleService     services.RoleService
-	walletService   services.WalletService
 	authService     services.AuthService
+	addressService  services.AddressService
+	walletService   services.WalletService
 	categoryService services.CategoryService
 }
 
 type HandlerConfig struct {
 	RoleService     services.RoleService
-	WalletService   services.WalletService
 	AuthService     services.AuthService
+	AddressService  services.AddressService
+	WalletService   services.WalletService
 	CategoryService services.CategoryService
->>>>>>> a817cfb680e773bccf30b513f4bfde6aa7066b5e
 }
 
 func New(c *HandlerConfig) *Handler {
 	return &Handler{
-<<<<<<< HEAD
-		roleService:    c.RoleService,
-		authService:    c.AuthService,
-		addressService: c.AddressService,
-=======
 		roleService:     c.RoleService,
 		walletService:   c.WalletService,
 		authService:     c.AuthService,
 		categoryService: c.CategoryService,
->>>>>>> a817cfb680e773bccf30b513f4bfde6aa7066b5e
 	}
 }
 
