@@ -110,7 +110,7 @@ func (r *merchantVoucherRepository) Delete(id uint) (model *models.MerchantVouch
 	queryResult := r.db.Clauses(clause.Returning{}).Delete(&model, id)
 
 	if queryResult.RowsAffected == 0 {
-		err = e.ErrDataNotFound
+		err = e.ErrVoucherNotFound
 		return
 	}
 
