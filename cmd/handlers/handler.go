@@ -8,31 +8,34 @@ import (
 )
 
 type Handler struct {
-	roleService       services.RoleService
-	walletService     services.WalletService
-	authService       services.AuthService
-	categoryService   services.CategoryService
-	userService       services.UserService
-	sealabsPayService services.SealabsPayService
+	roleService            services.RoleService
+	walletService          services.WalletService
+	authService            services.AuthService
+	categoryService        services.CategoryService
+	userService            services.UserService
+	sealabsPayService      services.SealabsPayService
+	merchantVoucherService services.MerchantVoucherService
 }
 
 type HandlerConfig struct {
-	RoleService       services.RoleService
-	WalletService     services.WalletService
-	AuthService       services.AuthService
-	CategoryService   services.CategoryService
-	UserService       services.UserService
-	SealabsPayService services.SealabsPayService
+	RoleService            services.RoleService
+	WalletService          services.WalletService
+	AuthService            services.AuthService
+	CategoryService        services.CategoryService
+	UserService            services.UserService
+	SealabsPayService      services.SealabsPayService
+	MerchantVoucherService services.MerchantVoucherService
 }
 
 func New(c *HandlerConfig) *Handler {
 	return &Handler{
-		roleService:       c.RoleService,
-		walletService:     c.WalletService,
-		authService:       c.AuthService,
-		categoryService:   c.CategoryService,
-		userService:       c.UserService,
-		sealabsPayService: c.SealabsPayService,
+		roleService:            c.RoleService,
+		walletService:          c.WalletService,
+		authService:            c.AuthService,
+		categoryService:        c.CategoryService,
+		userService:            c.UserService,
+		sealabsPayService:      c.SealabsPayService,
+		merchantVoucherService: c.MerchantVoucherService,
 	}
 }
 

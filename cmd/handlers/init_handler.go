@@ -40,6 +40,7 @@ func Init() *Handler {
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
 	})
+
 	userService := services.NewUserService(&services.UserServiceConfig{
 		UserRepository: userRepository,
 	})
@@ -50,13 +51,25 @@ func Init() *Handler {
 		SealabsPayRepository: sealabsPayRepository,
 	})
 
+	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{
+		MerchantRepository:        merchantRepository,
+		MerchantVoucherRepository: merchantVoucherRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:       roleService,
-		WalletService:     walletService,
-		AuthService:       authService,
-		CategoryService:   categoryService,
-		UserService:       userService,
-		SealabsPayService: sealabsPayService,
+		RoleService:            roleService,
+		WalletService:          walletService,
+		AuthService:            authService,
+		CategoryService:        categoryService,
+		UserService:            userService,
+		SealabsPayService:      sealabsPayService,
+		MerchantVoucherService: merchantVoucherService,
 	})
 
 	return h
