@@ -43,13 +43,20 @@ func Init() *Handler {
 	userService := services.NewUserService(&services.UserServiceConfig{
 		UserRepository: userRepository,
 	})
+	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
+		DB: db.Get(),
+	})
+	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
+		SealabsPayRepository: sealabsPayRepository,
+	})
 
 	h := New(&HandlerConfig{
-		RoleService:     roleService,
-		WalletService:   walletService,
-		AuthService:     authService,
-		CategoryService: categoryService,
-		UserService: userService,
+		RoleService:       roleService,
+		WalletService:     walletService,
+		AuthService:       authService,
+		CategoryService:   categoryService,
+		UserService:       userService,
+		SealabsPayService: sealabsPayService,
 	})
 
 	return h

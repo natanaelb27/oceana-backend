@@ -11,4 +11,7 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 		"PUT": "011",
 		"GET": "011",
 	},
+	"/profile/sealabs-pay": {
+		"POST": "011",
+	},
 }
