@@ -12,6 +12,7 @@ type UserRepository interface {
 	GetByPhoneNumber(phoneNumber string) (model *models.User, err error)
 	GetByUsername(username string) (model *models.User, err error)
 	GetByEmailID(emailID uuid.UUID) (model *models.User, err error)
+	Update(id uuid.UUID, newModel *models.User) (model *models.User, err error)
 }
 
 type userRepository struct {
@@ -66,5 +67,18 @@ func (u *userRepository) GetByEmailID(emailID uuid.UUID) (model *models.User, er
 		err = e.ErrDataNotFound
 		return
 	}
+	return
+}
+
+func (u *userRepository) Update(id uuid.UUID, newModel *models.User) (model *models.User, err error) {
+	result := u.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model = newModel
+	model.ID = id
+
 	return
 }

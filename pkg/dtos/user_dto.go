@@ -74,3 +74,43 @@ type UserLoginRequest struct {
 type UserLoginResponse struct {
 	Role string `json:"role"`
 }
+
+type UserProfileUpdateRequest struct {
+	ID        uuid.UUID
+	FullName  string                `form:"full_name" json:"full_name" binding:"required"`
+	Photo     *multipart.FileHeader `form:"photo" json:"photo"`
+	Gender    string                `form:"gender" json:"gender" binding:"required"`
+	Birthdate time.Time             `form:"birthdate" json:"birthdate" binding:"required"`
+}
+
+func (source *UserProfileUpdateRequest) ToModel() (target *models.User) {
+	target = &models.User{
+		FullName:  source.FullName,
+		Gender:    source.Gender,
+		Birthdate: source.Birthdate,
+	}
+	return
+}
+
+type UserProfileUpdateResponse struct {
+	ID        uuid.UUID `json:"id"`
+	FullName  string    `json:"full_name"`
+	Gender    string    `json:"gender"`
+	Birthdate time.Time `json:"birthdate"`
+	Photo     *string   `json:"photo,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func NewUserProfileUpdateResponse(source *models.User) (target *UserProfileUpdateResponse) {
+	target = &UserProfileUpdateResponse{
+		ID:        source.ID,
+		FullName:  source.FullName,
+		Gender:    source.Gender,
+		Birthdate: source.Birthdate,
+		Photo:     source.Photo,
+		CreatedAt: source.CreatedAt,
+		UpdatedAt: source.UpdatedAt,
+	}
+	return
+}
