@@ -37,6 +37,7 @@ func Init() *Handler {
 		EmailRepository:        emailRepository,
 		WalletRepository:       walletRepository,
 		RefreshTokenRepository: refreshTokenRepository,
+		RedisRepository:        redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),

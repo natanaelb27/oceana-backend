@@ -12,6 +12,7 @@ type UserRepository interface {
 	GetByPhoneNumber(phoneNumber string) (model *models.User, err error)
 	GetByUsername(username string) (model *models.User, err error)
 	GetByEmailID(emailID uuid.UUID) (model *models.User, err error)
+	GetById(id uuid.UUID) (model *models.User, err error)
 }
 
 type userRepository struct {
@@ -62,6 +63,15 @@ func (u *userRepository) GetByUsername(username string) (model *models.User, err
 
 func (u *userRepository) GetByEmailID(emailID uuid.UUID) (model *models.User, err error) {
 	result := u.db.Model(&models.User{}).Where("email_id = ?", emailID).Find(&model)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	return
+}
+
+func (u *userRepository) GetById(id uuid.UUID) (model *models.User, err error) {
+	result := u.db.Model(&models.User{}).Where("id = ?", id).Find(&model)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

@@ -48,7 +48,7 @@ func (p *walletService) Activate(id uuid.UUID, requestModel *models.Wallet) (*mo
 }
 
 func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error) {
-	_, err := p.redisRepository.Get(c, "step-up-token:"+userId.String()+":"+c.ClientIP())
+	_, err := p.redisRepository.Get(c, "upgrade-token-password:"+userId.String()+":"+c.ClientIP())
 	if err != nil {
 		return nil, e.ErrStepUpNotFound
 	}

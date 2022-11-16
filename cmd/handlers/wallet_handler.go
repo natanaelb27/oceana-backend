@@ -55,5 +55,6 @@ func (h *Handler) WalletChangePin(c *gin.Context) {
 	}
 
 	responseData := dtos.NewWalletChangePinResponse(result)
+
 	utils.ResponseSuccess(c, responseData, nil)
 }

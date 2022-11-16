@@ -10,4 +10,7 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/profile/wallet/pin": {
 		"PATCH": "011",
 	},
+	"/auth/step-up/password": {
+		"POST": "011",
+	},
 }
