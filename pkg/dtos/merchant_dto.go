@@ -8,13 +8,15 @@ import (
 )
 
 type MerchantCreateRequest struct {
+	UserID    uuid.UUID
 	Name      string    `json:"name" binding:"required"`
 	AddressID uuid.UUID `json:"address_id" binding:"required"`
 }
 
 func (source *MerchantCreateRequest) ToModel() (target *models.Merchant) {
 	target = &models.Merchant{
-		Name: source.Name,
+		UserID:    source.UserID,
+		Name:      source.Name,
 		AddressID: source.AddressID,
 	}
 	return
@@ -31,9 +33,9 @@ type MerchantCreateResponse struct {
 
 func NewMerchantCreateResponse(source *models.Merchant) (target *MerchantCreateResponse) {
 	target = &MerchantCreateResponse{
-		ID: source.ID,
-		UserID: source.UserID,
-		Name: source.Name,
+		ID:        source.ID,
+		UserID:    source.UserID,
+		Name:      source.Name,
 		AddressID: source.AddressID,
 		CreatedAt: source.CreatedAt,
 		UpdatedAt: source.UpdatedAt,

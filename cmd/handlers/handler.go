@@ -13,6 +13,7 @@ type Handler struct {
 	authService     services.AuthService
 	categoryService services.CategoryService
 	userService     services.UserService
+	merchantService services.MerchantService
 }
 
 type HandlerConfig struct {
@@ -21,6 +22,7 @@ type HandlerConfig struct {
 	AuthService     services.AuthService
 	CategoryService services.CategoryService
 	UserService     services.UserService
+	MerchantService services.MerchantService
 }
 
 func New(c *HandlerConfig) *Handler {
@@ -30,6 +32,7 @@ func New(c *HandlerConfig) *Handler {
 		authService:     c.AuthService,
 		categoryService: c.CategoryService,
 		userService:     c.UserService,
+		merchantService: c.MerchantService,
 	}
 }
 
