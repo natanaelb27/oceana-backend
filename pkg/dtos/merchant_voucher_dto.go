@@ -61,6 +61,8 @@ func NewMerchantVoucherCreateResponse(source *models.MerchantVoucher) (target *M
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
 		CurrentQuota:          source.CurrentQuota,
+		CreatedAt:             source.CreatedAt,
+		UpdatedAt:             source.UpdatedAt,
 	}
 	return
 }
