@@ -40,12 +40,23 @@ func Init() *Handler {
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
 	})
+	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{
+		MerchantRepository:        merchantRepository,
+		MerchantVoucherRepository: merchantVoucherRepository,
+	})
 
 	h := New(&HandlerConfig{
-		RoleService:     roleService,
-		WalletService:   walletService,
-		AuthService:     authService,
-		CategoryService: categoryService,
+		RoleService:            roleService,
+		WalletService:          walletService,
+		AuthService:            authService,
+		CategoryService:        categoryService,
+		MerchantVoucherService: merchantVoucherService,
 	})
 
 	return h

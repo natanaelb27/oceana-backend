@@ -32,6 +32,8 @@ func Connect() {
 		&models.Wallet{},
 		&models.Category{},
 		&models.RefreshToken{},
+		&models.Merchant{},
+		&models.MerchantVoucher{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
