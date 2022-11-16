@@ -45,12 +45,16 @@ func Init() *Handler {
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
 	})
+	userService := services.NewUserService(&services.UserServiceConfig{
+		UserRepository: userRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:     roleService,
 		WalletService:   walletService,
 		AuthService:     authService,
 		CategoryService: categoryService,
+		UserService: userService,
 	})
 
 	return h

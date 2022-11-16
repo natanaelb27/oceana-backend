@@ -157,7 +157,7 @@ func (u *authService) Login(userLoginRequest *externalDtos.UserLoginRequest) (*i
 }
 
 func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error) {
-	user, err := u.userRepository.GetById(id)
+	user, err := u.userRepository.GetByID(id)
 	if err != nil {
 		return
 	}
