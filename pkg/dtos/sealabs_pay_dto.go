@@ -13,7 +13,7 @@ type SealabsPayCreateRequest struct {
 
 func (source *SealabsPayCreateRequest) ToModel(id uuid.UUID) (target *models.SealabsPay) {
 	target = &models.SealabsPay{
-		UserId:        id,
+		UserID:        id,
 		AccountNumber: source.AccountNumber,
 	}
 	return

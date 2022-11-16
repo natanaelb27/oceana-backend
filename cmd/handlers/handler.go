@@ -16,11 +16,11 @@ type Handler struct {
 }
 
 type HandlerConfig struct {
-	RoleService     services.RoleService
-	WalletService   services.WalletService
-	AuthService     services.AuthService
-	CategoryService services.CategoryService
-	SealabsPay      services.SealabsPayService
+	RoleService       services.RoleService
+	WalletService     services.WalletService
+	AuthService       services.AuthService
+	CategoryService   services.CategoryService
+	SealabsPayService services.SealabsPayService
 }
 
 func New(c *HandlerConfig) *Handler {
@@ -29,7 +29,7 @@ func New(c *HandlerConfig) *Handler {
 		walletService:     c.WalletService,
 		authService:       c.AuthService,
 		categoryService:   c.CategoryService,
-		sealabsPayService: c.SealabsPay,
+		sealabsPayService: c.SealabsPayService,
 	}
 }
 

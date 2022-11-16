@@ -39,5 +39,7 @@ func (p *sealabsPayService) Create(id uuid.UUID, request *dtos.SealabsPayCreateR
 		return nil, err
 	}
 
-	return dtos.NewSealabsPayCreateResponse(newModel), nil
+	response := dtos.NewSealabsPayCreateResponse(newModel)
+
+	return response, nil
 }

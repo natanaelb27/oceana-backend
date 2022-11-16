@@ -9,7 +9,7 @@ import (
 
 type SealabsPay struct {
 	ID            uuid.UUID
-	UserId        uuid.UUID
+	UserID        uuid.UUID
 	User          User
 	AccountNumber string
 	ActiveDate    time.Time

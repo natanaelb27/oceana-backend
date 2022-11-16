@@ -48,11 +48,11 @@ func Init() *Handler {
 	})
 
 	h := New(&HandlerConfig{
-		RoleService:     roleService,
-		WalletService:   walletService,
-		AuthService:     authService,
-		CategoryService: categoryService,
-		SealabsPay:      sealabsPayService,
+		RoleService:       roleService,
+		WalletService:     walletService,
+		AuthService:       authService,
+		CategoryService:   categoryService,
+		SealabsPayService: sealabsPayService,
 	})
 
 	return h
