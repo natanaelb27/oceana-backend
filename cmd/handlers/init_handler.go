@@ -42,7 +42,8 @@ func Init() *Handler {
 	})
 
 	userService := services.NewUserService(&services.UserServiceConfig{
-		UserRepository: userRepository,
+		UserRepository:  userRepository,
+		EmailRepository: emailRepository,
 	})
 	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
 		DB: db.Get(),

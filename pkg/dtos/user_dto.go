@@ -77,35 +77,26 @@ type UserLoginResponse struct {
 
 type UserProfileUpdateRequest struct {
 	ID        uuid.UUID
-	FullName  string               `form:"full_name" json:"full_name"`
+	FullName  *string               `form:"full_name" json:"full_name"`
 	Photo     *multipart.FileHeader `form:"photo" json:"photo"`
 	Gender    *string               `form:"gender" json:"gender"`
 	Birthdate *time.Time            `form:"birthdate" json:"birthdate"`
 }
 
-func (source *UserProfileUpdateRequest) ToModel() (target *models.User) {
-	target = &models.User{
-		FullName:  source.FullName,
-		Gender:    source.Gender,
-		Birthdate: source.Birthdate,
-	}
-	return
-}
-
 type UserProfileUpdateResponse struct {
-	ID        uuid.UUID `json:"id"`
-	FullName  string    `json:"full_name"`
+	ID        uuid.UUID  `json:"id"`
+	FullName  *string    `json:"full_name,omitempty"`
 	Gender    *string    `json:"gender,omitempty"`
 	Birthdate *time.Time `json:"birthdate,omitempty"`
-	Photo     *string   `json:"photo,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Photo     *string    `json:"photo,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 func NewUserProfileUpdateResponse(source *models.User) (target *UserProfileUpdateResponse) {
 	target = &UserProfileUpdateResponse{
 		ID:        source.ID,
-		FullName:  source.FullName,
+		FullName:  &source.FullName,
 		Gender:    source.Gender,
 		Birthdate: source.Birthdate,
 		Photo:     source.Photo,
@@ -116,18 +107,18 @@ func NewUserProfileUpdateResponse(source *models.User) (target *UserProfileUpdat
 }
 
 type UserProfileGetResponse struct {
-	ID          uuid.UUID `json:"id"`
-	FullName    string    `json:"full_name"`
-	Username    string    `json:"username"`
-	Email       string    `json:"email"`
-	PhoneNumber string    `json:"phone_number"`
+	ID          uuid.UUID  `json:"id"`
+	FullName    string     `json:"full_name"`
+	Username    string     `json:"username"`
+	Email       string     `json:"email"`
+	PhoneNumber string     `json:"phone_number"`
 	Gender      *string    `json:"gender,omitempty"`
 	Birthdate   *time.Time `json:"birthdate,omitempty"`
-	Photo       *string   `json:"photo,omitempty"`
-	GoogleID    *string   `json:"google_id,omitempty"`
-	Role        string    `json:"role"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Photo       *string    `json:"photo,omitempty"`
+	GoogleID    *string    `json:"google_id,omitempty"`
+	Role        string     `json:"role"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 func NewUserProfileGetResponse(source *models.User) (target *UserProfileGetResponse) {

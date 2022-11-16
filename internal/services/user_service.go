@@ -13,21 +13,36 @@ type UserService interface {
 }
 
 type userService struct {
-	userRepository r.UserRepository
+	userRepository  r.UserRepository
+	emailRepository r.EmailRepository
 }
 
 type UserServiceConfig struct {
-	UserRepository r.UserRepository
+	UserRepository  r.UserRepository
+	EmailRepository r.EmailRepository
 }
 
 func NewUserService(c *UserServiceConfig) UserService {
 	return &userService{
-		userRepository: c.UserRepository,
+		userRepository:  c.UserRepository,
+		emailRepository: c.EmailRepository,
 	}
 }
 
 func (u *userService) UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUpdateRequest) (*dtos.UserProfileUpdateResponse, error) {
-	user := userProfileUpdateRequest.ToModel()
+	user, err := u.userRepository.GetByID(userProfileUpdateRequest.ID)
+	if err != nil {
+		return nil, err
+	}
+	if userProfileUpdateRequest.FullName != nil {
+		user.FullName = *userProfileUpdateRequest.FullName
+	}
+	if userProfileUpdateRequest.Gender != nil {
+		user.Gender = userProfileUpdateRequest.Gender
+	}
+	if userProfileUpdateRequest.Birthdate != nil {
+		user.Birthdate = userProfileUpdateRequest.Birthdate
+	}
 	if userProfileUpdateRequest.Photo != nil {
 		photoFile, err := userProfileUpdateRequest.Photo.Open()
 		if err != nil {
@@ -50,8 +65,13 @@ func (u *userService) UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUp
 func (u *userService) GetProfile(id uuid.UUID) (*dtos.UserProfileGetResponse, error) {
 	user, err := u.userRepository.GetByID(id)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
-	responseData := dtos.NewUserProfileGetResponse(user) 
+	responseData := dtos.NewUserProfileGetResponse(user)
+	email, err := u.emailRepository.GetById(user.EmailID)
+	if err != nil {
+		return nil, err
+	}
+	responseData.Email = email.Address
 	return responseData, nil
 }
