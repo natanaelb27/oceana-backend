@@ -11,8 +11,8 @@ type MerchantVoucher struct {
 	MerchantID            uint
 	Merchant              Merchant
 	Code                  string
-	StartDate             time.Time
-	EndDate               time.Time
+	StartDatetime         time.Time
+	EndDatetime           time.Time
 	DiscountType          string
 	Discount              uint
 	MinimumSpendAmount    uint

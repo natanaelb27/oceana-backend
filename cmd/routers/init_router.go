@@ -29,6 +29,7 @@ func Init(h *handlers.Handler) {
 	profile(public, private, h)
 	auth(public, private, h)
 	category(public, private, h)
+	myShop(public, private, h)
 
 	r.NoRoute(h.NotFound)
 
