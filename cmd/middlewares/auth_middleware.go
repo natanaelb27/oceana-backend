@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"net/http"
-	"strings"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -10,17 +9,9 @@ import (
 )
 
 func Auth(c *gin.Context) {
-	clientToken := c.GetHeader("Authorization")
-	if clientToken == "" {
+	clientToken, err := c.Cookie("access_token")
+	if err != nil {
 		utils.ResponseError(c, e.ErrUnauthorized)
-		c.Abort()
-		return
-	}
-	extractedToken := strings.Split(clientToken, "Bearer ")
-	if len(extractedToken) == 2 {
-		clientToken = strings.TrimSpace(extractedToken[1])
-	} else {
-		utils.ResponseError(c, e.ErrInvalidToken)
 		c.Abort()
 		return
 	}
