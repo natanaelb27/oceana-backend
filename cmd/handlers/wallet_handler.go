@@ -32,3 +32,27 @@ func (h *Handler) WalletActivate(c *gin.Context) {
 	responseData := dtos.NewWalletActivateResponse(result)
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) WalletChangePin(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	var request *dtos.WalletChangePinRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	result, err := h.walletService.ChangePin(c, id, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewWalletChangePinResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
