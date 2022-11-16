@@ -13,6 +13,7 @@ import (
 type MerchantVoucherService interface {
 	Create(id uuid.UUID, request *dtos.MerchantVoucherCreateRequest) (*dtos.MerchantVoucherCreateResponse, error)
 	Update(userID uuid.UUID, voucherID uint, request *dtos.MerchantVoucherUpdateRequest) (*dtos.MerchantVoucherUpdateResponse, error)
+	Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error)
 }
 
 type merchantVoucherService struct {
@@ -166,4 +167,30 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 	}
 
 	return dtos.NewMerchantVoucherUpdateResponse(newModel), nil
+}
+
+func (s *merchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	merchantVoucherDetails, err := s.merchantVoucherRepository.GetDetailsByID(voucherID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if merchantVoucherDetails.MerchantID != merchant.ID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	newModel, err := s.merchantVoucherRepository.Delete(voucherID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewMerchantVoucherDeleteResponse(newModel), nil
 }

@@ -11,5 +11,6 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 	{
 		privateRoute.POST("/vouchers", h.MerchantVoucherCreate)
 		privateRoute.PUT("/vouchers/:merchantVoucherId", h.MerchantVoucherUpdate)
+		privateRoute.DELETE("/vouchers/:merchantVoucherId", h.MerchantVoucherDelete)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"gorm.io/gorm"
 )
 
 type MerchantVoucherCreateRequest struct {
@@ -120,6 +121,41 @@ func NewMerchantVoucherUpdateResponse(source *models.MerchantVoucher) (target *M
 		CurrentQuota:          source.CurrentQuota,
 		CreatedAt:             source.CreatedAt,
 		UpdatedAt:             source.UpdatedAt,
+	}
+	return
+}
+
+type MerchantVoucherDeleteResponse struct {
+	ID                    uint           `json:"id"`
+	Code                  string         `json:"code"`
+	StartDatetime         time.Time      `json:"start_datetime"`
+	EndDatetime           time.Time      `json:"end_datetime"`
+	DiscountType          string         `json:"discount_type"`
+	Discount              uint           `json:"discount"`
+	MinimumSpendAmount    uint           `json:"minimum_spend_amount"`
+	MaximumDiscountAmount uint           `json:"maximum_discount_amount"`
+	MaximumQuota          uint           `json:"maximum_quota"`
+	CurrentQuota          uint           `json:"current_quota"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+	DeletedAt             gorm.DeletedAt `json:"deleted_at"`
+}
+
+func NewMerchantVoucherDeleteResponse(source *models.MerchantVoucher) (target *MerchantVoucherDeleteResponse) {
+	target = &MerchantVoucherDeleteResponse{
+		ID:                    source.ID,
+		Code:                  source.Code,
+		StartDatetime:         source.StartDatetime,
+		EndDatetime:           source.EndDatetime,
+		DiscountType:          source.DiscountType,
+		Discount:              source.Discount,
+		MinimumSpendAmount:    source.MinimumSpendAmount,
+		MaximumDiscountAmount: source.MaximumDiscountAmount,
+		MaximumQuota:          source.MaximumQuota,
+		CurrentQuota:          source.CurrentQuota,
+		CreatedAt:             source.CreatedAt,
+		UpdatedAt:             source.UpdatedAt,
+		DeletedAt:             source.DeletedAt,
 	}
 	return
 }

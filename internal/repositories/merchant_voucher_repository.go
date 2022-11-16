@@ -14,6 +14,7 @@ type MerchantVoucherRepository interface {
 	Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
 	GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error)
 	Update(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
+	Delete(id uint) (model *models.MerchantVoucher, err error)
 }
 
 type merchantVoucherRepository struct {
@@ -102,5 +103,21 @@ func (r *merchantVoucherRepository) Update(newModel *models.MerchantVoucher) (mo
 	}
 
 	model = newModel
+	return
+}
+
+func (r *merchantVoucherRepository) Delete(id uint) (model *models.MerchantVoucher, err error) {
+	queryResult := r.db.Clauses(clause.Returning{}).Delete(&model, id)
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
 	return
 }
