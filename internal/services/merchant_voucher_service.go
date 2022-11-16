@@ -186,6 +186,10 @@ func (s *merchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos
 		return nil, e.ErrForbiddenMerchant
 	}
 
+	if merchantVoucherDetails.VoucherStatus != "upcoming" {
+		return nil, e.ErrVoucherNotUpcoming
+	}
+
 	newModel, err := s.merchantVoucherRepository.Delete(voucherID)
 
 	if err != nil {
