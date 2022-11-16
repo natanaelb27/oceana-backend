@@ -48,6 +48,7 @@ var (
 	ErrWrongEmailAddress                   = errors.New("wrong email address")
 	ErrWrongPassword                       = errors.New("wrong password")
 	ErrEmailAddressAlreadyExist            = errors.New("email address is already registered")
+	ErrWalletAlreadyActive                 = errors.New("wallet is already active")
 	ErrSealabsPayAccountNumberAlreadyExist = errors.New("account number is already registered")
 
 	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
@@ -67,6 +68,7 @@ var (
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
+	ErrHashingFailed                 = errors.New("hashing failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -115,6 +117,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUnauthorized) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
+		errors.Is(err, ErrWalletAlreadyActive) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) {
