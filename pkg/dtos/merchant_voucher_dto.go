@@ -3,6 +3,7 @@ package dtos
 import (
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -156,6 +157,37 @@ func NewMerchantVoucherDeleteResponse(source *models.MerchantVoucher) (target *M
 		CreatedAt:             source.CreatedAt,
 		UpdatedAt:             source.UpdatedAt,
 		DeletedAt:             source.DeletedAt,
+	}
+	return
+}
+
+type MerchantVoucherGetByIDResponse struct {
+	ID                    uint      `json:"id"`
+	MerchantID            uint      `json:"merchant_id"`
+	Code                  string    `json:"code"`
+	StartDatetime         time.Time `json:"start_datetime"`
+	EndDatetime           time.Time `json:"end_datetime"`
+	DiscountType          string    `json:"discount_type"`
+	Discount              uint      `json:"discount"`
+	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
+	MaximumQuota          uint      `json:"maximum_quota"`
+	CurrentQuota          uint      `json:"current_quota"`
+}
+
+func NewMerchantVoucherGetByIDResponse(source *dtos.MerchantVoucherDetails) (target *MerchantVoucherGetByIDResponse) {
+	target = &MerchantVoucherGetByIDResponse{
+		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
+		Code:                  source.Code,
+		StartDatetime:         source.StartDatetime,
+		EndDatetime:           source.EndDatetime,
+		DiscountType:          source.DiscountType,
+		Discount:              source.Discount,
+		MinimumSpendAmount:    source.MinimumSpendAmount,
+		MaximumDiscountAmount: source.MaximumDiscountAmount,
+		MaximumQuota:          source.MaximumQuota,
+		CurrentQuota:          source.CurrentQuota,
 	}
 	return
 }

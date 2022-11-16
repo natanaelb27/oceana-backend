@@ -14,6 +14,7 @@ type MerchantVoucherService interface {
 	Create(id uuid.UUID, request *dtos.MerchantVoucherCreateRequest) (*dtos.MerchantVoucherCreateResponse, error)
 	Update(userID uuid.UUID, voucherID uint, request *dtos.MerchantVoucherUpdateRequest) (*dtos.MerchantVoucherUpdateResponse, error)
 	Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error)
+	GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error)
 }
 
 type merchantVoucherService struct {
@@ -197,4 +198,14 @@ func (s *merchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos
 	}
 
 	return dtos.NewMerchantVoucherDeleteResponse(newModel), nil
+}
+
+func (s *merchantVoucherService) GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error) {
+	merchantVoucherDetails, err := s.merchantVoucherRepository.GetDetailsByID(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewMerchantVoucherGetByIDResponse(merchantVoucherDetails), nil
 }

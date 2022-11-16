@@ -80,3 +80,18 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 
 	utils.ResponseSuccess(c, merchantVouherDeleteResponse, nil)
 }
+
+func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {
+	merchantVoucherIDRaw, _ := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+
+	merchantVoucherID := uint(merchantVoucherIDRaw)
+
+	merchantVouherGetByIDResponse, err := h.merchantVoucherService.GetByID(merchantVoucherID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantVouherGetByIDResponse, nil)
+}

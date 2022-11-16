@@ -7,6 +7,11 @@ import (
 
 func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
 	path := "/my-shop"
+	publicRoute := public.Group(path)
+	{
+		publicRoute.GET("/vouchers/:merchantVoucherId", h.MerchantVoucherGetByID)
+
+	}
 	privateRoute := private.Group(path)
 	{
 		privateRoute.POST("/vouchers", h.MerchantVoucherCreate)
