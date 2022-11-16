@@ -9,7 +9,7 @@ import (
 
 type MerchantRepository interface {
 	Create(merchant *models.Merchant) (*models.Merchant, error)
-	GetByName(name string) (*models.Merchant, error) 
+	GetByName(name string) (*models.Merchant, error)
 	GetByUserID(id uuid.UUID) (model *models.Merchant, err error)
 }
 

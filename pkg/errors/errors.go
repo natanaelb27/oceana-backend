@@ -52,7 +52,7 @@ var (
 	ErrEmailAddressAlreadyExist            = errors.New("email address is already registered")
 	ErrUsernameAlreadyExist                = errors.New("username is already registered")
 	ErrPhoneNumberAlreadyExist             = errors.New("phone number is already registered")
-	ErrMerchantNameAlreadyExist 		   = errors.New("merchant name is already registered")
+	ErrMerchantNameAlreadyExist            = errors.New("merchant name is already registered")
 	ErrWalletAlreadyActive                 = errors.New("wallet is already active")
 	ErrSealabsPayAccountNumberAlreadyExist = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist     = errors.New("voucher code already exist")

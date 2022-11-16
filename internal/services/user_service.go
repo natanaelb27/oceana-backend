@@ -50,8 +50,8 @@ func (u *userService) UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUp
 func (u *userService) GetProfile(id uuid.UUID) (*dtos.UserProfileGetResponse, error) {
 	user, err := u.userRepository.GetByID(id)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
-	responseData := dtos.NewUserProfileGetResponse(user) 
+	responseData := dtos.NewUserProfileGetResponse(user)
 	return responseData, nil
 }
