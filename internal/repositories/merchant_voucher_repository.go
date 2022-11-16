@@ -79,7 +79,7 @@ func (r *merchantVoucherRepository) GetDetailsByID(id uint) (*dtos.MerchantVouch
 		First(&merchantVoucherDetails)
 
 	if queryResult.RowsAffected == 0 {
-		return nil, e.ErrDataNotFound
+		return nil, e.ErrVoucherNotFound
 	}
 
 	if queryResult.Error != nil {
@@ -93,7 +93,7 @@ func (r *merchantVoucherRepository) Update(newModel *models.MerchantVoucher) (mo
 	queryResult := r.db.Clauses(clause.Returning{}).Updates(newModel)
 
 	if queryResult.RowsAffected == 0 {
-		err = e.ErrDataNotFound
+		err = e.ErrVoucherNotFound
 		return
 	}
 
