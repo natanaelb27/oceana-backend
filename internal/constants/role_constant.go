@@ -8,6 +8,6 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 		"PATCH": "011",
 	},
 	"/profile/sealabs-pay": {
-		"POST": "011",
+		"POST": "010",
 	},
 }
