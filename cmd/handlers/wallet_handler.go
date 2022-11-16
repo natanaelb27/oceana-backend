@@ -46,9 +46,7 @@ func (h *Handler) WalletChangePin(c *gin.Context) {
 		return
 	}
 
-	requestModel := request.ToModel()
-
-	result, err := h.walletService.ChangePin(c, id, requestModel)
+	result, err := h.walletService.ChangePin(c, id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

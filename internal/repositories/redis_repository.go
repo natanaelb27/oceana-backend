@@ -11,6 +11,7 @@ import (
 type RedisRepository interface {
 	Get(c *gin.Context, key string) (result string, err error)
 	Set(c *gin.Context, key string, value string, expire time.Duration) error
+	Delete(c *gin.Context, key string) (err error)
 }
 
 type redisRepository struct {
@@ -42,6 +43,16 @@ func (r *redisRepository) Get(c *gin.Context, key string) (result string, err er
 
 func (r *redisRepository) Set(c *gin.Context, key string, value string, expire time.Duration) (err error) {
 	err = r.redisClient.Set(c, key, value, expire).Err()
+	if err != nil {
+		err = e.ErrCacheOperationFailed
+		return
+	}
+
+	return nil
+}
+
+func (r *redisRepository) Delete(c *gin.Context, key string) (err error) {
+	err = r.redisClient.Del(c, key).Err()
 	if err != nil {
 		err = e.ErrCacheOperationFailed
 		return

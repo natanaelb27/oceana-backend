@@ -1,9 +1,12 @@
 package services
 
 import (
+	"net/http"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -11,7 +14,7 @@ import (
 
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
-	ChangePin(c *gin.Context, userId uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
+	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
 }
 
 type walletService struct {
@@ -47,15 +50,32 @@ func (p *walletService) Activate(id uuid.UUID, requestModel *models.Wallet) (*mo
 	return p.walletRepository.Activate(newModel.ID, newModel)
 }
 
-func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error) {
-	_, err := p.redisRepository.Get(c, "upgrade-token-password:"+userId.String()+":"+c.ClientIP())
+func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (wallet *models.Wallet, err error) {
+	redisKey := "upgrade-token-password:" + userId.String()
+
+	token, err := p.redisRepository.Get(c, redisKey)
 	if err != nil {
 		return nil, e.ErrStepUpNotFound
 	}
 
-	// Check step-up-token jwt claims value (scope)
+	if token != request.UpgradeToken {
+		return nil, e.ErrStepUpNotFound
+	}
 
-	// Do Blacklist (delete stepup token) here
+	jwtWrapper, err := utils.NewJwtWrapper()
+	if err != nil {
+		return nil, err
+	}
+	claims, err := jwtWrapper.JwtStepUpValidateToken(token)
+	if err != nil {
+		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
+		c.Abort()
+		return
+	}
+	if claims.Data.Scope != "level1" {
+		err = e.ErrStepUpScopeIncorrect
+		return
+	}
 
 	newModel, err := p.walletRepository.GetByUserId(userId)
 	if err != nil {
@@ -65,10 +85,20 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, requestModel
 		return nil, e.ErrWalletIsNotActive
 	}
 
-	newModel.Pin, err = utils.Hash(requestModel.Pin)
+	newModel.Pin, err = utils.Hash(request.Pin)
 	if err != nil {
 		return nil, e.ErrHashingFailed
 	}
 
-	return p.walletRepository.Update(newModel.ID, newModel)
+	wallet, err = p.walletRepository.Update(newModel.ID, newModel)
+	if err != nil {
+		return
+	}
+
+	err = p.redisRepository.Delete(c, redisKey)
+	if err != nil {
+		return
+	}
+
+	return
 }

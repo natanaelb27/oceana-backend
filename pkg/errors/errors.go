@@ -56,6 +56,7 @@ var (
 	ErrForbidden            = errors.New("you don't have permission to access this resource")
 	ErrResourceDoesNotExist = errors.New("resource does not exist")
 	ErrStepUpNotFound       = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect = errors.New("incorrect step up scope")
 
 	ErrInsufficientBalance      = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked   = errors.New("event is already bookmarked")
@@ -117,7 +118,8 @@ func GetStatusCode(err error) int {
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
 		errors.Is(err, ErrUnauthorized) ||
-		errors.Is(err, ErrStepUpNotFound) {
+		errors.Is(err, ErrStepUpNotFound) ||
+		errors.Is(err, ErrStepUpScopeIncorrect) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) {
 		return http.StatusNotFound
