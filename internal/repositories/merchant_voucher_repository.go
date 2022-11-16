@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -27,7 +29,7 @@ func NewMerchantVoucherRepository(c *MerchantVoucherRepositoryConfig) MerchantVo
 func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error) {
 	queryResult := r.db.
 		Where("code = ?", newModel.Code).
-		Where("end_datetime::date >= now()::date").
+		Where("end_datetime::date >= ?::date", time.Now()).
 		Where("merchant_id = ?", newModel.MerchantID).
 		FirstOrCreate(&newModel)
 
