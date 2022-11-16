@@ -9,7 +9,7 @@ import (
 
 type EmailRepository interface {
 	Create(email *models.Email) (*models.Email, error)
-	GetById(id uuid.UUID) (model *models.Email, err error) 
+	GetById(id uuid.UUID) (model *models.Email, err error)
 	GetByEmail(emailAddress string) (model *models.Email, err error)
 }
 

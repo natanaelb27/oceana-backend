@@ -65,3 +65,12 @@ func NewUserCreateResponse(source *models.User) (target *UserCreateResponse) {
 	}
 	return
 }
+
+type UserLoginRequest struct {
+	LoginCredentials string `json:"login_credentials" binding:"required"`
+	Password         string `json:"password" binding:"required"`
+}
+
+type UserLoginResponse struct {
+	Role string `json:"role"`
+}

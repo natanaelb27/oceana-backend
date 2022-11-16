@@ -47,6 +47,8 @@ var (
 	ErrWrongEmailAddress        = errors.New("wrong email address")
 	ErrWrongPassword            = errors.New("wrong password")
 	ErrEmailAddressAlreadyExist = errors.New("email address is already registered")
+	ErrUsernameAlreadyExist     = errors.New("username is already registered")
+	ErrPhoneNumberAlreadyExist  = errors.New("phone number is already registered")
 	ErrWalletAlreadyActive      = errors.New("wallet is already active")
 
 	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
@@ -109,7 +111,6 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
-		errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrInvalidRequest) {
 		return http.StatusBadRequest
@@ -118,8 +119,12 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUnauthorized) ||
 		errors.Is(err, ErrStepUpNotFound) {
 		return http.StatusUnauthorized
+	} else if errors.Is(err, ErrDataNotFound) {
+		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
-		errors.Is(err, ErrWalletAlreadyActive) {
+		errors.Is(err, ErrWalletAlreadyActive) ||
+		errors.Is(err, ErrUsernameAlreadyExist) ||
+		errors.Is(err, ErrPhoneNumberAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) {
 		return http.StatusForbidden
