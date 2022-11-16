@@ -40,12 +40,19 @@ func Init() *Handler {
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
 	})
+	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
+		DB: db.Get(),
+	})
+	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
+		SealabsPayRepository: sealabsPayRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:     roleService,
 		WalletService:   walletService,
 		AuthService:     authService,
 		CategoryService: categoryService,
+		SealabsPay:      sealabsPayService,
 	})
 
 	return h

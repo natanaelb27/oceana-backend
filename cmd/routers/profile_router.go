@@ -10,5 +10,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	privateRoute := private.Group(path)
 	{
 		privateRoute.PATCH("/wallet/activate", h.WalletActivate)
+		privateRoute.POST("/sealabs-pay", h.SealabsPayCreate)
 	}
 }
