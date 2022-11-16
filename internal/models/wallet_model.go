@@ -14,8 +14,11 @@ type Wallet struct {
 	Balance               uint
 	Pin                   string
 	IsActive              bool
-	InvalidPinCount       uint
-	BlockedExpirationTime time.Time
+	InvalidPinCount       int
+	BlockedExpirationTime *time.Time
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	DeletedAt             gorm.DeletedAt
 }
 
 func (m *Wallet) BeforeCreate(tx *gorm.DB) (err error) {
