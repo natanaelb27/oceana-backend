@@ -26,17 +26,20 @@ func ResponseError(c *gin.Context, err error) dtos.Response {
 	var data any
 	var message string
 	var newErr string
+	var code int
 	if err != nil {
 		message = TranslateError(err)
 		if message == "-" {
 			message = err.Error()
 			newErr = http.StatusText(e.GetStatusCode(err))
+			code = e.GetStatusCode(err)
 		} else {
 			newErr = http.StatusText(http.StatusBadRequest)
+			code = http.StatusBadRequest
 		}
 	}
 
-	return Response(c, e.GetStatusCode(err), data, nil, newErr, message)
+	return Response(c, code, data, nil, newErr, message)
 }
 
 func ResponseSuccess(c *gin.Context, data any, metadata any) dtos.Response {
