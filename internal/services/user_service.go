@@ -4,10 +4,12 @@ import (
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	"github.com/google/uuid"
 )
 
 type UserService interface {
 	UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUpdateRequest) (*dtos.UserProfileUpdateResponse, error)
+	GetProfile(id uuid.UUID) (*dtos.UserProfileGetResponse, error)
 }
 
 type userService struct {
@@ -39,8 +41,17 @@ func (u *userService) UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUp
 	}
 	updatedUser, err := u.userRepository.Update(userProfileUpdateRequest.ID, user)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 	responseData := dtos.NewUserProfileUpdateResponse(updatedUser)
+	return responseData, nil
+}
+
+func (u *userService) GetProfile(id uuid.UUID) (*dtos.UserProfileGetResponse, error) {
+	user, err := u.userRepository.GetByID(id)
+	if err != nil {
+		return nil, err 
+	}
+	responseData := dtos.NewUserProfileGetResponse(user) 
 	return responseData, nil
 }

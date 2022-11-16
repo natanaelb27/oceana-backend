@@ -27,3 +27,17 @@ func (h *Handler) UserUpdateProfile(c *gin.Context) {
 	}
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) UserGetProfile(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	responseData, err := h.userService.GetProfile(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}
