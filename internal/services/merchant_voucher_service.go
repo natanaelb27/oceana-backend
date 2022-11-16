@@ -4,6 +4,7 @@ import (
 	"time"
 
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -31,8 +32,8 @@ func NewMerchantVoucherService(c *MerchantVoucherServiceConfig) MerchantVoucherS
 }
 
 func (s *merchantVoucherService) Create(id uuid.UUID, request *dtos.MerchantVoucherCreateRequest) (*dtos.MerchantVoucherCreateResponse, error) {
-	if len(request.Code[4:]) > 5 {
-		return nil, e.ErrVoucherCodeSuffixMoreThanFive
+	if !utils.ValidateMerchantVoucherCode(request.Code[4:]) {
+		return nil, e.ErrInvalidMerchantVoucherCode
 	}
 
 	if request.StartDatetime.Before(time.Now()) {

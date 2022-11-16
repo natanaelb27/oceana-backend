@@ -23,27 +23,28 @@ var (
 	ErrEmptyPrice          = errors.New("price should not be empty")
 	ErrEmptyEventID        = errors.New("event id should not be empty")
 
-	ErrInvalidEmailAddress   = errors.New("invalid email address")
-	ErrInvalidPassword       = errors.New("invalid password")
-	ErrInvalidAmount         = errors.New("invalid amount")
-	ErrInvalidMembershipID   = errors.New("invalid membership id")
-	ErrInvalidName           = errors.New("invalid name")
-	ErrInvalidImage          = errors.New("invalid image")
-	ErrInvalidDescription    = errors.New("invalid description")
-	ErrInvalidStartTime      = errors.New("invalid start time")
-	ErrInvalidDurationMinute = errors.New("invalid duration minute")
-	ErrInvalidCapacity       = errors.New("invalid capacity")
-	ErrInvalidStock          = errors.New("invalid stock")
-	ErrInvalidCategoryID     = errors.New("invalid category id")
-	ErrInvalidMerchandiseID  = errors.New("invalid merchandise id")
-	ErrInvalidQuantity       = errors.New("invalid quantity")
-	ErrInvalidPrice          = errors.New("invalid price")
-	ErrInvalidEventID        = errors.New("invalid event id")
-	ErrDataNotFound          = errors.New("data not found")
-	ErrMerchantNotFound      = errors.New("merchant not found")
-	ErrInvalidRequest        = errors.New("invalid request")
-	ErrInvalidIdentifier     = errors.New("invalid identifier")
-	ErrInvalidToken          = errors.New("invalid token")
+	ErrInvalidEmailAddress        = errors.New("invalid email address")
+	ErrInvalidPassword            = errors.New("invalid password")
+	ErrInvalidAmount              = errors.New("invalid amount")
+	ErrInvalidMembershipID        = errors.New("invalid membership id")
+	ErrInvalidName                = errors.New("invalid name")
+	ErrInvalidImage               = errors.New("invalid image")
+	ErrInvalidDescription         = errors.New("invalid description")
+	ErrInvalidStartTime           = errors.New("invalid start time")
+	ErrInvalidDurationMinute      = errors.New("invalid duration minute")
+	ErrInvalidCapacity            = errors.New("invalid capacity")
+	ErrInvalidStock               = errors.New("invalid stock")
+	ErrInvalidCategoryID          = errors.New("invalid category id")
+	ErrInvalidMerchandiseID       = errors.New("invalid merchandise id")
+	ErrInvalidQuantity            = errors.New("invalid quantity")
+	ErrInvalidPrice               = errors.New("invalid price")
+	ErrInvalidEventID             = errors.New("invalid event id")
+	ErrDataNotFound               = errors.New("data not found")
+	ErrMerchantNotFound           = errors.New("merchant not found")
+	ErrInvalidRequest             = errors.New("invalid request")
+	ErrInvalidIdentifier          = errors.New("invalid identifier")
+	ErrInvalidToken               = errors.New("invalid token")
+	ErrInvalidMerchantVoucherCode = errors.New("invalid voucher code")
 
 	ErrWrongEmailAddress               = errors.New("wrong email address")
 	ErrWrongPassword                   = errors.New("wrong password")
@@ -73,7 +74,6 @@ var (
 	ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime = errors.New("voucher end period is earlier than the start period")
 	ErrVoucherPeriodMinimumOneHour                       = errors.New("voucher period must be at least 1 hour")
 	ErrVoucherStartDatetimeMinimumOneDayFromNow          = errors.New("voucher start period must be at least 1 day from now")
-	ErrVoucherCodeSuffixMoreThanFive                     = errors.New("voucher code suffix can only contain a maximum 5 characters")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -118,7 +118,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrInvalidToken) ||
-		errors.Is(err, ErrInvalidRequest) {
+		errors.Is(err, ErrInvalidRequest) ||
+		errors.Is(err, ErrInvalidMerchantVoucherCode) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -150,8 +151,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherStartDatetimeEarlierThanNow) ||
 		errors.Is(err, ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime) ||
 		errors.Is(err, ErrVoucherPeriodMinimumOneHour) ||
-		errors.Is(err, ErrVoucherStartDatetimeMinimumOneDayFromNow) ||
-		errors.Is(err, ErrVoucherCodeSuffixMoreThanFive) {
+		errors.Is(err, ErrVoucherStartDatetimeMinimumOneDayFromNow) {
 		return http.StatusUnprocessableEntity
 	}
 
