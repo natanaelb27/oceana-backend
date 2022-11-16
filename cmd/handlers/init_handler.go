@@ -28,6 +28,9 @@ func Init() *Handler {
 	refreshTokenRepository := repositories.NewRefreshTokenRepository(&repositories.RefreshTokenRepositoryConfig{
 		DB: db.Get(),
 	})
+	addressRepository := repositories.NewAddressRepository(&repositories.AddressRepositoryConfig{
+		DB: db.Get(),
+	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
 		UserRepository:         userRepository,
 		EmailRepository:        emailRepository,
@@ -40,12 +43,16 @@ func Init() *Handler {
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
 	})
+	addressService := services.NewAddressService(&services.AddressServiceConfig{
+		AddressRepository: addressRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:     roleService,
 		WalletService:   walletService,
 		AuthService:     authService,
 		CategoryService: categoryService,
+		AddressService:  addressService,
 	})
 
 	return h

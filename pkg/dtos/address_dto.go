@@ -6,10 +6,9 @@ import (
 )
 
 type AddressCreateRequest struct {
-	UserID        uuid.UUID `json:"user_id" binding:"required"`
-	Name          string    `form:"name" json:"name" binding:"required"`
-	Detail        string    `form:"detail" json:"detail" binding:"required"`
-	SubDistrictID uint      `form:"sub_district_id" json:"sub_district_id" binding:"required"`
+	Name          string `form:"name" json:"name" binding:"required"`
+	Detail        string `form:"detail" json:"detail" binding:"required"`
+	SubDistrictID uint   `form:"sub_district_id" json:"sub_district_id" binding:"required"`
 }
 
 type AddressCreateResponse struct {

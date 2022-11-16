@@ -28,6 +28,7 @@ func New(c *HandlerConfig) *Handler {
 		roleService:     c.RoleService,
 		walletService:   c.WalletService,
 		authService:     c.AuthService,
+		addressService:  c.AddressService,
 		categoryService: c.CategoryService,
 	}
 }
