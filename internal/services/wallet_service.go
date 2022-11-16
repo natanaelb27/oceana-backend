@@ -53,6 +53,8 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, requestModel
 		return nil, e.ErrStepUpNotFound
 	}
 
+	// Check step-up-token jwt claims value (scope)
+
 	// Do Blacklist (delete stepup token) here
 
 	newModel, err := p.walletRepository.GetByUserId(userId)
