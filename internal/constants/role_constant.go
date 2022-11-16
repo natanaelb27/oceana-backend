@@ -16,5 +16,6 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	},
 	"/my-shop/vouchers": {
 		"POST": "010",
+		"PUT":  "010",
 	},
 }

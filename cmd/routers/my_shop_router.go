@@ -10,5 +10,6 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 	privateRoute := private.Group(path)
 	{
 		privateRoute.POST("/vouchers", h.MerchantVoucherCreate)
+		privateRoute.PUT("/vouchers/:merchantVoucherId", h.MerchantVoucherUpdate)
 	}
 }
