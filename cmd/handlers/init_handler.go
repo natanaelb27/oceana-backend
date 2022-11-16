@@ -40,6 +40,11 @@ func Init() *Handler {
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
 	})
+
+	userService := services.NewUserService(&services.UserServiceConfig{
+		UserRepository: userRepository,
+	})
+
 	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -56,6 +61,7 @@ func Init() *Handler {
 		WalletService:          walletService,
 		AuthService:            authService,
 		CategoryService:        categoryService,
+		UserService:            userService,
 		MerchantVoucherService: merchantVoucherService,
 	})
 

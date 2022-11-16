@@ -117,7 +117,6 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
-		errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrInvalidRequest) {
 		return http.StatusBadRequest
@@ -125,6 +124,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrWrongPassword) ||
 		errors.Is(err, ErrUnauthorized) {
 		return http.StatusUnauthorized
+	} else if errors.Is(err, ErrDataNotFound) {
+		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
 		errors.Is(err, ErrUsernameAlreadyExist) ||

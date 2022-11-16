@@ -12,6 +12,7 @@ type Handler struct {
 	walletService          services.WalletService
 	authService            services.AuthService
 	categoryService        services.CategoryService
+	userService            services.UserService
 	merchantVoucherService services.MerchantVoucherService
 }
 
@@ -20,6 +21,7 @@ type HandlerConfig struct {
 	WalletService          services.WalletService
 	AuthService            services.AuthService
 	CategoryService        services.CategoryService
+	UserService            services.UserService
 	MerchantVoucherService services.MerchantVoucherService
 }
 
@@ -29,6 +31,7 @@ func New(c *HandlerConfig) *Handler {
 		walletService:          c.WalletService,
 		authService:            c.AuthService,
 		categoryService:        c.CategoryService,
+		userService:            c.UserService,
 		merchantVoucherService: c.MerchantVoucherService,
 	}
 }
