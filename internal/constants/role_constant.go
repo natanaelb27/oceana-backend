@@ -10,5 +10,6 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/profile/addresses": {
 		"POST": "001",
 		"GET":  "001",
+		"PUT":  "001",
 	},
 }

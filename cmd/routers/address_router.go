@@ -12,5 +12,6 @@ func address(private *gin.RouterGroup, h *handlers.Handler) {
 		privateRoute.GET("/", h.AddressGetAll)
 		privateRoute.GET("/:address_id", h.AddressGetById)
 		privateRoute.POST("/", h.AddressCreate)
+		privateRoute.PUT("/:address_id", h.AddressUpdate)
 	}
 }

@@ -71,3 +71,35 @@ func (h *Handler) AddressGetById(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) AddressUpdate(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("address_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+	}
+
+	var request *dtos.AddressCreateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	model := request.ToModel(userID)
+
+	result, err := h.addressService.UpdateProfileAddress(id, model)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewAddressCreateResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
