@@ -184,3 +184,20 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 
 	return
 }
+
+func (u *authService) SendResetPasswordEmail(c *gin.Context, emailAddress string) error {
+	email, err := u.emailRepository.GetByEmail(emailAddress)
+	if err != nil {
+		return e.ErrEmailNotFound
+	}
+	user, err := u.userRepository.GetByEmailID(email.ID)
+	if err != nil {
+		return e.ErrUserNotFound
+	}
+	err = u.redisRepository.Set(c, "reset-password:"+user.ID.String(), uuid.New().String(), 15*time.Minute)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+

@@ -41,6 +41,7 @@ var (
 	ErrInvalidEventID                 = errors.New("invalid event id")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
+	ErrEmailNotFound 				  = errors.New("email not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
@@ -137,7 +138,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStepUpScopeIncorrect) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
-		errors.Is(err, ErrMerchantNotFound) {
+		errors.Is(err, ErrMerchantNotFound) ||
+		errors.Is(err, ErrUserNotFound) ||
+		errors.Is(err, ErrEmailNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
