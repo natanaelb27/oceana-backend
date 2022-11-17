@@ -97,3 +97,15 @@ func NewAddressGetResponse(source *models.Address) (target *AddressGetResponse) 
 
 	return
 }
+
+type AddressDeleteResponse struct {
+	ID uuid.UUID `json:"id"`
+}
+
+func NewAddressDeleteResponse(source *models.Address) (target *AddressDeleteResponse) {
+	target = &AddressDeleteResponse{
+		ID: source.ID,
+	}
+
+	return
+}

@@ -11,6 +11,7 @@ type AddressService interface {
 	Create(address *models.Address) (*models.Address, error)
 	GetProfileAddressById(id uuid.UUID) (model *models.Address, err error)
 	UpdateProfileAddress(id uuid.UUID, newModel *models.Address) (model *models.Address, err error)
+	DeleteProfileAddress(id uuid.UUID) (*models.Address, error)
 }
 
 type addressService struct {
@@ -48,4 +49,8 @@ func (a *addressService) GetProfileAddressById(id uuid.UUID) (model *models.Addr
 
 func (a *addressService) UpdateProfileAddress(id uuid.UUID, newModel *models.Address) (model *models.Address, err error) {
 	return a.addressRepository.UpdateProfileAddress(id, newModel)
+}
+
+func (a *addressService) DeleteProfileAddress(id uuid.UUID) (*models.Address, error) {
+	return a.addressRepository.DeleteProfileAddress(id)
 }

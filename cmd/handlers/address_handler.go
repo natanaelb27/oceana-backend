@@ -103,3 +103,21 @@ func (h *Handler) AddressUpdate(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) AddressDelete(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("address_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.addressService.DeleteProfileAddress(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewAddressDeleteResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}

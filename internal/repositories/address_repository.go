@@ -12,6 +12,7 @@ type AddressRepository interface {
 	Create(address *models.Address) (*models.Address, error)
 	GetProfileAddressById(id uuid.UUID) (*models.Address, error)
 	UpdateProfileAddress(id uuid.UUID, newModel *models.Address) (model *models.Address, err error)
+	DeleteProfileAddress(id uuid.UUID) (model *models.Address, err error)
 }
 
 type addressRepository struct {
@@ -74,6 +75,18 @@ func (a *addressRepository) UpdateProfileAddress(id uuid.UUID, newModel *models.
 	}
 
 	model = newModel
+	model.ID = id
+
+	return
+}
+
+func (a *addressRepository) DeleteProfileAddress(id uuid.UUID) (model *models.Address, err error) {
+	result := a.db.Delete(&model, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
 	model.ID = id
 
 	return

@@ -8,8 +8,10 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 		"PATCH": "011",
 	},
 	"/profile/addresses": {
-		"POST": "001",
-		"GET":  "001",
-		"PUT":  "001",
+		"POST":   "001",
+		"GET":    "001",
+		"PUT":    "001",
+		"DELETE": "001",
+		"PATCH":  "001",
 	},
 }
