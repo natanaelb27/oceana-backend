@@ -15,8 +15,8 @@ type User struct {
 	Email       Email
 	Password    string
 	PhoneNumber string
-	Gender      string
-	Birthdate   time.Time
+	Gender      *string
+	Birthdate   *time.Time
 	Photo       *string
 	GoogleID    *string
 	Role        string

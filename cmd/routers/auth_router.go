@@ -12,4 +12,8 @@ func auth(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 		publicRoute.POST("/register", h.UserCreate)
 		publicRoute.POST("/login", h.UserLogin)
 	}
+	privateRoute := private.Group(path)
+	{
+		privateRoute.POST("/step-up/password", h.StepUpPassword)
+	}
 }
