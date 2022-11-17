@@ -60,6 +60,8 @@ var (
 	ErrUserNotFound         = errors.New("user not found")
 	ErrForbidden            = errors.New("you don't have permission to access this resource")
 	ErrResourceDoesNotExist = errors.New("resource does not exist")
+	ErrStepUpNotFound       = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect = errors.New("incorrect step up scope")
 
 	ErrInsufficientBalance                               = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
@@ -69,6 +71,7 @@ var (
 	ErrMerchandiseAlreadyInCart                          = errors.New("merchandise already in cart")
 	ErrExceedEventCapacity                               = errors.New("event has reached maximum capacity")
 	ErrExceedMerchandiseStock                            = errors.New("merchandise has no stock left")
+	ErrWalletIsNotActive                                 = errors.New("wallet is not active")
 	ErrDiscountExceedMinimumSpendAmount                  = errors.New("discount is exceeding the minimum spend amount")
 	ErrExceedDiscountPercentage                          = errors.New("discount is more than 100%")
 	ErrMaximumDiscountAmountExceedMinimumSpendAmount     = errors.New("maximum discount amount is exceeding the minimum spend amount")
@@ -79,8 +82,10 @@ var (
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
+	ErrCacheOperationFailed          = errors.New("cache operation failed")
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
 	ErrHashingFailed                 = errors.New("hashing failed")
+	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -126,7 +131,9 @@ func GetStatusCode(err error) int {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
-		errors.Is(err, ErrUnauthorized) {
+		errors.Is(err, ErrUnauthorized) ||
+		errors.Is(err, ErrStepUpNotFound) ||
+		errors.Is(err, ErrStepUpScopeIncorrect) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) {
@@ -150,6 +157,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchandiseAlreadyInCart) ||
 		errors.Is(err, ErrExceedEventCapacity) ||
 		errors.Is(err, ErrExceedMerchandiseStock) ||
+		errors.Is(err, ErrWalletIsNotActive) ||
 		errors.Is(err, ErrDiscountExceedMinimumSpendAmount) ||
 		errors.Is(err, ErrExceedDiscountPercentage) ||
 		errors.Is(err, ErrMaximumDiscountAmountExceedMinimumSpendAmount) ||
