@@ -11,6 +11,7 @@ func auth(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	{
 		publicRoute.POST("/register", h.UserCreate)
 		publicRoute.POST("/login", h.UserLogin)
+		publicRoute.POST("/reset-password/verify", h.UserVerifyResetPassword)
 	}
 	privateRoute := private.Group(path)
 	{

@@ -7,6 +7,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
+	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) error
 }
 
 type authService struct {
@@ -185,8 +187,8 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 	return
 }
 
-func (u *authService) SendResetPasswordEmail(c *gin.Context, emailAddress string) error {
-	email, err := u.emailRepository.GetByEmail(emailAddress)
+func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserVerifyResetPasswordRequest) error {
+	email, err := u.emailRepository.GetByEmail(request.Email)
 	if err != nil {
 		return e.ErrEmailNotFound
 	}

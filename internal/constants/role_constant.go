@@ -16,6 +16,9 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/auth/step-up/password": {
 		"POST": "011",
 	},
+	"/auth/reset-password/verify": {
+		"POST": "111",
+	},
 	"/profile": {
 		"PUT": "011",
 		"GET": "011",
