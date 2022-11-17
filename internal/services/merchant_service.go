@@ -1,8 +1,8 @@
 package services
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
@@ -38,7 +38,11 @@ func (m *merchantService) Register(merchantCreateRequest *dtos.MerchantCreateReq
 	if err != nil {
 		return
 	}
-	user := &models.User{Role: "011"}
+	user, err := m.userRepository.GetByID(merchantCreateRequest.UserID)
+	if err != nil {
+		return nil, err
+	}
+	user.Role = utils.ReplaceAtIndex(user.Role, '1', 1)
 	_, err = m.userRepository.Update(merchantCreateRequest.UserID, user)
 	if err != nil {
 		return
