@@ -101,15 +101,20 @@ func (p *profileService) CheckPasswordVerificationCode(c *gin.Context, id uuid.U
 	return
 }
 
-func (p *profileService) RequestChangePasswordVerificationCode(c *gin.Context, id uuid.UUID) (status bool, err error) {
+func (s *profileService) RequestChangePasswordVerificationCode(c *gin.Context, id uuid.UUID) (status bool, err error) {
+	user, err := s.userRepository.GetByIDJoinsEmail(id)
+	if err != nil {
+		return
+	}
+
 	verificationCode := utils.RandomVerificationCode()
-	err = p.redisRepository.Set(c, externalDtos.NewPasswordVerificationCodeKey(id.String()), verificationCode, 10*time.Minute)
+	err = s.redisRepository.Set(c, externalDtos.NewPasswordVerificationCodeKey(id.String()), verificationCode, 10*time.Minute)
 	if err != nil {
 		err = e.ErrCacheOperationFailed
 		return
 	}
 
-	to := []string{"azmi.adhani@shopee.com"}
+	to := []string{user.Email.Address}
 	cc := []string{}
 	subject := "Change Password Verification Code "
 	message := "Verification code: " + verificationCode
