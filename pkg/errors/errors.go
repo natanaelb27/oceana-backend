@@ -41,6 +41,7 @@ var (
 	ErrInvalidEventID                 = errors.New("invalid event id")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
+	ErrVoucherNotFound                = errors.New("voucher not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
@@ -61,6 +62,8 @@ var (
 	ErrForbidden            = errors.New("you don't have permission to access this resource")
 	ErrResourceDoesNotExist = errors.New("resource does not exist")
 
+	ErrForbiddenMerchant = errors.New("user is not the merchant")
+
 	ErrInsufficientBalance                               = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
 	ErrEventAlreadyPaid                                  = errors.New("event is already paid")
@@ -76,6 +79,10 @@ var (
 	ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime = errors.New("voucher end period is earlier than the start period")
 	ErrVoucherPeriodMinimumOneHour                       = errors.New("voucher period must be at least 1 hour")
 	ErrVoucherStartDatetimeMinimumOneDayFromNow          = errors.New("voucher start period must be at least 1 day from now")
+	ErrVoucherHasEnded                                   = errors.New("voucher has ended")
+	ErrMaximumQuotaLowerThanCurrentQuota                 = errors.New("voucher maximum quota is lower than current quota")
+	ErrVoucherEndDatetimeEarlierThanNow                  = errors.New("voucher end period is earlier than now")
+	ErrVoucherNotUpcoming                                = errors.New("voucher is not upcoming")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -129,7 +136,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUnauthorized) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
-		errors.Is(err, ErrMerchantNotFound) {
+		errors.Is(err, ErrMerchantNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
@@ -138,7 +146,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
-	} else if errors.Is(err, ErrForbidden) {
+	} else if errors.Is(err, ErrForbidden) ||
+		errors.Is(err, ErrForbiddenMerchant) {
 		return http.StatusForbidden
 	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound
@@ -156,7 +165,11 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherStartDatetimeEarlierThanNow) ||
 		errors.Is(err, ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime) ||
 		errors.Is(err, ErrVoucherPeriodMinimumOneHour) ||
-		errors.Is(err, ErrVoucherStartDatetimeMinimumOneDayFromNow) {
+		errors.Is(err, ErrVoucherStartDatetimeMinimumOneDayFromNow) ||
+		errors.Is(err, ErrVoucherHasEnded) ||
+		errors.Is(err, ErrMaximumQuotaLowerThanCurrentQuota) ||
+		errors.Is(err, ErrVoucherEndDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrVoucherNotUpcoming) {
 		return http.StatusUnprocessableEntity
 	}
 

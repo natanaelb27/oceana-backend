@@ -14,7 +14,9 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/profile/sealabs-pay": {
 		"POST": "011",
 	},
-	"/my-shop/vouchers": {
-		"POST": "010",
+	"/merchant/vouchers": {
+		"POST":   "010",
+		"PUT":    "010",
+		"DELETE": "010",
 	},
 }
