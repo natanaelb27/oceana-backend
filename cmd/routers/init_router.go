@@ -15,7 +15,7 @@ func Init(h *handlers.Handler) {
 	r := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowOrigins = []string{os.Getenv("FRONTEND_URL")}
 	config.AllowCredentials = true
 	config.AllowHeaders = []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"}
 	r.Use(cors.New(config))
