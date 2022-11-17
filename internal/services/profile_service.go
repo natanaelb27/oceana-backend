@@ -12,6 +12,7 @@ import (
 
 type ProfileService interface {
 	UpdateProfilePassword(c *gin.Context, id uuid.UUID, request *externalDtos.UpdateProfilePasswordRequest) (model *models.User, err error)
+	CheckPasswordVerificationCode(c *gin.Context, id uuid.UUID, request *externalDtos.ProfileCheckPasswordVerificationCodeRequest) (status bool, err error)
 }
 
 type profileService struct {
@@ -58,4 +59,20 @@ func (u *profileService) UpdateProfilePassword(c *gin.Context, id uuid.UUID, req
 	// blacklist all refreshToken and accessToken here
 
 	return u.userRepository.Update(id, user)
+}
+
+func (p *profileService) CheckPasswordVerificationCode(c *gin.Context, id uuid.UUID, request *externalDtos.ProfileCheckPasswordVerificationCodeRequest) (status bool, err error) {
+	verificationCode, err := p.redisRepository.Get(c, externalDtos.NewPasswordVerificationCodeKey(id.String()))
+	if err != nil {
+		err = e.ErrVerificationCodeNotFound
+		return
+	}
+	if verificationCode != request.VerificationCode {
+		err = e.ErrInvalidVerificationCode
+		return
+	}
+
+	status = true
+
+	return
 }

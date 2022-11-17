@@ -31,3 +31,27 @@ func (h *Handler) UpdateProfilePassword(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) ProfileCheckPasswordVerificationCode(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	var request *dtos.ProfileCheckPasswordVerificationCodeRequest
+	if err := c.ShouldBind(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	result, err := h.profileService.CheckPasswordVerificationCode(c, id, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewProfileCheckPasswordVerificationCodeResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}

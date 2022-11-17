@@ -25,3 +25,22 @@ func NewUpdateProfilePasswordResponse(source *models.User) (target *UpdateProfil
 	}
 	return
 }
+
+type ProfileCheckPasswordVerificationCodeRequest struct {
+	VerificationCode string `json:"verification_code" binding:"required"`
+}
+
+type ProfileCheckPasswordVerificationCodeResponse struct {
+	Status bool `json:"status"`
+}
+
+func NewProfileCheckPasswordVerificationCodeResponse(status bool) (target *ProfileCheckPasswordVerificationCodeResponse) {
+	target = &ProfileCheckPasswordVerificationCodeResponse{
+		Status: status,
+	}
+	return
+}
+
+func NewPasswordVerificationCodeKey(userId string) string {
+	return "password-verification-code:" + userId
+}

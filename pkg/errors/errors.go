@@ -44,6 +44,7 @@ var (
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
+	ErrInvalidVerificationCode        = errors.New("invalid verification code")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -53,12 +54,13 @@ var (
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
 
-	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
-	ErrUserNotFound         = errors.New("user not found")
-	ErrForbidden            = errors.New("you don't have permission to access this resource")
-	ErrResourceDoesNotExist = errors.New("resource does not exist")
-	ErrStepUpNotFound       = errors.New("step up authenticaiton not found")
-	ErrStepUpScopeIncorrect = errors.New("incorrect step up scope")
+	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
+	ErrUserNotFound             = errors.New("user not found")
+	ErrForbidden                = errors.New("you don't have permission to access this resource")
+	ErrResourceDoesNotExist     = errors.New("resource does not exist")
+	ErrStepUpNotFound           = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
+	ErrVerificationCodeNotFound = errors.New("verification code not found")
 
 	ErrInsufficientBalance      = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked   = errors.New("event is already bookmarked")
@@ -116,13 +118,15 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrPasswordCannotContainsUsername) ||
-		errors.Is(err, ErrInvalidRequest) {
+		errors.Is(err, ErrInvalidRequest) ||
+		errors.Is(err, ErrInvalidVerificationCode) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
 		errors.Is(err, ErrUnauthorized) ||
 		errors.Is(err, ErrStepUpNotFound) ||
-		errors.Is(err, ErrStepUpScopeIncorrect) {
+		errors.Is(err, ErrStepUpScopeIncorrect) ||
+		errors.Is(err, ErrVerificationCodeNotFound) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) {
 		return http.StatusNotFound
