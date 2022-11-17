@@ -47,9 +47,13 @@ func (h *Handler) MerchantVoucherUpdate(c *gin.Context) {
 		return
 	}
 
-	merchantVoucherIDRaw, _ := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
 
-	merchantVoucherID := uint(merchantVoucherIDRaw)
+	merchantVoucherID := uint(merchantVoucherIDUint64)
 
 	merchantVouherUpdateResponse, err := h.merchantVoucherService.Update(id, merchantVoucherID, request)
 
@@ -68,9 +72,13 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 		return
 	}
 
-	merchantVoucherIDRaw, _ := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
 
-	merchantVoucherID := uint(merchantVoucherIDRaw)
+	merchantVoucherID := uint(merchantVoucherIDUint64)
 
 	merchantVouherDeleteResponse, err := h.merchantVoucherService.Delete(id, merchantVoucherID)
 
@@ -95,9 +103,13 @@ func (h *Handler) MerchantVoucherGetAll(c *gin.Context) {
 }
 
 func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {
-	merchantVoucherIDRaw, _ := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
 
-	merchantVoucherID := uint(merchantVoucherIDRaw)
+	merchantVoucherID := uint(merchantVoucherIDUint64)
 
 	merchantVouherGetByIDResponse, err := h.merchantVoucherService.GetByID(merchantVoucherID)
 

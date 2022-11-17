@@ -105,7 +105,7 @@ func (r *merchantVoucherRepository) GetAllDetails(query *dtos.MerchantVoucherQue
 		Find(&merchantVoucherDetails)
 
 	if queryResult.Error != nil {
-		return nil, nil, queryResult.Error
+		return nil, nil, e.ErrDatabaseOperationFailed
 	}
 
 	return merchantVoucherDetails, pagination, nil
@@ -142,7 +142,7 @@ func (r *merchantVoucherRepository) GetDetailsByID(id uint) (*dtos.MerchantVouch
 	}
 
 	if queryResult.Error != nil {
-		return nil, queryResult.Error
+		return nil, e.ErrDatabaseOperationFailed
 	}
 
 	return merchantVoucherDetails, nil
