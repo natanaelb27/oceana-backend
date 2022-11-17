@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -13,6 +15,7 @@ import (
 type ProfileService interface {
 	UpdateProfilePassword(c *gin.Context, id uuid.UUID, request *externalDtos.UpdateProfilePasswordRequest) (model *models.User, err error)
 	CheckPasswordVerificationCode(c *gin.Context, id uuid.UUID, request *externalDtos.ProfileCheckPasswordVerificationCodeRequest) (status bool, err error)
+	RequestChangePasswordVerificationCode(c *gin.Context, id uuid.UUID) (status bool, err error)
 }
 
 type profileService struct {
@@ -71,6 +74,21 @@ func (p *profileService) CheckPasswordVerificationCode(c *gin.Context, id uuid.U
 		err = e.ErrInvalidVerificationCode
 		return
 	}
+
+	status = true
+
+	return
+}
+
+func (p *profileService) RequestChangePasswordVerificationCode(c *gin.Context, id uuid.UUID) (status bool, err error) {
+	verificationCode := utils.RandomVerificationCode()
+	err = p.redisRepository.Set(c, externalDtos.NewPasswordVerificationCodeKey(id.String()), verificationCode, 10*time.Minute)
+	if err != nil {
+		err = e.ErrCacheOperationFailed
+		return
+	}
+
+	// send verification code to email here
 
 	status = true
 

@@ -44,3 +44,18 @@ func NewProfileCheckPasswordVerificationCodeResponse(status bool) (target *Profi
 func NewPasswordVerificationCodeKey(userId string) string {
 	return "password-verification-code:" + userId
 }
+
+type ProfileRequestChangePasswordVerificationCodeRequest struct {
+	VerificationCode string `json:"verification_code" binding:"required"`
+}
+
+type ProfileRequestChangePasswordVerificationCodeResponse struct {
+	Status bool `json:"status"`
+}
+
+func NewProfileRequestChangePasswordVerificationCodeResponse(status bool) (target *ProfileRequestChangePasswordVerificationCodeResponse) {
+	target = &ProfileRequestChangePasswordVerificationCodeResponse{
+		Status: status,
+	}
+	return
+}

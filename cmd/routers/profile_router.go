@@ -15,5 +15,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.PATCH("/wallet/pin", h.WalletChangePin)
 		privateRoute.PATCH("/password", h.UpdateProfilePassword)
 		privateRoute.POST("/password/check-verification-code", h.ProfileCheckPasswordVerificationCode)
+		privateRoute.POST("/password/request-verification-code", h.ProfileRequestChangePasswordVerificationCode)
 	}
 }

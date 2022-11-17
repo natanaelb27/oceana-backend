@@ -24,4 +24,7 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/profile/password/check-verification-code": {
 		"POST": "011",
 	},
+	"/profile/password/request-verification-code": {
+		"POST": "011",
+	},
 }

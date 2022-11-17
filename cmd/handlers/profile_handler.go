@@ -55,3 +55,21 @@ func (h *Handler) ProfileCheckPasswordVerificationCode(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) ProfileRequestChangePasswordVerificationCode(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.profileService.RequestChangePasswordVerificationCode(c, id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewProfileRequestChangePasswordVerificationCodeResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
