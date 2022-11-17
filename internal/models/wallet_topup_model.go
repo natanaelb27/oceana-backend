@@ -14,7 +14,7 @@ type WalletTopup struct {
 	SealabsPayID    uuid.UUID
 	SealabsPay      SealabsPay
 	TxID            string
-	Amount          int
+	Amount          uint
 	TransactionDate time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

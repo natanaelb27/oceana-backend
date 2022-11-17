@@ -11,8 +11,8 @@ type RefundAmount struct {
 	ID                 uuid.UUID
 	RefundID           uuid.UUID
 	Refund             Refund
-	AmountUserGet      int
-	AmountMerchantLost int
+	AmountUserGet      uint
+	AmountMerchantLost uint
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 	DeletedAt          gorm.DeletedAt

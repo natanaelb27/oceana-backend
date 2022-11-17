@@ -35,6 +35,17 @@ func Connect() {
 		&models.SealabsPay{},
 		&models.Merchant{},
 		&models.MerchantVoucher{},
+		&models.Product{},
+		&models.ProductItem{},
+		&models.Courier{},
+		&models.CourierService{},
+		&models.AddressSnapshot{},
+		&models.PaymentMethod{},
+		&models.Transaction{},
+		&models.Order{},
+		&models.ProductSnapshot{},
+		&models.OrderDetail{},
+		&models.ProductReview{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")

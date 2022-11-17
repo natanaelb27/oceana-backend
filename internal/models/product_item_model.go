@@ -11,8 +11,8 @@ type ProductItem struct {
 	ProductID     uint
 	Product       Product
 	SKU           string
-	Price         int
-	StockQuantity int
+	Price         uint
+	StockQuantity uint
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt

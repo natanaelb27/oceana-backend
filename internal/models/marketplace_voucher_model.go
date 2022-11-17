@@ -12,11 +12,11 @@ type MarketplaceVoucher struct {
 	StartDate              time.Time
 	EndDate                time.Time
 	DiscountType           string
-	Discount               int
-	MinimumSpendAmount     int
-	MaxmimumDiscountAmount int
-	MaximumQuota           int
-	CurrentQuota           int
+	Discount               uint
+	MinimumSpendAmount     uint
+	MaxmimumDiscountAmount uint
+	MaximumQuota           uint
+	CurrentQuota           uint
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
 	DeletedAt              gorm.DeletedAt

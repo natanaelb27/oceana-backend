@@ -11,8 +11,8 @@ type MarketplacePromotion struct {
 	Name                   string
 	StartDate              time.Time
 	EndDate                time.Time
-	Discount               int
-	MaxmimumDiscountAmount int
+	Discount               uint
+	MaxmimumDiscountAmount uint
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
 	DeletedAt              gorm.DeletedAt

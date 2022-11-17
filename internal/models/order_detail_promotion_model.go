@@ -13,7 +13,7 @@ type OrderDetailPromotion struct {
 	OrderDetail         OrderDetail
 	MerchantPromotionID uint
 	MerchantPromotion   MerchantPromotion
-	TotalDiscount       int
+	TotalDiscount       uint
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	DeletedAt           gorm.DeletedAt
