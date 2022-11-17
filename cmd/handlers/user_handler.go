@@ -41,3 +41,23 @@ func (h *Handler) UserGetProfile(c *gin.Context) {
 	}
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) UserRegisterMerchant(c *gin.Context) {
+	var request *dtos.MerchantCreateRequest
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	request.UserID = id
+	responseData, err := h.merchantService.Register(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}

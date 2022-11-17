@@ -7,6 +7,9 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/profile/wallet/activate": {
 		"PATCH": "011",
 	},
+	"/profile/register-shop": {
+		"POST": "001",
+	},
 	"/profile/wallet/pin": {
 		"PATCH": "011",
 	},
@@ -26,5 +29,13 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	},
 	"/profile/password/request-verification-code": {
 		"POST": "011",
+	},
+	"/profile/sealabs-pay": {
+		"POST": "011",
+	},
+	"/merchant/vouchers": {
+		"POST":   "010",
+		"PUT":    "010",
+		"DELETE": "010",
 	},
 }

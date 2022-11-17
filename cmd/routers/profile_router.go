@@ -11,10 +11,12 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	{
 		privateRoute.GET("", h.UserGetProfile)
 		privateRoute.PUT("", h.UserUpdateProfile)
+		privateRoute.POST("/register-shop", h.UserRegisterMerchant)
 		privateRoute.PATCH("/wallet/activate", h.WalletActivate)
 		privateRoute.PATCH("/wallet/pin", h.WalletChangePin)
 		privateRoute.POST("/password/check-verification-code", h.ProfileCheckPasswordVerificationCode)
 		privateRoute.POST("/password/request-verification-code", h.ProfileRequestChangePasswordVerificationCode)
 		privateRoute.PATCH("/password", h.UpdateProfilePassword)
+		privateRoute.POST("/sealabs-pay", h.SealabsPayCreate)
 	}
 }
