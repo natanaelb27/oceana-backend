@@ -14,7 +14,11 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 		"POST": "011",
 	},
 	"/profile": {
-		"PUT": "011",
-		"GET": "011",
+		"PUT":   "011",
+		"GET":   "011",
+		"PATCH": "011",
+	},
+	"/profile/password": {
+		"PATCH": "011",
 	},
 }

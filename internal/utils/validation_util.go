@@ -20,6 +20,8 @@ func newErrorMessage(ve validator.FieldError) (msg string) {
 		msg = fmt.Sprintf("must be equal to %v field.", strings.ToLower(ve.Param()))
 	case "email":
 		msg = "have incorrect format."
+	case "secure_password":
+		msg = "length must be at least 6, must be alphanumeric, contains uppercase, lowercase, and symbol."
 	default:
 		msg = "is incorrect."
 	}
@@ -45,4 +47,8 @@ func TranslateError(err error) (errors string) {
 	}
 
 	return
+}
+
+func IsPasswordContainsUsername(password string, username string) bool {
+	return !strings.Contains(strings.ToLower(password), strings.ToLower(username))
 }

@@ -48,13 +48,18 @@ func Init() *Handler {
 	userService := services.NewUserService(&services.UserServiceConfig{
 		UserRepository: userRepository,
 	})
+	profileService := services.NewProfileService(&services.ProfileServiceConfig{
+		UserRepository:  userRepository,
+		RedisRepository: redisRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:     roleService,
 		WalletService:   walletService,
 		AuthService:     authService,
 		CategoryService: categoryService,
-		UserService: userService,
+		UserService:     userService,
+		ProfileService:  profileService,
 	})
 
 	return h
