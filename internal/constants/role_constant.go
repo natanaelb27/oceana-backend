@@ -7,6 +7,15 @@ var ROLE_RESOURCES_RULE map[string]map[string]string = map[string]map[string]str
 	"/profile/wallet/activate": {
 		"PATCH": "011",
 	},
+	"/profile/register-shop": {
+		"POST": "001",
+	},
+	"/profile/wallet/pin": {
+		"PATCH": "011",
+	},
+	"/auth/step-up/password": {
+		"POST": "011",
+	},
 	"/profile": {
 		"PUT": "011",
 		"GET": "011",

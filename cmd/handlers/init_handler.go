@@ -7,6 +7,9 @@ import (
 )
 
 func Init() *Handler {
+	redisRepository := repositories.NewRedisRepository(&repositories.RedisRepositoryConfig{
+		RedisClient: db.RedisGet(),
+	})
 	roleRepository := repositories.NewRoleRepository(&repositories.RoleRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -18,6 +21,7 @@ func Init() *Handler {
 	})
 	walletService := services.NewWalletService(&services.WalletServiceConfig{
 		WalletRepository: walletRepository,
+		RedisRepository:  redisRepository,
 	})
 	userRepository := repositories.NewUserRepository(&repositories.UserRepositoryConfig{
 		DB: db.Get(),
@@ -33,6 +37,7 @@ func Init() *Handler {
 		EmailRepository:        emailRepository,
 		WalletRepository:       walletRepository,
 		RefreshTokenRepository: refreshTokenRepository,
+		RedisRepository:        redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),
@@ -62,12 +67,17 @@ func Init() *Handler {
 		MerchantRepository:        merchantRepository,
 		MerchantVoucherRepository: merchantVoucherRepository,
 	})
+	merchantService := services.NewMerchantService(&services.MerchantServiceConfig{
+		MerchantRepository: merchantRepository,
+		UserRepository:     userRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
 		WalletService:          walletService,
 		AuthService:            authService,
 		CategoryService:        categoryService,
+		MerchantService:        merchantService,
 		UserService:            userService,
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,

@@ -11,6 +11,7 @@ type WalletRepository interface {
 	GetByUserId(id uuid.UUID) (model *models.Wallet, err error)
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 	Create(newModel *models.Wallet) (model *models.Wallet, err error)
+	Update(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 }
 
 type walletRepository struct {
@@ -42,7 +43,22 @@ func (r *walletRepository) GetByUserId(id uuid.UUID) (model *models.Wallet, err 
 }
 
 func (r *walletRepository) Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error) {
-	result := r.db.Where("id = ?", &newModel.ID).Updates(&newModel)
+	result := r.db.Where("id = ?", id).Updates(&newModel)
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model = newModel
+	return
+}
+
+func (r *walletRepository) Update(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error) {
+	result := r.db.Where("id = ?", id).Updates(&newModel)
 	if result.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return

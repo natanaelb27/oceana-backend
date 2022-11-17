@@ -54,6 +54,7 @@ var (
 	ErrEmailAddressAlreadyExist            = errors.New("email address is already registered")
 	ErrUsernameAlreadyExist                = errors.New("username is already registered")
 	ErrPhoneNumberAlreadyExist             = errors.New("phone number is already registered")
+	ErrMerchantNameAlreadyExist            = errors.New("merchant name is already registered")
 	ErrWalletAlreadyActive                 = errors.New("wallet is already active")
 	ErrSealabsPayAccountNumberAlreadyExist = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist     = errors.New("voucher code already exist")
@@ -62,6 +63,8 @@ var (
 	ErrUserNotFound         = errors.New("user not found")
 	ErrForbidden            = errors.New("you don't have permission to access this resource")
 	ErrResourceDoesNotExist = errors.New("resource does not exist")
+	ErrStepUpNotFound       = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect = errors.New("incorrect step up scope")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 
@@ -73,6 +76,7 @@ var (
 	ErrMerchandiseAlreadyInCart                          = errors.New("merchandise already in cart")
 	ErrExceedEventCapacity                               = errors.New("event has reached maximum capacity")
 	ErrExceedMerchandiseStock                            = errors.New("merchandise has no stock left")
+	ErrWalletIsNotActive                                 = errors.New("wallet is not active")
 	ErrDiscountExceedMinimumSpendAmount                  = errors.New("discount is exceeding the minimum spend amount")
 	ErrExceedDiscountPercentage                          = errors.New("discount is more than 100%")
 	ErrMaximumDiscountAmountExceedMinimumSpendAmount     = errors.New("maximum discount amount is exceeding the minimum spend amount")
@@ -87,8 +91,10 @@ var (
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
+	ErrCacheOperationFailed          = errors.New("cache operation failed")
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
 	ErrHashingFailed                 = errors.New("hashing failed")
+	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -135,7 +141,9 @@ func GetStatusCode(err error) int {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
-		errors.Is(err, ErrUnauthorized) {
+		errors.Is(err, ErrUnauthorized) ||
+		errors.Is(err, ErrStepUpNotFound) ||
+		errors.Is(err, ErrStepUpScopeIncorrect) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
@@ -145,6 +153,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrWalletAlreadyActive) ||
 		errors.Is(err, ErrUsernameAlreadyExist) ||
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
+		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
@@ -161,6 +170,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchandiseAlreadyInCart) ||
 		errors.Is(err, ErrExceedEventCapacity) ||
 		errors.Is(err, ErrExceedMerchandiseStock) ||
+		errors.Is(err, ErrWalletIsNotActive) ||
 		errors.Is(err, ErrDiscountExceedMinimumSpendAmount) ||
 		errors.Is(err, ErrExceedDiscountPercentage) ||
 		errors.Is(err, ErrMaximumDiscountAmountExceedMinimumSpendAmount) ||
