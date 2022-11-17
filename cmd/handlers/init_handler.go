@@ -67,12 +67,17 @@ func Init() *Handler {
 		MerchantRepository:        merchantRepository,
 		MerchantVoucherRepository: merchantVoucherRepository,
 	})
+	merchantService := services.NewMerchantService(&services.MerchantServiceConfig{
+		MerchantRepository: merchantRepository,
+		UserRepository:     userRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
 		WalletService:          walletService,
 		AuthService:            authService,
 		CategoryService:        categoryService,
+		MerchantService:        merchantService,
 		UserService:            userService,
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,
