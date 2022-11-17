@@ -35,9 +35,20 @@ func NewProfileService(c *ProfileServiceConfig) ProfileService {
 	}
 }
 
-func (u *profileService) UpdateProfilePassword(c *gin.Context, id uuid.UUID, request *externalDtos.UpdateProfilePasswordRequest) (model *models.User, err error) {
-	user, err := u.userRepository.GetByID(id)
+func (s *profileService) UpdateProfilePassword(c *gin.Context, id uuid.UUID, request *externalDtos.UpdateProfilePasswordRequest) (model *models.User, err error) {
+	user, err := s.userRepository.GetByID(id)
 	if err != nil {
+		return
+	}
+
+	redisKey := externalDtos.NewPasswordVerificationCodeKey(id.String())
+	verificationCode, err := s.redisRepository.Get(c, redisKey)
+	if err != nil {
+		err = e.ErrVerificationCodeNotFound
+		return
+	}
+	if verificationCode != request.VerificationCode {
+		err = e.ErrInvalidVerificationCode
 		return
 	}
 
@@ -59,9 +70,19 @@ func (u *profileService) UpdateProfilePassword(c *gin.Context, id uuid.UUID, req
 
 	user.Password = hashedPassword
 
+	model, err = s.userRepository.Update(id, user)
+	if err != nil {
+		return
+	}
+
+	err = s.redisRepository.Delete(c, redisKey)
+	if err != nil {
+		return
+	}
+
 	// blacklist all refreshToken and accessToken here
 
-	return u.userRepository.Update(id, user)
+	return
 }
 
 func (p *profileService) CheckPasswordVerificationCode(c *gin.Context, id uuid.UUID, request *externalDtos.ProfileCheckPasswordVerificationCodeRequest) (status bool, err error) {

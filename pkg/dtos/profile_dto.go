@@ -8,7 +8,8 @@ import (
 )
 
 type UpdateProfilePasswordRequest struct {
-	Password string `json:"password" binding:"required,secure_password"`
+	Password         string `json:"password" binding:"required,secure_password"`
+	VerificationCode string `json:"verification_code" binding:"required"`
 }
 
 type UpdateProfilePasswordResponse struct {
