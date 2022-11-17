@@ -173,6 +173,7 @@ type MerchantVoucherGetByIDResponse struct {
 	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota"`
 	CurrentQuota          uint      `json:"current_quota"`
+	VoucherStatus         string    `json:"voucher_status"`
 }
 
 func NewMerchantVoucherGetByIDResponse(source *dtos.MerchantVoucherDetails) (target *MerchantVoucherGetByIDResponse) {
@@ -188,6 +189,7 @@ func NewMerchantVoucherGetByIDResponse(source *dtos.MerchantVoucherDetails) (tar
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
 		CurrentQuota:          source.CurrentQuota,
+		VoucherStatus:         source.VoucherStatus,
 	}
 	return
 }
