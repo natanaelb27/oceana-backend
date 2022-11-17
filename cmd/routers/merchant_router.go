@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
+func merchant(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
 	path := "/merchant"
 	publicRoute := public.Group(path)
 	{
