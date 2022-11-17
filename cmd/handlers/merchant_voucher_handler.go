@@ -3,6 +3,7 @@ package handlers
 import (
 	"strconv"
 
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -79,6 +80,18 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, merchantVouherDeleteResponse, nil)
+}
+
+func (h *Handler) MerchantVoucherGetAll(c *gin.Context) {
+	query := internalDtos.NewMerchantVoucherQuery(c)
+	merchantVouherGetAllResponse, err := h.merchantVoucherService.GetAll(query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantVouherGetAllResponse, nil)
 }
 
 func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {

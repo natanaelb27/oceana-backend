@@ -5,6 +5,7 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -191,5 +192,23 @@ func NewMerchantVoucherGetByIDResponse(source *dtos.MerchantVoucherDetails) (tar
 		CurrentQuota:          source.CurrentQuota,
 		VoucherStatus:         source.VoucherStatus,
 	}
+	return
+}
+
+type MerchantVoucherGetAllResponse struct {
+	Pagination      *utils.Pagination              `json:"pagination"`
+	MerchantVoucher []*dtos.MerchantVoucherDetails `json:"merchant_voucher"`
+}
+
+func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails, pagination *utils.Pagination) (target *MerchantVoucherGetAllResponse) {
+	if pagination == nil {
+		return nil
+	}
+
+	target = &MerchantVoucherGetAllResponse{
+		Pagination:      pagination,
+		MerchantVoucher: source,
+	}
+
 	return
 }

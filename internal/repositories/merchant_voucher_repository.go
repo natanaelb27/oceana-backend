@@ -1,10 +1,12 @@
 package repositories
 
 import (
+	"fmt"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -12,6 +14,7 @@ import (
 
 type MerchantVoucherRepository interface {
 	Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
+	GetAllDetails(query *dtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error)
 	GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error)
 	Update(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
 	Delete(id uint) (model *models.MerchantVoucher, err error)
@@ -50,6 +53,62 @@ func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (mo
 
 	model = newModel
 	return
+}
+
+func (r *merchantVoucherRepository) GetAllDetails(query *dtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error) {
+	var merchantVoucherDetails []*dtos.MerchantVoucherDetails
+
+	queryResult := r.db.Model(&models.MerchantVoucher{}).
+		Select(`
+			id, 
+			merchant_id, 
+			code, 
+			start_datetime, 
+			end_datetime, 
+			discount_type, 
+			discount, 
+			minimum_spend_amount, 
+			maximum_discount_amount, 
+			maximum_quota, 
+			current_quota, 
+			(
+				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
+				AND end_datetime::timestamp THEN 'ongoing' 
+				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
+				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
+			) AS voucher_status
+		`)
+
+	if query.SearchVoucherCode != "" {
+		queryResult.Where("code = ?", query.SearchVoucherCode)
+	}
+
+	if query.FilterVoucherStatus == "ongoing" {
+		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
+	}
+
+	if query.FilterVoucherStatus == "upcoming" {
+		queryResult.Where("start_datetime::timestamp > NOW()::timestamp")
+	}
+
+	if query.FilterVoucherStatus == "ended" {
+		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
+	}
+
+	if query.FilterMerchant != 0 {
+		queryResult.Where("merchant_id = ?", query.FilterMerchant)
+	}
+
+	queryResult.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&merchantVoucherDetails)
+
+	if queryResult.Error != nil {
+		return nil, nil, queryResult.Error
+	}
+
+	return merchantVoucherDetails, pagination, nil
 }
 
 func (r *merchantVoucherRepository) GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error) {

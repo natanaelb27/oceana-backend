@@ -9,6 +9,7 @@ func merchant(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Han
 	path := "/merchant"
 	publicRoute := public.Group(path)
 	{
+		publicRoute.GET("/vouchers", h.MerchantVoucherGetAll)
 		publicRoute.GET("/vouchers/:merchantVoucherId", h.MerchantVoucherGetByID)
 	}
 	privateRoute := private.Group(path)
