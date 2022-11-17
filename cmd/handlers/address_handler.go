@@ -33,3 +33,23 @@ func (h *Handler) AddressCreate(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) AddressGetAll(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+	}
+
+	results, err := h.addressService.GetProfileAddressess(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+	}
+
+	var responseData []*dtos.AddressGetResponse = make([]*dtos.AddressGetResponse, 0)
+
+	for _, result := range results {
+		responseData = append(responseData, dtos.NewAddressGetResponse(result))
+	}
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
