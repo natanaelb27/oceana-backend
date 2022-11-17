@@ -9,6 +9,7 @@ import (
 type AddressService interface {
 	GetProfileAddressess(userID uuid.UUID) (model []*models.Address, err error)
 	Create(address *models.Address) (*models.Address, error)
+	GetProfileAddressById(id uuid.UUID) (model *models.Address, err error)
 }
 
 type addressService struct {
@@ -38,4 +39,8 @@ func (a *addressService) Create(model *models.Address) (*models.Address, error) 
 
 func (a *addressService) GetProfileAddressess(userID uuid.UUID) ([]*models.Address, error) {
 	return a.addressRepository.GetProfileAddressess(userID)
+}
+
+func (a *addressService) GetProfileAddressById(id uuid.UUID) (model *models.Address, err error) {
+	return a.addressRepository.GetProfileAddressById(id)
 }

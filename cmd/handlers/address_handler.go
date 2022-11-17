@@ -53,3 +53,21 @@ func (h *Handler) AddressGetAll(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) AddressGetById(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("address_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.addressService.GetProfileAddressById(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewAddressGetResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}

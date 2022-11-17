@@ -10,6 +10,7 @@ func address(private *gin.RouterGroup, h *handlers.Handler) {
 	privateRoute := private.Group(path)
 	{
 		privateRoute.GET("/", h.AddressGetAll)
+		privateRoute.GET("/:address_id", h.AddressGetById)
 		privateRoute.POST("/", h.AddressCreate)
 	}
 }
