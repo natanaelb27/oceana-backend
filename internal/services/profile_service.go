@@ -88,7 +88,16 @@ func (p *profileService) RequestChangePasswordVerificationCode(c *gin.Context, i
 		return
 	}
 
-	// send verification code to email here
+	to := []string{"azmi.adhani@shopee.com"}
+	cc := []string{}
+	subject := "Change Password Verification Code "
+	message := "Verification code: " + verificationCode
+
+	err = utils.SendMail(to, cc, subject, message)
+	if err != nil {
+		err = e.ErrSendingEmailFailed
+		return
+	}
 
 	status = true
 

@@ -78,6 +78,7 @@ var (
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
 	ErrHashingFailed                 = errors.New("hashing failed")
 	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
+	ErrSendingEmailFailed            = errors.New("sending email failed")
 
 	ErrUnknown = errors.New("unknown")
 )
