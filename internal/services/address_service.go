@@ -26,7 +26,13 @@ func NewAddressService(c *AddressServiceConfig) AddressService {
 }
 
 func (a *addressService) Create(model *models.Address) (*models.Address, error) {
-	model.IsDefault = false
+	isAvailable, _ := a.addressRepository.GetProfileAddressess(model.UserID)
+	if len(isAvailable) == 0 {
+		model.IsDefault = true
+	} else {
+		model.IsDefault = false
+	}
+
 	return a.addressRepository.Create(model)
 }
 
