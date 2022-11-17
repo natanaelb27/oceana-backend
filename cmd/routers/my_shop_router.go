@@ -6,11 +6,10 @@ import (
 )
 
 func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
-	path := "/my-shop"
+	path := "/merchant"
 	publicRoute := public.Group(path)
 	{
 		publicRoute.GET("/vouchers/:merchantVoucherId", h.MerchantVoucherGetByID)
-
 	}
 	privateRoute := private.Group(path)
 	{
