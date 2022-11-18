@@ -46,6 +46,19 @@ func Init() *Handler {
 		CategoryRepository: categoryRepository,
 	})
 
+	orderRepository := repositories.NewOrderRepository(&repositories.OrderRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderDetailRepository := repositories.NewOrderDetailRepository(&repositories.OrderDetailRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderService := services.NewOrderService(&services.OrderServiceConfig{
+		OrderRepository:       orderRepository,
+		OrderDetailRepository: orderDetailRepository,
+	})
+
 	userService := services.NewUserService(&services.UserServiceConfig{
 		UserRepository:  userRepository,
 		EmailRepository: emailRepository,
@@ -86,6 +99,7 @@ func Init() *Handler {
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,
 		MerchantService:        merchantService,
+		OrderService:           orderService,
 	})
 
 	return h

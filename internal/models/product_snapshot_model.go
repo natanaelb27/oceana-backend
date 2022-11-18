@@ -7,13 +7,18 @@ import (
 )
 
 type ProductSnapshot struct {
-	ID          uint
-	CategoryID  uint
-	Category    Category
-	Name        string
-	Price       uint
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   gorm.DeletedAt
+	ID            uint
+	CategoryID    uint
+	Category      Category
+	ProductID     int
+	Product       Product
+	ProductItemID int
+	ProductItem   ProductItem
+	Name          string
+	Description   string
+	SKU           string
+	Price         uint
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt
 }

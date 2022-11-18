@@ -3,7 +3,6 @@ package services
 import (
 	"time"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -15,7 +14,7 @@ type MerchantVoucherService interface {
 	Create(id uuid.UUID, request *dtos.MerchantVoucherCreateRequest) (*dtos.MerchantVoucherCreateResponse, error)
 	Update(userID uuid.UUID, voucherID uint, request *dtos.MerchantVoucherUpdateRequest) (*dtos.MerchantVoucherUpdateResponse, error)
 	Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error)
-	GetAll(query *internalDtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error)
+	GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error)
 	GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error)
 }
 
@@ -202,7 +201,7 @@ func (s *merchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos
 	return dtos.NewMerchantVoucherDeleteResponse(newModel), nil
 }
 
-func (s *merchantVoucherService) GetAll(query *internalDtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error) {
+func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
