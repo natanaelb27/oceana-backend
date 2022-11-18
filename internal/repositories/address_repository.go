@@ -13,6 +13,7 @@ type AddressRepository interface {
 	GetProfileAddressById(id uuid.UUID) (*models.Address, error)
 	UpdateProfileAddress(id uuid.UUID, newModel *models.Address) (model *models.Address, err error)
 	DeleteProfileAddress(id uuid.UUID) (model *models.Address, err error)
+	UpdateProfileAddressDefault(id uuid.UUID, userID uuid.UUID) (model *models.Address, err error)
 }
 
 type addressRepository struct {
@@ -88,6 +89,22 @@ func (a *addressRepository) DeleteProfileAddress(id uuid.UUID) (model *models.Ad
 	}
 
 	model.ID = id
+
+	return
+}
+
+func (a *addressRepository) UpdateProfileAddressDefault(id uuid.UUID, userID uuid.UUID) (model *models.Address, err error) {
+	updateExisting := a.db.Model(&model).Where("user_id = ?", userID).Where("is_default = ?", true).Update("is_default", false)
+	if updateExisting.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	result := a.db.Model(&model).Where("id = ?", id).Update("is_default", true)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }
