@@ -1,12 +1,10 @@
 package utils
 
 import (
-	"strings"
-
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/gin-gonic/gin"
 )
 
 func GetUserRoleById(id string) (role string, err error) {
@@ -23,17 +21,10 @@ func GetUserRoleById(id string) (role string, err error) {
 	return
 }
 
-func RolePermissionToResource(role string, requestMethod string, requestUri string) bool {
-	matchedUri := ""
-	for uri := range constants.ROLE_RESOURCES_RULE {
-		if strings.HasPrefix(requestUri, uri) {
-			matchedUri = uri
-		}
-	}
-
-	for k, v := range []rune(role) {
+func RoleAllowed(c *gin.Context, allowedRole string) bool {
+	for k, v := range []rune(c.GetString("role")) {
 		if string(v) == "1" {
-			resourceRoleArray := []rune(constants.ROLE_RESOURCES_RULE[matchedUri][requestMethod])
+			resourceRoleArray := []rune(allowedRole)
 			if k >= 0 && k < len(resourceRoleArray) && string(resourceRoleArray[k]) == "1" {
 				return true
 			}
