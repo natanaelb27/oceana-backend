@@ -31,20 +31,27 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 
 	query.FilterOrderStatus = filterOrderStatus
 	query.FilterOngoingOrderStatus = filterOngoingOrderStatus
-	startDate, err := time.Parse("2006-01-02", filterStartTransactionDate)
 
-	if err != nil {
+	if filterStartTransactionDate != "" && filterEndTransactionDate != "" {
+		startDate, err := time.Parse("2006-01-02", filterStartTransactionDate)
+
+		if err != nil {
+			query.FilterStartTransactionDate = nil
+		} else {
+			query.FilterStartTransactionDate = &startDate
+		}
+
+		endDate, err := time.Parse("2006-01-02", filterEndTransactionDate)
+
+		if err != nil {
+			query.FilterEndTransactionDate = nil
+		} else {
+			query.FilterEndTransactionDate = &endDate
+		}
+
+	} else {
 		query.FilterStartTransactionDate = nil
-	} else {
-		query.FilterStartTransactionDate = &startDate
-	}
-
-	endDate, err := time.Parse("2006-01-02", filterEndTransactionDate)
-
-	if err != nil {
 		query.FilterEndTransactionDate = nil
-	} else {
-		query.FilterEndTransactionDate = &endDate
 	}
 
 	pageInt, err := strconv.Atoi(page)

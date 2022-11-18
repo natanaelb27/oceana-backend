@@ -59,6 +59,26 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Where("transactions.user_id = ?", id)
 
+	if query.FilterOrderStatus == "ongoing" {
+		if query.FilterOngoingOrderStatus != "" && query.FilterOngoingOrderStatus != "all" {
+			queryResult.Where("orders.status = ?", query.FilterOngoingOrderStatus)
+		} else {
+			queryResult.Where("orders.status IN ('pending payment', 'pending seller', 'out for delivery', 'delivered', 'complained')")
+		}
+	}
+
+	if query.FilterOrderStatus == "completed" {
+		queryResult.Where("orders.status = 'completed'")
+	}
+
+	if query.FilterOrderStatus == "canceled" {
+		queryResult.Where("orders.status = 'canceled'")
+	}
+
+	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
+		queryResult.Where("transactions.transaction_date::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+	}
+
 	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
 		Find(&orderList)
 
