@@ -78,10 +78,22 @@ func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	err := h.authService.SendResetPasswordEmail(c, request)
+	result, err := h.authService.SendResetPasswordEmail(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	utils.ResponseSuccess(c, nil, nil)
+	responseData := dtos.NewUserVerifyResetPasswordResponse(result)
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UserResetPassword(c *gin.Context) {
+	var request *dtos.ResetPasswordRequest
+	resetPasswordID := c.Param("resetPasswordID")
+	responseData, err := h.authService.ResetPassword(c, resetPasswordID, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
 }

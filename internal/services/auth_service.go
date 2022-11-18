@@ -18,7 +18,8 @@ type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
-	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) error
+	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
+	ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error)
 }
 
 type authService struct {
@@ -187,19 +188,64 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 	return
 }
 
-func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserVerifyResetPasswordRequest) error {
+func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserVerifyResetPasswordRequest) (bool, error) {
 	email, err := u.emailRepository.GetByEmail(request.Email)
 	if err != nil {
-		return e.ErrEmailNotFound
+		return false, e.ErrEmailNotFound
 	}
 	user, err := u.userRepository.GetByEmailID(email.ID)
 	if err != nil {
-		return e.ErrUserNotFound
+		return false, e.ErrUserNotFound
 	}
-	err = u.redisRepository.Set(c, "reset-password:"+user.ID.String(), uuid.New().String(), 15*time.Minute)
+	resetPasswordID := uuid.New().String()
+	err = u.redisRepository.Set(c, "reset-password:"+resetPasswordID, user.ID.String(), 15*time.Minute)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	err = u.redisRepository.Set(c, "reset-password:"+user.ID.String(), resetPasswordID, 15*time.Minute)
+	if err != nil {
+		return false, err
+	}
+
+	to := []string{user.Email.Address}
+	cc := []string{}
+	subject := "Reset Password Link"
+	message := "Reset Password ID: " + resetPasswordID
+
+	err = utils.SendMail(to, cc, subject, message)
+	if err != nil {
+		return false, e.ErrSendingEmailFailed
+	}
+
+	return true, nil
+}
+
+func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error) {
+	userID, err := u.redisRepository.Get(c, "reset-password:"+resetPasswordID)
+	if err != nil {
+		return nil, err
+	}
+	getResetPasswordID, err := u.redisRepository.Get(c, "reset-password:"+userID)
+	if err != nil {
+		return nil, err
+	}
+	if resetPasswordID != getResetPasswordID {
+		return nil, e.ErrInvalidResetPasswordID
+	}
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+	user, err := u.userRepository.GetByID(userUUID)
+	if err != nil {
+		return nil, err
+	}
+	hashedPassword, err := utils.Hash(request.Password)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = hashedPassword
+	responseData := dtos.NewResetPasswordResponse(true)
+	return responseData, nil
 }
 

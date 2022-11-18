@@ -91,5 +91,31 @@ func NewAuthStepUpPasswordResponse(token string) (target *AuthStepUpPasswordResp
 }
 
 type UserVerifyResetPasswordRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" binding:"required"`
+}
+
+type UserVerifyResetPasswordResponse struct {
+	Status bool `json:"status"`
+}
+
+func NewUserVerifyResetPasswordResponse(status bool) (target *UserVerifyResetPasswordResponse) {
+	target = &UserVerifyResetPasswordResponse{
+		Status: status,
+	}
+	return
+}
+
+type ResetPasswordRequest struct {
+	Password string `json:"password" binding:"required"`
+}
+
+type ResetPasswordResponse struct {
+	Status bool `json:"status"`
+}
+
+func NewResetPasswordResponse(status bool) (target *ResetPasswordResponse) {
+	target = &ResetPasswordResponse{
+		Status: status,
+	}
+	return
 }
