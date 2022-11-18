@@ -71,16 +71,21 @@ func Init() *Handler {
 		MerchantRepository: merchantRepository,
 		UserRepository:     userRepository,
 	})
+	profileService := services.NewProfileService(&services.ProfileServiceConfig{
+		UserRepository:  userRepository,
+		RedisRepository: redisRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
 		WalletService:          walletService,
 		AuthService:            authService,
 		CategoryService:        categoryService,
-		MerchantService:        merchantService,
 		UserService:            userService,
+		ProfileService:         profileService,
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,
+		MerchantService:        merchantService,
 	})
 
 	return h

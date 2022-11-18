@@ -13,6 +13,7 @@ type UserRepository interface {
 	GetByUsername(username string) (model *models.User, err error)
 	GetByEmailID(emailID uuid.UUID) (model *models.User, err error)
 	GetByID(id uuid.UUID) (model *models.User, err error)
+	GetByIDJoinsEmail(id uuid.UUID) (model *models.User, err error)
 	Update(id uuid.UUID, newModel *models.User) (model *models.User, err error)
 }
 
@@ -73,6 +74,16 @@ func (u *userRepository) GetByEmailID(emailID uuid.UUID) (model *models.User, er
 
 func (u *userRepository) GetByID(id uuid.UUID) (model *models.User, err error) {
 	result := u.db.First(&model, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (u *userRepository) GetByIDJoinsEmail(id uuid.UUID) (model *models.User, err error) {
+	result := u.db.Joins("Email").First(&model, id)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

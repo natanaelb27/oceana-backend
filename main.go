@@ -13,5 +13,6 @@ func main() {
 	db.RedisConnect()
 	h := handlers.Init()
 	utils.RegisterTagName()
+	utils.RegisterValidation()
 	routers.Init(h)
 }
