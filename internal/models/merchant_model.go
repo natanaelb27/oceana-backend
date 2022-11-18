@@ -11,6 +11,7 @@ type Merchant struct {
 	ID        uint
 	UserID    uuid.UUID
 	User      User
+	Photo     *string
 	Name      string
 	AddressID uuid.UUID
 	Address   Address
