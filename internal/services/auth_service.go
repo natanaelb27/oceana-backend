@@ -1,17 +1,22 @@
 package services
 
 import (
+	"time"
+
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
+	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 }
 
 type authService struct {
@@ -19,6 +24,7 @@ type authService struct {
 	emailRepository        r.EmailRepository
 	walletRepository       r.WalletRepository
 	refreshTokenRepository r.RefreshTokenRepository
+	redisRepository        r.RedisRepository
 }
 
 type AuthServiceConfig struct {
@@ -26,6 +32,7 @@ type AuthServiceConfig struct {
 	EmailRepository        r.EmailRepository
 	WalletRepository       r.WalletRepository
 	RefreshTokenRepository r.RefreshTokenRepository
+	RedisRepository        r.RedisRepository
 }
 
 func NewAuthService(c *AuthServiceConfig) AuthService {
@@ -34,6 +41,7 @@ func NewAuthService(c *AuthServiceConfig) AuthService {
 		emailRepository:        c.EmailRepository,
 		walletRepository:       c.WalletRepository,
 		refreshTokenRepository: c.RefreshTokenRepository,
+		redisRepository:        c.RedisRepository,
 	}
 }
 
@@ -146,4 +154,33 @@ func (u *authService) Login(userLoginRequest *externalDtos.UserLoginRequest) (*i
 		return userLoginData, nil
 	}
 	return nil, e.ErrUserNotFound
+}
+
+func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error) {
+	user, err := u.userRepository.GetByID(id)
+	if err != nil {
+		return
+	}
+	err = utils.CheckHash(user.Password, request.Password)
+	if err != nil {
+		err = e.ErrInvalidPassword
+		return
+	}
+
+	jwtWrapper, err := utils.NewJwtWrapper()
+	if err != nil {
+		return
+	}
+	jwtData := internalDtos.NewJwtStepUp("level1")
+	token, err = jwtWrapper.JwtStepUpGenerateToken(jwtData)
+	if err != nil {
+		return
+	}
+
+	err = u.redisRepository.Set(c, "upgrade-token-password:"+id.String(), token, 10*time.Minute)
+	if err != nil {
+		return
+	}
+
+	return
 }
