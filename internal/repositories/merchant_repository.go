@@ -54,12 +54,14 @@ func (m *merchantRepository) GetByName(name string) (model *models.Merchant, err
 
 func (r *merchantRepository) GetByUserID(id uuid.UUID) (model *models.Merchant, err error) {
 	result := r.db.Where("user_id = ?", id).First(&model)
+
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			err = e.ErrMerchantNotFound
+			return
+		}
+
 		err = e.ErrDatabaseOperationFailed
-		return
-	}
-	if result.RowsAffected == 0 {
-		err = e.ErrMerchantNotFound
 		return
 	}
 
@@ -114,11 +116,12 @@ func (r *merchantRepository) GetInformationByID(id uint) (merchantInformation *d
 		First(&merchantInformation)
 
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			err = e.ErrMerchantNotFound
+			return
+		}
+
 		err = e.ErrDatabaseOperationFailed
-		return
-	}
-	if result.RowsAffected == 0 {
-		err = e.ErrMerchantNotFound
 		return
 	}
 
