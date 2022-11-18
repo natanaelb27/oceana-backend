@@ -11,7 +11,7 @@ type Refund struct {
 	ID                       uuid.UUID
 	OrderDetailID            uuid.UUID
 	OrderDetail              OrderDetail
-	Quantity                 int
+	Quantity                 uint
 	Reason                   string
 	RefundRequestDatetime    time.Time
 	RefundExpirationDatetime time.Time

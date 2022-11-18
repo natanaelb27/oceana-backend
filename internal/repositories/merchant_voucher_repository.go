@@ -95,8 +95,8 @@ func (r *merchantVoucherRepository) GetAllDetails(query *dtos.MerchantVoucherQue
 		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
 	}
 
-	if query.FilterMerchant != 0 {
-		queryResult.Where("merchant_id = ?", query.FilterMerchant)
+	if query.MerchantID != 0 {
+		queryResult.Where("merchant_id = ?", query.MerchantID)
 	}
 
 	queryResult.

@@ -10,7 +10,7 @@ type ProductReview struct {
 	ID            uint
 	UserId        uint
 	User          User
-	OrderDetailId int
+	OrderDetailId uint
 	OrderDetail   OrderDetail
 	Rating        uint
 	Review        string

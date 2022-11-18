@@ -9,6 +9,7 @@ import (
 
 type MerchantService interface {
 	Register(merchantCreateRequest *dtos.MerchantCreateRequest) (merchantCreateResponse *dtos.MerchantCreateResponse, err error)
+	GetInformationByID(id uint) (merchantGetInformationByIDResponse *dtos.MerchantGetInformationByIDResponse, err error)
 }
 
 type merchantService struct {
@@ -48,5 +49,15 @@ func (m *merchantService) Register(merchantCreateRequest *dtos.MerchantCreateReq
 		return
 	}
 	merchantCreateResponse = dtos.NewMerchantCreateResponse(createdMerchant)
+	return
+}
+
+func (m *merchantService) GetInformationByID(id uint) (merchantGetInformationByIDResponse *dtos.MerchantGetInformationByIDResponse, err error) {
+	merchantInformation, err := m.merchantRepository.GetInformationByID(id)
+	if err != nil {
+		return
+	}
+
+	merchantGetInformationByIDResponse = dtos.NewMerchantGetInformationByIDResponse(merchantInformation)
 	return
 }

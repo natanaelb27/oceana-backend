@@ -13,7 +13,7 @@ type TransactionMarketplaceVoucher struct {
 	Transaction          Transaction
 	MarketplaceVoucherID uint
 	MarketplaceVoucher   MarketplaceVoucher
-	TotalDiscount        int
+	TotalDiscount        uint
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 	DeletedAt            gorm.DeletedAt

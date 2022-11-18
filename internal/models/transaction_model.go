@@ -13,9 +13,9 @@ type Transaction struct {
 	UserID                    uuid.UUID
 	User                      User
 	TransactionDate           time.Time
-	TotalPrice                int
-	TotalPriceAfterDiscount   int
-	TotalPriceWithShippingFee int
+	TotalPrice                uint
+	TotalPriceAfterDiscount   uint
+	TotalPriceWithShippingFee uint
 	PaymentMethodID           uint
 	PaymentMethod             PaymentMethod
 	AddressSnapshotID         uint
