@@ -18,6 +18,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.POST("/password/check-verification-code", h.ProfileCheckPasswordVerificationCode)
 		privateRoute.POST("/password/request-verification-code", h.ProfileRequestChangePasswordVerificationCode)
 		privateRoute.PATCH("/password", h.UpdateProfilePassword)
-		privateRoute.POST("/sealabs-pay", h.SealabsPayCreate)
+		privateRoute.POST("/sealabs-pay", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayCreate)
 	}
 }
