@@ -9,7 +9,6 @@ import (
 
 type Transaction struct {
 	ID                        uuid.UUID
-	TxID                      string
 	UserID                    uuid.UUID
 	User                      User
 	TransactionDate           time.Time

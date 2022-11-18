@@ -1,6 +1,11 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type Address struct {
 	ID            uuid.UUID
@@ -11,4 +16,7 @@ type Address struct {
 	SubDistrictID uint
 	SubDistrict   SubDistrict
 	IsDefault     bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt
 }
