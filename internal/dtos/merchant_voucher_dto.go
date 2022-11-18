@@ -26,7 +26,7 @@ type MerchantVoucherDetails struct {
 type MerchantVoucherQuery struct {
 	SearchVoucherCode   string `json:"search_voucher_code"`
 	FilterVoucherStatus string `json:"filter_voucher_status"`
-	FilterMerchant      uint   `json:"filter_merchant"`
+	MerchantID          uint   `json:"merchant_id"`
 	SortBy              string `json:"sort_by"`
 	Sort                string `json:"sort"`
 	Limit               uint   `json:"limit"`
@@ -38,7 +38,7 @@ func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 
 	searchVoucherCode := c.Query("search_voucher_code")
 	filterVoucherStatus := strings.ToLower(c.Query("filter_voucher_status"))
-	FilterMerchant := c.Query("filter_merchant")
+	merchantID := c.Query("merchant_id")
 	sortBy := strings.ToLower(c.Query("sort_by"))
 	sort := strings.ToLower(c.Query("sort"))
 	limit := c.Query("limit")
@@ -47,12 +47,14 @@ func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 	query.SearchVoucherCode = searchVoucherCode
 	query.FilterVoucherStatus = filterVoucherStatus
 
-	filterMerchantInt, err := strconv.Atoi(FilterMerchant)
+	merchantIDInt, err := strconv.Atoi(merchantID)
 
 	if err != nil {
-		filterMerchantInt = 0
+		query.MerchantID = 0
+	} else if merchantIDInt <= 0 {
+		query.MerchantID = 0
 	} else {
-		query.FilterMerchant = uint(filterMerchantInt)
+		query.MerchantID = uint(merchantIDInt)
 	}
 
 	if sortBy == "end_datetime" {
