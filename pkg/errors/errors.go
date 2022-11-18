@@ -23,52 +23,78 @@ var (
 	ErrEmptyPrice          = errors.New("price should not be empty")
 	ErrEmptyEventID        = errors.New("event id should not be empty")
 
-	ErrInvalidEmailAddress   = errors.New("invalid email address")
-	ErrInvalidPassword       = errors.New("invalid password")
-	ErrInvalidAmount         = errors.New("invalid amount")
-	ErrInvalidMembershipID   = errors.New("invalid membership id")
-	ErrInvalidName           = errors.New("invalid name")
-	ErrInvalidImage          = errors.New("invalid image")
-	ErrInvalidDescription    = errors.New("invalid description")
-	ErrInvalidStartTime      = errors.New("invalid start time")
-	ErrInvalidDurationMinute = errors.New("invalid duration minute")
-	ErrInvalidCapacity       = errors.New("invalid capacity")
-	ErrInvalidStock          = errors.New("invalid stock")
-	ErrInvalidCategoryID     = errors.New("invalid category id")
-	ErrInvalidMerchandiseID  = errors.New("invalid merchandise id")
-	ErrInvalidQuantity       = errors.New("invalid quantity")
-	ErrInvalidPrice          = errors.New("invalid price")
-	ErrInvalidEventID        = errors.New("invalid event id")
-	ErrDataNotFound          = errors.New("data not found")
-	ErrInvalidRequest        = errors.New("invalid request")
-	ErrInvalidIdentifier     = errors.New("invalid identifier")
-	ErrInvalidToken          = errors.New("invalid token")
+	ErrInvalidEmailAddress            = errors.New("invalid email address")
+	ErrInvalidPassword                = errors.New("invalid password")
+	ErrInvalidAmount                  = errors.New("invalid amount")
+	ErrInvalidMembershipID            = errors.New("invalid membership id")
+	ErrInvalidName                    = errors.New("invalid name")
+	ErrInvalidImage                   = errors.New("invalid image")
+	ErrInvalidDescription             = errors.New("invalid description")
+	ErrInvalidStartTime               = errors.New("invalid start time")
+	ErrInvalidDurationMinute          = errors.New("invalid duration minute")
+	ErrInvalidCapacity                = errors.New("invalid capacity")
+	ErrInvalidStock                   = errors.New("invalid stock")
+	ErrInvalidCategoryID              = errors.New("invalid category id")
+	ErrInvalidMerchandiseID           = errors.New("invalid merchandise id")
+	ErrInvalidQuantity                = errors.New("invalid quantity")
+	ErrInvalidPrice                   = errors.New("invalid price")
+	ErrInvalidEventID                 = errors.New("invalid event id")
+	ErrDataNotFound                   = errors.New("data not found")
+	ErrMerchantNotFound               = errors.New("merchant not found")
+	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrInvalidRequest                 = errors.New("invalid request")
+	ErrInvalidIdentifier              = errors.New("invalid identifier")
+	ErrInvalidToken                   = errors.New("invalid token")
+	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
+	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
+	ErrInvalidParams                  = errors.New("invalid params")
 
-	ErrWrongEmailAddress        = errors.New("wrong email address")
-	ErrWrongPassword            = errors.New("wrong password")
-	ErrEmailAddressAlreadyExist = errors.New("email address is already registered")
-	ErrUsernameAlreadyExist     = errors.New("username is already registered")
-	ErrPhoneNumberAlreadyExist  = errors.New("phone number is already registered")
-	ErrWalletAlreadyActive      = errors.New("wallet is already active")
+	ErrWrongEmailAddress                   = errors.New("wrong email address")
+	ErrWrongPassword                       = errors.New("wrong password")
+	ErrEmailAddressAlreadyExist            = errors.New("email address is already registered")
+	ErrUsernameAlreadyExist                = errors.New("username is already registered")
+	ErrPhoneNumberAlreadyExist             = errors.New("phone number is already registered")
+	ErrMerchantNameAlreadyExist            = errors.New("merchant name is already registered")
+	ErrWalletAlreadyActive                 = errors.New("wallet is already active")
+	ErrSealabsPayAccountNumberAlreadyExist = errors.New("account number is already registered")
+	ErrMerchantVoucherCodeAlreadyExist     = errors.New("voucher code already exist")
 
 	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound         = errors.New("user not found")
 	ErrForbidden            = errors.New("you don't have permission to access this resource")
 	ErrResourceDoesNotExist = errors.New("resource does not exist")
+	ErrStepUpNotFound       = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect = errors.New("incorrect step up scope")
 
-	ErrInsufficientBalance      = errors.New("insufficient balance")
-	ErrEventAlreadyBookmarked   = errors.New("event is already bookmarked")
-	ErrEventAlreadyPaid         = errors.New("event is already paid")
-	ErrMerchandiseAlreadyPaid   = errors.New("merchandise is already paid")
-	ErrEventHasNotBeenPaid      = errors.New("event has not been paid")
-	ErrMerchandiseAlreadyInCart = errors.New("merchandise already in cart")
-	ErrExceedEventCapacity      = errors.New("event has reached maximum capacity")
-	ErrExceedMerchandiseStock   = errors.New("merchandise has no stock left")
+	ErrForbiddenMerchant = errors.New("user is not the merchant")
+
+	ErrInsufficientBalance                               = errors.New("insufficient balance")
+	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
+	ErrEventAlreadyPaid                                  = errors.New("event is already paid")
+	ErrMerchandiseAlreadyPaid                            = errors.New("merchandise is already paid")
+	ErrEventHasNotBeenPaid                               = errors.New("event has not been paid")
+	ErrMerchandiseAlreadyInCart                          = errors.New("merchandise already in cart")
+	ErrExceedEventCapacity                               = errors.New("event has reached maximum capacity")
+	ErrExceedMerchandiseStock                            = errors.New("merchandise has no stock left")
+	ErrWalletIsNotActive                                 = errors.New("wallet is not active")
+	ErrDiscountExceedMinimumSpendAmount                  = errors.New("discount is exceeding the minimum spend amount")
+	ErrExceedDiscountPercentage                          = errors.New("discount is more than 100%")
+	ErrMaximumDiscountAmountExceedMinimumSpendAmount     = errors.New("maximum discount amount is exceeding the minimum spend amount")
+	ErrVoucherStartDatetimeEarlierThanNow                = errors.New("voucher start period is earlier than now")
+	ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime = errors.New("voucher end period is earlier than the start period")
+	ErrVoucherPeriodMinimumOneHour                       = errors.New("voucher period must be at least 1 hour")
+	ErrVoucherStartDatetimeMinimumOneDayFromNow          = errors.New("voucher start period must be at least 1 day from now")
+	ErrVoucherHasEnded                                   = errors.New("voucher has ended")
+	ErrMaximumQuotaLowerThanCurrentQuota                 = errors.New("voucher maximum quota is lower than current quota")
+	ErrVoucherEndDatetimeEarlierThanNow                  = errors.New("voucher end period is earlier than now")
+	ErrVoucherNotUpcoming                                = errors.New("voucher is not upcoming")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
+	ErrCacheOperationFailed          = errors.New("cache operation failed")
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
 	ErrHashingFailed                 = errors.New("hashing failed")
+	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -107,20 +133,32 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
-		errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrInvalidToken) ||
-		errors.Is(err, ErrInvalidRequest) {
+		errors.Is(err, ErrInvalidRequest) ||
+		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
+		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
+		errors.Is(err, ErrInvalidParams) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
-		errors.Is(err, ErrUnauthorized) {
+		errors.Is(err, ErrUnauthorized) ||
+		errors.Is(err, ErrStepUpNotFound) ||
+		errors.Is(err, ErrStepUpScopeIncorrect) {
 		return http.StatusUnauthorized
+	} else if errors.Is(err, ErrDataNotFound) ||
+		errors.Is(err, ErrMerchantNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) {
+		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
 		errors.Is(err, ErrUsernameAlreadyExist) ||
-		errors.Is(err, ErrPhoneNumberAlreadyExist) {
+		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
+		errors.Is(err, ErrMerchantNameAlreadyExist) ||
+		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
+		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
-	} else if errors.Is(err, ErrForbidden) {
+	} else if errors.Is(err, ErrForbidden) ||
+		errors.Is(err, ErrForbiddenMerchant) {
 		return http.StatusForbidden
 	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound
@@ -131,7 +169,19 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEventHasNotBeenPaid) ||
 		errors.Is(err, ErrMerchandiseAlreadyInCart) ||
 		errors.Is(err, ErrExceedEventCapacity) ||
-		errors.Is(err, ErrExceedMerchandiseStock) {
+		errors.Is(err, ErrExceedMerchandiseStock) ||
+		errors.Is(err, ErrWalletIsNotActive) ||
+		errors.Is(err, ErrDiscountExceedMinimumSpendAmount) ||
+		errors.Is(err, ErrExceedDiscountPercentage) ||
+		errors.Is(err, ErrMaximumDiscountAmountExceedMinimumSpendAmount) ||
+		errors.Is(err, ErrVoucherStartDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime) ||
+		errors.Is(err, ErrVoucherPeriodMinimumOneHour) ||
+		errors.Is(err, ErrVoucherStartDatetimeMinimumOneDayFromNow) ||
+		errors.Is(err, ErrVoucherHasEnded) ||
+		errors.Is(err, ErrMaximumQuotaLowerThanCurrentQuota) ||
+		errors.Is(err, ErrVoucherEndDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrVoucherNotUpcoming) {
 		return http.StatusUnprocessableEntity
 	}
 

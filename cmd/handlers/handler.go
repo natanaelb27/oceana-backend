@@ -8,28 +8,40 @@ import (
 )
 
 type Handler struct {
-	roleService     services.RoleService
-	authService     services.AuthService
-	addressService  services.AddressService
-	walletService   services.WalletService
-	categoryService services.CategoryService
+	roleService            services.RoleService
+	walletService          services.WalletService
+	authService            services.AuthService
+	categoryService        services.CategoryService
+	userService            services.UserService
+	merchantService        services.MerchantService
+	sealabsPayService      services.SealabsPayService
+	merchantVoucherService services.MerchantVoucherService
+	addressService         services.AddressService
 }
 
 type HandlerConfig struct {
-	RoleService     services.RoleService
-	AuthService     services.AuthService
-	AddressService  services.AddressService
-	WalletService   services.WalletService
-	CategoryService services.CategoryService
+	RoleService            services.RoleService
+	WalletService          services.WalletService
+	AuthService            services.AuthService
+	CategoryService        services.CategoryService
+	UserService            services.UserService
+	MerchantService        services.MerchantService
+	SealabsPayService      services.SealabsPayService
+	MerchantVoucherService services.MerchantVoucherService
+	AddressService         services.AddressService
 }
 
 func New(c *HandlerConfig) *Handler {
 	return &Handler{
-		roleService:     c.RoleService,
-		walletService:   c.WalletService,
-		authService:     c.AuthService,
-		addressService:  c.AddressService,
-		categoryService: c.CategoryService,
+		roleService:            c.RoleService,
+		walletService:          c.WalletService,
+		authService:            c.AuthService,
+		categoryService:        c.CategoryService,
+		userService:            c.UserService,
+		merchantService:        c.MerchantService,
+		sealabsPayService:      c.SealabsPayService,
+		merchantVoucherService: c.MerchantVoucherService,
+		addressService:         c.AddressService,
 	}
 }
 

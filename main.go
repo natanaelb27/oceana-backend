@@ -10,6 +10,7 @@ import (
 func main() {
 	utils.InitEnv()
 	db.Connect()
+	db.RedisConnect()
 	h := handlers.Init()
 	utils.RegisterTagName()
 	routers.Init(h)
