@@ -12,9 +12,9 @@ type ProductMerchantPromotion struct {
 	MerchantPromotion   MerchantPromotion
 	ProductID           uint
 	Product             Product
-	MaximumQuota        int
-	MaximumUserLimit    int
-	CurrentQuota        int
+	MaximumQuota        uint
+	MaximumUserLimit    uint
+	CurrentQuota        uint
 	Status              string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time

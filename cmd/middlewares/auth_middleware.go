@@ -35,13 +35,8 @@ func Auth(c *gin.Context) {
 		return
 	}
 
-	if !utils.RolePermissionToResource(role, c.Request.Method, c.Request.RequestURI) {
-		utils.ResponseError(c, e.ErrForbidden)
-		c.Abort()
-		return
-	}
-
 	c.Set("id", claims.User.ID)
+	c.Set("role", role)
 
 	c.Next()
 }

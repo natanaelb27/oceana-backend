@@ -15,9 +15,9 @@ type Order struct {
 	Merchant                Merchant
 	CourierServiceID        uint
 	CourierService          CourierService
-	TotalPrice              int
-	TotalPriceAfterDiscount int
-	ShippingFee             int
+	TotalPrice              uint
+	TotalPriceAfterDiscount uint
+	ShippingFee             uint
 	Status                  string
 	ClaimStatus             bool
 	CreatedAt               time.Time

@@ -11,7 +11,7 @@ type ProductSnapshot struct {
 	CategoryID  uint
 	Category    Category
 	Name        string
-	Price       int
+	Price       uint
 	Description string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

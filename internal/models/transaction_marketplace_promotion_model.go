@@ -13,7 +13,7 @@ type TransactionMarketplacePromotion struct {
 	Transaction            Transaction
 	MarketplacePromotionID uint
 	MarketplacePromotion   MarketplacePromotion
-	TotalDiscount          int
+	TotalDiscount          uint
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
 	DeletedAt              gorm.DeletedAt
