@@ -47,6 +47,7 @@ func NewMerchantCreateResponse(source *models.Merchant) (target *MerchantCreateR
 type MerchantGetInformationByIDResponse struct {
 	ID              uint      `json:"id"`
 	Name            string    `json:"name"`
+	Photo           *string   `json:"photo"`
 	TotalRating     uint      `json:"total_rating"`
 	RatingStar      float64   `json:"rating_star"`
 	ProductCount    uint      `json:"product_count"`
@@ -62,6 +63,7 @@ func NewMerchantGetInformationByIDResponse(source *dtos.MerchantInformation) (ta
 	target = &MerchantGetInformationByIDResponse{
 		ID:              source.ID,
 		Name:            source.Name,
+		Photo:           source.Photo,
 		TotalRating:     source.TotalRating,
 		RatingStar:      source.RatingStar,
 		ProductCount:    source.ProductCount,

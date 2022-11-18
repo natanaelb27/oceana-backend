@@ -92,6 +92,7 @@ func (r *merchantRepository) GetInformationByID(id uint) (merchantInformation *d
 		Select(`
 			merchants.id AS id,
 			merchants.name AS name,
+			merchants.photo AS photo,
 			merchant_review_agg.total_rating AS total_rating,
 			merchant_review_agg.rating_star AS rating_star,
 			product_agg.product_count AS product_count,
