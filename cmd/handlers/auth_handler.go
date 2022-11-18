@@ -90,6 +90,10 @@ func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
 func (h *Handler) UserResetPassword(c *gin.Context) {
 	var request *dtos.ResetPasswordRequest
 	resetPasswordID := c.Param("resetPasswordID")
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
 	responseData, err := h.authService.ResetPassword(c, resetPasswordID, request)
 	if err != nil {
 		utils.ResponseError(c, err)

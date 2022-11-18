@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -207,12 +208,13 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserV
 		return false, err
 	}
 
-	to := []string{user.Email.Address}
+	to := []string{email.Address}
 	cc := []string{}
 	subject := "Reset Password Link"
 	message := "Reset Password ID: " + resetPasswordID
 
 	err = utils.SendMail(to, cc, subject, message)
+	fmt.Println(err)
 	if err != nil {
 		return false, e.ErrSendingEmailFailed
 	}
@@ -245,7 +247,10 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 		return nil, err
 	}
 	user.Password = hashedPassword
+	_, err = u.userRepository.Update(user.ID, user)
+	if err != nil {
+		return nil, err
+	}
 	responseData := dtos.NewResetPasswordResponse(true)
 	return responseData, nil
 }
-
