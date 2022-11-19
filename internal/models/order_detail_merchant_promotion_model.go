@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrderDetailPromotion struct {
+type OrderDetailMerchantPromotion struct {
 	ID                  uint
 	OrderDetailID       uuid.UUID
 	OrderDetail         OrderDetail

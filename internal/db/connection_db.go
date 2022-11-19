@@ -56,7 +56,7 @@ func Connect() {
 		&models.ProductMediaSnapshot{},
 		&models.ProductVariationSnapshot{},
 		&models.OrderDetail{},
-		&models.OrderDetailPromotion{},
+		&models.OrderDetailMerchantPromotion{},
 		&models.ProductReview{},
 		&models.ProductReviewMedia{},
 		&models.SealabsPayTransactionPayment{},

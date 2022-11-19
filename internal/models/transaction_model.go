@@ -17,8 +17,6 @@ type Transaction struct {
 	TotalPriceWithShippingFee uint
 	PaymentMethodID           uint
 	PaymentMethod             PaymentMethod
-	AddressSnapshotID         uint
-	AddressSnapshot           AddressSnapshot
 	CreatedAt                 time.Time
 	UpdatedAt                 time.Time
 	DeletedAt                 gorm.DeletedAt

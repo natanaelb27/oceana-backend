@@ -4,33 +4,38 @@ import (
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
 )
 
 type OrderService interface {
-	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.BuyerOrderListGetAllResponse, error)
+	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, error)
+	OrderListDetailsGetAll(userId uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetAllResponse, error)
 }
 
 type orderService struct {
-	orderRepository       r.OrderRepository
-	orderDetailRepository r.OrderDetailRepository
+	orderRepository           r.OrderRepository
+	orderDetailRepository     r.OrderDetailRepository
+	addressSnapshotRepository r.AddressSnapshotRepository
 }
 
 type OrderServiceConfig struct {
-	OrderRepository       r.OrderRepository
-	OrderDetailRepository r.OrderDetailRepository
+	OrderRepository           r.OrderRepository
+	OrderDetailRepository     r.OrderDetailRepository
+	AddressSnapshotRepository r.AddressSnapshotRepository
 }
 
 func NewOrderService(c *OrderServiceConfig) OrderService {
 	return &orderService{
-		orderRepository:       c.OrderRepository,
-		orderDetailRepository: c.OrderDetailRepository,
+		orderRepository:           c.OrderRepository,
+		orderDetailRepository:     c.OrderDetailRepository,
+		addressSnapshotRepository: c.AddressSnapshotRepository,
 	}
 }
 
-func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.BuyerOrderListGetAllResponse, error) {
+func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -64,5 +69,35 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 
 	}
 
-	return dtos.NewBuyerOrderListGetAllResponse(orderList, pagination), nil
+	return dtos.NewOrderListGetAllResponse(orderList, pagination), nil
+}
+
+func (s *orderService) OrderListDetailsGetAll(userId uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetAllResponse, error) {
+	orderData, err := s.orderRepository.OrderListDetailsGetAll(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if orderData.UserID != userId {
+		return nil, e.ErrForbiddenOrder
+	}
+
+	addressSnapshot, err := s.addressSnapshotRepository.GetByOrderID(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderData.Address = addressSnapshot
+
+	orderDetails, err := s.orderDetailRepository.OrderDetailListGetByOrderID(orderData.OrderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderData.OrderDetails = orderDetails
+
+	return dtos.NewOrderListDetailsGetAllResponse(orderData), nil
 }

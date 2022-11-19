@@ -50,6 +50,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrMerchantNotFound               = errors.New("merchant not found")
 	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -71,6 +72,7 @@ var (
 	ErrVerificationCodeNotFound = errors.New("verification code not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
+	ErrForbiddenOrder    = errors.New("user is not the buyer")
 
 	ErrInsufficientBalance                               = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
@@ -156,7 +158,8 @@ func GetStatusCode(err error) int {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) {
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrOrderNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
@@ -168,7 +171,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
-		errors.Is(err, ErrForbiddenMerchant) {
+		errors.Is(err, ErrForbiddenMerchant) ||
+		errors.Is(err, ErrForbiddenOrder) {
 		return http.StatusForbidden
 	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound

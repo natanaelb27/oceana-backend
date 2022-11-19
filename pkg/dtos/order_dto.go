@@ -7,6 +7,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type OrderListQuery struct {
@@ -77,19 +78,63 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	return &query
 }
 
-type BuyerOrderListGetAllResponse struct {
+type OrderListGetAllResponse struct {
 	Pagination *utils.Pagination `json:"pagination"`
 	OrderList  []*dtos.OrderList `json:"order_list"`
 }
 
-func NewBuyerOrderListGetAllResponse(source []*dtos.OrderList, pagination *utils.Pagination) (target *BuyerOrderListGetAllResponse) {
+func NewOrderListGetAllResponse(source []*dtos.OrderList, pagination *utils.Pagination) (target *OrderListGetAllResponse) {
 	if pagination == nil {
 		return nil
 	}
 
-	target = &BuyerOrderListGetAllResponse{
+	target = &OrderListGetAllResponse{
 		Pagination: pagination,
 		OrderList:  source,
+	}
+
+	return
+}
+
+type OrderListDetailsGetAllResponse struct {
+	TransactionID                     uuid.UUID                    `json:"transaction_id"`
+	OrderID                           uuid.UUID                    `json:"oder_id"`
+	MerchantID                        uint                         `json:"merchant_id"`
+	ShopName                          string                       `json:"shop_name"`
+	OrderDetails                      []*dtos.OrderDetailList      `json:"order_details"`
+	TransactionDatetime               time.Time                    `json:"transaction_datetime"`
+	OrderStatus                       string                       `json:"order_status"`
+	CourierDescription                string                       `json:"courier_description"`
+	Address                           *dtos.AddressSnapshotDetails `json:"address"`
+	PaymentMethod                     string                       `json:"payment_method"`
+	TotalPriceBeforeDiscount          uint                         `json:"total_price_before_discount"`
+	TotalMerchantPromotionDiscount    float64                      `json:"total_merchant_promotion_discount"`
+	TotalMerchantVoucherDiscount      float64                      `json:"total_merchant_voucher_discount"`
+	TotalMarketplacePromotionDiscount float64                      `json:"total_marketplace_promotion_discount"`
+	TotalMarketplaceVoucherDiscount   float64                      `json:"total_marketplace_voucher_discount"`
+	ShippingFee                       uint                         `json:"shipping_fee"`
+	TotalPayment                      float64                      `json:"total_payment"`
+}
+
+func NewOrderListDetailsGetAllResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetAllResponse) {
+	target = &OrderListDetailsGetAllResponse{
+		TransactionID:                     source.TransactionID,
+		OrderID:                           source.OrderID,
+		MerchantID:                        source.MerchantID,
+		ShopName:                          source.ShopName,
+		OrderDetails:                      source.OrderDetails,
+		TransactionDatetime:               source.TransactionDatetime,
+		OrderStatus:                       source.OrderStatus,
+		CourierDescription:                source.CourierDescription,
+		Address:                           source.Address,
+		PaymentMethod:                     source.PaymentMethod,
+		TotalPriceBeforeDiscount:          source.TotalPriceBeforeDiscount,
+		TotalMerchantPromotionDiscount:    source.TotalMerchantPromotionDiscount,
+		TotalMerchantVoucherDiscount:      source.TotalMerchantVoucherDiscount,
+		TotalMarketplacePromotionDiscount: source.TotalMarketplacePromotionDiscount,
+		TotalMarketplaceVoucherDiscount:   source.TotalMarketplaceVoucherDiscount,
+		ShippingFee:                       source.ShippingFee,
+		TotalPayment:                      source.TotalPayment,
 	}
 
 	return
