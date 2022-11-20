@@ -37,6 +37,7 @@ type ProductQuery struct {
 	Page   uint   `json:"page"`
 	// Filter
 	MerchantID   uint `json:"merchant_id"`
+	CategoryID   uint `json:"category_id"`
 	PriceMinimum uint `json:"price_minimum"`
 	PriceMaximum uint `json:"price_maximum"`
 }
@@ -46,6 +47,7 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 
 	query.Search = c.Query("search")
 	query.MerchantID = utils.StringToUint(c.Query("merchant_id"))
+	query.CategoryID = utils.StringToUint(c.Query("category_id"))
 	query.PriceMinimum = utils.StringToUint(c.Query("price_minimum"))
 	query.PriceMaximum = utils.StringToUint(c.Query("price_maximum"))
 
@@ -74,7 +76,6 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	default:
 		query.SortBy = "name"
 	}
-	fmt.Println()
 
 	return query
 }

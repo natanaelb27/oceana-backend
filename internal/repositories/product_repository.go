@@ -66,6 +66,10 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		query.Where("products.merchant_id = ?", queryParams.MerchantID)
 	}
 
+	if queryParams.CategoryID != 0 {
+		query.Where("products.category_id = ?", queryParams.CategoryID)
+	}
+
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
 
 	query.
