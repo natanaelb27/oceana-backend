@@ -28,6 +28,24 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 	}
 }
 
+func (r *productRepository) subQueryProductItemsMinimumMaximumPrice(priceType string) *gorm.DB {
+	minMax := "MIN"
+	if priceType == "max" {
+		minMax = "MAX"
+	}
+	query := r.db.Model(&models.ProductItem{}).
+		Select(minMax + "(product_items.price)").
+		Where("product_items.product_id = products.id")
+	return query
+}
+
+func (r *productRepository) subQueryProductViewsSum() *gorm.DB {
+	query := r.db.Model(&models.ProductView{}).
+		Select("SUM(product_views.count)").
+		Where("product_views.product_id = products.id")
+	return query
+}
+
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	var ProductDetails []*product_dtos.Product
 
@@ -43,24 +61,16 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.package_size,
             products.condition,
             products.product_status,
-			(
-				SELECT MIN(product_items.price) 
-				FROM product_items 
-				WHERE product_items.product_id = products.id
-			) AS price_minimum,
-			(
-				SELECT MAX(product_items.price) 
-				FROM product_items 
-				WHERE product_items.product_id = products.id
-			) AS price_maximum,
-			(
-				SELECT SUM(product_views.count)
-				FROM product_views 
-				WHERE product_views.product_id = products.id
-			) AS total_view_count,
+			(?) AS price_minimum,
+			(?) AS price_maximum,
+			(?) AS total_view_count,
             products.created_at,
             products.updated_at
-		`)
+		`,
+			r.subQueryProductItemsMinimumMaximumPrice("min"),
+			r.subQueryProductItemsMinimumMaximumPrice("max"),
+			r.subQueryProductViewsSum(),
+		)
 
 	if queryParams.MerchantID != 0 {
 		query.Where("products.merchant_id = ?", queryParams.MerchantID)
@@ -68,6 +78,16 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	if queryParams.CategoryID != 0 {
 		query.Where("products.category_id = ?", queryParams.CategoryID)
+	}
+
+	if queryParams.PriceMinimum != 0 {
+		query.Where(`(?) >= ?`, r.subQueryProductItemsMinimumMaximumPrice("min"), queryParams.PriceMinimum)
+		query.Where(`(?) >= ?`, r.subQueryProductItemsMinimumMaximumPrice("min"), queryParams.PriceMinimum)
+	}
+
+	if queryParams.PriceMaximum != 0 {
+		query.Where(`(?) <= ?`, r.subQueryProductItemsMinimumMaximumPrice("max"), queryParams.PriceMaximum)
+		query.Where(`(?) <= ?`, r.subQueryProductItemsMinimumMaximumPrice("max"), queryParams.PriceMaximum)
 	}
 
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
