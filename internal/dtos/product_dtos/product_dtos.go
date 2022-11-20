@@ -1,6 +1,7 @@
 package product_dtos
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -21,6 +22,8 @@ type Product struct {
 	PackageSize   string    `json:"package_size"`
 	Condition     string    `json:"condition"`
 	ProductStatus string    `json:"product_status"`
+	PriceMinimum  uint      `json:"price_minimum"`
+	PriceMaximum  uint      `json:"price_maximum"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
@@ -58,15 +61,18 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.Sort = utils.QueryParamSort(c.Query("sort"))
 
 	sortBy := strings.ToLower(c.Query("sort_by"))
+	fmt.Println(sortBy)
 	switch sortBy {
 	case "newest":
-		query.SortBy = "created_at"
+		query.SortBy = "products.created_at"
+	case "price":
+		query.SortBy = "price_minimum"
 	// case most buy
-	// case price
 	// case recommended
 	default:
 		query.SortBy = "name"
 	}
+	fmt.Println()
 
 	return query
 }

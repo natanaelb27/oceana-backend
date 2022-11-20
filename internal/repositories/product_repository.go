@@ -31,14 +31,37 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	var ProductDetails []*product_dtos.Product
 
-	query := r.db.Model(&models.Product{}).
-		Select(`*`)
+	query := r.db.Debug().Model(&models.Product{}).
+		Select(`
+			products.id,
+            products.merchant_id,
+            products.category_id,
+            products.name,
+            products.description,
+            products.is_hazardous,
+            products.weight,
+            products.package_size,
+            products.condition,
+            products.product_status,
+			(
+				SELECT MIN(product_items.price) 
+				FROM product_items 
+				WHERE product_items.product_id = products.id
+			) AS price_minimum,
+			(
+				SELECT MAX(product_items.price) 
+				FROM product_items 
+				WHERE product_items.product_id = products.id
+			) AS price_maximum,
+            products.created_at,
+            products.updated_at
+		`)
 
 	if queryParams.MerchantID != 0 {
-		query.Where("merchant_id = ?", queryParams.MerchantID)
+		query.Where("products.merchant_id = ?", queryParams.MerchantID)
 	}
 
-	query.Where("name ILIKE ?", "%"+queryParams.Search+"%")
+	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
 
 	query.
 		Order(fmt.Sprintf("%s %s", queryParams.SortBy, queryParams.Sort)).
