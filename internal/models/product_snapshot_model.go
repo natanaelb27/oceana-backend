@@ -10,8 +10,6 @@ type ProductSnapshot struct {
 	ID            uint
 	CategoryID    uint
 	Category      Category
-	ProductID     int
-	Product       Product
 	ProductItemID int
 	ProductItem   ProductItem
 	Name          string

@@ -19,12 +19,14 @@ type orderService struct {
 	orderRepository           r.OrderRepository
 	orderDetailRepository     r.OrderDetailRepository
 	addressSnapshotRepository r.AddressSnapshotRepository
+	orderTrackingRepository   r.OrderTrackingRepository
 }
 
 type OrderServiceConfig struct {
 	OrderRepository           r.OrderRepository
 	OrderDetailRepository     r.OrderDetailRepository
 	AddressSnapshotRepository r.AddressSnapshotRepository
+	OrderTrackingRepository   r.OrderTrackingRepository
 }
 
 func NewOrderService(c *OrderServiceConfig) OrderService {
@@ -32,6 +34,7 @@ func NewOrderService(c *OrderServiceConfig) OrderService {
 		orderRepository:           c.OrderRepository,
 		orderDetailRepository:     c.OrderDetailRepository,
 		addressSnapshotRepository: c.AddressSnapshotRepository,
+		orderTrackingRepository:   c.OrderTrackingRepository,
 	}
 }
 
@@ -90,6 +93,14 @@ func (s *orderService) OrderListDetailsGetAll(userId uuid.UUID, orderID uuid.UUI
 	}
 
 	orderData.Address = addressSnapshot
+
+	orderTrackingHistory, err := s.orderTrackingRepository.GetByOrderID(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderData.OrderTrackingHistory = orderTrackingHistory
 
 	orderDetails, err := s.orderDetailRepository.OrderDetailListGetByOrderID(orderData.OrderID)
 

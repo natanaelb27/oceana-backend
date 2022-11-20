@@ -49,6 +49,7 @@ func Connect() {
 		&models.TransactionMarketplacePromotion{},
 		&models.TransactionMarketplaceVoucher{},
 		&models.Order{},
+		&models.OrderTracking{},
 		&models.OrderMerchantVoucher{},
 		&models.MerchantPromotion{},
 		&models.ProductMerchantPromotion{},

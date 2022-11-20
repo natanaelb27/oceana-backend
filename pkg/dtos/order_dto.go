@@ -105,6 +105,7 @@ type OrderListDetailsGetAllResponse struct {
 	TransactionDatetime               time.Time                    `json:"transaction_datetime"`
 	OrderStatus                       string                       `json:"order_status"`
 	CourierDescription                string                       `json:"courier_description"`
+	OrderTrackingHistory              []*dtos.OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
 	Address                           *dtos.AddressSnapshotDetails `json:"address"`
 	PaymentMethod                     string                       `json:"payment_method"`
 	TotalPriceBeforeDiscount          uint                         `json:"total_price_before_discount"`
@@ -126,6 +127,7 @@ func NewOrderListDetailsGetAllResponse(source *dtos.OrderListDetails) (target *O
 		TransactionDatetime:               source.TransactionDatetime,
 		OrderStatus:                       source.OrderStatus,
 		CourierDescription:                source.CourierDescription,
+		OrderTrackingHistory:              source.OrderTrackingHistory,
 		Address:                           source.Address,
 		PaymentMethod:                     source.PaymentMethod,
 		TotalPriceBeforeDiscount:          source.TotalPriceBeforeDiscount,

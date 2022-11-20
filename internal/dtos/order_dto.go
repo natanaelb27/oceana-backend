@@ -27,6 +27,7 @@ type OrderListDetails struct {
 	TransactionDatetime               time.Time               `json:"transaction_datetime"`
 	OrderStatus                       string                  `json:"order_status"`
 	CourierDescription                string                  `json:"courier_description"`
+	OrderTrackingHistory              []*OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
 	Address                           *AddressSnapshotDetails `json:"address" gorm:"-"`
 	PaymentMethod                     string                  `json:"payment_method"`
 	TotalPriceBeforeDiscount          uint                    `json:"total_price_before_discount"`

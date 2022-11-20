@@ -58,10 +58,15 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	orderTrackingRepository := repositories.NewOrderTrackingRepository(&repositories.OrderTrackingRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
 		OrderRepository:           orderRepository,
 		OrderDetailRepository:     orderDetailRepository,
 		AddressSnapshotRepository: addressSnapshotRepository,
+		OrderTrackingRepository:   orderTrackingRepository,
 	})
 
 	userService := services.NewUserService(&services.UserServiceConfig{

@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"strings"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -46,21 +49,30 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Where("transactions.user_id = ?", id)
 
-	if query.FilterOrderStatus == "ongoing" {
-		if query.FilterOngoingOrderStatus != "" && query.FilterOngoingOrderStatus != "all" {
-			queryResult.Where("orders.status = ?", query.FilterOngoingOrderStatus)
+	if strings.EqualFold(query.FilterOrderStatus, constants.OngoingStatus) {
+		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
+			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
 		} else {
-			queryResult.Where("orders.status IN ('pending payment', 'pending seller', 'out for delivery', 'delivered', 'complained')")
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+				constants.PendingPaymentStatus,
+				constants.PendingSellerStatus,
+				constants.OutForDeliveryStatus,
+				constants.DeliveredStatus,
+				constants.ComplainedStatus)
+		}
+	} else {
+		if query.FilterOrderStatus != "" && !strings.EqualFold(query.FilterOrderStatus, constants.AllStatus) {
+			queryResult.Where("orders.status ILIKE ?", query.FilterOrderStatus)
 		}
 	}
 
-	if query.FilterOrderStatus == "completed" {
-		queryResult.Where("orders.status = 'completed'")
-	}
+	// if strings.EqualFold(query.FilterOrderStatus, constants.CompletedStatus) {
+	// 	queryResult.Where("orders.status ILIKE ?", constants.CompletedStatus)
+	// }
 
-	if query.FilterOrderStatus == "canceled" {
-		queryResult.Where("orders.status = 'canceled'")
-	}
+	// if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
+	// 	queryResult.Where("orders.status ILIKE ?", constants.CanceledStatus)
+	// }
 
 	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
 		queryResult.Where("transactions.transaction_date::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
