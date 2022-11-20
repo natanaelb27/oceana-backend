@@ -46,6 +46,7 @@ func Connect() {
 		&models.ProductSnapshot{},
 		&models.OrderDetail{},
 		&models.ProductReview{},
+		&models.ProductView{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")

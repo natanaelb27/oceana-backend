@@ -53,6 +53,11 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 				FROM product_items 
 				WHERE product_items.product_id = products.id
 			) AS price_maximum,
+			(
+				SELECT SUM(product_views.count)
+				FROM product_views 
+				WHERE product_views.product_id = products.id
+			) AS total_view_count,
             products.created_at,
             products.updated_at
 		`)

@@ -15,17 +15,18 @@ type Product struct {
 	// Merchant      models.Merchant `json:"merchant"`
 	CategoryID uint `json:"category_id"`
 	// Category      models.Category `json:"category"`
-	Name          string    `json:"name"`
-	Description   string    `json:"description"`
-	IsHazardous   bool      `json:"is_hazardous"`
-	Weight        uint      `json:"weight"`
-	PackageSize   string    `json:"package_size"`
-	Condition     string    `json:"condition"`
-	ProductStatus string    `json:"product_status"`
-	PriceMinimum  uint      `json:"price_minimum"`
-	PriceMaximum  uint      `json:"price_maximum"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	IsHazardous    bool      `json:"is_hazardous"`
+	Weight         uint      `json:"weight"`
+	PackageSize    string    `json:"package_size"`
+	Condition      string    `json:"condition"`
+	ProductStatus  string    `json:"product_status"`
+	PriceMinimum   uint      `json:"price_minimum"`
+	PriceMaximum   uint      `json:"price_maximum"`
+	TotalViewCount uint      `json:"total_view_count"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type ProductQuery struct {
@@ -67,8 +68,9 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 		query.SortBy = "products.created_at"
 	case "price":
 		query.SortBy = "price_minimum"
+	case "recommended":
+		query.SortBy = "total_view_count"
 	// case most buy
-	// case recommended
 	default:
 		query.SortBy = "name"
 	}
