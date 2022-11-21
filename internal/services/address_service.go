@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"github.com/google/uuid"
@@ -13,19 +15,23 @@ type AddressService interface {
 	UpdateProfileAddress(id uuid.UUID, newModel *models.Address) (model *models.Address, err error)
 	DeleteProfileAddress(id uuid.UUID) (*models.Address, error)
 	UpdateProfileAddressDefault(id uuid.UUID, userID uuid.UUID) (model *models.Address, err error)
+	UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error)
 }
 
 type addressService struct {
-	addressRepository r.AddressRepository
+	addressRepository  r.AddressRepository
+	merchantRepository r.MerchantRepository
 }
 
 type AddressServiceConfig struct {
-	AddressRepository r.AddressRepository
+	AddressRepository  r.AddressRepository
+	MerchantRepository r.MerchantRepository
 }
 
 func NewAddressService(c *AddressServiceConfig) AddressService {
 	return &addressService{
-		addressRepository: c.AddressRepository,
+		addressRepository:  c.AddressRepository,
+		merchantRepository: c.MerchantRepository,
 	}
 }
 
@@ -58,4 +64,10 @@ func (a *addressService) DeleteProfileAddress(id uuid.UUID) (*models.Address, er
 
 func (a *addressService) UpdateProfileAddressDefault(id uuid.UUID, userID uuid.UUID) (model *models.Address, err error) {
 	return a.addressRepository.UpdateProfileAddressDefault(id, userID)
+}
+
+func (a *addressService) UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error) {
+	fmt.Println("masuk 0")
+
+	return a.merchantRepository.UpdateProfileAddressShopDefault(userID, addressID)
 }

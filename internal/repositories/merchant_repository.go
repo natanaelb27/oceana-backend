@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -11,6 +13,7 @@ type MerchantRepository interface {
 	Create(merchant *models.Merchant) (*models.Merchant, error)
 	GetByName(name string) (*models.Merchant, error)
 	GetByUserID(id uuid.UUID) (model *models.Merchant, err error)
+	UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error)
 }
 
 type merchantRepository struct {
@@ -58,6 +61,20 @@ func (r *merchantRepository) GetByUserID(id uuid.UUID) (model *models.Merchant, 
 	}
 	if result.RowsAffected == 0 {
 		err = e.ErrMerchantNotFound
+		return
+	}
+
+	return
+}
+
+func (m *merchantRepository) UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error) {
+	fmt.Println("masuk 1")
+
+	result := m.db.Model(&model).Where("user_id = ?", userID).Update("address_id", addressID)
+	fmt.Println("masuk 2")
+
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
 		return
 	}
 

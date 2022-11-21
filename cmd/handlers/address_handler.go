@@ -143,3 +143,25 @@ func (h *Handler) AddressUpdateDefault(c *gin.Context) {
 
 	utils.ResponseSuccess(c, result, nil)
 }
+
+func (h *Handler) AddressShopUpdateDefault(c *gin.Context) {
+	addressID, err := uuid.Parse(c.Param("address_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+	}
+
+	result, err := h.addressService.UpdateProfileAddressShopDefault(userID, addressID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, result, nil)
+}
