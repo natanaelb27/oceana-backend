@@ -46,6 +46,14 @@ func (r *productRepository) subQueryProductViewsSum() *gorm.DB {
 	return query
 }
 
+func (r *productRepository) subQueryProductCourierService(courierServices []string) *gorm.DB {
+	query := r.db.Model(&models.ProductCourierService{}).
+		Select("product_courier_services.courier_service_id").
+		Where("product_courier_services.product_id = products.id").
+		Where("product_courier_services.courier_service_id in (?)", courierServices)
+	return query
+}
+
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	var ProductDetails []*product_dtos.Product
 
@@ -100,6 +108,11 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	if len(queryParams.MerchantCities) > 0 {
 		query = query.Where("cities.id in (?)", queryParams.MerchantCities)
+	}
+
+	if len(queryParams.CourierServices) > 0 {
+		fmt.Println(queryParams.CourierServices)
+		query.Where(`EXISTS (?)`, r.subQueryProductCourierService(queryParams.CourierServices))
 	}
 
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")

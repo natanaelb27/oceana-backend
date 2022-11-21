@@ -43,11 +43,12 @@ type ProductQuery struct {
 	Limit  uint   `json:"limit"`
 	Page   uint   `json:"page"`
 	// Filter
-	MerchantID     uint     `json:"merchant_id"`
-	CategoryID     uint     `json:"category_id"`
-	PriceMinimum   uint     `json:"price_minimum"`
-	PriceMaximum   uint     `json:"price_maximum"`
-	MerchantCities []string `json:"merchant_cities"`
+	MerchantID      uint     `json:"merchant_id"`
+	CategoryID      uint     `json:"category_id"`
+	PriceMinimum    uint     `json:"price_minimum"`
+	PriceMaximum    uint     `json:"price_maximum"`
+	MerchantCities  []string `json:"merchant_cities"`
+	CourierServices []string `json:"courier_services"`
 }
 
 func NewProductQuery(c *gin.Context) *ProductQuery {
@@ -72,6 +73,11 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	merchantCitiesString := c.Query("merchant_cities")
 	if merchantCitiesString != "" {
 		query.MerchantCities = strings.Split(merchantCitiesString, ",")
+	}
+
+	courierServicesString := c.Query("courier_services")
+	if courierServicesString != "" {
+		query.CourierServices = strings.Split(courierServicesString, ",")
 	}
 
 	query.Sort = utils.QueryParamSort(c.Query("sort"))
