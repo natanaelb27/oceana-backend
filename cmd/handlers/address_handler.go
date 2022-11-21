@@ -141,7 +141,9 @@ func (h *Handler) AddressUpdateDefault(c *gin.Context) {
 		return
 	}
 
-	utils.ResponseSuccess(c, result, nil)
+	responseData := dtos.NewAddressCreateResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
 }
 
 func (h *Handler) AddressShopUpdateDefault(c *gin.Context) {
@@ -163,5 +165,7 @@ func (h *Handler) AddressShopUpdateDefault(c *gin.Context) {
 		return
 	}
 
-	utils.ResponseSuccess(c, result, nil)
+	responseData := dtos.NewMerchantCreateResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
 }

@@ -74,5 +74,12 @@ func (m *merchantRepository) UpdateProfileAddressShopDefault(userID uuid.UUID, a
 		return
 	}
 
+	getUpdated := m.db.Where("address_id = ?", addressID).Find(&model)
+
+	if getUpdated.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
 	return
 }

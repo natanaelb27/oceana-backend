@@ -107,5 +107,11 @@ func (a *addressRepository) UpdateProfileAddressDefault(id uuid.UUID, userID uui
 		return
 	}
 
+	getUpdated := a.db.First(&model, id)
+	if getUpdated.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
 	return
 }
