@@ -96,7 +96,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList, pagination *utils.Pagi
 	return
 }
 
-type OrderListDetailsGetAllResponse struct {
+type OrderListDetailsGetByIDResponse struct {
 	TransactionID                   uuid.UUID                    `json:"transaction_id"`
 	OrderID                         uuid.UUID                    `json:"oder_id"`
 	MerchantID                      uint                         `json:"merchant_id"`
@@ -116,8 +116,8 @@ type OrderListDetailsGetAllResponse struct {
 	TotalPayment                    float64                      `json:"total_payment"`
 }
 
-func NewOrderListDetailsGetAllResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetAllResponse) {
-	target = &OrderListDetailsGetAllResponse{
+func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetByIDResponse) {
+	target = &OrderListDetailsGetByIDResponse{
 		TransactionID:                   source.TransactionID,
 		OrderID:                         source.OrderID,
 		MerchantID:                      source.MerchantID,

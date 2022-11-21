@@ -15,7 +15,7 @@ import (
 
 type OrderRepository interface {
 	OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
-	OrderListDetailsGetAll(id uuid.UUID) (*dtos.OrderListDetails, error)
+	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 }
 
 type orderRepository struct {
@@ -80,7 +80,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	return orderList, pagination, nil
 }
 
-func (r *orderRepository) OrderListDetailsGetAll(id uuid.UUID) (*dtos.OrderListDetails, error) {
+func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error) {
 	var orderListDetails *dtos.OrderListDetails
 
 	subQueryTotalPriceBeforeDiscount := r.db.Model(&models.OrderDetail{}).
