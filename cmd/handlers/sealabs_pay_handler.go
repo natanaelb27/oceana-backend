@@ -51,3 +51,21 @@ func (h *Handler) SealabsPayGetAll(c *gin.Context) {
 	utils.ResponseSuccess(c, responseData, nil)
 
 }
+
+func (h *Handler) SealabsPayGetById(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("sealabs_pay_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.sealabsPayService.GetById(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewSealabsPayCreateResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
