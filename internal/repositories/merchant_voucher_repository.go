@@ -74,7 +74,7 @@ func (r *merchantVoucherRepository) GetAllDetails(query *externalDtos.MerchantVo
 			current_quota, 
 			(
 				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
-				AND end_datetime::timestamp THEN 'ongoing' 
+				AND end_datetime::timestaSearchVoucherCodemp THEN 'ongoing' 
 				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
 				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
 			) AS voucher_status
