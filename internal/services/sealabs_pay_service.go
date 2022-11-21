@@ -13,6 +13,7 @@ type SealabsPayService interface {
 	Create(id uuid.UUID, request *dtos.SealabsPayCreateRequest) (*dtos.SealabsPayCreateResponse, error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
+	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
 }
 
 type sealabsPayService struct {
@@ -53,4 +54,8 @@ func (p *sealabsPayService) GetAll(userID uuid.UUID) (model []*models.SealabsPay
 
 func (p *sealabsPayService) GetById(id uuid.UUID) (model *models.SealabsPay, err error) {
 	return p.sealabsPayRepository.GetById(id)
+}
+
+func (p *sealabsPayService) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
+	return p.sealabsPayRepository.Delete(id)
 }

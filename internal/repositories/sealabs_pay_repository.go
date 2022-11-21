@@ -11,6 +11,7 @@ type SealabsPayRepository interface {
 	Create(sealabsPay *models.SealabsPay) (model *models.SealabsPay, err error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
+	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
 }
 
 type sealabsPayRepository struct {
@@ -62,5 +63,16 @@ func (r *sealabsPayRepository) GetById(id uuid.UUID) (model *models.SealabsPay, 
 		return
 	}
 
+	return
+}
+
+func (r *sealabsPayRepository) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
+	result := r.db.Delete(&model, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model.ID = id
 	return
 }

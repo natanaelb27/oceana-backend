@@ -69,3 +69,21 @@ func (h *Handler) SealabsPayGetById(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) SealabsPayDelete(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("sealabs_pay_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.sealabsPayService.Delete(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewSealabsPayDeleteResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
