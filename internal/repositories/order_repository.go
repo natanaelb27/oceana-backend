@@ -66,14 +66,6 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		}
 	}
 
-	// if strings.EqualFold(query.FilterOrderStatus, constants.CompletedStatus) {
-	// 	queryResult.Where("orders.status ILIKE ?", constants.CompletedStatus)
-	// }
-
-	// if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
-	// 	queryResult.Where("orders.status ILIKE ?", constants.CanceledStatus)
-	// }
-
 	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
 		queryResult.Where("transactions.transaction_date::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
 	}
