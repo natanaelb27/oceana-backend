@@ -9,8 +9,8 @@ import (
 type MarketplacePromotion struct {
 	ID                     uint
 	Name                   string
-	StartDate              time.Time
-	EndDate                time.Time
+	StartDatetime          time.Time
+	EndDatetime            time.Time
 	Discount               uint
 	MaxmimumDiscountAmount uint
 	CreatedAt              time.Time
