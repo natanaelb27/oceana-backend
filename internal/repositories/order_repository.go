@@ -105,13 +105,6 @@ func (r *orderRepository) OrderListDetailsGetAll(id uuid.UUID) (*dtos.OrderListD
 		Where("order_merchant_vouchers.order_id = orders.id").
 		Group("order_merchant_vouchers.order_id")
 
-	subQueryMarketplacePromotion := r.db.Model(&models.TransactionMarketplacePromotion{}).
-		Select(`
-			SUM(transaction_marketplace_promotions.total_discount)
-		`).
-		Where("transaction_marketplace_promotions.transaction_id = transactions.id").
-		Group("transaction_marketplace_promotions.transaction_id")
-
 	subQueryMarketplaceVoucher := r.db.Model(&models.TransactionMarketplaceVoucher{}).
 		Select(`
 				SUM(transaction_marketplace_vouchers.total_discount)
@@ -133,7 +126,6 @@ func (r *orderRepository) OrderListDetailsGetAll(id uuid.UUID) (*dtos.OrderListD
 			(?) AS total_price_before_discount,
 			(?) AS total_merchant_promotion_discount,
 			(?) AS total_merchant_voucher_discount,
-			orders.total_price_after_discount::float / transactions.total_price::float * (?) AS total_marketplace_promotion_discount,
 			orders.total_price_after_discount::float / transactions.total_price::float * (?) AS total_marketplace_voucher_discount,
 			orders.shipping_fee AS shipping_fee,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment
@@ -141,7 +133,6 @@ func (r *orderRepository) OrderListDetailsGetAll(id uuid.UUID) (*dtos.OrderListD
 			subQueryTotalPriceBeforeDiscount,
 			subQueryMerchantPromotion,
 			subQueryMerchantVoucher,
-			subQueryMarketplacePromotion,
 			subQueryMarketplaceVoucher).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
