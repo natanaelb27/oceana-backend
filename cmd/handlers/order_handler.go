@@ -27,7 +27,7 @@ func (h *Handler) OrderListGetAll(c *gin.Context) {
 	utils.ResponseSuccess(c, orderListGetAllResponse, nil)
 }
 
-func (h *Handler) OrderListDetailsGetAll(c *gin.Context) {
+func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
@@ -40,7 +40,7 @@ func (h *Handler) OrderListDetailsGetAll(c *gin.Context) {
 		return
 	}
 
-	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetAll(id, orderID)
+	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetByID(id, orderID)
 
 	if err != nil {
 		utils.ResponseError(c, err)
