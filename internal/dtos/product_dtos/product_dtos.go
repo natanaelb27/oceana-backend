@@ -1,7 +1,6 @@
 package product_dtos
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -83,7 +82,6 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.Sort = utils.QueryParamSort(c.Query("sort"))
 
 	sortBy := strings.ToLower(c.Query("sort_by"))
-	fmt.Println(sortBy)
 	switch sortBy {
 	case "newest":
 		query.SortBy = "products.created_at"

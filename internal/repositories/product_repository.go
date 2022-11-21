@@ -57,7 +57,7 @@ func (r *productRepository) subQueryProductCourierService(courierServices []stri
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	var ProductDetails []*product_dtos.Product
 
-	query := r.db.Debug().Model(&models.Product{}).
+	query := r.db.Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -111,7 +111,6 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	}
 
 	if len(queryParams.CourierServices) > 0 {
-		fmt.Println(queryParams.CourierServices)
 		query.Where(`EXISTS (?)`, r.subQueryProductCourierService(queryParams.CourierServices))
 	}
 
