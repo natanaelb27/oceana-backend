@@ -7,6 +7,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -14,7 +15,7 @@ import (
 
 type MerchantVoucherRepository interface {
 	Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
-	GetAllDetails(query *dtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error)
+	GetAllDetails(query *externalDtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error)
 	GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error)
 	Update(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
 	Delete(id uint) (model *models.MerchantVoucher, err error)
@@ -55,7 +56,7 @@ func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (mo
 	return
 }
 
-func (r *merchantVoucherRepository) GetAllDetails(query *dtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error) {
+func (r *merchantVoucherRepository) GetAllDetails(query *externalDtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error) {
 	var merchantVoucherDetails []*dtos.MerchantVoucherDetails
 
 	queryResult := r.db.Model(&models.MerchantVoucher{}).
@@ -137,11 +138,10 @@ func (r *merchantVoucherRepository) GetDetailsByID(id uint) (*dtos.MerchantVouch
 		Where("id = ?", id).
 		First(&merchantVoucherDetails)
 
-	if queryResult.RowsAffected == 0 {
-		return nil, e.ErrVoucherNotFound
-	}
-
 	if queryResult.Error != nil {
+		if queryResult.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrVoucherNotFound
+		}
 		return nil, e.ErrDatabaseOperationFailed
 	}
 

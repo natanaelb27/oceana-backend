@@ -41,7 +41,7 @@ var (
 	ErrInvalidEventID                 = errors.New("invalid event id")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
-	ErrEmailNotFound 				  = errors.New("email not found")
+	ErrEmailNotFound                  = errors.New("email not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
@@ -52,6 +52,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -73,6 +74,7 @@ var (
 	ErrVerificationCodeNotFound = errors.New("verification code not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
+	ErrForbiddenOrder    = errors.New("user is not the buyer")
 
 	ErrInsufficientBalance                               = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
@@ -161,7 +163,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantNotFound) ||
 		errors.Is(err, ErrUserNotFound) ||
 		errors.Is(err, ErrEmailNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) {
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrOrderNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
@@ -173,7 +177,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
-		errors.Is(err, ErrForbiddenMerchant) {
+		errors.Is(err, ErrForbiddenMerchant) ||
+		errors.Is(err, ErrForbiddenOrder) {
 		return http.StatusForbidden
 	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound

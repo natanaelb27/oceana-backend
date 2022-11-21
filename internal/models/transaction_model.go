@@ -9,17 +9,14 @@ import (
 
 type Transaction struct {
 	ID                        uuid.UUID
-	TxID                      string
 	UserID                    uuid.UUID
 	User                      User
-	TransactionDate           time.Time
+	TransactionDatetime       time.Time
 	TotalPrice                uint
 	TotalPriceAfterDiscount   uint
 	TotalPriceWithShippingFee uint
 	PaymentMethodID           uint
 	PaymentMethod             PaymentMethod
-	AddressSnapshotID         uint
-	AddressSnapshot           AddressSnapshot
 	CreatedAt                 time.Time
 	UpdatedAt                 time.Time
 	DeletedAt                 gorm.DeletedAt

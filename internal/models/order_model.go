@@ -13,6 +13,8 @@ type Order struct {
 	Transaction             Transaction
 	MerchantID              uint
 	Merchant                Merchant
+	AddressSnapshotID       uint
+	AddressSnapshot         AddressSnapshot
 	CourierServiceID        uint
 	CourierService          CourierService
 	TotalPrice              uint
