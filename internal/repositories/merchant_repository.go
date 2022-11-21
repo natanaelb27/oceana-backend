@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"fmt"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -68,10 +66,8 @@ func (r *merchantRepository) GetByUserID(id uuid.UUID) (model *models.Merchant, 
 }
 
 func (m *merchantRepository) UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error) {
-	fmt.Println("masuk 1")
 
 	result := m.db.Model(&model).Where("user_id = ?", userID).Update("address_id", addressID)
-	fmt.Println("masuk 2")
 
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound

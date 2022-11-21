@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"github.com/google/uuid"
@@ -67,7 +65,5 @@ func (a *addressService) UpdateProfileAddressDefault(id uuid.UUID, userID uuid.U
 }
 
 func (a *addressService) UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error) {
-	fmt.Println("masuk 0")
-
 	return a.merchantRepository.UpdateProfileAddressShopDefault(userID, addressID)
 }
