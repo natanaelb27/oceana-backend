@@ -1,6 +1,7 @@
 package services
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -10,6 +11,7 @@ import (
 
 type SealabsPayService interface {
 	Create(id uuid.UUID, request *dtos.SealabsPayCreateRequest) (*dtos.SealabsPayCreateResponse, error)
+	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 }
 
 type sealabsPayService struct {
@@ -42,4 +44,8 @@ func (p *sealabsPayService) Create(id uuid.UUID, request *dtos.SealabsPayCreateR
 	response := dtos.NewSealabsPayCreateResponse(newModel)
 
 	return response, nil
+}
+
+func (p *sealabsPayService) GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error) {
+	return p.sealabsPayRepository.GetAll(userID)
 }
