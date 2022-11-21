@@ -9,8 +9,8 @@ import (
 type MarketplaceVoucher struct {
 	ID                     uint
 	Name                   string
-	StartDate              time.Time
-	EndDate                time.Time
+	StartDatetime          time.Time
+	EndDatetime            time.Time
 	DiscountType           string
 	Discount               uint
 	MinimumSpendAmount     uint

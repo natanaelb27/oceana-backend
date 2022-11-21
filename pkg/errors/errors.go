@@ -40,6 +40,8 @@ var (
 	ErrInvalidPrice                   = errors.New("invalid price")
 	ErrInvalidEventID                 = errors.New("invalid event id")
 	ErrDataNotFound                   = errors.New("data not found")
+	ErrMerchantNotFound               = errors.New("merchant not found")
+	ErrEmailNotFound                  = errors.New("email not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
@@ -48,8 +50,9 @@ var (
 	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
-	ErrMerchantNotFound               = errors.New("merchant not found")
+	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -71,6 +74,7 @@ var (
 	ErrVerificationCodeNotFound = errors.New("verification code not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
+	ErrForbiddenOrder    = errors.New("user is not the buyer")
 
 	ErrInsufficientBalance                               = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
@@ -145,7 +149,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidRequest) ||
 		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
-		errors.Is(err, ErrInvalidParams) {
+		errors.Is(err, ErrInvalidParams) ||
+		errors.Is(err, ErrInvalidResetPasswordID) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -156,7 +161,11 @@ func GetStatusCode(err error) int {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) {
+		errors.Is(err, ErrUserNotFound) ||
+		errors.Is(err, ErrEmailNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrOrderNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
@@ -168,7 +177,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
-		errors.Is(err, ErrForbiddenMerchant) {
+		errors.Is(err, ErrForbiddenMerchant) ||
+		errors.Is(err, ErrForbiddenOrder) {
 		return http.StatusForbidden
 	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound

@@ -11,8 +11,8 @@ type MerchantPromotion struct {
 	MerchantId            uint
 	Merchant              Merchant
 	Name                  string
-	StartDate             time.Time
-	EndDate               time.Time
+	StartDatetime         time.Time
+	EndDatetime           time.Time
 	DiscountType          string
 	Discount              uint
 	MaximumDiscountAmount uint
