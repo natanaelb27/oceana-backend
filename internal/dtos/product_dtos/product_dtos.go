@@ -9,6 +9,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Merchant struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+	City string `json:"city"`
+}
+
 type Product struct {
 	ID         uint `json:"id"`
 	MerchantID uint `json:"merchant_id"`
@@ -25,6 +31,7 @@ type Product struct {
 	PriceMinimum   uint      `json:"price_minimum"`
 	PriceMaximum   uint      `json:"price_maximum"`
 	TotalViewCount uint      `json:"total_view_count"`
+	Merchant       Merchant  `json:"merchant"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -36,10 +43,11 @@ type ProductQuery struct {
 	Limit  uint   `json:"limit"`
 	Page   uint   `json:"page"`
 	// Filter
-	MerchantID   uint `json:"merchant_id"`
-	CategoryID   uint `json:"category_id"`
-	PriceMinimum uint `json:"price_minimum"`
-	PriceMaximum uint `json:"price_maximum"`
+	MerchantID     uint     `json:"merchant_id"`
+	CategoryID     uint     `json:"category_id"`
+	PriceMinimum   uint     `json:"price_minimum"`
+	PriceMaximum   uint     `json:"price_maximum"`
+	MerchantCities []string `json:"merchant_cities"`
 }
 
 func NewProductQuery(c *gin.Context) *ProductQuery {
@@ -59,6 +67,11 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.Limit = utils.StringToUint(c.Query("limit"))
 	if query.Limit == 0 {
 		query.Limit = 10
+	}
+
+	merchantCitiesString := c.Query("merchant_cities")
+	if merchantCitiesString != "" {
+		query.MerchantCities = strings.Split(merchantCitiesString, ",")
 	}
 
 	query.Sort = utils.QueryParamSort(c.Query("sort"))

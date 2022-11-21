@@ -65,12 +65,20 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			(?) AS price_maximum,
 			(?) AS total_view_count,
             products.created_at,
-            products.updated_at
+            products.updated_at,
+			merchants.id as "Merchant__id",
+			merchants.name as "Merchant__name",
+			cities.name as "Merchant__city"
 		`,
 			r.subQueryProductItemsMinimumMaximumPrice("min"),
 			r.subQueryProductItemsMinimumMaximumPrice("max"),
 			r.subQueryProductViewsSum(),
-		)
+		).
+		Joins("JOIN merchants ON merchants.id = products.merchant_id").
+		Joins("JOIN addresses ON addresses.id = merchants.address_id").
+		Joins("JOIN sub_districts ON sub_districts.id = addresses.sub_district_id").
+		Joins("JOIN districts ON districts.id = sub_districts.district_id").
+		Joins("JOIN cities ON cities.id = districts.city_id")
 
 	if queryParams.MerchantID != 0 {
 		query.Where("products.merchant_id = ?", queryParams.MerchantID)
@@ -88,6 +96,10 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	if queryParams.PriceMaximum != 0 {
 		query.Where(`(?) <= ?`, r.subQueryProductItemsMinimumMaximumPrice("max"), queryParams.PriceMaximum)
 		query.Where(`(?) <= ?`, r.subQueryProductItemsMinimumMaximumPrice("max"), queryParams.PriceMaximum)
+	}
+
+	if len(queryParams.MerchantCities) > 0 {
+		query = query.Where("cities.id in (?)", queryParams.MerchantCities)
 	}
 
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
