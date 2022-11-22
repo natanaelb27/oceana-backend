@@ -63,7 +63,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	var ProductDetails []*product_dtos.Product
 
-	query := r.db.Model(&models.Product{}).
+	query := r.db.Debug().Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -77,9 +77,36 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.product_status,
 			(@price_minimum) AS price_minimum,
 			(@price_maximum) AS price_maximum,
-			(@price_minimum) AS price_minimum_after_discount,
-			(@price_maximum) AS price_maximum_after_discount,
+			-- count price minimum after discount
+			(
+				CASE
+					WHEN pmp.discount_type = 'percentage' THEN 
+					(
+						(pmp.discount / 100.0) * (@price_minimum)
+					)
+					WHEN pmp.discount_type = 'nominal' THEN 
+					(
+						(@price_minimum) - pmp.discount
+					)
+				ELSE (@price_minimum)
+				END
+			) AS price_minimum_after_discount,
+			-- count price maximum after discount
+			(
+				CASE
+					WHEN pmp.discount_type = 'percentage' THEN 
+					(
+						(pmp.discount / 100.0) * (@price_maximum)
+					)
+					WHEN pmp.discount_type = 'nominal' THEN 
+					(
+						(@price_maximum) - pmp.discount
+					)
+				ELSE (@price_maximum)
+				END
+			) AS price_maximum_after_discount,
 			(@total_view_count) AS total_view_count,
+			pmp.discount as discount,
             products.created_at,
             products.updated_at,
 			merchants.id as "Merchant__id",
@@ -94,23 +121,31 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("JOIN addresses ON addresses.id = merchants.address_id").
 		Joins("JOIN sub_districts ON sub_districts.id = addresses.sub_district_id").
 		Joins("JOIN districts ON districts.id = sub_districts.district_id").
-		Joins("JOIN cities ON cities.id = districts.city_id")
+		Joins("JOIN cities ON cities.id = districts.city_id").
+		// left join to get merchant promotion
+		Joins("LEFT JOIN product_merchant_promotions pmp ON products.id = pmp.product_id")
 
+	// group when status is active or when product got no promotion
+	query.Group("products.id, pmp.id, merchants.id, cities.id").Having("pmp.status = 'active' OR pmp.id IS NULL")
+
+	// filter by merchant
 	if queryParams.MerchantID != 0 {
 		query.Where("products.merchant_id = ?", queryParams.MerchantID)
 	}
 
+	// filter by price category
 	if queryParams.CategoryID != 0 {
 		query.Where("products.category_id = ?", queryParams.CategoryID)
 	}
 
+	// filter by price minimum
 	if queryParams.PriceMinimum != 0 {
 		query.Where(`(@price_minimum) >= @query_price_minimum`,
 			sqPriceMinimum,
 			sql.Named("query_price_minimum", queryParams.PriceMinimum),
 		)
 	}
-
+	// filter by price maximum
 	if queryParams.PriceMaximum != 0 {
 		query.Where(`(@price_maximum) <= @query_price_maximum`,
 			sqPriceMaximum,
@@ -118,16 +153,19 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		)
 	}
 
+	// filter by merchant cities
 	if len(queryParams.MerchantCities) > 0 {
 		query = query.Where("cities.id in (?)", queryParams.MerchantCities)
 	}
 
+	// filter by cities
 	if len(queryParams.CourierServices) > 0 {
 		query.Where(`EXISTS (?)`,
 			r.subQueryProductCourierService(queryParams.CourierServices),
 		)
 	}
 
+	// search by products name
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
 
 	query.

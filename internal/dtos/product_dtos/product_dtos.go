@@ -23,19 +23,22 @@ type Product struct {
 	// Merchant      models.Merchant `json:"merchant"`
 	CategoryID uint `json:"category_id"`
 	// Category      models.Category `json:"category"`
-	Name           string    `json:"name"`
-	Description    string    `json:"description"`
-	IsHazardous    bool      `json:"is_hazardous"`
-	Weight         uint      `json:"weight"`
-	PackageSize    string    `json:"package_size"`
-	Condition      string    `json:"condition"`
-	ProductStatus  string    `json:"product_status"`
-	PriceMinimum   uint      `json:"price_minimum"`
-	PriceMaximum   uint      `json:"price_maximum"`
-	TotalViewCount uint      `json:"total_view_count"`
-	Merchant       Merchant  `json:"merchant"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	Name                      string    `json:"name"`
+	Description               string    `json:"description"`
+	IsHazardous               bool      `json:"is_hazardous"`
+	Weight                    uint      `json:"weight"`
+	PackageSize               string    `json:"package_size"`
+	Condition                 string    `json:"condition"`
+	ProductStatus             string    `json:"product_status"`
+	PriceMinimum              uint      `json:"price_minimum"`
+	PriceMaximum              uint      `json:"price_maximum"`
+	PriceMinimumAfterDiscount float64   `json:"price_minimum_after_discount"`
+	PriceMaximumAfterDiscount float64   `json:"price_maximum_after_discount"`
+	Discount                  uint      `json:"discount"`
+	TotalViewCount            uint      `json:"total_view_count"`
+	Merchant                  Merchant  `json:"merchant"`
+	CreatedAt                 time.Time `json:"created_at"`
+	UpdatedAt                 time.Time `json:"updated_at"`
 }
 
 type ProductQuery struct {
