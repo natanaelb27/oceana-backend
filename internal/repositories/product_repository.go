@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"fmt"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -55,6 +56,11 @@ func (r *productRepository) subQueryProductCourierService(courierServices []stri
 }
 
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
+	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
+	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
+	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
+	// subquery promotion price
+
 	var ProductDetails []*product_dtos.Product
 
 	query := r.db.Model(&models.Product{}).
@@ -69,18 +75,20 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.package_size,
             products.condition,
             products.product_status,
-			(?) AS price_minimum,
-			(?) AS price_maximum,
-			(?) AS total_view_count,
+			(@price_minimum) AS price_minimum,
+			(@price_maximum) AS price_maximum,
+			(@price_minimum) AS price_minimum_after_discount,
+			(@price_maximum) AS price_maximum_after_discount,
+			(@total_view_count) AS total_view_count,
             products.created_at,
             products.updated_at,
 			merchants.id as "Merchant__id",
 			merchants.name as "Merchant__name",
 			cities.name as "Merchant__city"
 		`,
-			r.subQueryProductItemsMinimumMaximumPrice("min"),
-			r.subQueryProductItemsMinimumMaximumPrice("max"),
-			r.subQueryProductViewsSum(),
+			sqPriceMinimum,
+			sqPriceMaximum,
+			sqTotalViewCount,
 		).
 		Joins("JOIN merchants ON merchants.id = products.merchant_id").
 		Joins("JOIN addresses ON addresses.id = merchants.address_id").
@@ -97,13 +105,17 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	}
 
 	if queryParams.PriceMinimum != 0 {
-		query.Where(`(?) >= ?`, r.subQueryProductItemsMinimumMaximumPrice("min"), queryParams.PriceMinimum)
-		query.Where(`(?) >= ?`, r.subQueryProductItemsMinimumMaximumPrice("min"), queryParams.PriceMinimum)
+		query.Where(`(@price_minimum) >= @query_price_minimum`,
+			sqPriceMinimum,
+			sql.Named("query_price_minimum", queryParams.PriceMinimum),
+		)
 	}
 
 	if queryParams.PriceMaximum != 0 {
-		query.Where(`(?) <= ?`, r.subQueryProductItemsMinimumMaximumPrice("max"), queryParams.PriceMaximum)
-		query.Where(`(?) <= ?`, r.subQueryProductItemsMinimumMaximumPrice("max"), queryParams.PriceMaximum)
+		query.Where(`(@price_maximum) <= @query_price_maximum`,
+			sqPriceMaximum,
+			sql.Named("query_price_maximum", queryParams.PriceMaximum),
+		)
 	}
 
 	if len(queryParams.MerchantCities) > 0 {
@@ -111,7 +123,9 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	}
 
 	if len(queryParams.CourierServices) > 0 {
-		query.Where(`EXISTS (?)`, r.subQueryProductCourierService(queryParams.CourierServices))
+		query.Where(`EXISTS (?)`,
+			r.subQueryProductCourierService(queryParams.CourierServices),
+		)
 	}
 
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
