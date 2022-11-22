@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -245,6 +246,12 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	hashedPassword, err := utils.Hash(request.Password)
 	if err != nil {
 		return nil, err
+	}
+	if user.Password == hashedPassword {
+		return nil, e.ErrInvalidPassword
+	}
+	if strings.Contains(request.Password, user.Username) {
+		return nil, e.ErrInvalidPassword
 	}
 	user.Password = hashedPassword
 	_, err = u.userRepository.Update(user.ID, user)
