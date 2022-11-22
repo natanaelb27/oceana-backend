@@ -94,7 +94,6 @@ func (a *addressRepository) DeleteProfileAddress(id uuid.UUID) (model *models.Ad
 }
 
 func (a *addressRepository) UpdateProfileAddressDefault(id uuid.UUID, userID uuid.UUID) (model *models.Address, err error) {
-
 	updateExisting := a.db.Model(&model).Where("user_id = ?", userID).Where("is_default = ?", true).Update("is_default", false)
 	if updateExisting.RowsAffected == 0 {
 		err = e.ErrDataNotFound
