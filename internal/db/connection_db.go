@@ -31,7 +31,6 @@ func Connect() {
 		&models.Email{},
 		&models.Wallet{},
 		&models.Category{},
-		&models.RefreshToken{},
 		&models.SealabsPay{},
 		&models.Merchant{},
 		&models.MerchantVoucher{},

@@ -29,7 +29,6 @@ type authService struct {
 	userRepository         r.UserRepository
 	emailRepository        r.EmailRepository
 	walletRepository       r.WalletRepository
-	refreshTokenRepository r.RefreshTokenRepository
 	redisRepository        r.RedisRepository
 }
 
@@ -37,7 +36,6 @@ type AuthServiceConfig struct {
 	UserRepository         r.UserRepository
 	EmailRepository        r.EmailRepository
 	WalletRepository       r.WalletRepository
-	RefreshTokenRepository r.RefreshTokenRepository
 	RedisRepository        r.RedisRepository
 }
 
@@ -46,7 +44,6 @@ func NewAuthService(c *AuthServiceConfig) AuthService {
 		userRepository:         c.UserRepository,
 		emailRepository:        c.EmailRepository,
 		walletRepository:       c.WalletRepository,
-		refreshTokenRepository: c.RefreshTokenRepository,
 		redisRepository:        c.RedisRepository,
 	}
 }

@@ -29,14 +29,10 @@ func Init() *Handler {
 	emailRepository := repositories.NewEmailRepository(&repositories.EmailRepositoryConfig{
 		DB: db.Get(),
 	})
-	refreshTokenRepository := repositories.NewRefreshTokenRepository(&repositories.RefreshTokenRepositoryConfig{
-		DB: db.Get(),
-	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
 		UserRepository:         userRepository,
 		EmailRepository:        emailRepository,
 		WalletRepository:       walletRepository,
-		RefreshTokenRepository: refreshTokenRepository,
 		RedisRepository:        redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
