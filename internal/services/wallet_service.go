@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -15,6 +16,7 @@ import (
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
+	GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error)
 }
 
 type walletService struct {
@@ -101,4 +103,19 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *ext
 	}
 
 	return
+}
+
+func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error) {
+	wallet, err := p.walletRepository.GetByUserId(id)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(wallet.ID)
+	walletTransactionHistory, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID)
+	if err != nil {
+		return nil, err
+	}
+	externalWalletTransactionHistoryResponse := externalDtos.NewWalletTransactionHistoryResponse(walletTransactionHistory)
+	responseData := externalDtos.NewWalletDetailsResponse(wallet, externalWalletTransactionHistoryResponse)
+	return responseData, nil
 }

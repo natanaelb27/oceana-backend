@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ type WalletRepository interface {
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 	Create(newModel *models.Wallet) (model *models.Wallet, err error)
 	Update(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
+	GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.WalletTransactionHistory, error)
 }
 
 type walletRepository struct {
@@ -84,4 +86,48 @@ func (w *walletRepository) Create(newModel *models.Wallet) (model *models.Wallet
 	}
 	model = newModel
 	return
+}
+
+func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.WalletTransactionHistory, error) {
+	var walletTransactionHistory []*dtos.WalletTransactionHistory
+	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
+		Select(`
+			id, wallet_id, amount, transaction_date, 'Top Up' AS transaction_type
+		`). 
+		Where("wallet_id = ?", id)
+
+	queryWalletTransactions := w.db.Model(&models.Transaction{}). 
+		Select(`
+			transactions.id, wallet_transaction_payments.wallet_id, transactions.total_price_with_shipping_fee, transactions.transaction_datetime, 'Payment Transaction' AS transaction_type
+		`).
+		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id"). 
+		Where("wallet_transaction_payments.wallet_id = ?", id)
+	
+	queryRefundTransactions := w.db.Model(&models.Refund{}).
+		Select(`
+			transactions.id, wallet_transaction_payments.wallet_id, transactions.total_price_with_shipping_fee, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
+		`). 
+		Joins("JOIN order_details ON refunds.order_detail_id = order_details.id"). 
+		Joins("JOIN orders ON order_details.order_id = orders.id"). 
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id"). 
+		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id"). 
+		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id"). 
+		Where("payment_methods.name = ?", "wallet")
+
+	queryResult := w.db.Raw("(?) UNION (?) UNION (?)", 
+		queryWalletTopUp,
+		queryWalletTransactions,
+		queryRefundTransactions,
+	).
+	Order("transaction_date DESC").
+	Find(&walletTransactionHistory)
+
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+	if queryResult.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return walletTransactionHistory, nil 
 }

@@ -64,6 +64,50 @@ func (_m *AuthService) Register(userCreateRequest *dtos.UserCreateRequest) (*dto
 	return r0, r1
 }
 
+// ResetPassword provides a mock function with given fields: c, resetPasswordID, request
+func (_m *AuthService) ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error) {
+	ret := _m.Called(c, resetPasswordID, request)
+
+	var r0 *dtos.ResetPasswordResponse
+	if rf, ok := ret.Get(0).(func(*gin.Context, string, *dtos.ResetPasswordRequest) *dtos.ResetPasswordResponse); ok {
+		r0 = rf(c, resetPasswordID, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.ResetPasswordResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*gin.Context, string, *dtos.ResetPasswordRequest) error); ok {
+		r1 = rf(c, resetPasswordID, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SendResetPasswordEmail provides a mock function with given fields: c, request
+func (_m *AuthService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserVerifyResetPasswordRequest) (bool, error) {
+	ret := _m.Called(c, request)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(*gin.Context, *dtos.UserVerifyResetPasswordRequest) bool); ok {
+		r0 = rf(c, request)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*gin.Context, *dtos.UserVerifyResetPasswordRequest) error); ok {
+		r1 = rf(c, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // StepUpPassword provides a mock function with given fields: c, id, request
 func (_m *AuthService) StepUpPassword(c *gin.Context, id uuid.UUID, request *dtos.AuthStepUpPasswordRequest) (string, error) {
 	ret := _m.Called(c, id, request)

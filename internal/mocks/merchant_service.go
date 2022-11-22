@@ -12,6 +12,29 @@ type MerchantService struct {
 	mock.Mock
 }
 
+// GetInformationByID provides a mock function with given fields: id
+func (_m *MerchantService) GetInformationByID(id uint) (*dtos.MerchantGetInformationByIDResponse, error) {
+	ret := _m.Called(id)
+
+	var r0 *dtos.MerchantGetInformationByIDResponse
+	if rf, ok := ret.Get(0).(func(uint) *dtos.MerchantGetInformationByIDResponse); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.MerchantGetInformationByIDResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Register provides a mock function with given fields: merchantCreateRequest
 func (_m *MerchantService) Register(merchantCreateRequest *dtos.MerchantCreateRequest) (*dtos.MerchantCreateResponse, error) {
 	ret := _m.Called(merchantCreateRequest)

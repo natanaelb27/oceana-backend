@@ -62,6 +62,8 @@ func Connect() {
 		&models.ProductReviewMedia{},
 		&models.SealabsPayTransactionPayment{},
 		&models.WalletTransactionPayment{},
+		&models.WalletTopup{},
+		&models.Refund{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
