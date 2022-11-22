@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -211,7 +212,7 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *externalDt
 	to := []string{email.Address}
 	cc := []string{}
 	subject := "Reset Password Link"
-	message := "Reset Password ID: " + resetPasswordID
+	message := "Reset Password Link (valid for 15 minutes): " + os.Getenv("FRONTEND_URL") + "/reset-password/" + resetPasswordID
 
 	err = utils.SendMail(to, cc, subject, message)
 	fmt.Println(err)
