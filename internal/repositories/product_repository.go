@@ -80,28 +80,20 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			-- count price minimum after discount
 			(
 				CASE
-					WHEN pmp.discount_type = 'percentage' THEN 
-					(
-						(pmp.discount / 100.0) * (@price_minimum)
-					)
-					WHEN pmp.discount_type = 'nominal' THEN 
-					(
-						(@price_minimum) - pmp.discount
-					)
+					WHEN pmp.discount_type = 'percentage' 
+					THEN (pmp.discount / 100.0) * (@price_minimum)
+					WHEN pmp.discount_type = 'nominal' 
+					THEN GREATEST(LEAST((@price_minimum) - pmp.discount, pmp.maximum_discount_amount), 0)
 				ELSE (@price_minimum)
 				END
 			) AS price_minimum_after_discount,
 			-- count price maximum after discount
 			(
 				CASE
-					WHEN pmp.discount_type = 'percentage' THEN 
-					(
-						(pmp.discount / 100.0) * (@price_maximum)
-					)
-					WHEN pmp.discount_type = 'nominal' THEN 
-					(
-						(@price_maximum) - pmp.discount
-					)
+					WHEN pmp.discount_type = 'percentage' 
+					THEN (pmp.discount / 100.0) * (@price_maximum)
+					WHEN pmp.discount_type = 'nominal' 
+					THEN GREATEST(LEAST((@price_maximum) - pmp.discount, pmp.maximum_discount_amount), 0)
 				ELSE (@price_maximum)
 				END
 			) AS price_maximum_after_discount,
