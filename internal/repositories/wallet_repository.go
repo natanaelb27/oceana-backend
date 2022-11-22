@@ -90,44 +90,75 @@ func (w *walletRepository) Create(newModel *models.Wallet) (model *models.Wallet
 
 func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.WalletTransactionHistory, error) {
 	var walletTransactionHistory []*dtos.WalletTransactionHistory
+	var wallet *models.Wallet
+	var merchant *models.Merchant
+	result := w.db.Model(&models.Wallet{}).First(&wallet, id)
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
 	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
 		Select(`
 			id, wallet_id, amount, transaction_date, 'Top Up' AS transaction_type
-		`). 
+		`).
 		Where("wallet_id = ?", id)
 
-	queryWalletTransactions := w.db.Model(&models.Transaction{}). 
+	queryWalletTransactionsAsBuyer := w.db.Model(&models.Transaction{}).
 		Select(`
 			transactions.id, wallet_transaction_payments.wallet_id, transactions.total_price_with_shipping_fee, transactions.transaction_datetime, 'Payment Transaction' AS transaction_type
 		`).
-		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id"). 
-		Where("wallet_transaction_payments.wallet_id = ?", id)
-	
+		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
+		Where("wallet_transaction_payments.wallet_id = ? AND transactions.user_id = ?", id, wallet.UserID)
+
 	queryRefundTransactions := w.db.Model(&models.Refund{}).
 		Select(`
-			transactions.id, wallet_transaction_payments.wallet_id, transactions.total_price_with_shipping_fee, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
-		`). 
-		Joins("JOIN order_details ON refunds.order_detail_id = order_details.id"). 
-		Joins("JOIN orders ON order_details.order_id = orders.id"). 
-		Joins("JOIN transactions ON orders.transaction_id = transactions.id"). 
-		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id"). 
-		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id"). 
+				transactions.id, wallet_transaction_payments.wallet_id, transactions.total_price_with_shipping_fee, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
+			`).
+		Joins("JOIN order_details ON refunds.order_detail_id = order_details.id").
+		Joins("JOIN orders ON order_details.order_id = orders.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
+		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
 		Where("payment_methods.name = ?", "wallet")
 
-	queryResult := w.db.Raw("(?) UNION (?) UNION (?)", 
-		queryWalletTopUp,
-		queryWalletTransactions,
-		queryRefundTransactions,
-	).
-	Order("transaction_date DESC").
-	Find(&walletTransactionHistory)
+	result = w.db.Model(&models.Merchant{}).Where("user_id ?", wallet.UserID).Find(&merchant)
+	if result.Error != gorm.ErrRecordNotFound {
+		queryWalletTransactionsAsSeller := w.db.Model(&models.Order{}).
+			Select(`
+				transactions.id, wallet_transaction_payments.wallet_id, orders.total_price_after_discount, transactions.transaction_datetime, 'Payment Transaction' AS transaction_type
+			`).
+			Joins("JOIN transactions ON transactions.id = orders.transaction_id").
+			Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
+			Where("orders.merchant_id = ?", merchant.ID)
 
-	if queryResult.Error != nil {
-		return nil, e.ErrDatabaseOperationFailed
-	}
-	if queryResult.RowsAffected == 0 {
-		return nil, e.ErrDataNotFound
+		queryResult := w.db.Raw("(?) UNION (?) UNION (?) UNION (?)",
+			queryWalletTopUp,
+			queryWalletTransactionsAsBuyer,
+			queryRefundTransactions,
+			queryWalletTransactionsAsSeller,
+		).
+			Order("transaction_date DESC").
+			Find(&walletTransactionHistory)
+		if queryResult.Error != nil {
+			return nil, e.ErrDatabaseOperationFailed
+		}
+		if queryResult.RowsAffected == 0 {
+			return nil, e.ErrDataNotFound
+		}
+	} else if result.Error == gorm.ErrRecordNotFound {
+		queryResult := w.db.Raw("(?) UNION (?) UNION (?)",
+			queryWalletTopUp,
+			queryWalletTransactionsAsBuyer,
+			queryRefundTransactions,
+		).
+			Order("transaction_date DESC").
+			Find(&walletTransactionHistory)
+		if queryResult.Error != nil {
+			return nil, e.ErrDatabaseOperationFailed
+		}
+		if queryResult.RowsAffected == 0 {
+			return nil, e.ErrDataNotFound
+		}
 	}
 
-	return walletTransactionHistory, nil 
+	return walletTransactionHistory, nil
 }
