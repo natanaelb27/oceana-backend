@@ -13,11 +13,13 @@ type Order struct {
 	Transaction             Transaction
 	MerchantID              uint
 	Merchant                Merchant
+	AddressSnapshotID       uint
+	AddressSnapshot         AddressSnapshot
 	CourierServiceID        uint
 	CourierService          CourierService
-	TotalPrice              int
-	TotalPriceAfterDiscount int
-	ShippingFee             int
+	TotalPrice              uint
+	TotalPriceAfterDiscount uint
+	ShippingFee             uint
 	Status                  string
 	ClaimStatus             bool
 	CreatedAt               time.Time

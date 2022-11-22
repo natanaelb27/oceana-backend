@@ -13,10 +13,15 @@ type Handler struct {
 	authService            services.AuthService
 	categoryService        services.CategoryService
 	userService            services.UserService
+	profileService         services.ProfileService
 	merchantService        services.MerchantService
 	sealabsPayService      services.SealabsPayService
 	merchantVoucherService services.MerchantVoucherService
+<<<<<<< cmd/handlers/handler.go
 	addressService         services.AddressService
+=======
+	orderService           services.OrderService
+>>>>>>> cmd/handlers/handler.go
 }
 
 type HandlerConfig struct {
@@ -24,11 +29,13 @@ type HandlerConfig struct {
 	WalletService          services.WalletService
 	AuthService            services.AuthService
 	CategoryService        services.CategoryService
+	ProfileService         services.ProfileService
 	UserService            services.UserService
 	MerchantService        services.MerchantService
 	SealabsPayService      services.SealabsPayService
 	MerchantVoucherService services.MerchantVoucherService
 	AddressService         services.AddressService
+	OrderService           services.OrderService
 }
 
 func New(c *HandlerConfig) *Handler {
@@ -38,10 +45,12 @@ func New(c *HandlerConfig) *Handler {
 		authService:            c.AuthService,
 		categoryService:        c.CategoryService,
 		userService:            c.UserService,
+		profileService:         c.ProfileService,
 		merchantService:        c.MerchantService,
 		sealabsPayService:      c.SealabsPayService,
 		merchantVoucherService: c.MerchantVoucherService,
 		addressService:         c.AddressService,
+		orderService:           c.OrderService,
 	}
 }
 

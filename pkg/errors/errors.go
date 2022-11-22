@@ -41,32 +41,40 @@ var (
 	ErrInvalidEventID                 = errors.New("invalid event id")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
-	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrEmailNotFound                  = errors.New("email not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
+	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
+	ErrInvalidVerificationCode        = errors.New("invalid verification code")
 	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
+	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
+	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrOrderNotFound                  = errors.New("order not found")
 
-	ErrWrongEmailAddress                   = errors.New("wrong email address")
-	ErrWrongPassword                       = errors.New("wrong password")
-	ErrEmailAddressAlreadyExist            = errors.New("email address is already registered")
-	ErrUsernameAlreadyExist                = errors.New("username is already registered")
-	ErrPhoneNumberAlreadyExist             = errors.New("phone number is already registered")
-	ErrMerchantNameAlreadyExist            = errors.New("merchant name is already registered")
-	ErrWalletAlreadyActive                 = errors.New("wallet is already active")
-	ErrSealabsPayAccountNumberAlreadyExist = errors.New("account number is already registered")
-	ErrMerchantVoucherCodeAlreadyExist     = errors.New("voucher code already exist")
+	ErrWrongEmailAddress                         = errors.New("wrong email address")
+	ErrWrongPassword                             = errors.New("wrong password")
+	ErrEmailAddressAlreadyExist                  = errors.New("email address is already registered")
+	ErrUsernameAlreadyExist                      = errors.New("username is already registered")
+	ErrPhoneNumberAlreadyExist                   = errors.New("phone number is already registered")
+	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
+	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
+	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
+	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
+	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
 
-	ErrUnauthorized         = errors.New("access is denied due to invalid credentials")
-	ErrUserNotFound         = errors.New("user not found")
-	ErrForbidden            = errors.New("you don't have permission to access this resource")
-	ErrResourceDoesNotExist = errors.New("resource does not exist")
-	ErrStepUpNotFound       = errors.New("step up authenticaiton not found")
-	ErrStepUpScopeIncorrect = errors.New("incorrect step up scope")
+	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
+	ErrUserNotFound             = errors.New("user not found")
+	ErrForbidden                = errors.New("you don't have permission to access this resource")
+	ErrResourceDoesNotExist     = errors.New("resource does not exist")
+	ErrStepUpNotFound           = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
+	ErrVerificationCodeNotFound = errors.New("verification code not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
+	ErrForbiddenOrder    = errors.New("user is not the buyer")
 
 	ErrInsufficientBalance                               = errors.New("insufficient balance")
 	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
@@ -95,6 +103,7 @@ var (
 	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
 	ErrHashingFailed                 = errors.New("hashing failed")
 	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
+	ErrSendingEmailFailed            = errors.New("sending email failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -134,31 +143,42 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidEventID) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrInvalidToken) ||
+		errors.Is(err, ErrPasswordCannotContainsUsername) ||
+		errors.Is(err, ErrInvalidRequest) ||
+		errors.Is(err, ErrInvalidVerificationCode) ||
 		errors.Is(err, ErrInvalidRequest) ||
 		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
-		errors.Is(err, ErrInvalidParams) {
+		errors.Is(err, ErrInvalidParams) ||
+		errors.Is(err, ErrInvalidResetPasswordID) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
 		errors.Is(err, ErrUnauthorized) ||
 		errors.Is(err, ErrStepUpNotFound) ||
-		errors.Is(err, ErrStepUpScopeIncorrect) {
+		errors.Is(err, ErrStepUpScopeIncorrect) ||
+		errors.Is(err, ErrVerificationCodeNotFound) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) {
+		errors.Is(err, ErrUserNotFound) ||
+		errors.Is(err, ErrEmailNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrOrderNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
 		errors.Is(err, ErrUsernameAlreadyExist) ||
+		errors.Is(err, ErrPasswordCannotBeTheSameAsPreviousPassword) ||
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
-		errors.Is(err, ErrForbiddenMerchant) {
+		errors.Is(err, ErrForbiddenMerchant) ||
+		errors.Is(err, ErrForbiddenOrder) {
 		return http.StatusForbidden
 	} else if errors.Is(err, ErrResourceDoesNotExist) {
 		return http.StatusNotFound

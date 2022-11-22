@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -14,6 +16,9 @@ type Address struct {
 	SubDistrictID uint
 	SubDistrict   SubDistrict
 	IsDefault     bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt
 }
 
 func (m *Address) BeforeCreate(tx *gorm.DB) (err error) {

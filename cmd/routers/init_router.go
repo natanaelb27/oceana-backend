@@ -32,6 +32,8 @@ func Init(h *handlers.Handler) {
 	category(public, private, h)
 	address(private, h)
 	merchant(public, private, h)
+	shop(public, private, h)
+	myShop(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

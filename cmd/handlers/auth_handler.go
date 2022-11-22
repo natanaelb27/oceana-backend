@@ -71,3 +71,33 @@ func (h *Handler) StepUpPassword(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
+	var request *dtos.UserVerifyResetPasswordRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	result, err := h.authService.SendResetPasswordEmail(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	responseData := dtos.NewUserVerifyResetPasswordResponse(result)
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UserResetPassword(c *gin.Context) {
+	var request *dtos.ResetPasswordRequest
+	resetPasswordID := c.Param("resetPasswordID")
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	responseData, err := h.authService.ResetPassword(c, resetPasswordID, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}

@@ -8,10 +8,10 @@ import (
 )
 
 type OrderDetail struct {
-	ID                      uint
+	ID                      uuid.UUID
 	OrderID                 uuid.UUID
 	Order                   Order
-	ProductSnapshotID       uuid.UUID
+	ProductSnapshotID       uint
 	ProductSnapshot         ProductSnapshot
 	Quantity                uint
 	TotalPrice              uint
@@ -20,4 +20,9 @@ type OrderDetail struct {
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 	DeletedAt               gorm.DeletedAt
+}
+
+func (m *OrderDetail) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	return
 }

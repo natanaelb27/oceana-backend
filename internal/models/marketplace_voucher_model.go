@@ -9,14 +9,14 @@ import (
 type MarketplaceVoucher struct {
 	ID                     uint
 	Name                   string
-	StartDate              time.Time
-	EndDate                time.Time
+	StartDatetime          time.Time
+	EndDatetime            time.Time
 	DiscountType           string
-	Discount               int
-	MinimumSpendAmount     int
-	MaxmimumDiscountAmount int
-	MaximumQuota           int
-	CurrentQuota           int
+	Discount               uint
+	MinimumSpendAmount     uint
+	MaxmimumDiscountAmount uint
+	MaximumQuota           uint
+	CurrentQuota           uint
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
 	DeletedAt              gorm.DeletedAt

@@ -56,6 +56,29 @@ func Init() *Handler {
 		MerchantRepository: merchantRepository,
 	})
 
+	orderRepository := repositories.NewOrderRepository(&repositories.OrderRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderDetailRepository := repositories.NewOrderDetailRepository(&repositories.OrderDetailRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	addressSnapshotRepository := repositories.NewAddressSnapshotRepository(&repositories.AddressSnapshotRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderTrackingRepository := repositories.NewOrderTrackingRepository(&repositories.OrderTrackingRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderService := services.NewOrderService(&services.OrderServiceConfig{
+		OrderRepository:           orderRepository,
+		OrderDetailRepository:     orderDetailRepository,
+		AddressSnapshotRepository: addressSnapshotRepository,
+		OrderTrackingRepository:   orderTrackingRepository,
+	})
+
 	userService := services.NewUserService(&services.UserServiceConfig{
 		UserRepository:  userRepository,
 		EmailRepository: emailRepository,
@@ -78,17 +101,23 @@ func Init() *Handler {
 		MerchantRepository: merchantRepository,
 		UserRepository:     userRepository,
 	})
+	profileService := services.NewProfileService(&services.ProfileServiceConfig{
+		UserRepository:  userRepository,
+		RedisRepository: redisRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
 		WalletService:          walletService,
 		AuthService:            authService,
 		CategoryService:        categoryService,
-		MerchantService:        merchantService,
 		UserService:            userService,
+		ProfileService:         profileService,
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,
 		AddressService:         addressService,
+		MerchantService:        merchantService,
+		OrderService:           orderService,
 	})
 
 	return h
