@@ -66,3 +66,21 @@ func NewWalletChangePinResponse(source *models.Wallet) (target *WalletChangePinR
 	}
 	return
 }
+
+type TopUpWalletRequest struct {
+	TxID         int    `json:"txn_id"`
+	Amount       int    `json:"amount"`
+	Merchantcode string `json:"merchant_code"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	Signature    string `json:"signature"`
+}
+
+func (source *TopUpWalletRequest) ToModel() (target *models.WalletTopup) {
+	target = &models.WalletTopup{
+		TxID:            source.TxID,
+		Amount:          uint(source.Amount),
+		TransactionDate: time.Now(),
+	}
+	return
+}

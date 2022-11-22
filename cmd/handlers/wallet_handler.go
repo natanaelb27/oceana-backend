@@ -56,3 +56,17 @@ func (h *Handler) WalletChangePin(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) WalletTopUpCallback(c *gin.Context) {
+	var request *dtos.TopUpWalletRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	err := h.walletService.CreateWalletTopUp(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, nil, nil)
+}

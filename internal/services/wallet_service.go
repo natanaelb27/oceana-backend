@@ -15,22 +15,26 @@ import (
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
+	CreateWalletTopUp(request *externalDtos.TopUpWalletRequest) error
 }
 
 type walletService struct {
-	walletRepository r.WalletRepository
-	redisRepository  r.RedisRepository
+	walletRepository      r.WalletRepository
+	redisRepository       r.RedisRepository
+	walletTopupRepository r.WalletTopupRepository
 }
 
 type WalletServiceConfig struct {
-	WalletRepository r.WalletRepository
-	RedisRepository  r.RedisRepository
+	WalletRepository      r.WalletRepository
+	RedisRepository       r.RedisRepository
+	WalletTopupRepository r.WalletTopupRepository
 }
 
 func NewWalletService(c *WalletServiceConfig) WalletService {
 	return &walletService{
-		walletRepository: c.WalletRepository,
-		redisRepository:  c.RedisRepository,
+		walletRepository:      c.WalletRepository,
+		redisRepository:       c.RedisRepository,
+		walletTopupRepository: c.WalletTopupRepository,
 	}
 }
 
@@ -101,4 +105,13 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *ext
 	}
 
 	return
+}
+
+func (p *walletService) CreateWalletTopUp(request *externalDtos.TopUpWalletRequest) error {
+	model := request.ToModel()
+	_, err := p.walletTopupRepository.Create(model)
+	if err != nil {
+		return err
+	}
+	return nil
 }
