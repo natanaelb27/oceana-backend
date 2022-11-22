@@ -106,6 +106,13 @@ func Init() *Handler {
 		ProductRepository: productRepository,
 	})
 
+	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
+		DB: db.Get(),
+	})
+	productItemService := services.NewProductItemService(&services.ProductItemServiceConfig{
+		ProductItemRepository: productItemRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
 		WalletService:          walletService,
@@ -118,6 +125,7 @@ func Init() *Handler {
 		MerchantService:        merchantService,
 		OrderService:           orderService,
 		ProductService:         productService,
+		ProductItemService:     productItemService,
 	})
 
 	return h
