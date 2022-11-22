@@ -250,7 +250,7 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	if user.Password == hashedPassword {
 		return nil, e.ErrInvalidPassword
 	}
-	if strings.Contains(request.Password, user.Username) {
+	if strings.Contains(strings.ToLower(request.Password), strings.ToLower(user.Username)) {
 		return nil, e.ErrInvalidPassword
 	}
 	user.Password = hashedPassword
