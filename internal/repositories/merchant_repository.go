@@ -66,7 +66,6 @@ func (r *merchantRepository) GetByUserID(id uuid.UUID) (model *models.Merchant, 
 }
 
 func (m *merchantRepository) UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error) {
-
 	result := m.db.Model(&model).Where("user_id = ?", userID).Update("address_id", addressID)
 
 	if result.RowsAffected == 0 {
