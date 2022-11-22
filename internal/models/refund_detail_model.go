@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type RefundAmount struct {
+type RefundDetail struct {
 	ID                 uuid.UUID
 	RefundID           uuid.UUID
 	Refund             Refund
@@ -18,7 +18,7 @@ type RefundAmount struct {
 	DeletedAt          gorm.DeletedAt
 }
 
-func (m *RefundAmount) BeforeCreate(tx *gorm.DB) (err error) {
+func (m *RefundDetail) BeforeCreate(tx *gorm.DB) (err error) {
 	m.ID = uuid.New()
 	return
 }
