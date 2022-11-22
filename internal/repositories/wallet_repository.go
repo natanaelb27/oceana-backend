@@ -93,12 +93,15 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 	var wallet *models.Wallet
 	var merchant *models.Merchant
 	result := w.db.Model(&models.Wallet{}).First(&wallet, id)
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
 	if result.RowsAffected == 0 {
 		return nil, e.ErrDataNotFound
 	}
 	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
 		Select(`
-			id, wallet_id, amount, transaction_date, 'Top Up' AS transaction_type
+			id, wallet_id, amount, transaction_date, 'Top Up Transaction' AS transaction_type
 		`).
 		Where("wallet_id = ?", id)
 
@@ -124,7 +127,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 	if result.Error != gorm.ErrRecordNotFound {
 		queryWalletTransactionsAsSeller := w.db.Model(&models.Order{}).
 			Select(`
-				transactions.id, wallet_transaction_payments.wallet_id, orders.total_price_after_discount, transactions.transaction_datetime, 'Payment Transaction' AS transaction_type
+				transactions.id, wallet_transaction_payments.wallet_id, orders.total_price_after_discount, transactions.transaction_datetime, 'Received Payment Transaction' AS transaction_type
 			`).
 			Joins("JOIN transactions ON transactions.id = orders.transaction_id").
 			Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
