@@ -39,3 +39,15 @@ func NewSealabsPayCreateResponse(source *models.SealabsPay) (target *SealabsPayC
 	}
 	return
 }
+
+type SealabsPayDeleteResponse struct {
+	ID uuid.UUID `json:"id"`
+}
+
+func NewSealabsPayDeleteResponse(source *models.SealabsPay) (target *SealabsPayDeleteResponse) {
+	target = &SealabsPayDeleteResponse{
+		ID: source.ID,
+	}
+
+	return
+}
