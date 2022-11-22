@@ -9,7 +9,6 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
@@ -21,7 +20,7 @@ type AuthService interface {
 	Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
-	ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error)
+	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
 }
 
 type authService struct {
@@ -190,7 +189,7 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 	return
 }
 
-func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserVerifyResetPasswordRequest) (bool, error) {
+func (u *authService) SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error) {
 	email, err := u.emailRepository.GetByEmail(request.Email)
 	if err != nil {
 		return false, e.ErrEmailNotFound
@@ -223,7 +222,7 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserV
 	return true, nil
 }
 
-func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error) {
+func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error) {
 	userID, err := u.redisRepository.Get(c, "reset-password:"+resetPasswordID)
 	if err != nil {
 		return nil, err
@@ -258,6 +257,6 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	if err != nil {
 		return nil, err
 	}
-	responseData := dtos.NewResetPasswordResponse(true)
+	responseData := externalDtos.NewResetPasswordResponse(true)
 	return responseData, nil
 }
