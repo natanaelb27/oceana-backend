@@ -9,6 +9,6 @@ func category(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Han
 	path := "/categories"
 	publicRoute := public.Group(path)
 	{
-		publicRoute.GET("/", h.CategoryGetAll)
+		publicRoute.GET("", h.CategoryGetAll)
 	}
 }
