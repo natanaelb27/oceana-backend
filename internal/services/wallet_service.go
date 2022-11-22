@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -110,7 +109,6 @@ func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDeta
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(wallet.ID)
 	walletTransactionHistory, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID)
 	if err != nil {
 		return nil, err
