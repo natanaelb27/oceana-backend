@@ -17,3 +17,19 @@ func (h *Handler) ProductGetAll(c *gin.Context) {
 
 	utils.ResponseSuccess(c, results, pagination)
 }
+
+func (h *Handler) ShopProductGetAll(c *gin.Context) {
+	query, err := product_dtos.NewShopProductQuery(c)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	results, pagination, err := h.productService.GetAll(query)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}
