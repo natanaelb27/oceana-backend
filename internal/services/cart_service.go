@@ -31,6 +31,8 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 		return
 	}
 
+	// check if stock available
+
 	if *request.Quantity == 0 {
 		return p.cartRepository.Delete(cart.ID)
 	}
