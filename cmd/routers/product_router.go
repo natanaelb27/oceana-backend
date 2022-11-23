@@ -9,6 +9,6 @@ func product(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	path := "/products"
 	publicRoute := public.Group(path)
 	{
-		publicRoute.GET("/", h.ProductGetAll)
+		publicRoute.GET("", h.ProductGetAll)
 	}
 }
