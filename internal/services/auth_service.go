@@ -2,13 +2,15 @@ package services
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
@@ -17,35 +19,32 @@ import (
 
 type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
-	Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
+	Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
-	ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error)
+	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
 }
 
 type authService struct {
-	userRepository         r.UserRepository
-	emailRepository        r.EmailRepository
-	walletRepository       r.WalletRepository
-	refreshTokenRepository r.RefreshTokenRepository
-	redisRepository        r.RedisRepository
+	userRepository   r.UserRepository
+	emailRepository  r.EmailRepository
+	walletRepository r.WalletRepository
+	redisRepository  r.RedisRepository
 }
 
 type AuthServiceConfig struct {
-	UserRepository         r.UserRepository
-	EmailRepository        r.EmailRepository
-	WalletRepository       r.WalletRepository
-	RefreshTokenRepository r.RefreshTokenRepository
-	RedisRepository        r.RedisRepository
+	UserRepository   r.UserRepository
+	EmailRepository  r.EmailRepository
+	WalletRepository r.WalletRepository
+	RedisRepository  r.RedisRepository
 }
 
 func NewAuthService(c *AuthServiceConfig) AuthService {
 	return &authService{
-		userRepository:         c.UserRepository,
-		emailRepository:        c.EmailRepository,
-		walletRepository:       c.WalletRepository,
-		refreshTokenRepository: c.RefreshTokenRepository,
-		redisRepository:        c.RedisRepository,
+		userRepository:   c.UserRepository,
+		emailRepository:  c.EmailRepository,
+		walletRepository: c.WalletRepository,
+		redisRepository:  c.RedisRepository,
 	}
 }
 
@@ -107,20 +106,22 @@ func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest
 	return responseData, nil
 }
 
-func (u *authService) Login(userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error) {
+func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error) {
 	user, err := u.userRepository.GetByUsername(userLoginRequest.LoginCredentials)
 	if err == nil {
 		userLoginData, err := utils.AuthenticateUser(user, userLoginRequest.Password)
 		if err != nil {
 			return nil, err
 		}
-		refreshToken := utils.NewRefreshToken(user)
-		_, err = u.refreshTokenRepository.Create(refreshToken)
+		refreshTokenCode := uuid.New().String()
+		refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
+		refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+		err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), refreshTokenCode, refreshTokenDuration)
 		if err != nil {
 			return nil, err
 		}
-		userLoginData.RefreshToken = refreshToken.Code
-		userLoginData.ExpiresAt = refreshToken.ExpiresAt
+		userLoginData.RefreshToken = refreshTokenCode
+		userLoginData.ExpireDuration = refreshTokenDuration
 		return userLoginData, nil
 	}
 	user, err = u.userRepository.GetByPhoneNumber(userLoginRequest.LoginCredentials)
@@ -129,13 +130,15 @@ func (u *authService) Login(userLoginRequest *externalDtos.UserLoginRequest) (*i
 		if err != nil {
 			return nil, err
 		}
-		refreshToken := utils.NewRefreshToken(user)
-		_, err = u.refreshTokenRepository.Create(refreshToken)
+		refreshTokenCode := uuid.New().String()
+		refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
+		refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+		err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), refreshTokenCode, refreshTokenDuration)
 		if err != nil {
 			return nil, err
 		}
-		userLoginData.RefreshToken = refreshToken.Code
-		userLoginData.ExpiresAt = refreshToken.ExpiresAt
+		userLoginData.RefreshToken = refreshTokenCode
+		userLoginData.ExpireDuration = refreshTokenDuration
 		return userLoginData, nil
 	}
 	email, err := u.emailRepository.GetByEmail(userLoginRequest.LoginCredentials)
@@ -148,13 +151,15 @@ func (u *authService) Login(userLoginRequest *externalDtos.UserLoginRequest) (*i
 		if err != nil {
 			return nil, err
 		}
-		refreshToken := utils.NewRefreshToken(user)
-		_, err = u.refreshTokenRepository.Create(refreshToken)
+		refreshTokenCode := uuid.New().String()
+		refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
+		refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+		err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), refreshTokenCode, refreshTokenDuration)
 		if err != nil {
 			return nil, err
 		}
-		userLoginData.RefreshToken = refreshToken.Code
-		userLoginData.ExpiresAt = refreshToken.ExpiresAt
+		userLoginData.RefreshToken = refreshTokenCode
+		userLoginData.ExpireDuration = refreshTokenDuration
 		return userLoginData, nil
 	}
 	return nil, e.ErrUserNotFound
@@ -189,7 +194,7 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 	return
 }
 
-func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserVerifyResetPasswordRequest) (bool, error) {
+func (u *authService) SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error) {
 	email, err := u.emailRepository.GetByEmail(request.Email)
 	if err != nil {
 		return false, e.ErrEmailNotFound
@@ -211,7 +216,7 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserV
 	to := []string{email.Address}
 	cc := []string{}
 	subject := "Reset Password Link"
-	message := "Reset Password ID: " + resetPasswordID
+	message := "Reset Password Link (valid for 15 minutes): " + os.Getenv("FRONTEND_URL") + "/reset-password/" + resetPasswordID
 
 	err = utils.SendMail(to, cc, subject, message)
 	fmt.Println(err)
@@ -222,7 +227,7 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *dtos.UserV
 	return true, nil
 }
 
-func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, request *dtos.ResetPasswordRequest) (*dtos.ResetPasswordResponse, error) {
+func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error) {
 	userID, err := u.redisRepository.Get(c, "reset-password:"+resetPasswordID)
 	if err != nil {
 		return nil, err
@@ -246,11 +251,17 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	if err != nil {
 		return nil, err
 	}
+	if user.Password == hashedPassword {
+		return nil, e.ErrInvalidPassword
+	}
+	if strings.Contains(strings.ToLower(request.Password), strings.ToLower(user.Username)) {
+		return nil, e.ErrInvalidPassword
+	}
 	user.Password = hashedPassword
 	_, err = u.userRepository.Update(user.ID, user)
 	if err != nil {
 		return nil, err
 	}
-	responseData := dtos.NewResetPasswordResponse(true)
+	responseData := externalDtos.NewResetPasswordResponse(true)
 	return responseData, nil
 }

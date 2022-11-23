@@ -9,9 +9,11 @@ import (
 
 type ProductReview struct {
 	ID            uint
-	UserId        uint
+	UserID        uuid.UUID
 	User          User
-	OrderDetailId uuid.UUID
+	ProductID     uint
+	Product       Product
+	OrderDetailID uuid.UUID
 	OrderDetail   OrderDetail
 	Rating        uint
 	Review        string
