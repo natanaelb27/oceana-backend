@@ -47,12 +47,7 @@ func (a *addressRepository) Create(newModel *models.Address) (model *models.Addr
 }
 
 func (a *addressRepository) GetProfileAddressess(userID uuid.UUID) (model []*models.Address, err error) {
-	queryResult := a.db.Joins("JOIN users on users.id = addresses.user_id").Joins("JOIN sub_districts on sub_districts.id = addresses.sub_district_id").Joins("JOIN districts on districts.id = sub_districts.district_id").Joins("JOIN cities on cities.id = districts.city_id").Joins("JOIN provinces on provinces.id = cities.province_id").Preload("User").Preload("SubDistrict").Preload("SubDistrict.District").Preload("SubDistrict.District.City").Preload("SubDistrict.District.City.Province").Where("user_id = ?", userID).Find(&model)
-
-	if queryResult.RowsAffected == 0 {
-		err = e.ErrDataNotFound
-		return
-	}
+	a.db.Joins("JOIN users on users.id = addresses.user_id").Joins("JOIN sub_districts on sub_districts.id = addresses.sub_district_id").Joins("JOIN districts on districts.id = sub_districts.district_id").Joins("JOIN cities on cities.id = districts.city_id").Joins("JOIN provinces on provinces.id = cities.province_id").Preload("User").Preload("SubDistrict").Preload("SubDistrict.District").Preload("SubDistrict.District.City").Preload("SubDistrict.District.City.Province").Where("user_id = ?", userID).Find(&model)
 
 	return
 }
