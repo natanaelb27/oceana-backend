@@ -10,7 +10,7 @@ func role(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	path := "/roles"
 	publicRoute := public.Group(path)
 	{
-		publicRoute.GET("/", h.RoleGetAll)
+		publicRoute.GET("", h.RoleGetAll)
 		publicRoute.POST("", h.RoleCreate)
 		publicRoute.DELETE("/:id", h.RoleDelete)
 		publicRoute.PUT("/:id", h.RoleUpdate)
