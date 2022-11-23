@@ -1,9 +1,13 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -28,23 +32,34 @@ func newErrorMessage(ve validator.FieldError) (msg string) {
 	return
 }
 
-func TranslateError(err error) (errors string) {
-	if err == nil {
-		return "-"
-	}
-
-	// check if err is coming from gin binding errors
-	if _, ok := err.(validator.ValidationErrors); !ok {
-		return "-"
-	}
-
-	// format error
-	for i, e := range err.(validator.ValidationErrors) {
-		errors += fmt.Sprintf("%s %s", e.Field(), newErrorMessage(e))
-		if i+1 < len(err.(validator.ValidationErrors)) {
-			errors += " "
+func TranslateError(err error) (message string, responseErr string, code int) {
+	switch {
+	// case if error is validator error
+	case errors.As(err, &validator.ValidationErrors{}):
+		for i, e := range err.(validator.ValidationErrors) {
+			message += fmt.Sprintf("%s %s", e.Field(), newErrorMessage(e))
+			if i+1 < len(err.(validator.ValidationErrors)) {
+				message += " "
+			}
 		}
+		responseErr = http.StatusText(http.StatusBadRequest)
+		code = http.StatusBadRequest
+		return
+
+	// case if an io.EOF error is returned by Decode() if the request body is empty
+	// in some circumstances Decode() may also return an
+	// io.ErrUnexpectedEOF error for syntax errors in the JSON
+	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
+		err = e.ErrEmptyRequstBody
+
+	// case if the request body is too large.
+	case err.Error() == "http: request body too large":
+		err = e.ErrRequestBodyTooLarge
 	}
+
+	message = err.Error()
+	responseErr = http.StatusText(e.GetStatusCode(err))
+	code = e.GetStatusCode(err)
 
 	return
 }
