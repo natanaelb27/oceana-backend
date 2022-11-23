@@ -36,7 +36,7 @@ func Connect() {
 		&models.MerchantVoucher{},
 		&models.Product{},
 		&models.ProductItem{},
-		&models.ProductItemMedia{},
+		&models.ProductVariantMedia{},
 		&models.Courier{},
 		&models.CourierService{},
 		&models.ProductCourierService{},

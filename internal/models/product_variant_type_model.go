@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ProductVariationGroup struct {
+type ProductVariantType struct {
 	ID        uint
 	ProductID uint
 	Product   Product

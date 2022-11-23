@@ -108,6 +108,29 @@ func (_m *MerchantRepository) GetInformationByID(id uint) (*dtos.MerchantInforma
 	return r0, r1
 }
 
+// UpdateProfileAddressShopDefault provides a mock function with given fields: userID, addressID
+func (_m *MerchantRepository) UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (*models.Merchant, error) {
+	ret := _m.Called(userID, addressID)
+
+	var r0 *models.Merchant
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID) *models.Merchant); ok {
+		r0 = rf(userID, addressID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Merchant)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, uuid.UUID) error); ok {
+		r1 = rf(userID, addressID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewMerchantRepository interface {
 	mock.TestingT
 	Cleanup(func())
