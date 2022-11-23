@@ -98,6 +98,12 @@ func Init() *Handler {
 		UserRepository:  userRepository,
 		RedisRepository: redisRepository,
 	})
+	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
+		DB: db.Get(),
+	})
+	cartService := services.NewCartService(&services.CartServiceConfig{
+		CartRepository: cartRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
@@ -110,6 +116,7 @@ func Init() *Handler {
 		MerchantVoucherService: merchantVoucherService,
 		MerchantService:        merchantService,
 		OrderService:           orderService,
+		CartService:            cartService,
 	})
 
 	return h

@@ -18,6 +18,7 @@ type Handler struct {
 	sealabsPayService      services.SealabsPayService
 	merchantVoucherService services.MerchantVoucherService
 	orderService           services.OrderService
+	cartService            services.CartService
 }
 
 type HandlerConfig struct {
@@ -31,6 +32,7 @@ type HandlerConfig struct {
 	SealabsPayService      services.SealabsPayService
 	MerchantVoucherService services.MerchantVoucherService
 	OrderService           services.OrderService
+	CartService            services.CartService
 }
 
 func New(c *HandlerConfig) *Handler {
@@ -45,6 +47,7 @@ func New(c *HandlerConfig) *Handler {
 		sealabsPayService:      c.SealabsPayService,
 		merchantVoucherService: c.MerchantVoucherService,
 		orderService:           c.OrderService,
+		cartService:            c.CartService,
 	}
 }
 
