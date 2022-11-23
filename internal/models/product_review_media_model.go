@@ -8,7 +8,7 @@ import (
 
 type ProductReviewMedia struct {
 	ID              uint
-	ProductReviewId uint
+	ProductReviewID uint
 	ProductReview   ProductReview
 	MediaURL        string
 	CreatedAt       time.Time

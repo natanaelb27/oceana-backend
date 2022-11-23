@@ -33,10 +33,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
-		UserRepository:         userRepository,
-		EmailRepository:        emailRepository,
-		WalletRepository:       walletRepository,
-		RedisRepository:        redisRepository,
+		UserRepository:   userRepository,
+		EmailRepository:  emailRepository,
+		WalletRepository: walletRepository,
+		RedisRepository:  redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),
@@ -67,7 +67,16 @@ func Init() *Handler {
 	orderTrackingRepository := repositories.NewOrderTrackingRepository(&repositories.OrderTrackingRepositoryConfig{
 		DB: db.Get(),
 	})
-
+	productReviewRepository := repositories.NewProductReviewRepository(&repositories.ProductReviewRepositoryConfig{
+		DB: db.Get(),
+	})
+	productReviewMediaRepository := repositories.NewProductReviewMediaRepository(&repositories.ProductReviewMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+	productReviewService := services.NewProductReviewService(&services.ProductReviewServiceConfig{
+		ProductReviewRepository:      productReviewRepository,
+		ProductReviewMediaRepository: productReviewMediaRepository,
+	})
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
 		OrderRepository:           orderRepository,
 		OrderDetailRepository:     orderDetailRepository,
@@ -114,6 +123,7 @@ func Init() *Handler {
 		AddressService:         addressService,
 		MerchantService:        merchantService,
 		OrderService:           orderService,
+		ProductReviewService:   productReviewService,
 	})
 
 	return h
