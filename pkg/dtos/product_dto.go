@@ -1,45 +1,61 @@
 package dtos
 
-// type ProductDetailsGetByIDResponse struct {
-// 	TransactionID                   uuid.UUID                    `json:"transaction_id"`
-// 	OrderID                         uuid.UUID                    `json:"oder_id"`
-// 	MerchantID                      uint                         `json:"merchant_id"`
-// 	ShopName                        string                       `json:"shop_name"`
-// 	OrderDetails                    []*dtos.OrderDetailList      `json:"order_details"`
-// 	TransactionDatetime             time.Time                    `json:"transaction_datetime"`
-// 	OrderStatus                     string                       `json:"order_status"`
-// 	CourierDescription              string                       `json:"courier_description"`
-// 	OrderTrackingHistory            []*dtos.OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
-// 	Address                         *dtos.AddressSnapshotDetails `json:"address"`
-// 	PaymentMethod                   string                       `json:"payment_method"`
-// 	TotalPriceBeforeDiscount        uint                         `json:"total_price_before_discount"`
-// 	TotalMerchantPromotionDiscount  float64                      `json:"total_merchant_promotion_discount"`
-// 	TotalMerchantVoucherDiscount    float64                      `json:"total_merchant_voucher_discount"`
-// 	TotalMarketplaceVoucherDiscount float64                      `json:"total_marketplace_voucher_discount"`
-// 	ShippingFee                     uint                         `json:"shipping_fee"`
-// 	TotalPayment                    float64                      `json:"total_payment"`
-// }
+import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"github.com/lib/pq"
+)
 
-// func NewProductDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetByIDResponse) {
-// 	target = &OrderListDetailsGetByIDResponse{
-// 		TransactionID:                   source.TransactionID,
-// 		OrderID:                         source.OrderID,
-// 		MerchantID:                      source.MerchantID,
-// 		ShopName:                        source.ShopName,
-// 		OrderDetails:                    source.OrderDetails,
-// 		TransactionDatetime:             source.TransactionDatetime,
-// 		OrderStatus:                     source.OrderStatus,
-// 		CourierDescription:              source.CourierDescription,
-// 		OrderTrackingHistory:            source.OrderTrackingHistory,
-// 		Address:                         source.Address,
-// 		PaymentMethod:                   source.PaymentMethod,
-// 		TotalPriceBeforeDiscount:        source.TotalPriceBeforeDiscount,
-// 		TotalMerchantPromotionDiscount:  source.TotalMerchantPromotionDiscount,
-// 		TotalMerchantVoucherDiscount:    source.TotalMerchantVoucherDiscount,
-// 		TotalMarketplaceVoucherDiscount: source.TotalMarketplaceVoucherDiscount,
-// 		ShippingFee:                     source.ShippingFee,
-// 		TotalPayment:                    source.TotalPayment,
-// 	}
+type ProductDetailsGetByIDResponse struct {
+	Name        string `json:"name"`
+	IsHazardous bool   `json:"is_hazardous"`
+	Weight      uint   `json:"weight"`
+	PackageSize string `json:"package_size"`
+	Condition   string `json:"condition"`
+	Category    string `json:"category"`
+	// ProductMedia          []*dtos.ProductMedia     `json:"product_media"`
+	Images                pq.StringArray           `json:"images" gorm:"type:text[]"`
+	Description           string                   `json:"description"`
+	TotalStock            uint                     `json:"total_stock"`
+	LikeCount             uint                     `json:"like_count"`
+	RatingCount           uint                     `json:"rating_count"`
+	RatingStar            float64                  `json:"rating_star"`
+	DiscountType          string                   `json:"discount_type"`
+	Discount              uint                     `json:"discount"`
+	Price                 float64                  `json:"price"`
+	PriceAfterDiscount    float64                  `json:"price_after_discount"`
+	PriceMax              float64                  `json:"price_max"`
+	PriceMaxAfterDiscount float64                  `json:"price_max_after_discount"`
+	PriceMin              float64                  `json:"price_min"`
+	PriceMinAfterDiscount float64                  `json:"price_min_after_discount"`
+	ProductModel          []*dtos.ProductModel     `json:"product_model"`
+	ProductVariation      []*dtos.ProductVariation `json:"product_variation"`
+}
 
-// 	return
-// }
+func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *ProductDetailsGetByIDResponse) {
+	target = &ProductDetailsGetByIDResponse{
+		Name:                  source.Name,
+		IsHazardous:           source.IsHazardous,
+		Weight:                source.Weight,
+		PackageSize:           source.PackageSize,
+		Condition:             source.Condition,
+		Category:              source.Category,
+		Images:                source.Images,
+		Description:           source.Description,
+		TotalStock:            source.TotalStock,
+		LikeCount:             source.LikeCount,
+		RatingCount:           source.RatingCount,
+		RatingStar:            source.RatingStar,
+		DiscountType:          source.DiscountType,
+		Discount:              source.Discount,
+		Price:                 source.Price,
+		PriceAfterDiscount:    source.PriceAfterDiscount,
+		PriceMax:              source.PriceMax,
+		PriceMaxAfterDiscount: source.PriceMaxAfterDiscount,
+		PriceMin:              source.PriceMin,
+		PriceMinAfterDiscount: source.PriceMinAfterDiscount,
+		ProductModel:          source.ProductModel,
+		ProductVariation:      source.ProductVariation,
+	}
+
+	return
+}

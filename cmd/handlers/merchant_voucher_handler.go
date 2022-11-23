@@ -48,7 +48,7 @@ func (h *Handler) MerchantVoucherUpdate(c *gin.Context) {
 
 	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
 	if err != nil {
-		utils.ResponseError(c, e.ErrInvalidParams)
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 
 	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
 	if err != nil {
-		utils.ResponseError(c, e.ErrInvalidParams)
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (h *Handler) MerchantVoucherGetAll(c *gin.Context) {
 func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {
 	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
 	if err != nil {
-		utils.ResponseError(c, e.ErrInvalidParams)
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 

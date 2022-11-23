@@ -12,7 +12,7 @@ import (
 
 type OrderService interface {
 	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, error)
-	OrderListDetailsGetByID(userId uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
+	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
 }
 
 type orderService struct {
@@ -75,14 +75,14 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 	return dtos.NewOrderListGetAllResponse(orderList, pagination), nil
 }
 
-func (s *orderService) OrderListDetailsGetByID(userId uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {
+func (s *orderService) OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {
 	orderData, err := s.orderRepository.OrderListDetailsGetByID(orderID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if orderData.UserID != userId {
+	if orderData.UserID != userID {
 		return nil, e.ErrForbiddenOrder
 	}
 
