@@ -83,6 +83,29 @@ func (_m *UserRepository) GetByID(id uuid.UUID) (*models.User, error) {
 	return r0, r1
 }
 
+// GetByIDJoinsEmail provides a mock function with given fields: id
+func (_m *UserRepository) GetByIDJoinsEmail(id uuid.UUID) (*models.User, error) {
+	ret := _m.Called(id)
+
+	var r0 *models.User
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *models.User); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByPhoneNumber provides a mock function with given fields: phoneNumber
 func (_m *UserRepository) GetByPhoneNumber(phoneNumber string) (*models.User, error) {
 	ret := _m.Called(phoneNumber)

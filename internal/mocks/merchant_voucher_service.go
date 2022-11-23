@@ -37,6 +37,98 @@ func (_m *MerchantVoucherService) Create(id uuid.UUID, request *dtos.MerchantVou
 	return r0, r1
 }
 
+// Delete provides a mock function with given fields: userID, voucherID
+func (_m *MerchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error) {
+	ret := _m.Called(userID, voucherID)
+
+	var r0 *dtos.MerchantVoucherDeleteResponse
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uint) *dtos.MerchantVoucherDeleteResponse); ok {
+		r0 = rf(userID, voucherID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.MerchantVoucherDeleteResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, uint) error); ok {
+		r1 = rf(userID, voucherID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetAll provides a mock function with given fields: query
+func (_m *MerchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error) {
+	ret := _m.Called(query)
+
+	var r0 *dtos.MerchantVoucherGetAllResponse
+	if rf, ok := ret.Get(0).(func(*dtos.MerchantVoucherQuery) *dtos.MerchantVoucherGetAllResponse); ok {
+		r0 = rf(query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.MerchantVoucherGetAllResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*dtos.MerchantVoucherQuery) error); ok {
+		r1 = rf(query)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetByID provides a mock function with given fields: id
+func (_m *MerchantVoucherService) GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error) {
+	ret := _m.Called(id)
+
+	var r0 *dtos.MerchantVoucherGetByIDResponse
+	if rf, ok := ret.Get(0).(func(uint) *dtos.MerchantVoucherGetByIDResponse); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.MerchantVoucherGetByIDResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: userID, voucherID, request
+func (_m *MerchantVoucherService) Update(userID uuid.UUID, voucherID uint, request *dtos.MerchantVoucherUpdateRequest) (*dtos.MerchantVoucherUpdateResponse, error) {
+	ret := _m.Called(userID, voucherID, request)
+
+	var r0 *dtos.MerchantVoucherUpdateResponse
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uint, *dtos.MerchantVoucherUpdateRequest) *dtos.MerchantVoucherUpdateResponse); ok {
+		r0 = rf(userID, voucherID, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.MerchantVoucherUpdateResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, uint, *dtos.MerchantVoucherUpdateRequest) error); ok {
+		r1 = rf(userID, voucherID, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewMerchantVoucherService interface {
 	mock.TestingT
 	Cleanup(func())
