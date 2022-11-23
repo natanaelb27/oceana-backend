@@ -17,11 +17,8 @@ type Handler struct {
 	merchantService        services.MerchantService
 	sealabsPayService      services.SealabsPayService
 	merchantVoucherService services.MerchantVoucherService
-<<<<<<< cmd/handlers/handler.go
 	addressService         services.AddressService
-=======
 	orderService           services.OrderService
->>>>>>> cmd/handlers/handler.go
 }
 
 type HandlerConfig struct {
