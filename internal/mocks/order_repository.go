@@ -18,8 +18,8 @@ type OrderRepository struct {
 	mock.Mock
 }
 
-// OrderListDetailsGetAll provides a mock function with given fields: id
-func (_m *OrderRepository) OrderListDetailsGetAll(id uuid.UUID) (*dtos.OrderListDetails, error) {
+// OrderListDetailsGetByID provides a mock function with given fields: id
+func (_m *OrderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error) {
 	ret := _m.Called(id)
 
 	var r0 *dtos.OrderListDetails
