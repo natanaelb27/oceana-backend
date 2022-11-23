@@ -38,11 +38,13 @@ func (h *Handler) AddressGetAll(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
 	}
 
 	results, err := h.addressService.GetProfileAddressess(id)
 	if err != nil {
 		utils.ResponseError(c, err)
+		return
 	}
 
 	var responseData []*dtos.AddressGetResponse = make([]*dtos.AddressGetResponse, 0)
