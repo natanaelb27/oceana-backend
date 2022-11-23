@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type Cart struct {
@@ -13,8 +12,7 @@ type Cart struct {
 	User          User
 	ProductItemID uint
 	ProductItem   ProductItem
-	Quantity      int
+	Quantity      uint
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt
 }
