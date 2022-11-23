@@ -1,6 +1,6 @@
 package dtos
 
 type ProductMedia struct {
-	ID       string
+	ID       uint
 	MediaURL string
 }

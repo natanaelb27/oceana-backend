@@ -9,7 +9,7 @@ import (
 )
 
 type ProductRepository interface {
-	ProductDetailsGetByID(id uint, user_id uuid.UUID) (*dtos.ProductDetails, error)
+	ProductDetailsGetByID(id uint, userID uuid.UUID) (*dtos.ProductDetails, error)
 }
 
 type productRepository struct {
@@ -26,36 +26,27 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 	}
 }
 
-func (r *productRepository) ProductDetailsGetByID(id uint, user_id uuid.UUID) (*dtos.ProductDetails, error) {
+func (r *productRepository) ProductDetailsGetByID(id uint, userID uuid.UUID) (*dtos.ProductDetails, error) {
 	var productDetails *dtos.ProductDetails
 
-	subQueryUserMerchantPromotion := r.db.Model(&models.OrderDetail{}).
+	subQueryUserMerchantPromotion := r.db.Model(&models.UserMerchantPromotion{}).
 		Select(`
-			SUM()
+			usage
 		`).
-		Joins("order_detail_merchant_promotions ON order_detail.id = order_detail_merchant_promotions.order_detail_id").
-		Joins("product_merchant_promotions pmp ON order_detail_merchant_promotions.merchant_promotion_id = pmp.merchant_promotion_id").
-		Joins("orders ON order_detail_id.order_id = orders.id").
-		Joins("transactions ON orders.transaction_id = transactions.id").
-		Where("transactions.user_id = ?", user_id).
-		Where("pmp.id = product_merchant_promotions.id").
-		Group("product_merchant_promotions.merchant_promotion_id")
+		Where("user_merchant_promotions.product_merchant_promotion_id = product_merchant_promotions.id").
+		Where("user_merchant_promotions.user_id = ?", userID)
 
-		// Joins("refunds ON order_details.id = refunds.order_detail_id").
-		// Where("LOWER(refunds.Status) = 'agreed'").
-
-	// CEK ORDER DETAIL - REFUND
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
-			merchant_promotions.discount_type AS discount_type,
-			merchant_promotions.discount AS discount,
-			merchant_promotions.maximum_discount_amount AS maximum_discount_amount 
+			product_merchant_promotions.discount_type,
+			product_merchant_promotions.discount,
+			product_merchant_promotions.maximum_discount_amount
 		`).
-		Joins("JOIN merchant_promotions ON product_merchant_promotions.merchant_promotion_id = merchant_promotions.id").
+		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
 		Where("product_merchant_promotions.status = 'active'").
 		Where("product_merchant_promotions.current_quota < product_merchant_promotions.maximum_quota").
 		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
-		Where("product_merchant_promotions.maximum_user_limit > ?", subQueryUserMerchantPromotion).
+		Where("product_merchant_promotions.maximum_user_limit > COALESCE((?), 0)", subQueryUserMerchantPromotion).
 		Where("product_merchant_promotions.product_id = ?", id)
 
 	subQueryProductItem := r.db.Model(&models.ProductItem{}).
@@ -92,27 +83,27 @@ func (r *productRepository) ProductDetailsGetByID(id uint, user_id uuid.UUID) (*
 			(
 				CASE 
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
-					THEN GREATEST(product_item_agg.price_min - product_discount_agg.maximum_discount_amount, 0)
-					ELSE product_item_agg.price_min - LEAST((product_item_agg.price_min * product_discount_agg.discount)::float / 100, product_discount_agg.maximum_discount_amount)
+					THEN GREATEST(product_item_agg.price_min - product_discount_agg.discount, 0)
+					ELSE product_item_agg.price_min - LEAST((product_item_agg.price_min * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
 				END
-			) AS price,
-			product_item_agg.price_min AS price_before_discount,
+			) AS price_after_discount,
+			product_item_agg.price_min AS price,
 			(
 				CASE 
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
-					THEN GREATEST(product_item_agg.price_max - product_discount_agg.maximum_discount_amount, 0)
-					ELSE product_item_agg.price_max - LEAST((product_item_agg.price_max * product_discount_agg.discount)::float / 100, product_discount_agg.maximum_discount_amount)
+					THEN GREATEST(product_item_agg.price_max - product_discount_agg.discount, 0)
+					ELSE product_item_agg.price_max - LEAST((product_item_agg.price_max * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
 				END
-			) AS price_max,
-			product_item_agg.price_max AS price_max_before_discount,
+			) AS price_max_after_discount,
+			product_item_agg.price_max AS price_max,
 			(
 				CASE 
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
-					THEN GREATEST(product_item_agg.price_min - product_discount_agg.maximum_discount_amount, 0)
-					ELSE product_item_agg.price_min - LEAST((product_item_agg.price_min * product_discount_agg.discount)::float / 100, product_discount_agg.maximum_discount_amount)
+					THEN GREATEST(product_item_agg.price_min - product_discount_agg.discount, 0)
+					ELSE product_item_agg.price_min - LEAST((product_item_agg.price_min * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
 				END
-			) AS price_min,
-			product_item_agg.price_min AS price_min_before_discount
+			) AS price_min_after_discount,
+			product_item_agg.price_min AS price_min
 		`).
 		Joins("JOIN (?) product_item_agg ON products.id = product_item_agg.product_id", subQueryProductItem).
 		Joins("JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).

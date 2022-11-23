@@ -37,9 +37,10 @@ func Connect() {
 		&models.MerchantVoucher{},
 		&models.Product{},
 		&models.ProductItem{},
-		&models.ProductVariationGroup{},
+		&models.ProductVariantType{},
 		&models.ProductVariation{},
-		&models.ProductItemMedia{},
+		&models.ProductVariant{},
+		&models.ProductVariantMedia{},
 		&models.Courier{},
 		&models.CourierService{},
 		&models.ProductCourierService{},
@@ -62,6 +63,7 @@ func Connect() {
 		&models.ProductReviewMedia{},
 		&models.SealabsPayTransactionPayment{},
 		&models.WalletTransactionPayment{},
+		&models.UserMerchantPromotion{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
