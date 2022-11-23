@@ -6,6 +6,8 @@ import (
 	dtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	mock "github.com/stretchr/testify/mock"
 
+	models "git.garena.com/azmi-adhani/group-project-backend/internal/models"
+
 	uuid "github.com/google/uuid"
 )
 
@@ -30,6 +32,75 @@ func (_m *SealabsPayService) Create(id uuid.UUID, request *dtos.SealabsPayCreate
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID, *dtos.SealabsPayCreateRequest) error); ok {
 		r1 = rf(id, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Delete provides a mock function with given fields: id
+func (_m *SealabsPayService) Delete(id uuid.UUID) (*models.SealabsPay, error) {
+	ret := _m.Called(id)
+
+	var r0 *models.SealabsPay
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *models.SealabsPay); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SealabsPay)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetAll provides a mock function with given fields: userID
+func (_m *SealabsPayService) GetAll(userID uuid.UUID) ([]*models.SealabsPay, error) {
+	ret := _m.Called(userID)
+
+	var r0 []*models.SealabsPay
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []*models.SealabsPay); ok {
+		r0 = rf(userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*models.SealabsPay)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetById provides a mock function with given fields: id
+func (_m *SealabsPayService) GetById(id uuid.UUID) (*models.SealabsPay, error) {
+	ret := _m.Called(id)
+
+	var r0 *models.SealabsPay
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *models.SealabsPay); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SealabsPay)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
