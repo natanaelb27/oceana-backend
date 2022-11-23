@@ -32,6 +32,9 @@ func Init() *Handler {
 	refreshTokenRepository := repositories.NewRefreshTokenRepository(&repositories.RefreshTokenRepositoryConfig{
 		DB: db.Get(),
 	})
+	addressRepository := repositories.NewAddressRepository(&repositories.AddressRepositoryConfig{
+		DB: db.Get(),
+	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
 		UserRepository:         userRepository,
 		EmailRepository:        emailRepository,
@@ -44,6 +47,13 @@ func Init() *Handler {
 	})
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
+	})
+	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
+		DB: db.Get(),
+	})
+	addressService := services.NewAddressService(&services.AddressServiceConfig{
+		AddressRepository:  addressRepository,
+		MerchantRepository: merchantRepository,
 	})
 
 	orderRepository := repositories.NewOrderRepository(&repositories.OrderRepositoryConfig{
@@ -80,9 +90,6 @@ func Init() *Handler {
 		SealabsPayRepository: sealabsPayRepository,
 	})
 
-	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
-		DB: db.Get(),
-	})
 	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -108,6 +115,7 @@ func Init() *Handler {
 		ProfileService:         profileService,
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,
+		AddressService:         addressService,
 		MerchantService:        merchantService,
 		OrderService:           orderService,
 	})
