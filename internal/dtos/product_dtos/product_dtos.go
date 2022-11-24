@@ -94,7 +94,7 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	case "price":
 		query.SortBy = "price_minimum"
 	case "recommended":
-		query.SortBy = "total_view_count"
+		query.SortBy = "price_minimum_after_discount"
 	// case most buy
 	default:
 		query.SortBy = "products.name"
