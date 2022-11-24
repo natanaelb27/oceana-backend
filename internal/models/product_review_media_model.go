@@ -11,6 +11,7 @@ type ProductReviewMedia struct {
 	ProductReviewID uint
 	ProductReview   ProductReview
 	MediaURL        string
+	Type            string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       gorm.DeletedAt

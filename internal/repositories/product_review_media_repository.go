@@ -8,6 +8,7 @@ import (
 
 type ProductReviewMediaRepository interface {
 	Create(newModel *models.ProductReviewMedia) (model *models.ProductReviewMedia, err error)
+	GetByProductReviewID(id uint) (model []*models.ProductReviewMedia, err error)
 }
 
 type productReviewMediaRepository struct {
@@ -35,5 +36,16 @@ func (pr *productReviewMediaRepository) Create(newModel *models.ProductReviewMed
 		return
 	}
 	model = newModel
+	return
+}
+
+func (pr *productReviewMediaRepository) GetByProductReviewID(id uint) (model []*models.ProductReviewMedia, err error) {
+	result := pr.db.Where("product_review_id = ?", id).Find(&model)
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
 	return
 }

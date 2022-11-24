@@ -8,6 +8,7 @@ import (
 
 type ProductReviewRepository interface {
 	Create(newModel *models.ProductReview) (model *models.ProductReview, err error)
+	GetByProductID(id uint) ([]*models.ProductReview, error)
 }
 
 type productReviewRepository struct {
@@ -36,4 +37,13 @@ func (pr *productReviewRepository) Create(newModel *models.ProductReview) (model
 	}
 	model = newModel
 	return
+}
+
+func (pr *productReviewRepository) GetByProductID(id uint) ([]*models.ProductReview, error) {
+	var productReviews []*models.ProductReview 
+	result := pr.db.Model(&models.ProductReview{}).Where("product_id = ?", id).Preload("User").Find(&productReviews)
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+	return productReviews, nil
 }

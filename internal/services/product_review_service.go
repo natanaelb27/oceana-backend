@@ -9,6 +9,7 @@ import (
 
 type ProductReviewService interface {
 	Create(*dtos.ProductReviewCreateRequest) (*dtos.ProductReviewCreateResponse, error)
+	GetByProductID(id uint) ([]*dtos.ProductReviewGetByProductIDResponse, error)
 }
 
 type productReviewService struct {
@@ -52,6 +53,7 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
+			Type:            "photo",
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -67,6 +69,7 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
+			Type:            "photo",
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -82,6 +85,7 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
+			Type:            "photo",
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -97,6 +101,7 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
+			Type:            "photo",
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -112,6 +117,7 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
+			Type:            "photo",
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -127,6 +133,7 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        videoUrl,
+			Type:            "video",
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -139,6 +146,36 @@ func (pr *productReviewService) Create(request *dtos.ProductReviewCreateRequest)
 		Review:        newProductReview.Review,
 		CreatedAt:     newProductReview.CreatedAt,
 		UpdatedAt:     newProductReview.UpdatedAt,
+	}
+	return response, nil
+}
+
+func (pr *productReviewService) GetByProductID(id uint) ([]*dtos.ProductReviewGetByProductIDResponse, error) {
+	productReviews, err := pr.productReviewRepository.GetByProductID(id)
+	if err != nil {
+		return nil, err
+	}
+	var response []*dtos.ProductReviewGetByProductIDResponse
+	for _, productReview := range productReviews {
+		var productReviewMediaLinks []*string 
+		productReviewMedia, err := pr.productReviewMediaRepository.GetByProductReviewID(productReview.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, singleProductReviewMedia := range productReviewMedia {
+			productReviewMediaLinks = append(productReviewMediaLinks, &singleProductReviewMedia.MediaURL)
+		}
+		productReviewResponse := &dtos.ProductReviewGetByProductIDResponse{
+			ID:                 productReview.ID,
+			UserID:             productReview.UserID,
+			User:               productReview.User,
+			ProductID:          productReview.ProductID,
+			Rating:             productReview.Rating,
+			Review:             productReview.Review,
+			ProductReviewMedia: productReviewMediaLinks,
+		}
+
+		response = append(response, productReviewResponse)
 	}
 	return response, nil
 }

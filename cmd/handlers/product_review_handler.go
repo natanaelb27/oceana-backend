@@ -33,3 +33,13 @@ func (h *Handler) ProductReviewCreate(c *gin.Context) {
 	}
 	utils.ResponseSuccess(c, response, nil)
 }
+
+func (h *Handler) ProductReviewGet(c *gin.Context) {
+	productID := utils.StringToUint(c.Param("productID"))
+	response, err := h.productReviewService.GetByProductID(productID)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, response, nil)
+}
