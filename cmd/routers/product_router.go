@@ -11,5 +11,9 @@ func product(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	privateRoute := private.Group(path)
 	{
 		privateRoute.POST("/:orderDetailID/review", func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProductReviewCreate)
+		publicRoute := public.Group(path)
+		{
+			publicRoute.GET("", h.ProductGetAll)
+		}
 	}
 }

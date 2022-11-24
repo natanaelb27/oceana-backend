@@ -110,6 +110,12 @@ func Init() *Handler {
 		UserRepository:  userRepository,
 		RedisRepository: redisRepository,
 	})
+	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
+		DB: db.Get(),
+	})
+	productService := services.NewProductService(&services.ProductServiceConfig{
+		ProductRepository: productRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
@@ -122,6 +128,7 @@ func Init() *Handler {
 		MerchantVoucherService: merchantVoucherService,
 		AddressService:         addressService,
 		MerchantService:        merchantService,
+		ProductService:         productService,
 		OrderService:           orderService,
 		ProductReviewService:   productReviewService,
 	})
