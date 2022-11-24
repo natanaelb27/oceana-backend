@@ -29,8 +29,9 @@ func NewCartService(c *CartServiceConfig) CartService {
 }
 
 func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.Cart, err error) {
-	cart, err := p.cartRepository.GetByUserIdProductItemId(request.UserID, request.ProductItemID)
-	if err != nil && err != e.ErrDataNotFound {
+	cart, cartErr := p.cartRepository.GetByUserIdProductItemId(request.UserID, request.ProductItemID)
+	if cartErr != nil && cartErr != e.ErrDataNotFound {
+		err = cartErr
 		return
 	}
 
@@ -44,12 +45,16 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 		return
 	}
 
-	if *request.Quantity == 0 {
-		return p.cartRepository.Delete(cart.ID)
+	if cartErr == e.ErrDataNotFound {
+		if *request.Quantity == 0 {
+			err = e.ErrEmptyQuantity
+			return
+		}
+		return p.cartRepository.Create(request.ToModel())
 	}
 
-	if err == e.ErrDataNotFound {
-		return p.cartRepository.Create(request.ToModel())
+	if *request.Quantity == 0 && err != e.ErrDataNotFound {
+		return p.cartRepository.Delete(cart.ID)
 	}
 
 	cart.Quantity = *request.Quantity
