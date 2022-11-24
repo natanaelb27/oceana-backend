@@ -4,7 +4,6 @@ import (
 	"mime/multipart"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/google/uuid"
 )
 
@@ -34,13 +33,15 @@ type ProductReviewCreateResponse struct {
 }
 
 type ProductReviewGetByProductIDResponse struct {
-	ID                 uint
-	UserID             uuid.UUID
-	User               models.User
+	ID                 uint      `json:"id"`
+	UserID             uuid.UUID `json:"user_id"`
+	FullName           string    `json:"full_name"`
+	Username           string    `json:"username"`
+	Photo              *string   `json:"photo"`
 	ProductID          uint      `json:"product_id"`
 	Rating             uint      `json:"rating"`
 	Review             string    `json:"review"`
 	ProductReviewMedia []*string `json:"product_review_media"`
+	ProductVariations  string    `json:"product_variations"`
 	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
 }
