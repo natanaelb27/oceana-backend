@@ -12,5 +12,7 @@ func shop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 		publicRoute.GET("/information/:merchantId", h.MerchantGetInformationByID)
 		publicRoute.GET("/vouchers", h.MerchantVoucherGetAll)
 		publicRoute.GET("/vouchers/:merchantVoucherId", h.MerchantVoucherGetByID)
+		publicRoute.GET("/:merchantId/products", h.ShopProductGetAll)
+
 	}
 }

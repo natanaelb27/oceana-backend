@@ -14,16 +14,16 @@ type OrderService struct {
 	mock.Mock
 }
 
-// OrderListDetailsGetAll provides a mock function with given fields: userId, orderID
-func (_m *OrderService) OrderListDetailsGetAll(userId uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetAllResponse, error) {
+// OrderListDetailsGetByID provides a mock function with given fields: userId, orderID
+func (_m *OrderService) OrderListDetailsGetByID(userId uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {
 	ret := _m.Called(userId, orderID)
 
-	var r0 *dtos.OrderListDetailsGetAllResponse
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID) *dtos.OrderListDetailsGetAllResponse); ok {
+	var r0 *dtos.OrderListDetailsGetByIDResponse
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID) *dtos.OrderListDetailsGetByIDResponse); ok {
 		r0 = rf(userId, orderID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dtos.OrderListDetailsGetAllResponse)
+			r0 = ret.Get(0).(*dtos.OrderListDetailsGetByIDResponse)
 		}
 	}
 

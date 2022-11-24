@@ -7,13 +7,12 @@ import (
 )
 
 type ProductVariation struct {
-	ID                      uint
-	ProductItemID           uint
-	ProductItem             ProductItem
-	ProductVariationGroupID uint
-	ProductVariationGroup   ProductVariationGroup
-	Name                    string
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
-	DeletedAt               gorm.DeletedAt
+	ID               uint
+	ProductItemID    uint
+	ProductItem      ProductItem
+	ProductVariantID uint
+	ProductVariant   ProductVariant
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        gorm.DeletedAt
 }

@@ -22,6 +22,8 @@ var (
 	ErrEmptyQuantity       = errors.New("quantity should not be empty")
 	ErrEmptyPrice          = errors.New("price should not be empty")
 	ErrEmptyEventID        = errors.New("event id should not be empty")
+	ErrEmptyRequstBody     = errors.New("request body should not be empty")
+	ErrRequestBodyTooLarge = errors.New("request body must not be larger than 1MB")
 
 	ErrInvalidEmailAddress            = errors.New("invalid email address")
 	ErrInvalidPassword                = errors.New("invalid password")
@@ -104,6 +106,7 @@ var (
 	ErrHashingFailed                 = errors.New("hashing failed")
 	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 	ErrSendingEmailFailed            = errors.New("sending email failed")
+	ErrInternalOperationFailed       = errors.New("internal operation failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -125,6 +128,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEmptyQuantity) ||
 		errors.Is(err, ErrEmptyPrice) ||
 		errors.Is(err, ErrEmptyEventID) ||
+		errors.Is(err, ErrEmptyRequstBody) ||
+		errors.Is(err, ErrRequestBodyTooLarge) ||
 		errors.Is(err, ErrInvalidEmailAddress) ||
 		errors.Is(err, ErrInvalidPassword) ||
 		errors.Is(err, ErrInvalidAmount) ||

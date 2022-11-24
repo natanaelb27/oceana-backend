@@ -10,8 +10,8 @@ type ProductVariationSnapshot struct {
 	ID                uint
 	ProductSnapshotID uint
 	ProductSnapshot   ProductSnapshot
+	VariantType       string
 	Variant           string
-	Value             string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         gorm.DeletedAt

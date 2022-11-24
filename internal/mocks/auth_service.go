@@ -18,13 +18,13 @@ type AuthService struct {
 	mock.Mock
 }
 
-// Login provides a mock function with given fields: userLoginRequest
-func (_m *AuthService) Login(userLoginRequest *dtos.UserLoginRequest) (*internaldtos.UserLoginData, error) {
-	ret := _m.Called(userLoginRequest)
+// Login provides a mock function with given fields: c, userLoginRequest
+func (_m *AuthService) Login(c *gin.Context, userLoginRequest *dtos.UserLoginRequest) (*internaldtos.UserLoginData, error) {
+	ret := _m.Called(c, userLoginRequest)
 
 	var r0 *internaldtos.UserLoginData
-	if rf, ok := ret.Get(0).(func(*dtos.UserLoginRequest) *internaldtos.UserLoginData); ok {
-		r0 = rf(userLoginRequest)
+	if rf, ok := ret.Get(0).(func(*gin.Context, *dtos.UserLoginRequest) *internaldtos.UserLoginData); ok {
+		r0 = rf(c, userLoginRequest)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*internaldtos.UserLoginData)
@@ -32,8 +32,8 @@ func (_m *AuthService) Login(userLoginRequest *dtos.UserLoginRequest) (*internal
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*dtos.UserLoginRequest) error); ok {
-		r1 = rf(userLoginRequest)
+	if rf, ok := ret.Get(1).(func(*gin.Context, *dtos.UserLoginRequest) error); ok {
+		r1 = rf(c, userLoginRequest)
 	} else {
 		r1 = ret.Error(1)
 	}
