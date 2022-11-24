@@ -81,9 +81,17 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			(
 				CASE
 					WHEN pmp.discount_type = 'percentage' 
-					THEN (pmp.discount / 100.0) * (@price_minimum)
+						THEN (@price_minimum) - LEAST
+							(
+								(pmp.discount / 100.0) * (@price_minimum), 
+								pmp.maximum_discount_amount
+							)
 					WHEN pmp.discount_type = 'nominal' 
-					THEN GREATEST(LEAST((@price_minimum) - pmp.discount, pmp.maximum_discount_amount), 0)
+						THEN GREATEST
+							(
+								(@price_minimum) - pmp.discount, 
+								0
+							)
 				ELSE (@price_minimum)
 				END
 			) AS price_minimum_after_discount,
@@ -91,9 +99,17 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			(
 				CASE
 					WHEN pmp.discount_type = 'percentage' 
-					THEN (pmp.discount / 100.0) * (@price_maximum)
+						THEN (@price_maximum) - LEAST
+							(
+								(pmp.discount / 100.0) * (@price_maximum), 
+								pmp.maximum_discount_amount
+							)
 					WHEN pmp.discount_type = 'nominal' 
-					THEN GREATEST(LEAST((@price_maximum) - pmp.discount, pmp.maximum_discount_amount), 0)
+						THEN GREATEST
+							(
+								(@price_maximum) - pmp.discount, 
+								0
+							)
 				ELSE (@price_maximum)
 				END
 			) AS price_maximum_after_discount,
