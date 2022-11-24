@@ -126,6 +126,8 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			) AS price_maximum_after_discount,
 			(@total_view_count) AS total_view_count,
 			pmp.discount as discount,
+			pmp.discount_type as discount_type,
+			pmp.maximum_discount_amount as discount_maximum_discount_amount,
             products.created_at,
             products.updated_at,
 			merchants.id as "Merchant__id",
