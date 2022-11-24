@@ -106,6 +106,7 @@ var (
 	ErrHashingFailed                 = errors.New("hashing failed")
 	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 	ErrSendingEmailFailed            = errors.New("sending email failed")
+	ErrInternalOperationFailed       = errors.New("internal operation failed")
 
 	ErrUnknown = errors.New("unknown")
 )

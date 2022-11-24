@@ -1,10 +1,13 @@
 package product_dtos
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -85,6 +88,7 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.Sort = utils.QueryParamSort(c.Query("sort"))
 
 	sortBy := strings.ToLower(c.Query("sort_by"))
+	fmt.Println(sortBy)
 	switch sortBy {
 	case "newest":
 		query.SortBy = "products.created_at"
@@ -98,4 +102,17 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	}
 
 	return query
+}
+
+func NewShopProductQuery(c *gin.Context) (query *ProductQuery, err error) {
+	query = NewProductQuery(c)
+	merchantId, err := strconv.Atoi(c.Param("merchantId"))
+	if err != nil {
+		err = e.ErrInternalOperationFailed
+		return
+	}
+
+	query.MerchantID = uint(merchantId)
+
+	return
 }
