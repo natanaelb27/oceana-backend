@@ -106,18 +106,31 @@ func Init() *Handler {
 		RedisRepository: redisRepository,
 	})
 
+	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	productMerchantPromotionRepository := repositories.NewProductMerchantPromotionRepositoryConfig(&repositories.ProductMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantPromotionService := services.NewMerchantPromotionService(&services.MerchantPromotionServiceConfig{
+		MerchantRepository:                 merchantRepository,
+		MerchantPromotionRepository:        merchantPromotionRepository,
+		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:            roleService,
-		WalletService:          walletService,
-		AuthService:            authService,
-		CategoryService:        categoryService,
-		UserService:            userService,
-		ProfileService:         profileService,
-		SealabsPayService:      sealabsPayService,
-		MerchantVoucherService: merchantVoucherService,
-		AddressService:         addressService,
-		MerchantService:        merchantService,
-		OrderService:           orderService,
+		RoleService:              roleService,
+		WalletService:            walletService,
+		AuthService:              authService,
+		CategoryService:          categoryService,
+		UserService:              userService,
+		ProfileService:           profileService,
+		SealabsPayService:        sealabsPayService,
+		MerchantVoucherService:   merchantVoucherService,
+		AddressService:           addressService,
+		MerchantService:          merchantService,
+		OrderService:             orderService,
+		MerchantPromotionService: merchantPromotionService,
 	})
 
 	return h
