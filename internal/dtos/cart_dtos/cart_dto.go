@@ -21,7 +21,7 @@ func (source *CartRequest) ToModel() (target *models.Cart) {
 }
 
 type Product struct {
-	ID                 uint   `json:"id"`
+	CartsID            uint   `json:"carts_id"`
 	ProductID          uint   `json:"product_id"`
 	ProductItemID      uint   `json:"product_item_id"`
 	ProductName        string `json:"product_name"`

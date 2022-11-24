@@ -63,7 +63,7 @@ func (r *cartRepository) subQueryCartsQuantitySum(merchantId uint, userId uuid.U
 func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, userId uuid.UUID) (result []*in_cart_dtos.Product, err error) {
 	sqTotalViewCount := sql.Named("all_product_items_quantity", r.subQueryCartsQuantitySum(merchantId, userId))
 	queryResult := r.db.Model(&models.Cart{}).Select(`
-			carts.id AS id,
+			carts.id AS carts_id,
 			carts.user_id AS user_id,
 			products.id AS product_id,
 			products.name AS product_name,
