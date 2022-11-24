@@ -24,6 +24,7 @@ type Product struct {
 	// Category      models.Category `json:"category"`
 	Name                      string    `json:"name"`
 	Description               string    `json:"description"`
+	MediaURL                  string    `json:"media_url"`
 	IsHazardous               bool      `json:"is_hazardous"`
 	Weight                    uint      `json:"weight"`
 	PackageSize               string    `json:"package_size"`

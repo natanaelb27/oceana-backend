@@ -55,10 +55,20 @@ func (r *productRepository) subQueryProductCourierService(courierServices []stri
 	return query
 }
 
+func (r *productRepository) subQueryProductMediaByProductID() *gorm.DB {
+	query := r.db.Model(&models.ProductMedia{}).
+		Select("product_media.media_url").
+		Where("product_media.product_id = products.id").
+		Order("product_media.id ASC").
+		Limit(1)
+	return query
+}
+
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
 	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
 	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
+	sqMediaURL := sql.Named("media_url", r.subQueryProductMediaByProductID())
 	// subquery promotion price
 
 	var ProductDetails []*product_dtos.Product
@@ -70,6 +80,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.category_id,
             products.name,
             products.description,
+            (@media_url) AS media_url,
             products.is_hazardous,
             products.weight,
             products.package_size,
@@ -120,10 +131,11 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			merchants.id as "Merchant__id",
 			merchants.name as "Merchant__name",
 			cities.name as "Merchant__city"
-		`,
+			`,
 			sqPriceMinimum,
 			sqPriceMaximum,
 			sqTotalViewCount,
+			sqMediaURL,
 		).
 		Joins("JOIN merchants ON merchants.id = products.merchant_id").
 		Joins("JOIN addresses ON addresses.id = merchants.address_id").
