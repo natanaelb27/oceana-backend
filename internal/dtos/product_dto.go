@@ -35,9 +35,9 @@ type ProductDetails struct {
 // }
 
 type SelectedProductPurchaseQuantities struct {
-	Price                      uint  `json:"price"`
-	Stock                      uint  `json:"stock"`
-	MaxPurchaseQuantity        uint  `json:"max_purchase_quantity"`
-	UserMaxPurchaseQuantity    uint  `json:"user_max_purchase_quantity"`
-	ProductMerchantPromotionID *uint `json:"product_merchant_promotion_id"`
+	Price                      float64 `json:"price"`
+	Stock                      uint    `json:"stock"`
+	MaxPurchaseQuantity        uint    `json:"max_purchase_quantity"`
+	UserMaxPurchaseQuantity    uint    `json:"user_max_purchase_quantity"`
+	ProductMerchantPromotionID *uint   `json:"product_merchant_promotion_id"`
 }

@@ -164,10 +164,11 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 
 	subQueryUserUsage := r.db.Model(&models.UserMerchantPromotion{}).
 		Select(`
-			user_merchant_promotions.usage + COALESCE(user_cart.total_quantity, 0)
+			user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
+			user_merchant_promotions.usage + COALESCE(user_cart.total_quantity, 0) AS total_usage
 		`).
-		Joins("LEFT JOIN (?) user_cart ON user_merchant_promotions.product_id = user_cart.product_id", subQueryUserCart).
-		Where("user_merchant_promotions.product_merchant_promotion_id = product_merchant_promotions.id").
+		Joins("JOIN product_merchant_promotions ON product_merchant_promotions.id = user_merchant_promotions.product_merchant_promotion_id").
+		Joins("LEFT JOIN (?) user_cart ON product_merchant_promotions.product_id = user_cart.product_id", subQueryUserCart).
 		Where("user_merchant_promotions.user_id = ?", userID)
 
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
@@ -177,13 +178,13 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 			product_merchant_promotions.discount_type,
 			product_merchant_promotions.discount,
 			product_merchant_promotions.maximum_discount_amount,
+			product_merchant_promotions.maximum_quota,
 			product_merchant_promotions.maximum_user_limit,
 			product_merchant_promotions.current_quota,
-			COALESCE((@user_usage), 0) AS user_usage
-		`,
-			sql.Named("user_usage", subQueryUserUsage)).
+			COALESCE(user_usage.total_usage, 0) AS total_usage
+		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Where("product_merchant_promotions.status = 'active'").
+		Joins("JOIN (?) user_usage ON user_usage.product_merchant_promotion_id = product_merchant_promotions.id", subQueryUserUsage).
 		Where(`
 			product_merchant_promotions.maximum_quota > 
 			CASE
@@ -194,18 +195,35 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where(`
 			CASE
-				WHEN product_merchant_promotions.maximum_user_limit > -1 AND product_merchant_promotions.maximum_quota > -1
-				THEN COALESCE((@user_usage), 0) + @quantity <= LEAST(product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota, product_merchant_promotions.maximum_user_limit)
-				WHEN product_merchant_promotions.maximum_user_limit > -1 AND product_merchant_promotions.maximum_quota <= -1
-				THEN COALESCE((@user_usage), 0) + @quantity <= product_merchant_promotions.maximum_user_limit
-				WHEN product_merchant_promotions.maximum_user_limit <= -1 AND product_merchant_promotions.maximum_quota > -1
-				THEN COALESCE((@user_usage), 0) + @quantity <= (product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota)
-				WHEN product_merchant_promotions.maximum_user_limit <= -1 AND product_merchant_promotions.maximum_quota <= -1
-				THEN TRUE
+				WHEN product_merchant_promotions.maximum_user_limit > -1 
+				THEN COALESCE(user_usage.total_usage, 0) + @quantity <= product_merchant_promotions.maximum_user_limit
+				ELSE TRUE
 			END
 		`,
-			sql.Named("user_usage", subQueryUserUsage),
 			sql.Named("quantity", quantity)).
+		Where(`
+			CASE
+				WHEN product_merchant_promotions.maximum_quota > -1 
+				THEN @quantity <= product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota
+				ELSE TRUE
+			END
+		`,
+			sql.Named("quantity", quantity)).
+		// Where(`
+		// 	CASE
+		// 		WHEN product_merchant_promotions.maximum_user_limit > -1 AND product_merchant_promotions.maximum_quota > -1
+		// 		THEN
+
+		// 		COALESCE(user_usage.total_usage, 0) + @quantity <= LEAST(product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota, product_merchant_promotions.maximum_user_limit)
+		// 		WHEN product_merchant_promotions.maximum_user_limit > -1 AND product_merchant_promotions.maximum_quota <= -1
+		// 		THEN COALESCE(user_usage.total_usage, 0) + @quantity <= product_merchant_promotions.maximum_user_limit
+		// 		WHEN product_merchant_promotions.maximum_user_limit <= -1 AND product_merchant_promotions.maximum_quota > -1
+		// 		THEN COALESCE(user_usage.total_usage, 0) + @quantity <= (product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota)
+		// 		WHEN product_merchant_promotions.maximum_user_limit <= -1 AND product_merchant_promotions.maximum_quota <= -1
+		// 		THEN TRUE
+		// 	END
+		// `,
+		// 	sql.Named("quantity", quantity)).
 		Where("product_merchant_promotions.product_id = ?", productID)
 
 	subQueryProduct := r.db.Model(&models.ProductItem{}).
@@ -221,10 +239,10 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 					END)
 				ELSE product_items.price
 			END AS price,
-			product_items.stock AS stock,
+			product_items.stock_quantity AS stock
 		`).
 		Joins("LEFT JOIN (?) product_discount_agg ON product_items.product_id = product_discount_agg.product_id", subQueryProductDiscount).
-		Where("products.id = ?", productID)
+		Where("product_items.id = ?", productItemID)
 
 	queryResult := r.db.Model(&models.Product{}).
 		Select(`
@@ -234,20 +252,28 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 				CASE
 					WHEN product_discount_agg.product_merchant_promotion_id IS NULL
 					THEN selected_product.stock
-					ELSE product_discount_agg.maximum_user_limit
+					ELSE 
+						(CASE
+							WHEN product_discount_agg.maximum_quota <= -1 THEN selected_product.stock
+							ELSE product_discount_agg.maximum_quota - product_discount_agg.current_quota
+						END)
 				END
 			) AS max_purchase_quantity,
 			(
 				CASE
 					WHEN product_discount_agg.product_merchant_promotion_id IS NULL
 					THEN selected_product.stock
-					ELSE product_discount_agg.maximum_user_limit - product_discount_agg.user_usage
+					ELSE 
+						(CASE
+							WHEN product_discount_agg.maximum_user_limit <= -1 THEN selected_product.stock
+							ELSE product_discount_agg.maximum_user_limit - product_discount_agg.total_usage
+						END)
 				END
 			) AS user_max_purchase_quantity,
 			product_discount_agg.product_merchant_promotion_id AS product_merchant_promotion_id
 		`).
 		Joins("JOIN (?) selected_product ON products.id = selected_product.product_id", subQueryProduct).
-		Joins("JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
+		Joins("LEFT JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
 		Where("products.id = ?", productID).
 		First(&selectedProductPurchaseQuantities)
 
