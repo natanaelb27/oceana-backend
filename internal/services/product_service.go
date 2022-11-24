@@ -3,12 +3,10 @@ package services
 import (
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-
-	"github.com/google/uuid"
 )
 
 type ProductService interface {
-	ProductDetailsGetByID(userID uuid.UUID, productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
+	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
 }
 
 type productService struct {
@@ -30,14 +28,14 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productVariantRepository: c.ProductVariationRepository,
 	}
 }
-func (s *productService) ProductDetailsGetByID(userID uuid.UUID, productID uint) (*dtos.ProductDetailsGetByIDResponse, error) {
-	productDetails, err := s.productRepository.ProductDetailsGetByID(userID, productID)
+func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error) {
+	productDetails, err := s.productRepository.ProductDetailsGetByID(productID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	productModels, err := s.productItemRepository.GetByProductID(userID, productID)
+	productModels, err := s.productItemRepository.GetByProductID(productID)
 
 	if err != nil {
 		return nil, err

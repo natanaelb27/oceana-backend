@@ -15,8 +15,8 @@ type ProductMerchantPromotion struct {
 	DiscountType          string
 	Discount              uint
 	MaximumDiscountAmount uint
-	MaximumQuota          uint
-	MaximumUserLimit      uint
+	MaximumQuota          int
+	MaximumUserLimit      int
 	CurrentQuota          uint
 	Status                string
 	CreatedAt             time.Time

@@ -4,12 +4,11 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type ProductItemRepository interface {
-	GetByProductID(userID uuid.UUID, productID uint) ([]*dtos.ProductModel, error)
+	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 }
 
 type productItemRepository struct {
@@ -26,7 +25,7 @@ func NewProductItemRepository(c *ProductItemRepositoryConfig) ProductItemReposit
 	}
 }
 
-func (r *productItemRepository) GetByProductID(userID uuid.UUID, productID uint) ([]*dtos.ProductModel, error) {
+func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductModel, error) {
 	var productModels []*dtos.ProductModel
 
 	subQueryVariationIndex := r.db.Model(&models.ProductVariant{}).
@@ -45,13 +44,6 @@ func (r *productItemRepository) GetByProductID(userID uuid.UUID, productID uint)
 		Joins("JOIN (?) tbl_variation_index ON tbl_variation_index.product_variant_id = product_variations.product_variant_id", subQueryVariationIndex).
 		Group("product_items.id")
 
-	subQueryUserMerchantPromotion := r.db.Model(&models.UserMerchantPromotion{}).
-		Select(`
-			usage
-		`).
-		Where("user_merchant_promotions.product_merchant_promotion_id = product_merchant_promotions.id").
-		Where("user_merchant_promotions.user_id = ?", userID)
-
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
 			product_merchant_promotions.product_id,
@@ -61,14 +53,14 @@ func (r *productItemRepository) GetByProductID(userID uuid.UUID, productID uint)
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
 		Where("product_merchant_promotions.status = 'active'").
-		Where("product_merchant_promotions.current_quota < product_merchant_promotions.maximum_quota").
-		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where(`
-			product_merchant_promotions.maximum_user_limit > 
-			CASE 
-				WHEN product_merchant_promotions.maximum_user_limit > 0 THEN COALESCE((?), 0)
-				ELSE -1
-			END`, subQueryUserMerchantPromotion).
+			product_merchant_promotions.maximum_quota > 
+			CASE
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+				ELSE -2
+			END
+		`).
+		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where("product_merchant_promotions.product_id = ?", productID)
 
 	queryResult := r.db.Model(&models.ProductItem{}).
@@ -79,7 +71,6 @@ func (r *productItemRepository) GetByProductID(userID uuid.UUID, productID uint)
 			product_items.price AS price,
 			(
 				CASE 
-					WHEN product_discount_agg.discount_type IS NULL THEN -1
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
 					THEN GREATEST(product_items.price - product_discount_agg.discount, 0)::float
 					ELSE product_items.price - LEAST((product_items.price * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)

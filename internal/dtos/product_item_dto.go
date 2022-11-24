@@ -7,6 +7,6 @@ type ProductModel struct {
 	SKU                string        `json:"sku"`
 	StockQuantity      uint          `json:"stock_quantity"`
 	Price              uint          `json:"price"`
-	PriceAfterDiscount float64       `json:"price_after_discount"`
+	PriceAfterDiscount *float64      `json:"price_after_discount"`
 	VariationIndex     pq.Int64Array `json:"variation_index" gorm:"type:integer[]"`
 }

@@ -4,12 +4,11 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type ProductRepository interface {
-	ProductDetailsGetByID(userID uuid.UUID, productID uint) (*dtos.ProductDetails, error)
+	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 }
 
 type productRepository struct {
@@ -26,15 +25,8 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 	}
 }
 
-func (r *productRepository) ProductDetailsGetByID(userID uuid.UUID, productID uint) (*dtos.ProductDetails, error) {
+func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error) {
 	var productDetails *dtos.ProductDetails
-
-	subQueryUserMerchantPromotion := r.db.Model(&models.UserMerchantPromotion{}).
-		Select(`
-			usage
-		`).
-		Where("user_merchant_promotions.product_merchant_promotion_id = product_merchant_promotions.id").
-		Where("user_merchant_promotions.user_id = ?", userID)
 
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
@@ -45,14 +37,14 @@ func (r *productRepository) ProductDetailsGetByID(userID uuid.UUID, productID ui
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
 		Where("product_merchant_promotions.status = 'active'").
-		Where("product_merchant_promotions.current_quota < product_merchant_promotions.maximum_quota").
-		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where(`
-			product_merchant_promotions.maximum_user_limit > 
-			CASE 
-				WHEN product_merchant_promotions.maximum_user_limit > 0 THEN COALESCE((?), 0)
-				ELSE -1
-			END`, subQueryUserMerchantPromotion).
+			product_merchant_promotions.maximum_quota > 
+			CASE
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+				ELSE -2
+			END
+		`).
+		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where("product_merchant_promotions.product_id = ?", productID)
 
 	subQueryProductItem := r.db.Model(&models.ProductItem{}).
@@ -112,7 +104,6 @@ func (r *productRepository) ProductDetailsGetByID(userID uuid.UUID, productID ui
 			product_discount_agg.discount AS discount,
 			(
 				CASE 
-					WHEN product_discount_agg.discount_type IS NULL THEN -1
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
 					THEN GREATEST(product_item_agg.price_min - product_discount_agg.discount, 0)
 					ELSE product_item_agg.price_min - LEAST((product_item_agg.price_min * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
@@ -121,7 +112,6 @@ func (r *productRepository) ProductDetailsGetByID(userID uuid.UUID, productID ui
 			product_item_agg.price_min AS price,
 			(
 				CASE 
-					WHEN product_discount_agg.discount_type IS NULL THEN -1
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
 					THEN GREATEST(product_item_agg.price_max - product_discount_agg.discount, 0)
 					ELSE product_item_agg.price_max - LEAST((product_item_agg.price_max * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
@@ -130,7 +120,6 @@ func (r *productRepository) ProductDetailsGetByID(userID uuid.UUID, productID ui
 			product_item_agg.price_max AS price_max,
 			(
 				CASE 
-					WHEN product_discount_agg.discount_type IS NULL THEN -1
 					WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
 					THEN GREATEST(product_item_agg.price_min - product_discount_agg.discount, 0)
 					ELSE product_item_agg.price_min - LEAST((product_item_agg.price_min * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
@@ -149,8 +138,7 @@ func (r *productRepository) ProductDetailsGetByID(userID uuid.UUID, productID ui
 
 	if queryResult.Error != nil {
 		if queryResult.Error == gorm.ErrRecordNotFound {
-			return nil, e.ErrDataNotFound
-			// ini ganti jd product not found
+			return nil, e.ErrProductNotFound
 		}
 		return nil, e.ErrDatabaseOperationFailed
 	}
