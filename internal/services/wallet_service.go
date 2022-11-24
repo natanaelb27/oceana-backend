@@ -113,7 +113,6 @@ func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDeta
 	if err != nil {
 		return nil, err
 	}
-	externalWalletTransactionHistoryResponse := externalDtos.NewWalletTransactionHistoryResponse(walletTransactionHistory)
-	responseData := externalDtos.NewWalletDetailsResponse(wallet, externalWalletTransactionHistoryResponse)
+	responseData := externalDtos.NewWalletDetailsResponse(wallet, walletTransactionHistory)
 	return responseData, nil
 }

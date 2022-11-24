@@ -144,11 +144,8 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		if queryResult.Error != nil {
 			return nil, e.ErrDatabaseOperationFailed
 		}
-		if queryResult.RowsAffected == 0 {
-			return nil, e.ErrDataNotFound
-		}
 	} else if result.Error == gorm.ErrRecordNotFound {
-		queryResult := w.db.Raw("(?) UNION (?) UNION (?)",
+		queryResult := w.db.Debug().Raw("(?) UNION (?) UNION (?)",
 			queryWalletTopUp,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
@@ -157,9 +154,6 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 			Find(&walletTransactionHistory)
 		if queryResult.Error != nil {
 			return nil, e.ErrDatabaseOperationFailed
-		}
-		if queryResult.RowsAffected == 0 {
-			return nil, e.ErrDataNotFound
 		}
 	}
 
