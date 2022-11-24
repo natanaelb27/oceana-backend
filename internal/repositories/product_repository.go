@@ -63,7 +63,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	var ProductDetails []*product_dtos.Product
 
-	query := r.db.Debug().Model(&models.Product{}).
+	query := r.db.Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -74,7 +74,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.weight,
             products.package_size,
             products.condition,
-            products.product_status,
+            products.status,
 			(@price_minimum) AS price_minimum,
 			(@price_maximum) AS price_maximum,
 			-- count price minimum after discount
@@ -177,8 +177,8 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
 
 	query.
-		Order(fmt.Sprintf("%s %s", queryParams.SortBy, queryParams.Sort)).
 		Scopes(utils.Paginate(pagination, query)).
+		Order(fmt.Sprintf("%s %s", queryParams.SortBy, queryParams.Sort)).
 		Find(&ProductDetails)
 
 	if query.Error != nil {
