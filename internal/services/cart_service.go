@@ -12,22 +12,35 @@ type CartService interface {
 }
 
 type cartService struct {
-	cartRepository r.CartRepository
+	cartRepository        r.CartRepository
+	productItemRepository r.ProductItemRepository
 }
 
 type CartServiceConfig struct {
-	CartRepository r.CartRepository
+	CartRepository        r.CartRepository
+	ProductItemRepository r.ProductItemRepository
 }
 
 func NewCartService(c *CartServiceConfig) CartService {
 	return &cartService{
-		cartRepository: c.CartRepository,
+		cartRepository:        c.CartRepository,
+		productItemRepository: c.ProductItemRepository,
 	}
 }
 
 func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.Cart, err error) {
 	cart, err := p.cartRepository.GetByUserIdProductItemId(request.UserID, request.ProductItemID)
 	if err != nil && err != e.ErrDataNotFound {
+		return
+	}
+
+	// check if stock available
+	productItem, err := p.productItemRepository.GetById(request.ProductItemID)
+	if err != nil {
+		return
+	}
+	if productItem.StockQuantity < *request.Quantity {
+		err = e.ErrStockIsNotAvailable
 		return
 	}
 
