@@ -2,7 +2,6 @@ package cart_dtos
 
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
 )
 
@@ -10,14 +9,6 @@ type CartRequest struct {
 	UserID        uuid.UUID
 	ProductItemID uint
 	Quantity      *uint
-}
-
-func NewInternalCartRequest(source *dtos.CartUpsertRequest) (target *CartRequest) {
-	target = &CartRequest{
-		ProductItemID: source.ProductItemID,
-		Quantity:      source.Quantity,
-	}
-	return
 }
 
 func (source *CartRequest) ToModel() (target *models.Cart) {
@@ -29,8 +20,18 @@ func (source *CartRequest) ToModel() (target *models.Cart) {
 	return
 }
 
-type CartResult struct {
-	UserID        uuid.UUID `json:"user_id"`
-	ProductItemID uint      `json:"product_item_id"`
-	Quantity      uint      `json:"name"`
+type Product struct {
+	ID                 uint   `json:"id"`
+	ProductID          uint   `json:"product_id"`
+	ProductItemID      uint   `json:"product_item_id"`
+	ProductName        string `json:"product_name"`
+	Quantity           uint   `json:"quantity"`
+	Price              uint   `json:"price"`
+	PriceAfterDiscount uint   `json:"price_after_discount"`
+}
+
+type Merchant struct {
+	MerchantID uint       `json:"merchant_id"`
+	Name       string     `json:"name"`
+	Products   []*Product `json:"products" gorm:"-"`
 }

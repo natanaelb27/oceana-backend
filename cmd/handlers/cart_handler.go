@@ -7,6 +7,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (h *Handler) CartGetAlByUserId(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+
+	results, err := h.cartService.GetAllByUserId(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	var responseData []*in_cart_dtos.Merchant = make([]*in_cart_dtos.Merchant, 0)
+
+	responseData = append(responseData, results...)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
 func (h *Handler) CartUpdate(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 
@@ -16,7 +32,7 @@ func (h *Handler) CartUpdate(c *gin.Context) {
 		return
 	}
 
-	internalRequest := in_cart_dtos.NewInternalCartRequest(request)
+	internalRequest := request.CartUpsertRequestToInternalCartRequest()
 
 	internalRequest.UserID = id
 

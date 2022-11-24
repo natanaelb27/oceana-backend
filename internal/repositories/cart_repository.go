@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"database/sql"
+
+	in_cart_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/cart_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -9,8 +12,9 @@ import (
 
 type CartRepository interface {
 	Create(cart *models.Cart) (model *models.Cart, err error)
-	GetAll() (model []*models.Cart, err error)
 	GetByUserIdProductItemId(userId uuid.UUID, productItemId uint) (model *models.Cart, err error)
+	GetCartsMerchants(userId uuid.UUID) (result []*in_cart_dtos.Merchant, err error)
+	GetCartsProductsByUserIdMerchants(merchantId uint, userId uuid.UUID) (result []*in_cart_dtos.Product, err error)
 	Update(id uint, newModel *models.Cart) (model *models.Cart, err error)
 	Delete(id uint) (model *models.Cart, err error)
 }
@@ -45,8 +49,78 @@ func (r *cartRepository) Create(newModel *models.Cart) (model *models.Cart, err 
 	return
 }
 
-func (r *cartRepository) GetAll() (model []*models.Cart, err error) {
-	queryResult := r.db.Find(&model)
+func (r *cartRepository) subQueryCartsQuantitySum(merchantId uint, userId uuid.UUID) *gorm.DB {
+	query := r.db.Model(&models.Cart{}).
+		Select("SUM(carts.quantity)").
+		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
+		Joins(`JOIN products p ON p.id = product_items.product_id`).
+		Where("carts.user_id = ?", userId).
+		Where("merchants.id = ?", merchantId).
+		Where("p.id = products.id")
+	return query
+}
+
+func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, userId uuid.UUID) (result []*in_cart_dtos.Product, err error) {
+	sqTotalViewCount := sql.Named("all_product_items_quantity", r.subQueryCartsQuantitySum(merchantId, userId))
+	queryResult := r.db.Model(&models.Cart{}).Select(`
+			carts.id AS id,
+			carts.user_id AS user_id,
+			products.id AS product_id,
+			products.name AS product_name,
+			carts.product_item_id AS product_item_id,
+			(@all_product_items_quantity) AS quantity,
+			product_items.price AS price,
+			-- count price after discount
+			(
+				CASE
+					WHEN (@all_product_items_quantity) > pmp.current_quota
+						THEN product_items.price
+					WHEN pmp.discount_type = 'percentage' 
+						THEN product_items.price - LEAST
+						(
+							(pmp.discount / 100.0) * product_items.price, 
+							pmp.maximum_discount_amount
+						)
+					WHEN pmp.discount_type = 'nominal' 
+						THEN GREATEST
+						(
+							product_items.price - pmp.discount, 
+							0
+						)
+				ELSE product_items.price
+				END		
+			) AS price_after_discount
+		`,
+		sqTotalViewCount,
+	).
+		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
+		Joins(`JOIN products ON products.id = product_items.product_id`).
+		Joins("LEFT JOIN product_merchant_promotions pmp ON products.id = pmp.product_id").
+		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
+		Where("carts.user_id = ?", userId).
+		Where("merchants.id = ?", merchantId).
+		Find(&result)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_dtos.Merchant, err error) {
+	// join products, product_items
+	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
+		merchants.id AS merchant_id,
+		merchants.name AS name,
+		NULL as products
+	`).
+		Where("carts.user_id = ?", userId).
+		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
+		Joins(`JOIN products ON products.id = product_items.product_id`).
+		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
+		Group("products.id, merchants.id").
+		Find(&result)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return

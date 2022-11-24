@@ -10,6 +10,7 @@ func cart(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	path := "/carts"
 	privateRoute := private.Group(path)
 	{
+		privateRoute.GET("", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CartGetAlByUserId)
 		privateRoute.POST("", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CartUpdate)
 	}
 }
