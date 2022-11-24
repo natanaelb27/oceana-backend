@@ -1,14 +1,18 @@
 package repositories
 
 import (
+	"database/sql"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type ProductRepository interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
+	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 }
 
 type productRepository struct {
@@ -144,4 +148,114 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 	}
 
 	return productDetails, nil
+}
+
+func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error) {
+	var selectedProductPurchaseQuantities *dtos.SelectedProductPurchaseQuantities
+
+	subQueryUserCart := r.db.Model(&models.Cart{}).
+		Select(`
+			product_items.product_id AS product_id, 
+			SUM(carts.quantity) AS total_quantity
+		`).
+		Joins("JOIN product_items ON carts.product_item_id = product_items.id").
+		Where("carts.user_id = ?", userID).
+		Group("carts.user_id, product_items.product_id")
+
+	subQueryUserUsage := r.db.Model(&models.UserMerchantPromotion{}).
+		Select(`
+			user_merchant_promotions.usage + COALESCE(user_cart.total_quantity, 0)
+		`).
+		Joins("LEFT JOIN (?) user_cart ON user_merchant_promotions.product_id = user_cart.product_id", subQueryUserCart).
+		Where("user_merchant_promotions.product_merchant_promotion_id = product_merchant_promotions.id").
+		Where("user_merchant_promotions.user_id = ?", userID)
+
+	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
+		Select(`
+			product_merchant_promotions.product_id,
+			product_merchant_promotions.id AS product_merchant_promotion_id,
+			product_merchant_promotions.discount_type,
+			product_merchant_promotions.discount,
+			product_merchant_promotions.maximum_discount_amount,
+			product_merchant_promotions.maximum_user_limit,
+			product_merchant_promotions.current_quota,
+			COALESCE((@user_usage), 0) AS user_usage
+		`,
+			sql.Named("user_usage", subQueryUserUsage)).
+		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+		Where("product_merchant_promotions.status = 'active'").
+		Where(`
+			product_merchant_promotions.maximum_quota > 
+			CASE
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+				ELSE -2
+			END
+		`).
+		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
+		Where(`
+			CASE
+				WHEN product_merchant_promotions.maximum_user_limit > -1 AND product_merchant_promotions.maximum_quota > -1
+				THEN COALESCE((@user_usage), 0) + @quantity <= LEAST(product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota, product_merchant_promotions.maximum_user_limit)
+				WHEN product_merchant_promotions.maximum_user_limit > -1 AND product_merchant_promotions.maximum_quota <= -1
+				THEN COALESCE((@user_usage), 0) + @quantity <= product_merchant_promotions.maximum_user_limit
+				WHEN product_merchant_promotions.maximum_user_limit <= -1 AND product_merchant_promotions.maximum_quota > -1
+				THEN COALESCE((@user_usage), 0) + @quantity <= (product_merchant_promotions.maximum_quota - product_merchant_promotions.current_quota)
+				WHEN product_merchant_promotions.maximum_user_limit <= -1 AND product_merchant_promotions.maximum_quota <= -1
+				THEN TRUE
+			END
+		`,
+			sql.Named("user_usage", subQueryUserUsage),
+			sql.Named("quantity", quantity)).
+		Where("product_merchant_promotions.product_id = ?", productID)
+
+	subQueryProduct := r.db.Model(&models.ProductItem{}).
+		Select(`
+			product_items.product_id AS product_id,
+			CASE 
+				WHEN product_discount_agg.product_merchant_promotion_id IS NOT NULL
+				THEN
+					(CASE
+						WHEN LOWER(product_discount_agg.discount_type) = 'nominal' 
+						THEN GREATEST(product_items.price - product_discount_agg.discount, 0)
+						ELSE product_items.price - LEAST((product_items.price * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
+					END)
+				ELSE product_items.price
+			END AS price,
+			product_items.stock AS stock,
+		`).
+		Joins("LEFT JOIN (?) product_discount_agg ON product_items.product_id = product_discount_agg.product_id", subQueryProductDiscount).
+		Where("products.id = ?", productID)
+
+	queryResult := r.db.Model(&models.Product{}).
+		Select(`
+			selected_product.price AS price,
+			selected_product.stock AS stock,
+			(
+				CASE
+					WHEN product_discount_agg.product_merchant_promotion_id IS NULL
+					THEN selected_product.stock
+					ELSE product_discount_agg.maximum_user_limit
+				END
+			) AS max_purchase_quantity,
+			(
+				CASE
+					WHEN product_discount_agg.product_merchant_promotion_id IS NULL
+					THEN selected_product.stock
+					ELSE product_discount_agg.maximum_user_limit - product_discount_agg.user_usage
+				END
+			) AS user_max_purchase_quantity,
+			product_discount_agg.product_merchant_promotion_id AS product_merchant_promotion_id
+		`).
+		Joins("JOIN (?) selected_product ON products.id = selected_product.product_id", subQueryProduct).
+		Joins("JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
+		Where("products.id = ?", productID).
+		First(&selectedProductPurchaseQuantities)
+
+	if queryResult.Error != nil {
+		if queryResult.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrProductNotFound
+		}
+		return nil, e.ErrDatabaseOperationFailed
+	}
+	return selectedProductPurchaseQuantities, nil
 }

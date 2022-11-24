@@ -38,6 +38,7 @@ func Connect() {
 		&models.ProductMedia{},
 		&models.ProductFavorite{},
 		&models.ProductItem{},
+		&models.Cart{},
 		&models.ProductVariantType{},
 		&models.ProductVariation{},
 		&models.ProductVariant{},

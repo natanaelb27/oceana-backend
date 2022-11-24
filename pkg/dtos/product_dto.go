@@ -1,7 +1,10 @@
 package dtos
 
 import (
+	"strconv"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 )
 
@@ -54,6 +57,64 @@ func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *Prod
 		PriceMinAfterDiscount: source.PriceMinAfterDiscount,
 		ProductModel:          source.ProductModel,
 		ProductVariation:      source.ProductVariation,
+	}
+
+	return
+}
+
+type PurchaseQuantitiesQuery struct {
+	ProductID     uint `json:"product_id"`
+	ProductItemID uint `json:"product_item_id"`
+	Quantity      uint `json:"quantity"`
+}
+
+func NewPurchaseQuantitiesQuery(c *gin.Context) *PurchaseQuantitiesQuery {
+	var query PurchaseQuantitiesQuery
+
+	productID := c.Query("product_id")
+	productItemID := c.Query("product_item_id")
+	quantity := c.Query("quantity")
+
+	productIDInt, err := strconv.Atoi(productID)
+	if err != nil || productIDInt <= 0 {
+		query.ProductID = 0
+	}
+
+	query.ProductID = uint(productIDInt)
+
+	productItemIDInt, err := strconv.Atoi(productItemID)
+	if err != nil || productItemIDInt <= 0 {
+		query.ProductID = 0
+	}
+
+	query.ProductItemID = uint(productItemIDInt)
+
+	quantityInt, err := strconv.Atoi(quantity)
+	if err != nil || quantityInt <= 0 {
+		query.ProductID = 0
+	}
+
+	query.Quantity = uint(quantityInt)
+
+	return &query
+
+}
+
+type GetPurchaseQuantitiesByIDResponse struct {
+	Price                      uint  `json:"price"`
+	Stock                      uint  `json:"stock"`
+	MaxPurchaseQuantity        uint  `json:"max_purchase_quantity"`
+	UserMaxPurchaseQuantity    uint  `json:"user_max_purchase_quantity"`
+	ProductMerchantPromotionID *uint `json:"product_merchant_promotion_id"`
+}
+
+func NewGetPurchaseQuantitiesByIDResponse(source *dtos.SelectedProductPurchaseQuantities) (target *GetPurchaseQuantitiesByIDResponse) {
+	target = &GetPurchaseQuantitiesByIDResponse{
+		Price:                      source.Price,
+		Stock:                      source.Stock,
+		MaxPurchaseQuantity:        source.MaxPurchaseQuantity,
+		UserMaxPurchaseQuantity:    source.UserMaxPurchaseQuantity,
+		ProductMerchantPromotionID: source.ProductMerchantPromotionID,
 	}
 
 	return

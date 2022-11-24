@@ -3,10 +3,12 @@ package services
 import (
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	"github.com/google/uuid"
 )
 
 type ProductService interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
+	GetPurchaseQuantitiesByID(userID uuid.UUID, quantity *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error)
 }
 
 type productService struct {
@@ -28,6 +30,7 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productVariantRepository: c.ProductVariationRepository,
 	}
 }
+
 func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error) {
 	productDetails, err := s.productRepository.ProductDetailsGetByID(productID)
 
@@ -52,4 +55,14 @@ func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDet
 	productDetails.ProductVariation = productVariation
 
 	return dtos.NewProductDetailsGetByIDResponse(productDetails), nil
+}
+
+func (s *productService) GetPurchaseQuantitiesByID(userID uuid.UUID, query *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error) {
+	purchaseQuantities, err := s.productRepository.GetPurchaseQuantitiesByID(userID, query.ProductID, query.ProductItemID, query.Quantity)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewGetPurchaseQuantitiesByIDResponse(purchaseQuantities), nil
 }
