@@ -29,18 +29,14 @@ func Init() *Handler {
 	emailRepository := repositories.NewEmailRepository(&repositories.EmailRepositoryConfig{
 		DB: db.Get(),
 	})
-	refreshTokenRepository := repositories.NewRefreshTokenRepository(&repositories.RefreshTokenRepositoryConfig{
-		DB: db.Get(),
-	})
 	addressRepository := repositories.NewAddressRepository(&repositories.AddressRepositoryConfig{
 		DB: db.Get(),
 	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
-		UserRepository:         userRepository,
-		EmailRepository:        emailRepository,
-		WalletRepository:       walletRepository,
-		RefreshTokenRepository: refreshTokenRepository,
-		RedisRepository:        redisRepository,
+		UserRepository:   userRepository,
+		EmailRepository:  emailRepository,
+		WalletRepository: walletRepository,
+		RedisRepository:  redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),
@@ -105,6 +101,12 @@ func Init() *Handler {
 		UserRepository:  userRepository,
 		RedisRepository: redisRepository,
 	})
+	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
+		DB: db.Get(),
+	})
+	productService := services.NewProductService(&services.ProductServiceConfig{
+		ProductRepository: productRepository,
+	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
 		DB: db.Get(),
@@ -129,6 +131,7 @@ func Init() *Handler {
 		MerchantVoucherService:   merchantVoucherService,
 		AddressService:           addressService,
 		MerchantService:          merchantService,
+		ProductService:           productService,
 		OrderService:             orderService,
 		MerchantPromotionService: merchantPromotionService,
 	})

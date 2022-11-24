@@ -3,15 +3,16 @@ package models
 import (
 	"time"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
-type ProductItemMedia struct {
+type Cart struct {
 	ID            uint
+	UserID        uuid.UUID
+	User          User
 	ProductItemID uint
 	ProductItem   ProductItem
-	MediaURL      string
+	Quantity      uint
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt
 }

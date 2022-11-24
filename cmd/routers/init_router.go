@@ -33,6 +33,7 @@ func Init(h *handlers.Handler) {
 	address(private, h)
 	shop(public, private, h)
 	myShop(public, private, h)
+	product(public, private, h)
 
 	r.NoRoute(h.NotFound)
 
