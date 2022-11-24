@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,15 +27,7 @@ func ResponseError(c *gin.Context, err error) dtos.Response {
 	var newErr string
 	var code int
 	if err != nil {
-		message = TranslateError(err)
-		if message == "-" {
-			message = err.Error()
-			newErr = http.StatusText(e.GetStatusCode(err))
-			code = e.GetStatusCode(err)
-		} else {
-			newErr = http.StatusText(http.StatusBadRequest)
-			code = http.StatusBadRequest
-		}
+		message, newErr, code = TranslateError(err)
 	}
 
 	return Response(c, code, data, nil, newErr, message)

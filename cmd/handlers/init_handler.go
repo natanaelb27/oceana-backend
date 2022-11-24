@@ -29,21 +29,27 @@ func Init() *Handler {
 	emailRepository := repositories.NewEmailRepository(&repositories.EmailRepositoryConfig{
 		DB: db.Get(),
 	})
-	refreshTokenRepository := repositories.NewRefreshTokenRepository(&repositories.RefreshTokenRepositoryConfig{
+	addressRepository := repositories.NewAddressRepository(&repositories.AddressRepositoryConfig{
 		DB: db.Get(),
 	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
-		UserRepository:         userRepository,
-		EmailRepository:        emailRepository,
-		WalletRepository:       walletRepository,
-		RefreshTokenRepository: refreshTokenRepository,
-		RedisRepository:        redisRepository,
+		UserRepository:   userRepository,
+		EmailRepository:  emailRepository,
+		WalletRepository: walletRepository,
+		RedisRepository:  redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),
 	})
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
+	})
+	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
+		DB: db.Get(),
+	})
+	addressService := services.NewAddressService(&services.AddressServiceConfig{
+		AddressRepository:  addressRepository,
+		MerchantRepository: merchantRepository,
 	})
 
 	orderRepository := repositories.NewOrderRepository(&repositories.OrderRepositoryConfig{
@@ -80,9 +86,6 @@ func Init() *Handler {
 		SealabsPayRepository: sealabsPayRepository,
 	})
 
-	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
-		DB: db.Get(),
-	})
 	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -104,6 +107,12 @@ func Init() *Handler {
 	cartService := services.NewCartService(&services.CartServiceConfig{
 		CartRepository: cartRepository,
 	})
+	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
+		DB: db.Get(),
+	})
+	productService := services.NewProductService(&services.ProductServiceConfig{
+		ProductRepository: productRepository,
+	})
 
 	h := New(&HandlerConfig{
 		RoleService:            roleService,
@@ -114,7 +123,9 @@ func Init() *Handler {
 		ProfileService:         profileService,
 		SealabsPayService:      sealabsPayService,
 		MerchantVoucherService: merchantVoucherService,
+		AddressService:         addressService,
 		MerchantService:        merchantService,
+		ProductService:         productService,
 		OrderService:           orderService,
 		CartService:            cartService,
 	})

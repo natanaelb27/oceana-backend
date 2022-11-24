@@ -3,7 +3,6 @@ package handlers
 import (
 	"os"
 	"strconv"
-	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -32,7 +31,7 @@ func (h *Handler) UserLogin(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	userLoginData, err := h.authService.Login(request)
+	userLoginData, err := h.authService.Login(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -40,11 +39,10 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	userLoginResponse := &dtos.UserLoginResponse{
 		Role: userLoginData.Role,
 	}
-	expirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
-	accessTokenExpirationSeconds := 3600 * expirationHours
-	refreshTokenExpirationSeconds := int(time.Time(userLoginData.ExpiresAt).Unix()) - int(time.Now().Unix())
-	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", userLoginData.RefreshToken, refreshTokenExpirationSeconds, "/", "localhost", false, true)
+	jwtExpirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
+	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
+	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("refresh_token", userLoginData.RefreshToken, int(userLoginData.ExpireDuration), "/", os.Getenv("DOMAIN"), false, true)
 	utils.ResponseSuccess(c, userLoginResponse, nil)
 }
 
