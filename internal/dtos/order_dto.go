@@ -37,3 +37,8 @@ type OrderListDetails struct {
 	ShippingFee                     uint                    `json:"shipping_fee"`
 	TotalPayment                    float64                 `json:"total_payment"`
 }
+
+type OrderProcessOrder struct {
+	CourierServiceID uint
+	OrderID          uuid.UUID
+}
