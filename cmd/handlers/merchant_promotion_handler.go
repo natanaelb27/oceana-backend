@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"fmt"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -23,7 +21,6 @@ func (h *Handler) MerchantPromotionCreate(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(mpRequest)
 	responses, err := h.merchantPromotionService.CreateMyShopPromotion(id, mpRequest, mpRequest.ProductMerchantPromotion)
 
 	if err != nil {
