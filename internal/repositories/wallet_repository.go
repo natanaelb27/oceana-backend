@@ -132,19 +132,19 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		`).
 			Joins("JOIN refunds ON refund_details.refund_id = refunds.id").
 			Joins("JOIN order_details ON order_details.id = refunds.order_detail_id").
-			Joins("JOIN orders ON order_details.order_id = orders.id").
-			Where("orders.merchant_id = ?", merchant.ID).
-			Group("orders.id")
+			Joins("JOIN orders o ON order_details.order_id = o.id").
+			Where("o.id = orders.id").
+			Group("o.id")
 
 		queryWalletTransactionsAsSeller := w.db.Model(&models.Order{}).
 			Select(`
-				transactions.id, wallets.id, (SUM(orders.total_price_after_discount) - (?)) AS amount, transactions.transaction_datetime, 'Received Payment Transaction' AS transaction_type
+				transactions.id, wallets.id, (orders.total_price_after_discount - (?)) AS amount, transactions.transaction_datetime, 'Received Payment Transaction' AS transaction_type
 			`, subQuery).
 			Joins("JOIN transactions ON transactions.id = orders.transaction_id").
 			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
 			Joins("JOIN wallets ON wallets.user_id = merchants.user_id").
 			Where("orders.merchant_id = ?", merchant.ID). 
-			Group("transactions.id")
+			Group("orders.id")
 
 		queryResult := w.db.Raw("(?) UNION (?) UNION (?) UNION (?)",
 			queryWalletTopUp,
