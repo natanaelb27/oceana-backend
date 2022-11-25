@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,6 +26,16 @@ type ProductReviewCreateRequest struct {
 	Video         *multipart.FileHeader `form:"video"`
 }
 
+func (p *ProductReviewCreateRequest) ToModel() *models.ProductReview {
+	return &models.ProductReview{
+		UserID:        p.UserID,
+		OrderDetailID: p.OrderDetailID,
+		ProductID:     p.ProductID,
+		Rating:        p.Rating,
+		Review:        p.Review,
+	}
+}
+
 type ProductReviewCreateResponse struct {
 	ID            uint
 	UserID        uuid.UUID
@@ -35,18 +47,18 @@ type ProductReviewCreateResponse struct {
 	UpdatedAt     time.Time
 }
 
-type ProductReviewGetByProductID struct {
-	ID                 uint      `json:"id"`
-	UserID             uuid.UUID `json:"user_id"`
-	FullName           string    `json:"full_name"`
-	Username           string    `json:"username"`
-	Photo              *string   `json:"photo"`
-	ProductID          uint      `json:"product_id"`
-	Rating             uint      `json:"rating"`
-	Review             string    `json:"review"`
-	ProductReviewMedia []*string `json:"product_review_media"`
-	ProductVariations  string    `json:"product_variations"`
-	CreatedAt          time.Time `json:"created_at"`
+func NewProductReviewCreateResponse(source *models.ProductReview) (target *ProductReviewCreateResponse) {
+	target = &ProductReviewCreateResponse{
+		ID:            source.ID,
+		UserID:        source.UserID,
+		OrderDetailID: source.OrderDetailID,
+		ProductID:     source.ProductID,
+		Rating:        source.Rating,
+		Review:        source.Review,
+		CreatedAt:     source.CreatedAt,
+		UpdatedAt:     source.UpdatedAt,
+	}
+	return
 }
 
 type ProductReviewQuery struct {
@@ -83,11 +95,11 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 }
 
 type ProductReviewGetByProductIDResponse struct {
-	Pagination    *utils.Pagination              `json:"pagination"`
-	ProductReview []*ProductReviewGetByProductID `json:"product_review"`
+	Pagination    *utils.Pagination                           `json:"pagination"`
+	ProductReview []*internalDtos.ProductReviewGetByProductID `json:"product_review"`
 }
 
-func NewProductReviewGetByIDResponse(source []*ProductReviewGetByProductID, pagination *utils.Pagination) (target *ProductReviewGetByProductIDResponse) {
+func NewProductReviewGetByIDResponse(source []*internalDtos.ProductReviewGetByProductID, pagination *utils.Pagination) (target *ProductReviewGetByProductIDResponse) {
 	if pagination == nil {
 		return nil
 	}
