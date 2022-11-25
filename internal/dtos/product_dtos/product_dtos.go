@@ -38,6 +38,7 @@ type Product struct {
 	DiscountType                  string    `json:"discount_type"`
 	DiscountMaximumDiscountAmount uint      `json:"discount_maximum_discount_amount"`
 	TotalViewCount                uint      `json:"total_view_count"`
+	TotalPurchaseCount            uint      `json:"total_purchase_count"`
 	Merchant                      Merchant  `json:"merchant"`
 	CreatedAt                     time.Time `json:"created_at"`
 	UpdatedAt                     time.Time `json:"updated_at"`
@@ -97,7 +98,8 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 		query.SortBy = "price_minimum"
 	case "recommended":
 		query.SortBy = "price_minimum_after_discount"
-	// case most buy
+	case "most-buy":
+		query.SortBy = "total_purchase_count"
 	default:
 		query.SortBy = "products.name"
 	}
