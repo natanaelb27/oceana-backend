@@ -79,17 +79,27 @@ func (r *merchantRepository) GetInformationByID(id uint) (merchantInformation *d
 		Where("merchants.id = ?", id).
 		Group("merchants.id")
 
-	subQueryMerchantReview := r.db.Model(&models.Merchant{}).
+	// subQueryMerchantReview := r.db.Model(&models.Merchant{}).
+	// 	Select(`
+	// 		merchants.id AS merchant_id,
+	// 		COUNT(product_reviews.id) AS total_rating,
+	// 		AVG(product_reviews.rating) AS rating_star
+	// 	`).
+	// 	Joins("JOIN orders ON merchants.id = orders.merchant_id").
+	// 	Joins("JOIN order_details ON orders.id = order_details.order_id").
+	// 	Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
+	// 	Where("merchants.id = ?", id).
+	// 	Group("merchants.id")
+
+	subQueryMerchantReview := r.db.Model(&models.ProductReview{}).
 		Select(`
-			merchants.id AS merchant_id,
+			products.merchant_id AS merchant_id,
 			COUNT(product_reviews.id) AS total_rating,
 			AVG(product_reviews.rating) AS rating_star
 		`).
-		Joins("JOIN orders ON merchants.id = orders.merchant_id").
-		Joins("JOIN order_details ON orders.id = order_details.order_id").
-		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
-		Where("merchants.id = ?", id).
-		Group("merchants.id")
+		Joins("JOIN products ON product_reviews.product_id = products.id").
+		Where("products.merchant_id = ?", id).
+		Group("products.merchant_id")
 
 	result := r.db.Model(&models.Merchant{}).
 		Select(`

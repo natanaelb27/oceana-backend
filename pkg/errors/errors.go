@@ -75,6 +75,7 @@ var (
 	ErrStepUpNotFound           = errors.New("step up authenticaiton not found")
 	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
 	ErrVerificationCodeNotFound = errors.New("verification code not found")
+	ErrProductNotFound          = errors.New("product not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
@@ -179,7 +180,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEmailNotFound) ||
 		errors.Is(err, ErrVoucherNotFound) ||
 		errors.Is(err, ErrVoucherNotFound) ||
-		errors.Is(err, ErrOrderNotFound) {
+		errors.Is(err, ErrOrderNotFound) ||
+		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||

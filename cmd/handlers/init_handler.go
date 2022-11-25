@@ -16,6 +16,19 @@ func Init() *Handler {
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
+
+	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productVariationRepository := repositories.NewProductVariationRepository(&repositories.ProductVariationRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -110,9 +123,7 @@ func Init() *Handler {
 		UserRepository:  userRepository,
 		RedisRepository: redisRepository,
 	})
-	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
-		DB: db.Get(),
-	})
+
 	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -120,11 +131,12 @@ func Init() *Handler {
 		CartRepository:        cartRepository,
 		ProductItemRepository: productItemRepository,
 	})
-	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
-		DB: db.Get(),
-	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
-		ProductRepository: productRepository,
+		ProductRepository:          productRepository,
+		MerchantRepository:         merchantRepository,
+		ProductItemRepository:      productItemRepository,
+		ProductVariationRepository: productVariationRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
@@ -148,9 +160,9 @@ func Init() *Handler {
 		ProfileService:           profileService,
 		SealabsPayService:        sealabsPayService,
 		MerchantVoucherService:   merchantVoucherService,
+		ProductService:           productService,
 		AddressService:           addressService,
 		MerchantService:          merchantService,
-		ProductService:           productService,
 		OrderService:             orderService,
 		ProductReviewService:     productReviewService,
 		MerchantPromotionService: merchantPromotionService,
