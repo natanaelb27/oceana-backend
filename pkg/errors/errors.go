@@ -28,6 +28,7 @@ var (
 	ErrInvalidEmailAddress            = errors.New("invalid email address")
 	ErrInvalidPassword                = errors.New("invalid password")
 	ErrInvalidAmount                  = errors.New("invalid amount")
+	ErrInvalidOrderDetailID           = errors.New("invalid order detail id")
 	ErrInvalidMembershipID            = errors.New("invalid membership id")
 	ErrInvalidName                    = errors.New("invalid name")
 	ErrInvalidImage                   = errors.New("invalid image")
@@ -141,6 +142,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidEmailAddress) ||
 		errors.Is(err, ErrInvalidPassword) ||
 		errors.Is(err, ErrInvalidAmount) ||
+		errors.Is(err, ErrInvalidOrderDetailID) ||
 		errors.Is(err, ErrInvalidMembershipID) ||
 		errors.Is(err, ErrInvalidName) ||
 		errors.Is(err, ErrInvalidImage) ||

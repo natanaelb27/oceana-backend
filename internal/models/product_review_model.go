@@ -11,10 +11,10 @@ type ProductReview struct {
 	ID            uint
 	UserID        uuid.UUID
 	User          User
-	ProductID     uint
-	Product       Product
 	OrderDetailID uuid.UUID
 	OrderDetail   OrderDetail
+	ProductID     uint
+	Product       Product
 	Rating        uint
 	Review        string
 	CreatedAt     time.Time

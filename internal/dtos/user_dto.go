@@ -1,6 +1,8 @@
 package dtos
 
-import "time"
+import (
+	"time"
+)
 
 type UserLoginData struct {
 	AccessToken    string        `json:"access_token"`

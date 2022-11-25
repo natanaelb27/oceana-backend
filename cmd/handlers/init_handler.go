@@ -80,7 +80,16 @@ func Init() *Handler {
 	orderTrackingRepository := repositories.NewOrderTrackingRepository(&repositories.OrderTrackingRepositoryConfig{
 		DB: db.Get(),
 	})
-
+	productReviewRepository := repositories.NewProductReviewRepository(&repositories.ProductReviewRepositoryConfig{
+		DB: db.Get(),
+	})
+	productReviewMediaRepository := repositories.NewProductReviewMediaRepository(&repositories.ProductReviewMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+	productReviewService := services.NewProductReviewService(&services.ProductReviewServiceConfig{
+		ProductReviewRepository:      productReviewRepository,
+		ProductReviewMediaRepository: productReviewMediaRepository,
+	})
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
 		OrderRepository:           orderRepository,
 		OrderDetailRepository:     orderDetailRepository,
@@ -155,6 +164,7 @@ func Init() *Handler {
 		AddressService:           addressService,
 		MerchantService:          merchantService,
 		OrderService:             orderService,
+		ProductReviewService:     productReviewService,
 		MerchantPromotionService: merchantPromotionService,
 		CartService:              cartService,
 	})
