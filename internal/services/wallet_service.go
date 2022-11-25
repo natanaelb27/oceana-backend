@@ -15,6 +15,7 @@ import (
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
+	GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error)
 }
 
 type walletService struct {
@@ -101,4 +102,17 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *ext
 	}
 
 	return
+}
+
+func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error) {
+	wallet, err := p.walletRepository.GetByUserId(id)
+	if err != nil {
+		return nil, err
+	}
+	walletTransactionHistory, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID)
+	if err != nil {
+		return nil, err
+	}
+	responseData := externalDtos.NewWalletDetailsResponse(wallet, walletTransactionHistory)
+	return responseData, nil
 }

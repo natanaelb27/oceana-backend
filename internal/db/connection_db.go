@@ -64,6 +64,9 @@ func Connect() {
 		&models.ProductReviewMedia{},
 		&models.SealabsPayTransactionPayment{},
 		&models.WalletTransactionPayment{},
+		&models.WalletTopup{},
+		&models.Refund{},
+		&models.RefundDetail{},
 		&models.Cart{},
 	)
 	if err != nil {
