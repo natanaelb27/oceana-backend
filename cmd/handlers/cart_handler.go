@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) CartGetAlByUserId(c *gin.Context) {
+func (h *Handler) CartGetAllByUserId(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 
 	results, err := h.cartService.GetAllByUserId(id)
