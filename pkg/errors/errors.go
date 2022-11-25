@@ -216,7 +216,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionStartDatetimeEarlierThanNow) ||
 		errors.Is(err, ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime) ||
 		errors.Is(err, ErrPromotionPeriodMinimumOneHour) ||
-		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) {
+		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) {
 		return http.StatusUnprocessableEntity
