@@ -118,20 +118,33 @@ func Init() *Handler {
 		ProductRepository: productRepository,
 	})
 
+	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	productMerchantPromotionRepository := repositories.NewProductMerchantPromotionRepositoryConfig(&repositories.ProductMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantPromotionService := services.NewMerchantPromotionService(&services.MerchantPromotionServiceConfig{
+		MerchantRepository:                 merchantRepository,
+		MerchantPromotionRepository:        merchantPromotionRepository,
+		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:            roleService,
-		WalletService:          walletService,
-		AuthService:            authService,
-		CategoryService:        categoryService,
-		UserService:            userService,
-		ProfileService:         profileService,
-		SealabsPayService:      sealabsPayService,
-		MerchantVoucherService: merchantVoucherService,
-		AddressService:         addressService,
-		MerchantService:        merchantService,
-		ProductService:         productService,
-		OrderService:           orderService,
-		CartService:            cartService,
+		RoleService:              roleService,
+		WalletService:            walletService,
+		AuthService:              authService,
+		CategoryService:          categoryService,
+		UserService:              userService,
+		ProfileService:           profileService,
+		SealabsPayService:        sealabsPayService,
+		MerchantVoucherService:   merchantVoucherService,
+		AddressService:           addressService,
+		MerchantService:          merchantService,
+		ProductService:           productService,
+		OrderService:             orderService,
+		MerchantPromotionService: merchantPromotionService,
+		CartService:              cartService,
 	})
 
 	return h

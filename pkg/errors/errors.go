@@ -101,6 +101,11 @@ var (
 	ErrStockIsNotAvailable                               = errors.New("stock is not available")
 	ErrStatusIsNotPendingSeller                          = errors.New("status is not pending seller")
 
+	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
+	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
+	ErrPromotionPeriodMinimumOneHour                       = errors.New("promotion period must be at least 1 hour")
+	ErrPromotionStartDatetimeMinimumOneDayFromNow          = errors.New("promotion start period must be at least 1 day from now")
+
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
 	ErrCacheOperationFailed          = errors.New("cache operation failed")
@@ -208,6 +213,11 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherHasEnded) ||
 		errors.Is(err, ErrMaximumQuotaLowerThanCurrentQuota) ||
 		errors.Is(err, ErrVoucherEndDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrVoucherNotUpcoming) ||
+		errors.Is(err, ErrPromotionStartDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime) ||
+		errors.Is(err, ErrPromotionPeriodMinimumOneHour) ||
+		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) {
