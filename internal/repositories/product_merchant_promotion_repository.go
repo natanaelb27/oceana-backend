@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"fmt"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -27,9 +25,6 @@ func NewProductMerchantPromotionRepositoryConfig(c *ProductMerchantPromotionRepo
 }
 
 func (pmp *productMerchantPromotionRepository) CreateProductMerchantPromotion(newModels []*models.ProductMerchantPromotion) (models []*models.ProductMerchantPromotion, err error) {
-	for _, newModel := range newModels {
-		fmt.Println(newModel.ID)
-	}
 	queryResult := pmp.db.Create(&newModels)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrInsertFailed
