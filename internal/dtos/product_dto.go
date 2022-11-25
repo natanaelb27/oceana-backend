@@ -27,13 +27,6 @@ type ProductDetails struct {
 	ProductVariation      []*ProductVariation `json:"product_variation" gorm:"-"`
 }
 
-// type SelectedProductPriceAndStock struct {
-// 	Price               uint `json:"price"`
-// 	Stock               uint `json:"stock"`
-// 	MaxPurchaseQuantity uint `json:"max_purchase_quantity"`
-// 	MerchantPromotionID uint `json:"merchant_promotion_id"`
-// }
-
 type SelectedProductPurchaseQuantities struct {
 	Price                      float64 `json:"price"`
 	Stock                      uint    `json:"stock"`
