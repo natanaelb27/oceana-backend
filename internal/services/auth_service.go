@@ -230,11 +230,11 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *externalDt
 func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error) {
 	userID, err := u.redisRepository.Get(c, "reset-password:"+resetPasswordID)
 	if err != nil {
-		return nil, err
+		return nil, e.ErrInvalidResetPasswordID
 	}
 	getResetPasswordID, err := u.redisRepository.Get(c, "reset-password:"+userID)
 	if err != nil {
-		return nil, err
+		return nil, e.ErrInvalidResetPasswordID
 	}
 	if resetPasswordID != getResetPasswordID {
 		return nil, e.ErrInvalidResetPasswordID
@@ -247,18 +247,27 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	if err != nil {
 		return nil, err
 	}
-	hashedPassword, err := utils.Hash(request.Password)
-	if err != nil {
-		return nil, err
-	}
-	if user.Password == hashedPassword {
+	err = utils.CheckHash(user.Password, request.Password)
+	if err == nil {
 		return nil, e.ErrInvalidPassword
 	}
 	if strings.Contains(strings.ToLower(request.Password), strings.ToLower(user.Username)) {
 		return nil, e.ErrInvalidPassword
 	}
+	hashedPassword, err := utils.Hash(request.Password)
+	if err != nil {
+		return nil, err
+	}
 	user.Password = hashedPassword
 	_, err = u.userRepository.Update(user.ID, user)
+	if err != nil {
+		return nil, err
+	}
+	err = u.redisRepository.Delete(c, "reset-password:"+resetPasswordID)
+	if err != nil {
+		return nil, err
+	}
+	err = u.redisRepository.Delete(c, "reset-password:"+userID)
 	if err != nil {
 		return nil, err
 	}
