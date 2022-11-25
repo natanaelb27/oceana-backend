@@ -33,3 +33,27 @@ func (h *Handler) MerchantPromotionCreate(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responses, nil)
 }
+
+func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewMerchantPromotionQuery(c)
+
+	results, err := h.merchantPromotionService.GetAll(userID, query)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	var responseData []*dtos.MerchantPromotionCreateResponse = make([]*dtos.MerchantPromotionCreateResponse, 0)
+
+	for _, result := range results {
+		responseData = append(responseData, dtos.NewMerchantPromotionCreateResponse(result))
+	}
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
