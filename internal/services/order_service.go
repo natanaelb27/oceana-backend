@@ -1,7 +1,9 @@
 package services
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -13,6 +15,7 @@ import (
 type OrderService interface {
 	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, error)
 	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
+	Update(request *internalDtos.OrderProcessOrder) (*models.Order, error)
 }
 
 type orderService struct {
@@ -111,4 +114,20 @@ func (s *orderService) OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UU
 	orderData.OrderDetails = orderDetails
 
 	return dtos.NewOrderListDetailsGetByIDResponse(orderData), nil
+}
+
+func (s *orderService) Update(request *internalDtos.OrderProcessOrder) (*models.Order, error) {
+	order, err := s.orderRepository.GetByID(request.OrderID)
+	if err != nil {
+		return nil, err
+	}
+
+	if order.Status != constants.PendingSellerStatus {
+		return nil, e.ErrStatusIsNotPendingSeller
+	}
+
+	order.CourierServiceID = request.CourierServiceID
+	order.Status = constants.OutForDeliveryStatus
+
+	return s.orderRepository.Update(request.OrderID, order)
 }

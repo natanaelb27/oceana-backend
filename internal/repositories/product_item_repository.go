@@ -9,6 +9,7 @@ import (
 
 type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
+	GetById(id uint) (model *models.ProductItem, err error)
 }
 
 type productItemRepository struct {
@@ -89,4 +90,14 @@ func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductM
 	}
 
 	return productModels, nil
+}
+
+func (r *productItemRepository) GetById(id uint) (model *models.ProductItem, err error) {
+	result := r.db.First(&model, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
 }

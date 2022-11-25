@@ -6,6 +6,7 @@ import (
 
 type CategoryGetResponse struct {
 	ID       uint             `json:"id" gorm:"primary_key"`
+	Image    string           `json:"image"`
 	Name     string           `json:"name"`
 	Level    int              `json:"level"`
 	Category []*dtos.Category `json:"category"`
@@ -14,6 +15,7 @@ type CategoryGetResponse struct {
 func NewCategoryGetResponse(source *dtos.Category) (target *CategoryGetResponse) {
 	target = &CategoryGetResponse{
 		ID:       source.ID,
+		Image:    source.Image,
 		Name:     source.Name,
 		Level:    source.Level,
 		Category: source.Category,

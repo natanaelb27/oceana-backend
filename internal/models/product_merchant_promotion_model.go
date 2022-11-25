@@ -18,7 +18,6 @@ type ProductMerchantPromotion struct {
 	MaximumQuota          int
 	MaximumUserLimit      int
 	CurrentQuota          uint
-	Status                string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt

@@ -57,15 +57,21 @@ func Connect() {
 		&models.MerchantPromotion{},
 		&models.ProductMerchantPromotion{},
 		&models.ProductSnapshot{},
+		&models.ProductMedia{},
 		&models.ProductMediaSnapshot{},
 		&models.ProductVariationSnapshot{},
 		&models.OrderDetail{},
 		&models.OrderDetailMerchantPromotion{},
 		&models.ProductReview{},
+		&models.ProductView{},
+		&models.Courier{},
+		&models.CourierService{},
+		&models.ProductCourierService{},
 		&models.ProductReviewMedia{},
 		&models.SealabsPayTransactionPayment{},
 		&models.WalletTransactionPayment{},
 		&models.UserMerchantPromotion{},
+		&models.Cart{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
