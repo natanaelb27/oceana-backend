@@ -5,10 +5,12 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 )
 
 type CartService interface {
 	Update(request *in_cart_dtos.CartRequest) (*models.Cart, error)
+	GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error)
 }
 
 type cartService struct {
@@ -60,4 +62,12 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 	cart.Quantity = *request.Quantity
 
 	return p.cartRepository.Update(cart.ID, cart)
+}
+
+func (p *cartService) GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error) {
+	cartsMerchants, err := p.cartRepository.GetCartsMerchants(userId)
+	for k, v := range cartsMerchants {
+		cartsMerchants[k].Products, err = p.cartRepository.GetCartsProductsByUserIdMerchants(v.MerchantID, userId)
+	}
+	return cartsMerchants, err
 }
