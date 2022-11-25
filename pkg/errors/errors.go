@@ -98,6 +98,7 @@ var (
 	ErrMaximumQuotaLowerThanCurrentQuota                 = errors.New("voucher maximum quota is lower than current quota")
 	ErrVoucherEndDatetimeEarlierThanNow                  = errors.New("voucher end period is earlier than now")
 	ErrVoucherNotUpcoming                                = errors.New("voucher is not upcoming")
+	ErrStatusIsNotPendingSeller                          = errors.New("status is not pending seller")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -206,6 +207,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherHasEnded) ||
 		errors.Is(err, ErrMaximumQuotaLowerThanCurrentQuota) ||
 		errors.Is(err, ErrVoucherEndDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) {
 		return http.StatusUnprocessableEntity
 	}
