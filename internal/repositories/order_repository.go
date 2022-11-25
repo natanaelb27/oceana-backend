@@ -16,6 +16,8 @@ import (
 type OrderRepository interface {
 	OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
+	GetByID(id uuid.UUID) (model *models.Order, err error)
+	Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error)
 }
 
 type orderRepository struct {
@@ -149,4 +151,38 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 	}
 
 	return orderListDetails, nil
+}
+
+func (r *orderRepository) GetByID(id uuid.UUID) (model *models.Order, err error) {
+	queryResult := r.db.First(&model, id)
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *orderRepository) Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error) {
+	queryResult := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model = newModel
+	model.ID = id
+
+	return
 }

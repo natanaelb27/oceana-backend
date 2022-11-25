@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -138,4 +139,22 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 	}
 
 	return
+}
+
+type OrderProcessOrderRequest struct {
+	CourierServiceID uint `json:"courier_service_id" binding:"required"`
+}
+
+type OrderProcessOrderResponse struct {
+	ID               uuid.UUID `json:"id"`
+	CourierServiceID uint      `json:"courier_service_id"`
+	Status           string    `json:"status"`
+}
+
+func NewOrderProcessOrderResponse(source *models.Order) *OrderProcessOrderResponse {
+	return &OrderProcessOrderResponse{
+		ID:               source.ID,
+		CourierServiceID: source.CourierServiceID,
+		Status:           source.Status,
+	}
 }
