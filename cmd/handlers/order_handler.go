@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -48,4 +49,31 @@ func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, orderListDetailsGetAllResponse, nil)
+}
+
+func (h *Handler) OrderProcessOrder(c *gin.Context) {
+	var request *dtos.OrderProcessOrderRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	orderID, err := uuid.Parse(c.Param("orderID"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.orderService.Update(&internalDtos.OrderProcessOrder{
+		CourierServiceID: request.CourierServiceID,
+		OrderID:          orderID,
+	})
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewOrderProcessOrderResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
 }

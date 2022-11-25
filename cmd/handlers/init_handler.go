@@ -33,10 +33,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
-		UserRepository:         userRepository,
-		EmailRepository:        emailRepository,
-		WalletRepository:       walletRepository,
-		RedisRepository:        redisRepository,
+		UserRepository:   userRepository,
+		EmailRepository:  emailRepository,
+		WalletRepository: walletRepository,
+		RedisRepository:  redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),
@@ -101,6 +101,16 @@ func Init() *Handler {
 		UserRepository:  userRepository,
 		RedisRepository: redisRepository,
 	})
+	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
+		DB: db.Get(),
+	})
+	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
+		DB: db.Get(),
+	})
+	cartService := services.NewCartService(&services.CartServiceConfig{
+		CartRepository:        cartRepository,
+		ProductItemRepository: productItemRepository,
+	})
 	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -108,19 +118,33 @@ func Init() *Handler {
 		ProductRepository: productRepository,
 	})
 
+	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	productMerchantPromotionRepository := repositories.NewProductMerchantPromotionRepositoryConfig(&repositories.ProductMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantPromotionService := services.NewMerchantPromotionService(&services.MerchantPromotionServiceConfig{
+		MerchantRepository:                 merchantRepository,
+		MerchantPromotionRepository:        merchantPromotionRepository,
+		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:            roleService,
-		WalletService:          walletService,
-		AuthService:            authService,
-		CategoryService:        categoryService,
-		UserService:            userService,
-		ProfileService:         profileService,
-		SealabsPayService:      sealabsPayService,
-		MerchantVoucherService: merchantVoucherService,
-		AddressService:         addressService,
-		MerchantService:        merchantService,
-		ProductService:         productService,
-		OrderService:           orderService,
+		RoleService:              roleService,
+		WalletService:            walletService,
+		AuthService:              authService,
+		CategoryService:          categoryService,
+		UserService:              userService,
+		ProfileService:           profileService,
+		SealabsPayService:        sealabsPayService,
+		MerchantVoucherService:   merchantVoucherService,
+		AddressService:           addressService,
+		MerchantService:          merchantService,
+		ProductService:           productService,
+		OrderService:             orderService,
+		MerchantPromotionService: merchantPromotionService,
+		CartService:              cartService,
 	})
 
 	return h
