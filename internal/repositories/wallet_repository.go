@@ -114,7 +114,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 
 	queryRefundTransactions := w.db.Model(&models.Refund{}).
 		Select(`
-				transactions.id, wallet_transaction_payments.wallet_id, refund_details.amount_user_get AS amount, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
+				transactions.id, wallet_transaction_payments.wallet_id, SUM(refund_details.amount_user_get) AS amount, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
 			`).
 		Joins("JOIN refund_details ON refunds.id = refund_details.refund_id").
 		Joins("JOIN order_details ON refunds.order_detail_id = order_details.id").
@@ -122,7 +122,8 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
-		Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id)
+		Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id).
+		Group("transactions.id")
 
 	result = w.db.Model(&models.Merchant{}).Where("user_id ?", wallet.UserID).Find(&merchant)
 	if result.Error != gorm.ErrRecordNotFound {
@@ -142,7 +143,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 			Joins("JOIN transactions ON transactions.id = orders.transaction_id").
 			Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
 			Where("orders.merchant_id = ?", merchant.ID). 
-			Group("transaction.id, wallet_transaction_payments.wallet_id")
+			Group("transactions.id, wallet_transaction_payments.wallet_id")
 
 		queryResult := w.db.Raw("(?) UNION (?) UNION (?) UNION (?)",
 			queryWalletTopUp,
