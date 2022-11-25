@@ -57,8 +57,8 @@ type MerchantPromotionQuery struct {
 func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
 	var query MerchantPromotionQuery
 
-	searchPromotionName := c.Query("search_promotion_name")
-	filterPromotionStatus := c.Query("filter_promotion_status")
+	searchPromotionName := c.Query("search-promotion-name")
+	filterPromotionStatus := c.Query("filter-promotion-status")
 
 	query.SearchPromotionName = searchPromotionName
 	query.FilterPromotionStatus = filterPromotionStatus
