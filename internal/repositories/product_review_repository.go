@@ -28,7 +28,9 @@ func NewProductReviewRepository(c *ProductReviewRepositoryConfig) ProductReviewR
 }
 
 func (pr *productReviewRepository) Create(newModel *models.ProductReview) (model *models.ProductReview, err error) {
-	queryResult := pr.db.Create(&newModel)
+	queryResult := pr.db.
+		Where("order_detail_id = ?", newModel.OrderDetailID).
+		FirstOrCreate(&newModel)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrInsertFailed
 		return
