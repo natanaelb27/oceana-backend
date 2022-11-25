@@ -167,6 +167,6 @@ func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.Prod
 		productReviewData := internalDtos.NewProductReviewGetByProductID(productReview, productReviewMediaLinks)
 		productReviewDataList = append(productReviewDataList, productReviewData)
 	}
-	realResponse := externalDtos.NewProductReviewGetByIDResponse(productReviewDataList, pagination)
-	return realResponse, nil
+	response := externalDtos.NewProductReviewGetByIDResponse(productReviewDataList, pagination)
+	return response, nil
 }
