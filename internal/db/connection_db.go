@@ -51,6 +51,7 @@ func Connect() {
 		&models.MerchantPromotion{},
 		&models.ProductMerchantPromotion{},
 		&models.ProductSnapshot{},
+		&models.ProductMedia{},
 		&models.ProductMediaSnapshot{},
 		&models.ProductVariationSnapshot{},
 		&models.OrderDetail{},

@@ -30,6 +30,7 @@ func (p *categoryService) GetAllSubCategoriesRecursive(level int, categoryData [
 	for i, cat := range categoryData {
 		category = append(category, &dtos.Category{
 			ID:    cat.ID,
+			Image: cat.MediaURL,
 			Name:  cat.Name,
 			Level: level,
 		})
