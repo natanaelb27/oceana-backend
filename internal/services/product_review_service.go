@@ -4,12 +4,13 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 )
 
 type ProductReviewService interface {
 	Create(*externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error)
-	GetByProductID(id uint) ([]*externalDtos.ProductReviewGetByProductIDResponse, error)
+	GetByProductID(id uint, query *dtos.ProductReviewQuery) (*externalDtos.ProductReviewGetByProductIDResponse, error)
 }
 
 type productReviewService struct {
@@ -150,12 +151,16 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 	return response, nil
 }
 
-func (pr *productReviewService) GetByProductID(id uint) ([]*externalDtos.ProductReviewGetByProductIDResponse, error) {
-	productReviews, err := pr.productReviewRepository.GetByProductID(id)
+func (pr *productReviewService) GetByProductID(id uint, query *dtos.ProductReviewQuery) (*externalDtos.ProductReviewGetByProductIDResponse, error) {
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+	productReviews, pagination, err := pr.productReviewRepository.GetByProductID(id, pagination)
 	if err != nil {
 		return nil, err
 	}
-	var response []*externalDtos.ProductReviewGetByProductIDResponse
+	var response []*externalDtos.ProductReviewGetByProductID
 	for _, productReview := range productReviews {
 		var productReviewMediaLinks []*string
 		productReviewMedia, err := pr.productReviewMediaRepository.GetByProductReviewID(productReview.ID)
@@ -165,7 +170,7 @@ func (pr *productReviewService) GetByProductID(id uint) ([]*externalDtos.Product
 		for _, singleProductReviewMedia := range productReviewMedia {
 			productReviewMediaLinks = append(productReviewMediaLinks, &singleProductReviewMedia.MediaURL)
 		}
-		productReviewResponse := &externalDtos.ProductReviewGetByProductIDResponse{
+		productReviewResponse := &externalDtos.ProductReviewGetByProductID{
 			ID:                 productReview.ID,
 			UserID:             productReview.UserID,
 			FullName:           productReview.FullName,
@@ -179,5 +184,6 @@ func (pr *productReviewService) GetByProductID(id uint) ([]*externalDtos.Product
 		}
 		response = append(response, productReviewResponse)
 	}
-	return response, nil
+	realResponse := dtos.NewProductReviewGetByIDResponse(response, pagination)
+	return realResponse, nil
 }

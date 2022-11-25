@@ -36,7 +36,8 @@ func (h *Handler) ProductReviewCreate(c *gin.Context) {
 
 func (h *Handler) ProductReviewGet(c *gin.Context) {
 	productID := utils.StringToUint(c.Param("productID"))
-	response, err := h.productReviewService.GetByProductID(productID)
+	query := dtos.NewProductReviewQuery(c)
+	response, err := h.productReviewService.GetByProductID(productID, query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
