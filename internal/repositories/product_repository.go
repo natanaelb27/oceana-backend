@@ -47,6 +47,18 @@ func (r *productRepository) subQueryProductViewsSum() *gorm.DB {
 	return query
 }
 
+func (r *productRepository) subQueryProductPurchaseSum() *gorm.DB {
+	query := r.db.Model(&models.ProductSnapshot{}).
+		Select(`
+			COALESCE(SUM(order_details.quantity),0)
+		`).
+		Joins("JOIN order_details ON order_details.product_snapshot_id = product_snapshots.id").
+		Where("product_snapshots.product_id = products.id")
+		// subtract by refund quantity?
+		// condition where order details is completed only?
+	return query
+}
+
 func (r *productRepository) subQueryProductCourierService(courierServices []string) *gorm.DB {
 	query := r.db.Model(&models.ProductCourierService{}).
 		Select("product_courier_services.courier_service_id").
@@ -55,11 +67,21 @@ func (r *productRepository) subQueryProductCourierService(courierServices []stri
 	return query
 }
 
+func (r *productRepository) subQueryProductMediaByProductID() *gorm.DB {
+	query := r.db.Model(&models.ProductMedia{}).
+		Select("product_media.media_url").
+		Where("product_media.product_id = products.id").
+		Order("product_media.id ASC").
+		Limit(1)
+	return query
+}
+
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
 	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
 	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
-	// subquery promotion price
+	sqTotalPurchaseSum := sql.Named("total_purchase_count", r.subQueryProductPurchaseSum())
+	sqMediaURL := sql.Named("media_url", r.subQueryProductMediaByProductID())
 
 	var ProductDetails []*product_dtos.Product
 
@@ -70,6 +92,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.category_id,
             products.name,
             products.description,
+            (@media_url) AS media_url,
             products.is_hazardous,
             products.weight,
             products.package_size,
@@ -114,23 +137,27 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 				END
 			) AS price_maximum_after_discount,
 			(@total_view_count) AS total_view_count,
+			(@total_purchase_count) AS total_purchase_count,
 			pmp.discount as discount,
+			pmp.discount_type as discount_type,
+			pmp.maximum_discount_amount as discount_maximum_discount_amount,
             products.created_at,
             products.updated_at,
 			merchants.id as "Merchant__id",
 			merchants.name as "Merchant__name",
 			cities.name as "Merchant__city"
-		`,
+			`,
 			sqPriceMinimum,
 			sqPriceMaximum,
 			sqTotalViewCount,
+			sqTotalPurchaseSum,
+			sqMediaURL,
 		).
 		Joins("JOIN merchants ON merchants.id = products.merchant_id").
 		Joins("JOIN addresses ON addresses.id = merchants.address_id").
 		Joins("JOIN sub_districts ON sub_districts.id = addresses.sub_district_id").
 		Joins("JOIN districts ON districts.id = sub_districts.district_id").
 		Joins("JOIN cities ON cities.id = districts.city_id").
-		// left join to get merchant promotion
 		Joins("LEFT JOIN product_merchant_promotions pmp ON products.id = pmp.product_id")
 
 	// group when status is active or when product got no promotion

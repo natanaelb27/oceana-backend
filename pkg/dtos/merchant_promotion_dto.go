@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"github.com/gin-gonic/gin"
 )
 
 type MerchantPromotionCreateRequest struct {
@@ -46,4 +47,21 @@ func NewMerchantPromotionCreateResponse(source *models.MerchantPromotion) (targe
 	}
 
 	return
+}
+
+type MerchantPromotionQuery struct {
+	SearchPromotionName   string `json:"search_promotion_name"`
+	FilterPromotionStatus string `json:"filter_promotion_status"`
+}
+
+func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
+	var query MerchantPromotionQuery
+
+	searchPromotionName := c.Query("search-promotion-name")
+	filterPromotionStatus := c.Query("filter-promotion-status")
+
+	query.SearchPromotionName = searchPromotionName
+	query.FilterPromotionStatus = filterPromotionStatus
+
+	return &query
 }

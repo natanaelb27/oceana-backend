@@ -101,6 +101,16 @@ func Init() *Handler {
 		UserRepository:  userRepository,
 		RedisRepository: redisRepository,
 	})
+	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
+		DB: db.Get(),
+	})
+	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
+		DB: db.Get(),
+	})
+	cartService := services.NewCartService(&services.CartServiceConfig{
+		CartRepository:        cartRepository,
+		ProductItemRepository: productItemRepository,
+	})
 	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -134,6 +144,7 @@ func Init() *Handler {
 		ProductService:           productService,
 		OrderService:             orderService,
 		MerchantPromotionService: merchantPromotionService,
+		CartService:              cartService,
 	})
 
 	return h
