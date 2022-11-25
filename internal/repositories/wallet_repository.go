@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"errors"
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -125,8 +128,9 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id).
 		Group("transactions.id, wallet_transaction_payments.wallet_id")
 
-	result = w.db.Model(&models.Merchant{}).Where("user_id ?", wallet.UserID).Find(&merchant)
-	if result.Error != gorm.ErrRecordNotFound || merchant != nil {
+	result = w.db.Model(&models.Merchant{}).Where("user_id = ?", wallet.UserID).First(&merchant)
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		fmt.Println("here")
 		subQuery := w.db.Model(&models.RefundDetail{}).Select(`
 			SUM(refund_details.amount_merchant_lost)
 		`).
@@ -156,8 +160,8 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		if queryResult.Error != nil {
 			return nil, e.ErrDatabaseOperationFailed
 		}
-	} else if result.Error == gorm.ErrRecordNotFound {
-		queryResult := w.db.Debug().Raw("(?) UNION (?) UNION (?)",
+	} else {
+		queryResult := w.db.Raw("(?) UNION (?) UNION (?)",
 			queryWalletTopUp,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
