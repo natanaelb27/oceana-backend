@@ -1,9 +1,11 @@
 package dtos
 
 import (
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"github.com/gin-gonic/gin"
 )
 
 type MerchantPromotionCreateRequest struct {
@@ -46,4 +48,32 @@ func NewMerchantPromotionCreateResponse(source *models.MerchantPromotion) (targe
 	}
 
 	return
+}
+
+type MerchantPromotionQuery struct {
+	SearchPromotionName   string `json:"search_promotion_name"`
+	FilterPromotionStatus string `json:"filter_promotion_status"`
+	MerchantID            uint   `json:"merchnat_id"`
+}
+
+func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
+	var query MerchantPromotionQuery
+
+	searchPromotionName := c.Query("search_promotion_name")
+	filterPromotionStatus := c.Query("filter_promotion_status")
+	merchantID := c.Query("merchant_id")
+
+	query.SearchPromotionName = searchPromotionName
+	query.FilterPromotionStatus = filterPromotionStatus
+
+	merchantIDInt, err := strconv.Atoi(merchantID)
+	if err != nil {
+		query.MerchantID = 0
+	} else if merchantIDInt <= 0 {
+		query.MerchantID = 0
+	} else {
+		query.MerchantID = uint(merchantIDInt)
+	}
+
+	return &query
 }
