@@ -35,6 +35,7 @@ func Init(h *handlers.Handler) {
 	myShop(public, private, h)
 	cart(public, private, h)
 	product(public, private, h)
+	review(public, private, h)
 
 	r.NoRoute(h.NotFound)
 
