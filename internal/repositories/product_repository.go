@@ -46,7 +46,6 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			product_merchant_promotions.maximum_discount_amount
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Where("product_merchant_promotions.status = 'active'").
 		Where(`
 			product_merchant_promotions.maximum_quota > 
 			CASE
@@ -333,7 +332,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	var ProductDetails []*product_dtos.Product
 
-	query := r.db.Model(&models.Product{}).
+	query := r.db.Debug().Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -409,7 +408,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("LEFT JOIN product_merchant_promotions pmp ON products.id = pmp.product_id")
 
 	// group when status is active or when product got no promotion
-	query.Group("products.id, pmp.id, merchants.id, cities.id").Having("pmp.status = 'active' OR pmp.id IS NULL")
+	query.Group("products.id, pmp.id, merchants.id, cities.id")
 
 	// filter by merchant
 	if queryParams.MerchantID != 0 {
