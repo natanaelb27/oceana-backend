@@ -11,3 +11,14 @@ docker-build:
 # -d / --detach can also be used to run the container in detached mode
 docker-run:
 	docker run --publish 8080:8080 oceana-app
+# build images and run the containers
+docker-up:
+	docker compose up
+# stop the containers
+docker-down:
+	docker compose down
+# stop the containers
+# "--rmi all" - delete images
+# "-v - delete" volumes
+docker-down-rm:
+	docker compose down --rmi all -v
