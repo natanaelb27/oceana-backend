@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  # can be any name
+  api:
+    # define where the Dockerfile that we use to built the docker image for api service
+    build: .
+    env_file:
+      # env for docker (make sure to create this file on project rood directory using .env.example as template
+      - .env
+    container_name: oceana_api_c
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+    # since we choose to build the golang app then we don't need to map sync file to docker volume which is better to use if we run the main.go or use nodemon to run the file and hot reload if there are changes in any files
+    # volumes:
+    #   - ./group-project-backend:/app
+  db:
+    image: postgres:14.6-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    # [container_port]:[host_port]
+    ports:
+      - 5445:5432
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+  
+volumes:
+  postgres-db:
