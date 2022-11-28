@@ -67,6 +67,7 @@ var (
 	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
 	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
+	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
 
 	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound             = errors.New("user not found")
@@ -111,6 +112,7 @@ var (
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
 	ErrPromotionPeriodMinimumOneHour                       = errors.New("promotion period must be at least 1 hour")
 	ErrPromotionStartDatetimeMinimumOneDayFromNow          = errors.New("promotion start period must be at least 1 day from now")
+	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 180 days")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -194,7 +196,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
-		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
+		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
+		errors.Is(err, ErrMerchantPromotionProductConflict) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
 		errors.Is(err, ErrForbiddenMerchant) ||
@@ -228,6 +231,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionPeriodMinimumOneHour) ||
 		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
+		errors.Is(err, ErrPromotionPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||

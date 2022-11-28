@@ -52,6 +52,10 @@ func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpReques
 		return nil, e.ErrPromotionPeriodMinimumOneHour
 	}
 
+	if int(mpRequest.EndDatetime.Sub(mpRequest.StartDatetime).Hours()/24) > 180 {
+		return nil, e.ErrPromotionPeriodExceedMaximumDays
+	}
+
 	merchant, err := mp.merchantRepository.GetByUserID(id)
 	if err != nil {
 		return nil, err
@@ -59,7 +63,9 @@ func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpReques
 
 	mpModel := mpRequest.ToModel(merchant.ID)
 
-	newMpModel, err := mp.merchantPromotionRepository.CreateMyShopPromotion(mpModel)
+	// transaction needed
+
+	newMpModel, err := mp.merchantPromotionRepository.CreateMyShopPromotion(mpModel, mpRequest.ProductIDList)
 	if err != nil {
 		return nil, err
 	}
