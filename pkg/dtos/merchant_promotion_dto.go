@@ -11,6 +11,7 @@ type MerchantPromotionCreateRequest struct {
 	Name                     string                                   `json:"name" binding:"required"`
 	StartDatetime            time.Time                                `json:"start_date_time" binding:"required"`
 	EndDatetime              time.Time                                `json:"end_date_time" binding:"required"`
+	ProductIDList            []int64                                  `json:"product_id_list" binding:"required"`
 	ProductMerchantPromotion []*ProductMerchantPromotionCreateRequest `json:"product_merchant_promotion" binding:"required"`
 }
 

@@ -10,10 +10,9 @@ type ProductMerchantPromotionCreateRequest struct {
 	ProductID             uint   `json:"product_id" binding:"required"`
 	DiscountType          string `json:"discount_type" binding:"required"`
 	Discount              uint   `json:"discount" binding:"required"`
-	MaximumDiscountAmount uint   `json:"maximum_discount_amount" binding:"required"`
+	MaximumDiscountAmount uint   `json:"maximum_discount_amount"`
 	MaximumQuota          int    `json:"maximum_quota" binding:"required"`
 	MaximumUserLimit      int    `json:"maximum_user_limit" binding:"required"`
-	CurrentQuota          uint   `json:"current_quota" binding:"required"`
 }
 
 func (source *ProductMerchantPromotionCreateRequest) ToModel(merchantPromotionId uint) (target *models.ProductMerchantPromotion) {
@@ -25,7 +24,7 @@ func (source *ProductMerchantPromotionCreateRequest) ToModel(merchantPromotionId
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
 		MaximumUserLimit:      source.MaximumUserLimit,
-		CurrentQuota:          source.CurrentQuota,
+		CurrentQuota:          0,
 	}
 
 	return

@@ -4,11 +4,12 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type MerchantPromotionRepository interface {
-	CreateMyShopPromotion(merchantPromotion *models.MerchantPromotion) (*models.MerchantPromotion, error)
+	CreateMyShopPromotion(merchantPromotion *models.MerchantPromotion, productIDList []int64) (*models.MerchantPromotion, error)
 	GetAll(merchantID uint, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
 }
 
@@ -26,14 +27,25 @@ func NewMerchantPromotionRepository(c *MerchantPromotionRepositoryConfig) Mercha
 	}
 }
 
-func (mp *merchantPromotionRepository) CreateMyShopPromotion(newModel *models.MerchantPromotion) (model *models.MerchantPromotion, err error) {
-	queryResult := mp.db.Create(&newModel)
-	if queryResult.RowsAffected == 0 {
-		err = e.ErrInsertFailed
-		return
-	}
+func (mp *merchantPromotionRepository) CreateMyShopPromotion(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error) {
+	subQueryProductList := mp.db.Model(&models.ProductMerchantPromotion{}).
+		Select("ARRAY_AGG(product_merchant_promotions.product_id)").
+		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+		Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", newModel.EndDatetime).
+		Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", newModel.StartDatetime).
+		Where("merchant_promotions.merchant_id = ?", newModel.MerchantId)
+
+	queryResult := mp.db.
+		Where("(?) && (?)", pq.Int64Array(productIDList), subQueryProductList).
+		FirstOrCreate(&newModel)
+
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrMerchantPromotionProductConflict
 		return
 	}
 

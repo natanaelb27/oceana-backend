@@ -21,7 +21,6 @@ type MerchantVoucherCreateRequest struct {
 	MinimumSpendAmount    uint      `json:"minimum_spend_amount" binding:"required"`
 	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota" binding:"required"`
-	CurrentQuota          uint      `json:"current_quota"`
 }
 
 func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.MerchantVoucher) {
@@ -35,7 +34,7 @@ func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.Mer
 		MinimumSpendAmount:    source.MinimumSpendAmount,
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
-		CurrentQuota:          source.CurrentQuota,
+		CurrentQuota:          0,
 	}
 	return
 }
