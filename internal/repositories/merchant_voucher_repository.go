@@ -38,7 +38,7 @@ func NewMerchantVoucherRepository(c *MerchantVoucherRepositoryConfig) MerchantVo
 func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error) {
 	queryResult := r.db.
 		Where("code = ?", newModel.Code).
-		Where("end_datetime::timestamp >= ?::timestamp", time.Now()).
+		Where("end_datetime::timestamp >= ?::timestamptz", time.Now()).
 		Where("merchant_id = ?", newModel.MerchantID).
 		FirstOrCreate(&newModel)
 
