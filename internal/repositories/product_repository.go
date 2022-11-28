@@ -46,7 +46,6 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			product_merchant_promotions.maximum_discount_amount
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Where("product_merchant_promotions.status = 'active'").
 		Where(`
 			product_merchant_promotions.maximum_quota > 
 			CASE
@@ -190,7 +189,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 			COALESCE(user_usage.total_usage, 0) AS total_usage
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Joins("JOIN (?) user_usage ON user_usage.product_merchant_promotion_id = product_merchant_promotions.id", subQueryUserUsage).
+		Joins("LEFT JOIN (?) user_usage ON user_usage.product_merchant_promotion_id = product_merchant_promotions.id", subQueryUserUsage).
 		Where(`
 			product_merchant_promotions.maximum_quota > 
 			CASE
