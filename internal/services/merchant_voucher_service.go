@@ -56,6 +56,10 @@ func (s *merchantVoucherService) Create(id uuid.UUID, request *dtos.MerchantVouc
 		return nil, e.ErrVoucherPeriodMinimumOneHour
 	}
 
+	if int(request.EndDatetime.Sub(request.StartDatetime).Hours()/24) > 180 {
+		return nil, e.ErrVoucherPeriodExceedMaximumDays
+	}
+
 	if request.DiscountType == "nominal" {
 		if request.Discount > request.MinimumSpendAmount {
 			return nil, e.ErrDiscountExceedMinimumSpendAmount
@@ -113,7 +117,9 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 	}
 
 	if merchantVoucherDetails.VoucherStatus == "ongoing" {
-		request.StartDatetime = merchantVoucherDetails.StartDatetime
+		if int(merchantVoucherDetails.StartDatetime.Sub(request.StartDatetime).Minutes()) != 0 {
+			return nil, e.ErrOngoingStartDatetimeUpdated
+		}
 
 		if request.MaximumQuota < merchantVoucherDetails.CurrentQuota {
 			return nil, e.ErrMaximumQuotaLowerThanCurrentQuota
@@ -125,17 +131,17 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 	}
 
 	if merchantVoucherDetails.VoucherStatus == "upcoming" {
-		if request.StartDatetime.Before(time.Now()) {
-			return nil, e.ErrVoucherStartDatetimeEarlierThanNow
-		}
-
-		if int(time.Until(request.StartDatetime).Hours()/24) <= 0 {
-			return nil, e.ErrVoucherStartDatetimeMinimumOneDayFromNow
+		if request.StartDatetime.Sub(merchantVoucherDetails.StartDatetime).Minutes() < 0 {
+			return nil, e.ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime
 		}
 
 		if request.EndDatetime.Before(request.StartDatetime) {
 			return nil, e.ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime
 		}
+	}
+
+	if request.EndDatetime.Sub(merchantVoucherDetails.EndDatetime).Minutes() > 0 {
+		return nil, e.ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime
 	}
 
 	if int(request.EndDatetime.Sub(request.StartDatetime).Hours()) <= 0 {
