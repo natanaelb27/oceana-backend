@@ -7,12 +7,12 @@ import (
 )
 
 type ProductCourierService struct {
-	ID               uint
-	CourierServiceId uint
-	CourierService   CourierService
-	ProductId        uint
-	Product          Product
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	DeletedAt        gorm.DeletedAt
+	ID                       uint
+	MerchantCourierServiceID uint
+	MerchantCourierService   MerchantCourierService
+	ProductId                uint
+	Product                  Product
+	CreatedAt                time.Time
+	UpdatedAt                time.Time
+	DeletedAt                gorm.DeletedAt
 }
