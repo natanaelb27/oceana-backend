@@ -53,7 +53,6 @@ func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductM
 			product_merchant_promotions.maximum_discount_amount
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Where("product_merchant_promotions.status = 'active'").
 		Where(`
 			product_merchant_promotions.maximum_quota > 
 			CASE
