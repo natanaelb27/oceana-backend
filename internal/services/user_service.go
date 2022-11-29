@@ -12,6 +12,7 @@ import (
 type UserService interface {
 	UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUpdateRequest) (*dtos.UserProfileUpdateResponse, error)
 	UpdateProfileEmail(userProfileUpdateEmailRequest *dtos.UserProfileUpdateEmailRequest) (*dtos.UserProfileUpdateResponse, error)
+	UpdateProfileUsername(userProfileUpdateUsernameRequest *dtos.UserProfileUpdateUsernameRequest) (*dtos.UserProfileUpdateResponse, error)
 	GetProfile(id uuid.UUID) (*dtos.UserProfileGetResponse, error)
 }
 
@@ -83,6 +84,24 @@ func (u *userService) UpdateProfileEmail(userProfileUpdateEmailRequest *dtos.Use
 	}
 	user.EmailID = createdEmail.ID
 	updatedUser, err := u.userRepository.Update(userProfileUpdateEmailRequest.ID, user)
+	if err != nil {
+		return nil, err
+	}
+	responseData := dtos.NewUserProfileUpdateResponse(updatedUser)
+	return responseData, nil
+}
+
+func (u *userService) UpdateProfileUsername(userProfileUpdateUsernameRequest *dtos.UserProfileUpdateUsernameRequest) (*dtos.UserProfileUpdateResponse, error) {
+	user, err := u.userRepository.GetByID(userProfileUpdateUsernameRequest.ID)
+	if err != nil {
+		return nil, err
+	}
+	_, err = u.userRepository.GetByUsername(userProfileUpdateUsernameRequest.Username)
+	if err != e.ErrDataNotFound {
+		return nil, e.ErrUsernameAlreadyExist
+	}
+	user.Username = userProfileUpdateUsernameRequest.Username
+	updatedUser, err := u.userRepository.Update(userProfileUpdateUsernameRequest.ID, user)
 	if err != nil {
 		return nil, err
 	}

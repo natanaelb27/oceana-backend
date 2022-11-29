@@ -14,6 +14,7 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.PUT("", h.UserUpdateProfile)
 		privateRoute.POST("/logout", h.UserLogout)
 		privateRoute.PATCH("/email", h.UserUpdateEmail)
+		privateRoute.PATCH("/username", h.UserUpdateUsername)
 		privateRoute.POST("/register-shop", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserRegisterMerchant)
 		privateRoute.PATCH("/wallet/activate", func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletActivate)
 		privateRoute.PATCH("/wallet/pin", func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletChangePin)
