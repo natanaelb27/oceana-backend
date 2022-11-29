@@ -91,14 +91,14 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 
 func (h *Handler) MerchantVoucherGetAll(c *gin.Context) {
 	query := dtos.NewMerchantVoucherQuery(c)
-	merchantVouherGetAllResponse, err := h.merchantVoucherService.GetAll(query)
+	merchantVouherGetAllResponse, pagination, err := h.merchantVoucherService.GetAll(query)
 
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, merchantVouherGetAllResponse, nil)
+	utils.ResponseSuccess(c, merchantVouherGetAllResponse, pagination)
 }
 
 func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {

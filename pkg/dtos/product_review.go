@@ -7,7 +7,6 @@ import (
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -67,10 +66,11 @@ type ProductReviewQuery struct {
 }
 
 func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
-	var query *ProductReviewQuery
+	var query ProductReviewQuery
 
 	limit := c.Query("limit")
 	page := c.Query("page")
+
 	pageInt, err := strconv.Atoi(page)
 
 	if err != nil {
@@ -91,21 +91,15 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 		query.Limit = uint(limitInt)
 	}
 
-	return query
+	return &query
 }
 
 type ProductReviewGetByProductIDResponse struct {
-	Pagination    *utils.Pagination                           `json:"pagination"`
 	ProductReview []*internalDtos.ProductReviewGetByProductID `json:"product_review"`
 }
 
-func NewProductReviewGetByIDResponse(source []*internalDtos.ProductReviewGetByProductID, pagination *utils.Pagination) (target *ProductReviewGetByProductIDResponse) {
-	if pagination == nil {
-		return nil
-	}
-
+func NewProductReviewGetByIDResponse(source []*internalDtos.ProductReviewGetByProductID) (target *ProductReviewGetByProductIDResponse) {
 	target = &ProductReviewGetByProductIDResponse{
-		Pagination:    pagination,
 		ProductReview: source,
 	}
 

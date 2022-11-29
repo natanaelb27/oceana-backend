@@ -14,7 +14,7 @@ type MerchantVoucherService interface {
 	Create(id uuid.UUID, request *dtos.MerchantVoucherCreateRequest) (*dtos.MerchantVoucherCreateResponse, error)
 	Update(userID uuid.UUID, voucherID uint, request *dtos.MerchantVoucherUpdateRequest) (*dtos.MerchantVoucherUpdateResponse, error)
 	Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error)
-	GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error)
+	GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error)
 	GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error)
 }
 
@@ -207,7 +207,7 @@ func (s *merchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos
 	return dtos.NewMerchantVoucherDeleteResponse(newModel), nil
 }
 
-func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error) {
+func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -216,10 +216,10 @@ func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos
 	merchantVoucherDetails, pagination, err := s.merchantVoucherRepository.GetAllDetails(query, pagination)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return dtos.NewMerchantVoucherGetAllResponse(merchantVoucherDetails, pagination), nil
+	return dtos.NewMerchantVoucherGetAllResponse(merchantVoucherDetails), pagination, nil
 }
 
 func (s *merchantVoucherService) GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error) {
