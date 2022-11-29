@@ -12,6 +12,7 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	{
 		privateRoute.GET("", h.UserGetProfile)
 		privateRoute.PUT("", h.UserUpdateProfile)
+		privateRoute.POST("/logout", h.UserLogout)
 		privateRoute.PATCH("/email", h.UserUpdateEmail)
 		privateRoute.POST("/register-shop", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserRegisterMerchant)
 		privateRoute.PATCH("/wallet/activate", func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletActivate)
