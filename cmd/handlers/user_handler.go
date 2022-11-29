@@ -28,6 +28,26 @@ func (h *Handler) UserUpdateProfile(c *gin.Context) {
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
+func (h *Handler) UserUpdateEmail(c *gin.Context) {
+	var request *dtos.UserProfileUpdateEmailRequest
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	if err := c.ShouldBind(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	request.ID = id
+	responseData, err := h.userService.UpdateProfileEmail(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
 func (h *Handler) UserGetProfile(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
