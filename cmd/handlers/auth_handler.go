@@ -43,6 +43,7 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
 	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
 	c.SetCookie("refresh_token", userLoginData.RefreshToken, int(userLoginData.ExpireDuration), "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
 	utils.ResponseSuccess(c, userLoginResponse, nil)
 }
 
