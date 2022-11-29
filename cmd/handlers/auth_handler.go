@@ -100,3 +100,23 @@ func (h *Handler) UserResetPassword(c *gin.Context) {
 	}
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) RefreshAccessToken(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrUnauthorized)
+		return
+	}
+
+	accessToken, err := h.authService.RefreshAccessToken(c, id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	jwtExpirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
+	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
+	c.SetCookie("access_token", accessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
+
+	utils.ResponseSuccess(c, nil, nil)
+}
