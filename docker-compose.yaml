@@ -13,6 +13,7 @@ services:
     expose:
       - 8080
     depends_on:
+      # depends on db that is healthy
       db:
         condition: service_healthy
     entrypoint: ["/oceana-app"]
@@ -28,6 +29,7 @@ services:
     # [container_port]:[host_port]
     ports:
       - 5445:5432
+    # healthcheck to make sure service_healthy is true
     healthcheck:
       test: "pg_isready --username=postgres && psql --username=postgres --list"
       interval: 1s
