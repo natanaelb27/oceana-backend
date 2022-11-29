@@ -7,7 +7,6 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -267,17 +266,11 @@ func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 }
 
 type MerchantVoucherGetAllResponse struct {
-	Pagination      *utils.Pagination              `json:"pagination"`
 	MerchantVoucher []*dtos.MerchantVoucherDetails `json:"merchant_voucher"`
 }
 
-func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails, pagination *utils.Pagination) (target *MerchantVoucherGetAllResponse) {
-	if pagination == nil {
-		return nil
-	}
-
+func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails) (target *MerchantVoucherGetAllResponse) {
 	target = &MerchantVoucherGetAllResponse{
-		Pagination:      pagination,
 		MerchantVoucher: source,
 	}
 
