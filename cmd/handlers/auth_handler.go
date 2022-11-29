@@ -104,11 +104,11 @@ func (h *Handler) UserResetPassword(c *gin.Context) {
 func (h *Handler) RefreshAccessToken(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
-		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		utils.ResponseError(c, e.ErrUnauthorized)
 		return
 	}
 
-	err := h.authService.RefreshAccessToken(c)
+	err := h.authService.RefreshAccessToken(c, id)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
