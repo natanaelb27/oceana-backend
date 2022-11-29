@@ -70,3 +70,8 @@ func NewUserProfileGetResponse(source *models.User) (target *UserProfileGetRespo
 	}
 	return
 }
+
+type UserProfileUpdateEmailRequest struct {
+	ID    uuid.UUID
+	Email string `form:"email" json:"email" binding:"required,email"`
+}
