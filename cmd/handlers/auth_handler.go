@@ -108,11 +108,15 @@ func (h *Handler) RefreshAccessToken(c *gin.Context) {
 		return
 	}
 
-	err := h.authService.RefreshAccessToken(c, id)
+	accessToken, err := h.authService.RefreshAccessToken(c, id)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
+	jwtExpirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
+	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
+	c.SetCookie("access_token", accessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
 
 	utils.ResponseSuccess(c, nil, nil)
 }

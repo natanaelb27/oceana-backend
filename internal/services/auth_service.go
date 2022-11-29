@@ -23,7 +23,7 @@ type AuthService interface {
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
 	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
-	RefreshAccessToken(c *gin.Context, userID uuid.UUID) error
+	RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error)
 }
 
 type authService struct {
@@ -287,17 +287,14 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	return responseData, nil
 }
 
-func (u *authService) RefreshAccessToken(c *gin.Context, userID uuid.UUID) error {
+func (u *authService) RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error) {
 	user, err := u.userRepository.GetByID(userID)
 	if err != nil {
-		return err
+		return "", err
 	}
 	accessToken, err := utils.GenerateUserTokenString(user)
 	if err != nil {
-		return err
+		return "", err
 	}
-	jwtExpirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
-	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
-	c.SetCookie("access_token", accessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
-	return nil
+	return accessToken, nil
 }
