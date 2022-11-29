@@ -10,8 +10,12 @@ services:
     container_name: oceana_api_c
     ports:
       - '8080:8080'
+    expose:
+      - 8080
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    entrypoint: ["/oceana-app"]
     # since we choose to build the golang app then we don't need to map sync file to docker volume which is better to use if we run the main.go or use nodemon to run the file and hot reload if there are changes in any files
     # volumes:
     #   - ./group-project-backend:/app
@@ -24,6 +28,11 @@ services:
     # [container_port]:[host_port]
     ports:
       - 5445:5432
+    healthcheck:
+      test: "pg_isready --username=postgres && psql --username=postgres --list"
+      interval: 1s
+      timeout: 1s
+      retries: 20
     volumes:
       - postgres-db:/var/lib/postgresql/data
   

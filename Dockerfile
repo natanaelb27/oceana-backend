@@ -30,11 +30,3 @@ COPY . .
 
 # build 
 RUN go build -o /oceana-app
-
-# EXPOSE will tell the container which port should the container export
-# We need to expose the port because if we run the applicaiton inside the containers then the application will run on the containers port not the actual machine port
-EXPOSE 8080
-
-# run the application in the container
-# CMD will run the command on container
-CMD ["/oceana-app"]
