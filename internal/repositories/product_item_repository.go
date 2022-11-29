@@ -80,7 +80,7 @@ func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductM
 		`).
 		Joins("JOIN products ON product_items.product_id = products.id").
 		Joins("LEFT JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
-		Joins("JOIN (?) product_item_variation_index ON product_items.id = product_item_variation_index.product_item_id", subQueryProductItemVariationIndex).
+		Joins("LEFT JOIN (?) product_item_variation_index ON product_items.id = product_item_variation_index.product_item_id", subQueryProductItemVariationIndex).
 		Where("products.id = ?", productID).
 		Find(&productModels)
 
