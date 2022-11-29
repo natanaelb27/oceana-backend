@@ -43,7 +43,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
-			transactions.transaction_date AS transaction_datetime,
+			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) AS total_price
 		`).
@@ -69,7 +69,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	}
 
 	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
-		queryResult.Where("transactions.transaction_date::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
 	}
 
 	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
@@ -121,7 +121,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
-			transactions.transaction_date AS transaction_datetime,
+			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			courier_services.description AS courier_description,
 			payment_methods.name AS payment_method,	
