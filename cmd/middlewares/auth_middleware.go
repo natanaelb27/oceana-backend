@@ -11,8 +11,26 @@ import (
 func Auth(c *gin.Context) {
 	clientToken, err := c.Cookie("access_token")
 	if err != nil {
-		utils.ResponseError(c, e.ErrUnauthorized)
-		c.Abort()
+		refreshToken, err := c.Cookie("refresh_token")
+		if err != nil {
+			utils.ResponseError(c, e.ErrUnauthorized)
+			c.Abort()
+			return
+		}
+
+		jwtWrapper, err := utils.NewJwtWrapper()
+		if err != nil {
+			return
+		}
+
+		claims, err := jwtWrapper.ValidateToken(refreshToken)
+		if err != nil {
+			utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
+			c.Abort()
+			return
+		}
+		c.Set("id", claims.User.ID)
+		c.Next()
 		return
 	}
 
