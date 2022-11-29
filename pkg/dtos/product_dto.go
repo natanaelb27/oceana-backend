@@ -63,16 +63,16 @@ func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *Prod
 }
 
 type PurchaseQuantitiesQuery struct {
-	ProductID     uint `json:"product_id"`
-	ProductItemID uint `json:"product_item_id"`
+	ProductID     uint `json:"product-id"`
+	ProductItemID uint `json:"product-item-id"`
 	Quantity      uint `json:"quantity"`
 }
 
 func NewPurchaseQuantitiesQuery(c *gin.Context) *PurchaseQuantitiesQuery {
 	var query PurchaseQuantitiesQuery
 
-	productID := c.Query("product_id")
-	productItemID := c.Query("product_item_id")
+	productID := c.Query("product-id")
+	productItemID := c.Query("product-item-id")
 	quantity := c.Query("quantity")
 
 	productIDInt, err := strconv.Atoi(productID)
