@@ -18,14 +18,14 @@ func (h *Handler) OrderListGetAll(c *gin.Context) {
 
 	query := dtos.NewOrderListQuery(c)
 
-	orderListGetAllResponse, err := h.orderService.OrderListGetAll(id, query)
+	orderListGetAllResponse, pagination, err := h.orderService.OrderListGetAll(id, query)
 
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, orderListGetAllResponse, nil)
+	utils.ResponseSuccess(c, orderListGetAllResponse, pagination)
 }
 
 func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {

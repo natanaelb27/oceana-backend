@@ -13,7 +13,7 @@ import (
 )
 
 type OrderService interface {
-	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, error)
+	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
 	Update(request *internalDtos.OrderProcessOrder) (*models.Order, error)
 }
@@ -41,7 +41,7 @@ func NewOrderService(c *OrderServiceConfig) OrderService {
 	}
 }
 
-func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, error) {
+func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -50,7 +50,7 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 	orderData, pagination, err := s.orderRepository.OrderListGetAll(id, query, pagination)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	orderList := []*internalDtos.OrderList{}
@@ -59,7 +59,7 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 		orderDetails, err := s.orderDetailRepository.OrderDetailListGetByOrderID(order.OrderID)
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		orderList = append(orderList, &internalDtos.OrderList{
@@ -75,7 +75,7 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 
 	}
 
-	return dtos.NewOrderListGetAllResponse(orderList, pagination), nil
+	return dtos.NewOrderListGetAllResponse(orderList), pagination, nil
 }
 
 func (s *orderService) OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {

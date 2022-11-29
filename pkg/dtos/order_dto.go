@@ -6,7 +6,6 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -80,18 +79,13 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 }
 
 type OrderListGetAllResponse struct {
-	Pagination *utils.Pagination `json:"pagination"`
-	OrderList  []*dtos.OrderList `json:"order_list"`
+	OrderList []*dtos.OrderList `json:"order_list"`
 }
 
-func NewOrderListGetAllResponse(source []*dtos.OrderList, pagination *utils.Pagination) (target *OrderListGetAllResponse) {
-	if pagination == nil {
-		return nil
-	}
+func NewOrderListGetAllResponse(source []*dtos.OrderList) (target *OrderListGetAllResponse) {
 
 	target = &OrderListGetAllResponse{
-		Pagination: pagination,
-		OrderList:  source,
+		OrderList: source,
 	}
 
 	return
