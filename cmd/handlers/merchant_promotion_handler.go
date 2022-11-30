@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -50,6 +52,30 @@ func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
 
 	for _, result := range results {
 		responseData = append(responseData, dtos.NewMerchantPromotionCreateResponse(result))
+	}
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionsIDUint64, err := strconv.ParseUint(c.Param("merchant-promotion-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionsID := uint(merchantPromotionsIDUint64)
+
+	responseData, err := h.merchantPromotionService.GetByID(merchantPromotionsID)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
 	}
 
 	utils.ResponseSuccess(c, responseData, nil)
