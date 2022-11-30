@@ -66,6 +66,7 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 			TransactionID:       order.TransactionID,
 			OrderID:             order.OrderID,
 			MerchantID:          order.MerchantID,
+			InvoiceNumber:       order.InvoiceNumber,
 			ShopName:            order.ShopName,
 			OrderDetails:        orderDetails,
 			TransactionDatetime: order.TransactionDatetime,
