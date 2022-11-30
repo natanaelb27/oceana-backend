@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -65,4 +66,26 @@ func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
 	query.FilterPromotionStatus = filterPromotionStatus
 
 	return &query
+}
+
+type MerchantPromotionDetails struct {
+	ID              uint      `json:"id"`
+	MerchantId      uint      `json:"merchant_id"`
+	Name            string    `json:"name"`
+	StartDatetime   time.Time `json:"start_date_time"`
+	EndDatetime     time.Time `json:"end_date_time"`
+	PromotionStatus string    `json:"promotion_status"`
+}
+
+func NewMerchantPromotionDetails(source *models.MerchantPromotion) (target *MerchantPromotionDetails) {
+	target = &MerchantPromotionDetails{
+		ID:              source.ID,
+		MerchantId:      source.MerchantId,
+		Name:            source.Name,
+		StartDatetime:   source.StartDatetime,
+		EndDatetime:     source.EndDatetime,
+		PromotionStatus: utils.PromotionOrVoucherStatus(source.StartDatetime, source.EndDatetime),
+	}
+
+	return
 }

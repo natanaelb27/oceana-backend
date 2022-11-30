@@ -58,7 +58,7 @@ func (h *Handler) OrderProcessOrder(c *gin.Context) {
 		return
 	}
 
-	orderID, err := uuid.Parse(c.Param("orderID"))
+	orderID, err := uuid.Parse(c.Param("order-id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return

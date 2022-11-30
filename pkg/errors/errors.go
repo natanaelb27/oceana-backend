@@ -55,6 +55,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrPromotionNotFound              = errors.New("promotion not found")
 	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")

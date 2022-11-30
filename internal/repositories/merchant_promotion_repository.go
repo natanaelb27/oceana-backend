@@ -11,6 +11,7 @@ import (
 type MerchantPromotionRepository interface {
 	CreateMyShopPromotion(merchantPromotion *models.MerchantPromotion, productIDList []int64) (*models.MerchantPromotion, error)
 	GetAll(merchantID uint, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
+	GetByID(id uint) (*models.MerchantPromotion, error)
 }
 
 type merchantPromotionRepository struct {
@@ -92,4 +93,18 @@ func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.Merch
 
 	return
 
+}
+
+func (mp *merchantPromotionRepository) GetByID(id uint) (*models.MerchantPromotion, error) {
+	var merchantPromotion *models.MerchantPromotion
+
+	result := mp.db.First(merchantPromotion, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrPromotionNotFound
+		}
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return merchantPromotion, nil
 }
