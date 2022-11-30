@@ -94,6 +94,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList) (target *OrderListGetA
 type OrderListDetailsGetByIDResponse struct {
 	TransactionID                   uuid.UUID                    `json:"transaction_id"`
 	OrderID                         uuid.UUID                    `json:"oder_id"`
+	InvoiceNumber                   string                       `json:"invoice_number"`
 	MerchantID                      uint                         `json:"merchant_id"`
 	ShopName                        string                       `json:"shop_name"`
 	OrderDetails                    []*dtos.OrderDetailList      `json:"order_details"`
@@ -115,6 +116,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 	target = &OrderListDetailsGetByIDResponse{
 		TransactionID:                   source.TransactionID,
 		OrderID:                         source.OrderID,
+		InvoiceNumber:                   source.InvoiceNumber,
 		MerchantID:                      source.MerchantID,
 		ShopName:                        source.ShopName,
 		OrderDetails:                    source.OrderDetails,

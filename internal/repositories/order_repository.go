@@ -40,6 +40,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
+			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
@@ -119,6 +120,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Select(`
 			orders.transaction_id AS transaction_id,
 			transactions.user_id AS user_id,
+			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
