@@ -12,7 +12,7 @@ import (
 )
 
 func (h *Handler) ProductDetailsGetByID(c *gin.Context) {
-	productIDUint64, err := strconv.ParseUint(c.Param("productId"), 10, 64)
+	productIDUint64, err := strconv.ParseUint(c.Param("product-id"), 10, 64)
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -77,4 +77,29 @@ func (h *Handler) ShopProductGetAll(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, results, pagination)
+}
+
+func (h *Handler) ViewProduct(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productIDUint64, err := strconv.ParseUint(c.Param("product-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productID := uint(productIDUint64)
+
+	viewProductResponse, err := h.productService.ViewProduct(id, productID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, viewProductResponse, nil)
 }

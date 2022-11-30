@@ -11,10 +11,11 @@ func product(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	publicRoute := public.Group(path)
 	{
 		publicRoute.GET("", h.ProductGetAll)
-		publicRoute.GET("/:productId", h.ProductDetailsGetByID)
+		publicRoute.GET("/:product-id", h.ProductDetailsGetByID)
 	}
 	privateRoute := private.Group(path)
 	{
 		privateRoute.GET("/purchased-quantities", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetPurchaseQuantitiesByID)
+		privateRoute.POST("/:product-id/view", func(c *gin.Context) { middlewares.Role(c, "011") }, h.ViewProduct)
 	}
 }
