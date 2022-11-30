@@ -103,3 +103,53 @@ func (h *Handler) ViewProduct(c *gin.Context) {
 
 	utils.ResponseSuccess(c, viewProductResponse, nil)
 }
+
+func (h *Handler) GetFavoriteProduct(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productIDUint64, err := strconv.ParseUint(c.Param("product-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productID := uint(productIDUint64)
+
+	getFavoriteProductResponse, err := h.productService.GetFavoriteProduct(id, productID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, getFavoriteProductResponse, nil)
+}
+
+func (h *Handler) FavoriteProduct(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productIDUint64, err := strconv.ParseUint(c.Param("product-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productID := uint(productIDUint64)
+
+	getFavoriteProductResponse, err := h.productService.FavoriteProduct(id, productID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, getFavoriteProductResponse, nil)
+}
