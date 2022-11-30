@@ -1,9 +1,10 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
+	productInternalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -13,7 +14,7 @@ import (
 )
 
 type ProductService interface {
-	GetAll(query *internalDtos.ProductQuery) ([]*internalDtos.Product, *utils.Pagination, error)
+	GetAll(query *productInternalDtos.ProductQuery) ([]*productInternalDtos.Product, *utils.Pagination, error)
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, quantity *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error)
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
@@ -28,6 +29,7 @@ type productService struct {
 	productVariantRepository  r.ProductVariationRepository
 	productViewRepository     r.ProductViewRepository
 	productFavoriteRepository r.ProductFavoriteRepository
+	categoryRepository        r.CategoryRepository
 }
 
 type ProductServiceConfig struct {
@@ -37,6 +39,7 @@ type ProductServiceConfig struct {
 	ProductVariationRepository r.ProductVariationRepository
 	ProductViewRepository      r.ProductViewRepository
 	ProductFavoriteRepository  r.ProductFavoriteRepository
+	CategoryRepository         r.CategoryRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
@@ -47,6 +50,7 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productVariantRepository:  c.ProductVariationRepository,
 		productViewRepository:     c.ProductViewRepository,
 		productFavoriteRepository: c.ProductFavoriteRepository,
+		categoryRepository:        c.CategoryRepository,
 	}
 }
 
@@ -86,11 +90,22 @@ func (s *productService) GetPurchaseQuantitiesByID(userID uuid.UUID, query *dtos
 	return dtos.NewGetPurchaseQuantitiesByIDResponse(purchaseQuantities), nil
 }
 
-func (s *productService) GetAll(query *internalDtos.ProductQuery) (productDetails []*internalDtos.Product, pagination *utils.Pagination, err error) {
+func (s *productService) GetAll(query *productInternalDtos.ProductQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error) {
 	pagination = &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
 	}
+
+	if query.CategoryID != 0 {
+		var categories []uint
+		categories, err = s.GetCategoryIds(query.CategoryID)
+		if err != nil {
+			return
+		}
+
+		query.Categories = categories
+	}
+	fmt.Println(query.Categories)
 
 	productDetails, pagination, err = s.productRepository.GetAll(query, pagination)
 	if err != nil {
@@ -98,6 +113,46 @@ func (s *productService) GetAll(query *internalDtos.ProductQuery) (productDetail
 	}
 
 	return productDetails, pagination, nil
+}
+
+func (d *productService) GetAllSubCategories(categoryData []*models.Category) ([]uint, error) {
+	category := []uint{}
+
+	for _, cat := range categoryData {
+		subCategoryData, err := d.categoryRepository.GetAllSubCategoriesByParentID(cat.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		category = append(category, cat.ID)
+
+		if len(subCategoryData) > 0 {
+			subCategory, err := d.GetAllSubCategories(subCategoryData)
+			if err != nil {
+				return nil, err
+			}
+
+			category = append(category, subCategory...)
+		}
+	}
+
+	return category, nil
+}
+
+func (s *productService) GetCategoryIds(id uint) ([]uint, error) {
+	categoryData, err := s.categoryRepository.GetAllSubCategoriesByParentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := s.GetAllSubCategories(categoryData)
+	if err != nil {
+		return nil, err
+	}
+
+	category = append(category, id)
+
+	return category, nil
 }
 
 func (s *productService) ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error) {
