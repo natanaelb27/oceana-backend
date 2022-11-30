@@ -9,6 +9,7 @@ import (
 
 type Order struct {
 	ID                      uuid.UUID
+	InvoiceNumber           string
 	TransactionID           uuid.UUID
 	Transaction             Transaction
 	MerchantID              uint
