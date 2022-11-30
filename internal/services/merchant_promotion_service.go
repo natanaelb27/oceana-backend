@@ -13,6 +13,7 @@ import (
 type MerchantPromotionService interface {
 	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionCreateRequest, pmpRequests []*dtos.ProductMerchantPromotionCreateRequest) ([]*dtos.ProductMerchantPromotionCreateResponse, error)
 	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
+	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
 }
 
 type merchantPromotionService struct {
@@ -112,4 +113,15 @@ func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.Merchan
 	}
 
 	return result, nil
+}
+
+func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error) {
+	result, err := mp.merchantPromotionRepository.GetByID(merchantPromotionID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := dtos.NewMerchantPromotionDetails(result)
+	
+	return response, nil
 }

@@ -55,6 +55,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrVoucherNotFound                = errors.New("voucher not found")
+	ErrPromotionNotFound              = errors.New("promotion not found")
 	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
@@ -185,7 +186,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUserNotFound) ||
 		errors.Is(err, ErrEmailNotFound) ||
 		errors.Is(err, ErrVoucherNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrPromotionNotFound) ||
 		errors.Is(err, ErrOrderNotFound) ||
 		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
