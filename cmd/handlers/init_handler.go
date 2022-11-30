@@ -29,6 +29,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	productViewRepository := repositories.NewProductViewRepository(&repositories.ProductViewRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -137,6 +141,7 @@ func Init() *Handler {
 		MerchantRepository:         merchantRepository,
 		ProductItemRepository:      productItemRepository,
 		ProductVariationRepository: productVariationRepository,
+		ProductViewRepository:      productViewRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
