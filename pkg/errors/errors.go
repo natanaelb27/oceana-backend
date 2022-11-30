@@ -186,7 +186,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUserNotFound) ||
 		errors.Is(err, ErrEmailNotFound) ||
 		errors.Is(err, ErrVoucherNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) ||
+		errors.Is(err, ErrPromotionNotFound) ||
 		errors.Is(err, ErrOrderNotFound) ||
 		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
