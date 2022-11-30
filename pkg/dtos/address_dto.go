@@ -45,14 +45,17 @@ func NewAddressCreateResponse(source *models.Address) (target *AddressCreateResp
 }
 
 type AddressGetResponse struct {
-	ID            uuid.UUID           `json:"id"`
-	UserID        uuid.UUID           `json:"user_id"`
-	User          UserCreateResponse  `json:"user"`
-	Name          string              `json:"name"`
-	Detail        string              `json:"detail"`
-	SubDistrictId uint                `json:"sub_district_id"`
-	SubDistrict   SubDistrictResponse `json:"sub_district"`
-	IsDefault     bool                `json:"is_default"`
+	ID          uuid.UUID          `json:"id"`
+	UserID      uuid.UUID          `json:"user_id"`
+	User        UserCreateResponse `json:"user"`
+	Name        string             `json:"name"`
+	Detail      string             `json:"detail"`
+	SubDistrict string             `json:"sub_district"`
+	District    string             `json:"district"`
+	City        string             `json:"city"`
+	Province    string             `json:"province"`
+	ZipCode     string             `json:"zip_code"`
+	IsDefault   bool               `json:"is_default"`
 }
 
 func NewAddressGetResponse(source *models.Address) (target *AddressGetResponse) {
@@ -69,30 +72,14 @@ func NewAddressGetResponse(source *models.Address) (target *AddressGetResponse) 
 			Birthdate:   source.User.Birthdate,
 			Role:        source.User.Role,
 		},
-		Name:          source.Name,
-		Detail:        source.Detail,
-		SubDistrictId: source.SubDistrictID,
-		SubDistrict: SubDistrictResponse{
-			ID:         source.SubDistrict.ID,
-			Name:       source.SubDistrict.Name,
-			DistrictID: source.SubDistrict.DistrictID,
-			District: DistrictResponse{
-				ID:     source.SubDistrict.District.ID,
-				Name:   source.SubDistrict.District.Name,
-				CityID: source.SubDistrict.District.CityID,
-				City: CityResponse{
-					ID:         source.SubDistrict.District.City.ID,
-					Name:       source.SubDistrict.District.City.Name,
-					ProvinceID: source.SubDistrict.District.City.ProvinceID,
-					Province: ProvinceResponse{
-						ID:   source.SubDistrict.District.City.Province.ID,
-						Name: source.SubDistrict.District.City.Province.Name,
-					},
-				},
-			},
-			ZipCode: source.SubDistrict.ZipCode,
-		},
-		IsDefault: source.IsDefault,
+		Name:        source.Name,
+		Detail:      source.Detail,
+		SubDistrict: source.SubDistrict.Name,
+		District:    source.SubDistrict.District.Name,
+		City:        source.SubDistrict.District.City.Name,
+		Province:    source.SubDistrict.District.City.Province.Name,
+		ZipCode:     source.SubDistrict.ZipCode,
+		IsDefault:   source.IsDefault,
 	}
 
 	return
