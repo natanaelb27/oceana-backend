@@ -43,16 +43,6 @@ func (r *productViewRepository) Create(newModel *models.ProductView) (model *mod
 	return
 }
 
-func (r *productViewRepository) GetAll() (model []*models.ProductView, err error) {
-	queryResult := r.db.Find(&model)
-	if queryResult.Error != nil {
-		err = e.ErrDatabaseOperationFailed
-		return
-	}
-
-	return
-}
-
 func (r *productViewRepository) GetByUserIDAndProductID(userID uuid.UUID, productID uint) (model *models.ProductView, err error) {
 	result := r.db.First(&model, "user_id = ? AND product_id = ?", userID, productID)
 	if result.RowsAffected == 0 {

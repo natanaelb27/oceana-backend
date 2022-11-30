@@ -17,14 +17,17 @@ type ProductService interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, quantity *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error)
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
+	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
+	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 }
 
 type productService struct {
-	productRepository        r.ProductRepository
-	merchantRepository       r.MerchantRepository
-	productItemRepository    r.ProductItemRepository
-	productVariantRepository r.ProductVariationRepository
-	productViewRepository    r.ProductViewRepository
+	productRepository         r.ProductRepository
+	merchantRepository        r.MerchantRepository
+	productItemRepository     r.ProductItemRepository
+	productVariantRepository  r.ProductVariationRepository
+	productViewRepository     r.ProductViewRepository
+	productFavoriteRepository r.ProductFavoriteRepository
 }
 
 type ProductServiceConfig struct {
@@ -33,15 +36,17 @@ type ProductServiceConfig struct {
 	ProductItemRepository      r.ProductItemRepository
 	ProductVariationRepository r.ProductVariationRepository
 	ProductViewRepository      r.ProductViewRepository
+	ProductFavoriteRepository  r.ProductFavoriteRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
 	return &productService{
-		productRepository:        c.ProductRepository,
-		merchantRepository:       c.MerchantRepository,
-		productItemRepository:    c.ProductItemRepository,
-		productVariantRepository: c.ProductVariationRepository,
-		productViewRepository:    c.ProductViewRepository,
+		productRepository:         c.ProductRepository,
+		merchantRepository:        c.MerchantRepository,
+		productItemRepository:     c.ProductItemRepository,
+		productVariantRepository:  c.ProductVariationRepository,
+		productViewRepository:     c.ProductViewRepository,
+		productFavoriteRepository: c.ProductFavoriteRepository,
 	}
 }
 
@@ -133,4 +138,64 @@ func (s *productService) ViewProduct(userID uuid.UUID, productID uint) (*dtos.Ge
 	}
 
 	return dtos.NewGetProductViewResponse(updatedViewProduct), nil
+}
+
+func (s *productService) GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error) {
+	favoriteProduct, err := s.productFavoriteRepository.GetByUserIDAndProductID(userID, productID)
+
+	if err != nil && err != e.ErrDataNotFound {
+		return nil, err
+	}
+
+	if err == e.ErrDataNotFound {
+		model := &models.ProductFavorite{
+			UserId:     userID,
+			ProductId:  productID,
+			IsFavorite: false,
+		}
+
+		newFavoriteProduct, err := s.productFavoriteRepository.Create(model)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return dtos.NewGetProductFavoriteResponse(newFavoriteProduct), nil
+	}
+
+	return dtos.NewGetProductFavoriteResponse(favoriteProduct), nil
+}
+
+func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error) {
+	favoriteProduct, err := s.productFavoriteRepository.GetByUserIDAndProductID(userID, productID)
+
+	if err != nil && err != e.ErrDataNotFound {
+		return nil, err
+	}
+
+	if err == e.ErrDataNotFound {
+		model := &models.ProductFavorite{
+			UserId:     userID,
+			ProductId:  productID,
+			IsFavorite: false,
+		}
+
+		newFavoriteProduct, err := s.productFavoriteRepository.Create(model)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return dtos.NewGetProductFavoriteResponse(newFavoriteProduct), nil
+	}
+
+	favoriteProduct.IsFavorite = !favoriteProduct.IsFavorite
+
+	updatedFavoriteProduct, err := s.productFavoriteRepository.Update(favoriteProduct.ID, favoriteProduct)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
 }
