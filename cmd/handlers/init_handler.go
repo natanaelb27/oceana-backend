@@ -33,6 +33,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	productFavoriteRepository := repositories.NewProductFavoriteRepository(&repositories.ProductFavoriteRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -142,6 +146,7 @@ func Init() *Handler {
 		ProductItemRepository:      productItemRepository,
 		ProductVariationRepository: productVariationRepository,
 		ProductViewRepository:      productViewRepository,
+		ProductFavoriteRepository:  productFavoriteRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
