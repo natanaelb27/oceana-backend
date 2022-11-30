@@ -46,7 +46,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			merchants.name AS shop_name,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) AS total_price
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
