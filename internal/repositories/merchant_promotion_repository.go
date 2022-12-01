@@ -98,7 +98,7 @@ func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.Merch
 func (mp *merchantPromotionRepository) GetByID(id uint) (*models.MerchantPromotion, error) {
 	var merchantPromotion *models.MerchantPromotion
 
-	result := mp.db.First(merchantPromotion, id)
+	result := mp.db.First(&merchantPromotion, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, e.ErrPromotionNotFound
