@@ -9,6 +9,7 @@ const (
 	OutForDeliveryStatus = "Out for Delivery"
 	DeliveredStatus      = "Delivered"
 	ComplainedStatus     = "Complained"
+	CanceledStatus       = "Canceled"
 	BuyerCanceledStatus  = "Canceled by Buyer"
 	SellerCanceledStatus = "Canceled by Seller"
 	CompletedStatus      = "Completed"

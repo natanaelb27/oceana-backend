@@ -11,6 +11,7 @@ import (
 )
 
 type OrderListQuery struct {
+	Search                     string     `json:"string"`
 	FilterOrderStatus          string     `json:"filter-order-status"`
 	FilterOngoingOrderStatus   string     `json:"filter-ongoing-order-status"`
 	FilterStartTransactionDate *time.Time `json:"filter-start-transaction-date"`
@@ -22,6 +23,7 @@ type OrderListQuery struct {
 func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	var query OrderListQuery
 
+	search := c.Query("search")
 	filterOrderStatus := c.Query("filter-order-status")
 	filterOngoingOrderStatus := c.Query("filter-ongoing-order-status")
 	filterStartTransactionDate := c.Query("filter-start-transaction-date")
@@ -30,6 +32,7 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	limit := c.Query("limit")
 	page := c.Query("page")
 
+	query.Search = search
 	query.FilterOrderStatus = filterOrderStatus
 	query.FilterOngoingOrderStatus = filterOngoingOrderStatus
 
