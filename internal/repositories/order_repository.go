@@ -40,12 +40,13 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
+			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) AS total_price
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
@@ -119,6 +120,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Select(`
 			orders.transaction_id AS transaction_id,
 			transactions.user_id AS user_id,
+			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
