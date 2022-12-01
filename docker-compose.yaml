@@ -16,6 +16,8 @@ services:
       # depends on db that is healthy
       db:
         condition: service_healthy
+      cache:
+        condition: service_healthy
     entrypoint: ["/oceana-app"]
     # since we choose to build the golang app then we don't need to map sync file to docker volume which is better to use if we run the main.go or use nodemon to run the file and hot reload if there are changes in any files
     # volumes:
@@ -37,6 +39,23 @@ services:
       retries: 20
     volumes:
       - postgres-db:/var/lib/postgresql/data
-  
+  cache:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - 6337:${REDIS_PORT}
+      # we use a custom redis-server command with --save 20 1 which instructs the server to save 1 or more writes every 20 seconds to disk in case the server restarts. We are using the --requirepass parameter to add authentication with the password to read/write data on the Redis server
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    volumes: 
+      - cache:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+# driver local means the volumes created on the same docker host where you run your container
 volumes:
   postgres-db:
+    driver: local
+  cache:
+    driver: local
