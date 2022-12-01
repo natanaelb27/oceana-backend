@@ -17,13 +17,13 @@ func (h *Handler) MerchantPromotionCreate(c *gin.Context) {
 		return
 	}
 
-	var mpRequest *dtos.MerchantPromotionCreateRequest
+	var mpRequest *dtos.MerchantPromotionRequest
 	if err := c.ShouldBindJSON(&mpRequest); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	responses, err := h.merchantPromotionService.CreateMyShopPromotion(id, mpRequest, mpRequest.ProductMerchantPromotion)
+	responses, err := h.merchantPromotionService.CreateMyShopPromotion(id, mpRequest)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -48,10 +48,10 @@ func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
 		return
 	}
 
-	var responseData []*dtos.MerchantPromotionCreateResponse = make([]*dtos.MerchantPromotionCreateResponse, 0)
+	var responseData []*dtos.MerchantPromotionResponse = make([]*dtos.MerchantPromotionResponse, 0)
 
 	for _, result := range results {
-		responseData = append(responseData, dtos.NewMerchantPromotionCreateResponse(result))
+		responseData = append(responseData, dtos.NewMerchantPromotionResponse(result, nil))
 	}
 
 	utils.ResponseSuccess(c, responseData, nil)
@@ -88,25 +88,25 @@ func (h *Handler) MerchantPromotionUpdate(c *gin.Context) {
 		return
 	}
 
-	var request *dtos.MerchantPromotionUpdateRequest
+	var request *dtos.MerchantPromotionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	merchantPromotionIDUint64, err := strconv.ParseUint(c.Param("merchant-voucher-id"), 10, 64)
+	merchantPromotionIDUint64, err := strconv.ParseUint(c.Param("merchant-promotion-id"), 10, 64)
 	if err != nil {
-		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		utils.ResponseError(c, err)
 		return
 	}
 
 	merchantPromotionID := uint(merchantPromotionIDUint64)
 
-	merchantPromotionUpdateResponse, err := h.merchantPromotionService.Update(userID, merchantPromotionID)
+	responses, err := h.merchantPromotionService.Update(userID, merchantPromotionID, request)
 	if err != nil {
-		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, merchantPromotionUpdateResponse, nil)
+	utils.ResponseSuccess(c, responses, nil)
 }

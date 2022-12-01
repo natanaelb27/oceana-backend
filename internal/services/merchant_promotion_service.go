@@ -1,20 +1,19 @@
 package services
 
 import (
-	"time"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 )
 
 type MerchantPromotionService interface {
-	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionCreateRequest, pmpRequests []*dtos.ProductMerchantPromotionCreateRequest) ([]*dtos.ProductMerchantPromotionCreateResponse, error)
+	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error)
 	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
 	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
-	Update(userID uuid.UUID, merchantPromotionID uint) (*dtos.MerchantPromotionUpdateResponse, error)
+	Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error)
 }
 
 type merchantPromotionService struct {
@@ -37,25 +36,10 @@ func NewMerchantPromotionService(c *MerchantPromotionServiceConfig) MerchantProm
 	}
 }
 
-func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionCreateRequest, pmpRequests []*dtos.ProductMerchantPromotionCreateRequest) ([]*dtos.ProductMerchantPromotionCreateResponse, error) {
-	if mpRequest.StartDatetime.Before(time.Now()) {
-		return nil, e.ErrPromotionStartDatetimeEarlierThanNow
-	}
-
-	if mpRequest.EndDatetime.Before(mpRequest.StartDatetime) {
-		return nil, e.ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime
-	}
-
-	if int(time.Until(mpRequest.StartDatetime).Hours()/24) <= 0 {
-		return nil, e.ErrPromotionStartDatetimeMinimumOneDayFromNow
-	}
-
-	if int(mpRequest.EndDatetime.Sub(mpRequest.StartDatetime).Hours()) <= 0 {
-		return nil, e.ErrPromotionPeriodMinimumOneHour
-	}
-
-	if int(mpRequest.EndDatetime.Sub(mpRequest.StartDatetime).Hours()/24) > 180 {
-		return nil, e.ErrPromotionPeriodExceedMaximumDays
+func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error) {
+	err := utils.ValidateMerchantPromotionDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime)
+	if err != nil {
+		return nil, err
 	}
 
 	merchant, err := mp.merchantRepository.GetByUserID(id)
@@ -73,9 +57,9 @@ func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpReques
 	}
 
 	var newPmpModels []*models.ProductMerchantPromotion
-	var responses []*dtos.ProductMerchantPromotionCreateResponse
+	var responses []*dtos.ProductMerchantPromotionResponse
 
-	for _, pmpRequest := range pmpRequests {
+	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
 		if pmpRequest.DiscountType == "nominal" {
 			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
 		}
@@ -96,7 +80,7 @@ func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpReques
 	}
 
 	for _, newPmpModel := range newPmpModels {
-		responses = append(responses, dtos.NewProductMerchantPromotionCreateResponse(newPmpModel))
+		responses = append(responses, dtos.NewProductMerchantPromotionResponse(newPmpModel))
 	}
 
 	return responses, nil
@@ -127,6 +111,46 @@ func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.Mer
 	return response, nil
 }
 
-func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID uint) (*dtos.MerchantPromotionUpdateResponse, error) {
-	return nil, nil
+func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error) {
+	err := utils.ValidateMerchantPromotionDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime)
+	if err != nil {
+		return nil, err
+	}
+
+	merchant, err := mp.merchantRepository.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	mpModel := mpRequest.ToModel(merchant.ID)
+	mpModel.ID = merchantPromotionID
+
+	updatedMpModel, err := mp.merchantPromotionRepository.Update(mpModel, mpRequest.ProductIDList)
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
+
+	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
+		if pmpRequest.DiscountType == "nominal" {
+			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
+		}
+
+		if pmpRequest.DiscountType == "percentage" {
+			if pmpRequest.Discount > 100 {
+				return nil, e.ErrExceedDiscountPercentage
+			}
+		}
+
+		pmpModel := pmpRequest.ToModel(updatedMpModel.ID)
+		updatedPmpModel, err := mp.productMerchantPromotionRepository.Update(pmpModel)
+		if err != nil {
+			return nil, err
+		}
+		updatedPmpResponse = append(updatedPmpResponse, dtos.NewProductMerchantPromotionResponse(updatedPmpModel))
+	}
+
+	response := dtos.NewMerchantPromotionResponse(mpModel, updatedPmpResponse)
+	return response, nil
 }
