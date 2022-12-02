@@ -133,16 +133,6 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	}
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
-
-	// convert ProductIDList []int64 -> []int and sort ASC for SearchInts
-	var productIDListIntSlice []int
-	for _, id := range mpRequest.ProductIDList {
-		productIDListIntSlice = append(productIDListIntSlice, int(id))
-	}
-	sort.SliceStable(productIDListIntSlice, func(i, j int) bool {
-		return productIDListIntSlice[i] < productIDListIntSlice[j]
-	})
-
 	// currenttly existing PMPs
 	currentPmp, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
 	if err != nil {
@@ -166,10 +156,10 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		}
 
 		// search PMP based on productIDList
-		exists := sort.SearchInts(currentPmpProductIDList, int(pmpRequest.ProductID))
+		existsInCurrentPmp := sort.SearchInts(currentPmpProductIDList, int(pmpRequest.ProductID))
 		pmpModel := pmpRequest.ToModel(updatedMpModel.ID)
 		var updatedPmpModel *models.ProductMerchantPromotion
-		switch exists {
+		switch existsInCurrentPmp {
 		case len(currentPmpProductIDList):
 			// create
 			var pmpModelSlice []*models.ProductMerchantPromotion
@@ -188,7 +178,26 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		}
 		updatedPmpResponse = append(updatedPmpResponse, dtos.NewProductMerchantPromotionResponse(updatedPmpModel))
 	}
+
+	// convert ProductIDList []int64 -> []int and sort ASC for SearchInts
+	var productIDListIntSlice []int
+	for _, productID := range mpRequest.ProductIDList {
+		productIDListIntSlice = append(productIDListIntSlice, int(productID))
+	}
+	sort.SliceStable(productIDListIntSlice, func(i, j int) bool {
+		return productIDListIntSlice[i] < productIDListIntSlice[j]
+	})
 	// delete
+	for _, productID := range currentPmpProductIDList {
+		existsInPmpRequest := sort.SearchInts(productIDListIntSlice, productID)
+		switch existsInPmpRequest {
+		case len(productIDListIntSlice):
+			_, err := mp.productMerchantPromotionRepository.DeleteByProductID(uint(productID))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	response := dtos.NewMerchantPromotionResponse(mpModel, updatedPmpResponse)
 	return response, nil

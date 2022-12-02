@@ -11,7 +11,7 @@ type ProductMerchantPromotionRepository interface {
 	CreateProductMerchantPromotion(newModels []*models.ProductMerchantPromotion) (models []*models.ProductMerchantPromotion, err error)
 	GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error)
 	Update(newModel *models.ProductMerchantPromotion) (model *models.ProductMerchantPromotion, err error)
-	Delete(id uint) (model *models.ProductMerchantPromotion, err error)
+	DeleteByProductID(productID uint) (model *models.ProductMerchantPromotion, err error)
 }
 
 type productMerchantPromotionRepository struct {
@@ -78,8 +78,8 @@ func (pmp *productMerchantPromotionRepository) Update(newModel *models.ProductMe
 	return
 }
 
-func (pmp *productMerchantPromotionRepository) Delete(id uint) (model *models.ProductMerchantPromotion, err error) {
-	queryResult := pmp.db.Clauses(clause.Returning{}).Delete(&model, id)
+func (pmp *productMerchantPromotionRepository) DeleteByProductID(productID uint) (model *models.ProductMerchantPromotion, err error) {
+	queryResult := pmp.db.Clauses(clause.Returning{}).Where("product_id = ?", productID).Delete(&model)
 
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrProductMerchantPromotionNotFound
