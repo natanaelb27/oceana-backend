@@ -21,17 +21,18 @@ func (source *CartRequest) ToModel() (target *models.Cart) {
 }
 
 type Product struct {
-	CartsID            uint   `json:"carts_id"`
-	ProductID          uint   `json:"product_id"`
-	ProductItemID      uint   `json:"product_item_id"`
-	ProductName        string `json:"product_name"`
-	Quantity           uint   `json:"quantity"`
-	Price              uint   `json:"price"`
-	PriceAfterDiscount uint   `json:"price_after_discount"`
+	CartsID            uint     `json:"carts_id"`
+	ProductID          uint     `json:"product_id"`
+	ProductItemID      uint     `json:"product_item_id"`
+	ProductName        string   `json:"product_name"`
+	Quantity           uint     `json:"quantity"`
+	Price              uint     `json:"price"`
+	PriceAfterDiscount *float64 `json:"price_after_discount"`
 }
 
 type Merchant struct {
-	MerchantID uint       `json:"merchant_id"`
-	Name       string     `json:"name"`
-	Products   []*Product `json:"products" gorm:"-"`
+	MerchantID       uint       `json:"merchant_id"`
+	Name             string     `json:"name"`
+	MerchantProvince string     `json:"merchant_province"`
+	Products         []*Product `json:"products" gorm:"-"`
 }
