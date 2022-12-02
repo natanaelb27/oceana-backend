@@ -1,15 +1,16 @@
 package services
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"github.com/google/uuid"
 )
 
 type AddressService interface {
-	GetProfileAddressess(userID uuid.UUID) (model []*models.Address, err error)
+	GetProfileAddressess(userID uuid.UUID) (model []*dtos.AddressDetails, err error)
 	Create(address *models.Address) (*models.Address, error)
-	GetProfileAddressById(id uuid.UUID) (model *models.Address, err error)
+	GetProfileAddressById(id uuid.UUID) (*dtos.AddressDetails, error)
 	UpdateProfileAddress(id uuid.UUID, newModel *models.Address) (model *models.Address, err error)
 	DeleteProfileAddress(id uuid.UUID) (*models.Address, error)
 	UpdateProfileAddressDefault(id uuid.UUID, userID uuid.UUID) (model *models.Address, err error)
@@ -44,11 +45,11 @@ func (a *addressService) Create(model *models.Address) (*models.Address, error) 
 	return a.addressRepository.Create(model)
 }
 
-func (a *addressService) GetProfileAddressess(userID uuid.UUID) ([]*models.Address, error) {
+func (a *addressService) GetProfileAddressess(userID uuid.UUID) ([]*dtos.AddressDetails, error) {
 	return a.addressRepository.GetProfileAddressess(userID)
 }
 
-func (a *addressService) GetProfileAddressById(id uuid.UUID) (model *models.Address, err error) {
+func (a *addressService) GetProfileAddressById(id uuid.UUID) (*dtos.AddressDetails, error) {
 	return a.addressRepository.GetProfileAddressById(id)
 }
 
