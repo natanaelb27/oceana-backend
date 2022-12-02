@@ -69,6 +69,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			products.name AS product_name,
 			carts.product_item_id AS product_item_id,
 			carts.quantity AS quantity,
+			product_items.stock_quantity AS stock_quantity,
 			product_items.price AS price,
 			-- count price after discount
 			(
@@ -120,10 +121,10 @@ func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
 		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
-		Joins("JOIN addresses ON merchants.address_id = addresses.id"). 
-		Joins("JOIN sub_districts ON addresses.sub_district_id = sub_districts.id"). 
-		Joins("JOIN districts ON sub_districts.district_id = districts.id"). 
-		Joins("JOIN cities ON districts.city_id = cities.id"). 
+		Joins("JOIN addresses ON merchants.address_id = addresses.id").
+		Joins("JOIN sub_districts ON addresses.sub_district_id = sub_districts.id").
+		Joins("JOIN districts ON sub_districts.district_id = districts.id").
+		Joins("JOIN cities ON districts.city_id = cities.id").
 		Joins("JOIN provinces ON cities.province_id = provinces.id").
 		Group("products.id, merchants.id, provinces.name").
 		Find(&result)
