@@ -75,6 +75,10 @@ type UserLoginResponse struct {
 	Role string `json:"role"`
 }
 
+type UserLoginWithGoogleRequest struct {
+	GoogleID string `json:"google_id" binding:"required"`
+}
+
 type AuthStepUpPasswordRequest struct {
 	Password string `json:"password" binding:"required"`
 }

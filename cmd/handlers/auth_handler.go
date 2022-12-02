@@ -47,6 +47,28 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	utils.ResponseSuccess(c, userLoginResponse, nil)
 }
 
+func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
+	var request *dtos.UserLoginWithGoogleRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	userLoginData, err := h.authService.LoginWithGoogle(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	userLoginResponse := &dtos.UserLoginResponse{
+		Role: userLoginData.Role,
+	}
+	jwtExpirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
+	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
+	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("refresh_token", userLoginData.RefreshToken, int(userLoginData.ExpireDuration), "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
+	utils.ResponseSuccess(c, userLoginResponse, nil)
+}
+
 func (h *Handler) StepUpPassword(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
@@ -88,7 +110,7 @@ func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
 
 func (h *Handler) UserResetPassword(c *gin.Context) {
 	var request *dtos.ResetPasswordRequest
-	resetPasswordID := c.Param("resetPasswordID")
+	resetPasswordID := c.Param("reset-password-id")
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return

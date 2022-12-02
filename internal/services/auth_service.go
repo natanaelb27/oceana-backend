@@ -20,6 +20,7 @@ import (
 type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
+	LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
 	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
@@ -175,6 +176,32 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 		return userLoginData, nil
 	}
 	return nil, e.ErrUserNotFound
+}
+
+func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {
+	user, err := u.userRepository.GetByGoogleID(userLoginWithGoogleRequest.GoogleID)
+	if err != nil {
+		// TODO: user first time login with Google
+		// MAYBE: for security, hash google_id for user first time login with Google
+		return nil, err
+	}
+	token, err := utils.GenerateUserTokenString(user)
+	if err != nil {
+		return nil, err
+	}
+	userLoginData := &internalDtos.UserLoginData{
+		AccessToken:  token,
+		RefreshToken: token,
+		Role:         user.Role,
+	}
+	refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
+	refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+	err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), token, refreshTokenDuration)
+	if err != nil {
+		return nil, err
+	}
+	userLoginData.ExpireDuration = refreshTokenDuration
+	return userLoginData, nil
 }
 
 func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error) {
