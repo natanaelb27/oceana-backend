@@ -54,9 +54,6 @@ var (
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
-	ErrVoucherNotFound                = errors.New("voucher not found")
-	ErrPromotionNotFound              = errors.New("promotion not found")
-	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -69,6 +66,8 @@ var (
 	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
 	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
 	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
+	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
+	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 
 	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound             = errors.New("user not found")
@@ -78,6 +77,9 @@ var (
 	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
 	ErrVerificationCodeNotFound = errors.New("verification code not found")
 	ErrProductNotFound          = errors.New("product not found")
+	ErrVoucherNotFound          = errors.New("voucher not found")
+	ErrPromotionNotFound        = errors.New("promotion not found")
+	ErrOrderNotFound            = errors.New("order not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
@@ -198,7 +200,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
-		errors.Is(err, ErrMerchantPromotionProductConflict) {
+		errors.Is(err, ErrMerchantPromotionProductConflict) ||
+		errors.Is(err, ErrDeleteDefaultAddressConflict) ||
+		errors.Is(err, ErrDeleteShopAddressConflict) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
 		errors.Is(err, ErrForbiddenMerchant) ||

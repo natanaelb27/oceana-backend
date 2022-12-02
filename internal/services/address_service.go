@@ -4,6 +4,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -58,6 +59,20 @@ func (a *addressService) UpdateProfileAddress(id uuid.UUID, newModel *models.Add
 }
 
 func (a *addressService) DeleteProfileAddress(id uuid.UUID) (*models.Address, error) {
+	addressDetails, err := a.addressRepository.GetProfileAddressById(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if addressDetails.IsDefault {
+		return nil, e.ErrDeleteDefaultAddressConflict
+	}
+
+	if addressDetails.IsShopAddress {
+		return nil, e.ErrDeleteShopAddressConflict
+	}
+
 	return a.addressRepository.DeleteProfileAddress(id)
 }
 
