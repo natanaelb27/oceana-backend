@@ -60,8 +60,20 @@ func (r *cartRepository) subQueryCartsQuantitySum(merchantId uint, userId uuid.U
 	return query
 }
 
+func (r *cartRepository) subQueryProductVariations() *gorm.DB {
+	query := r.db.
+		Table("product_variations pvariations").
+		Select(`string_agg(CONCAT(pvarianttype."name", ':', pvariants."name"),', ' ORDER BY pvarianttype.id) AS value`).
+		Joins(`JOIN product_variants pvariants ON pvariants.id = pvariations.product_variant_id `).
+		Joins(`JOIN product_variant_types pvarianttype ON pvarianttype.id = pvariants.product_variant_type_id  `).
+		Where("pvariations.product_item_id = carts.product_item_id").
+		Group("pvariations.product_item_id")
+	return query
+}
+
 func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, userId uuid.UUID) (result []*in_cart_dtos.Product, err error) {
 	sqTotalViewCount := sql.Named("all_product_items_quantity", r.subQueryCartsQuantitySum(merchantId, userId))
+	subQueryProductVariations := sql.Named("subQueryProductVariations", r.subQueryProductVariations())
 	queryResult := r.db.Model(&models.Cart{}).Select(`
 			carts.id AS carts_id,
 			carts.user_id AS user_id,
@@ -90,9 +102,11 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 						)
 				ELSE product_items.price
 				END		
-			) AS price_after_discount
+			) AS price_after_discount,
+			(@subQueryProductVariations) AS product_variation
 		`,
 		sqTotalViewCount,
+		subQueryProductVariations,
 	).
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
