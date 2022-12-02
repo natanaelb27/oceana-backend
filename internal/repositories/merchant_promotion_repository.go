@@ -13,7 +13,7 @@ type MerchantPromotionRepository interface {
 	CreateMyShopPromotion(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error)
 	GetAll(merchantID uint, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
 	GetByID(id uint) (*models.MerchantPromotion, error)
-	Update(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error)
+	Update(newModel *models.MerchantPromotion) (model *models.MerchantPromotion, err error)
 }
 
 type merchantPromotionRepository struct {
@@ -111,7 +111,7 @@ func (mp *merchantPromotionRepository) GetByID(id uint) (*models.MerchantPromoti
 	return merchantPromotion, nil
 }
 
-func (mp *merchantPromotionRepository) Update(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error) {
+func (mp *merchantPromotionRepository) Update(newModel *models.MerchantPromotion) (model *models.MerchantPromotion, err error) {
 	queryResult := mp.db.Clauses(clause.Returning{}).Updates(newModel)
 
 	if queryResult.Error != nil {

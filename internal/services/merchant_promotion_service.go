@@ -1,6 +1,8 @@
 package services
 
 import (
+	"sort"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -125,13 +127,33 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	mpModel := mpRequest.ToModel(merchant.ID)
 	mpModel.ID = merchantPromotionID
 
-	updatedMpModel, err := mp.merchantPromotionRepository.Update(mpModel, mpRequest.ProductIDList)
+	updatedMpModel, err := mp.merchantPromotionRepository.Update(mpModel)
 	if err != nil {
 		return nil, err
 	}
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
 
+	// convert ProductIDList []int64 -> []int and sort ASC for SearchInts
+	var productIDListIntSlice []int
+	for _, id := range mpRequest.ProductIDList {
+		productIDListIntSlice = append(productIDListIntSlice, int(id))
+	}
+	sort.SliceStable(productIDListIntSlice, func(i, j int) bool {
+		return productIDListIntSlice[i] < productIDListIntSlice[j]
+	})
+
+	// currenttly existing PMPs
+	currentPmp, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
+	if err != nil {
+		return nil, err
+	}
+	var currentPmpProductIDList []int
+	for _, pmp := range currentPmp {
+		currentPmpProductIDList = append(currentPmpProductIDList, int(pmp.ProductID))
+	}
+
+	// create/update PMP
 	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
 		if pmpRequest.DiscountType == "nominal" {
 			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
@@ -143,13 +165,30 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 			}
 		}
 
+		// search PMP based on productIDList
+		exists := sort.SearchInts(currentPmpProductIDList, int(pmpRequest.ProductID))
 		pmpModel := pmpRequest.ToModel(updatedMpModel.ID)
-		updatedPmpModel, err := mp.productMerchantPromotionRepository.Update(pmpModel)
-		if err != nil {
-			return nil, err
+		var updatedPmpModel *models.ProductMerchantPromotion
+		switch exists {
+		case len(currentPmpProductIDList):
+			// create
+			var pmpModelSlice []*models.ProductMerchantPromotion
+			pmpModelSlice = append(pmpModelSlice, pmpModel)
+			createdPmpModel, err := mp.productMerchantPromotionRepository.CreateProductMerchantPromotion(pmpModelSlice)
+			if err != nil {
+				return nil, err
+			}
+			updatedPmpModel = createdPmpModel[0]
+		default:
+			// update
+			updatedPmpModel, err = mp.productMerchantPromotionRepository.Update(pmpModel)
+			if err != nil {
+				return nil, err
+			}
 		}
 		updatedPmpResponse = append(updatedPmpResponse, dtos.NewProductMerchantPromotionResponse(updatedPmpModel))
 	}
+	// delete
 
 	response := dtos.NewMerchantPromotionResponse(mpModel, updatedPmpResponse)
 	return response, nil

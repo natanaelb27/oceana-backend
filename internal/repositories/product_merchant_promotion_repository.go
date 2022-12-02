@@ -9,7 +9,9 @@ import (
 
 type ProductMerchantPromotionRepository interface {
 	CreateProductMerchantPromotion(newModels []*models.ProductMerchantPromotion) (models []*models.ProductMerchantPromotion, err error)
+	GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error)
 	Update(newModel *models.ProductMerchantPromotion) (model *models.ProductMerchantPromotion, err error)
+	Delete(id uint) (model *models.ProductMerchantPromotion, err error)
 }
 
 type productMerchantPromotionRepository struct {
@@ -42,11 +44,27 @@ func (pmp *productMerchantPromotionRepository) CreateProductMerchantPromotion(ne
 	return
 }
 
+func (pmp *productMerchantPromotionRepository) GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error) {
+	queryResult := pmp.db.Where("merchant_promotion_id = ?", merchantPromotionID).Find(&models).Order("product_id ASC")
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrProductMerchantPromotionNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
 func (pmp *productMerchantPromotionRepository) Update(newModel *models.ProductMerchantPromotion) (model *models.ProductMerchantPromotion, err error) {
 	queryResult := pmp.db.Where("merchant_promotion_id = ? AND product_id = ?", newModel.MerchantPromotionId, newModel.ProductID).Clauses(clause.Returning{}).Updates(newModel)
 
 	if queryResult.RowsAffected == 0 {
-		err = e.ErrPromotionNotFound
+		err = e.ErrProductMerchantPromotionNotFound
 		return
 	}
 
@@ -56,6 +74,22 @@ func (pmp *productMerchantPromotionRepository) Update(newModel *models.ProductMe
 	}
 
 	model = newModel
+
+	return
+}
+
+func (pmp *productMerchantPromotionRepository) Delete(id uint) (model *models.ProductMerchantPromotion, err error) {
+	queryResult := pmp.db.Clauses(clause.Returning{}).Delete(&model, id)
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrProductMerchantPromotionNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 
 	return
 }
