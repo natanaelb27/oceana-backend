@@ -140,6 +140,17 @@ func Init() *Handler {
 		ProductItemRepository: productItemRepository,
 	})
 
+	courierServiceRepository := repositories.NewCourierServiceRepository(&repositories.CourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierRepository := repositories.NewCourierRepository(&repositories.CourierRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierService := services.NewCourierService(&services.CourierServiceConfig{
+		CourierRepository:        courierRepository,
+		CourierServiceRepository: courierServiceRepository,
+	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
 		ProductRepository:          productRepository,
 		MerchantRepository:         merchantRepository,
@@ -177,6 +188,7 @@ func Init() *Handler {
 		ProductReviewService:     productReviewService,
 		MerchantPromotionService: merchantPromotionService,
 		CartService:              cartService,
+		CourierService:           courierService,
 	})
 
 	return h
