@@ -14,6 +14,7 @@ type MerchantPromotionService interface {
 	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionCreateRequest, pmpRequests []*dtos.ProductMerchantPromotionCreateRequest) ([]*dtos.ProductMerchantPromotionCreateResponse, error)
 	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
 	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
+	Update(userID uuid.UUID, merchantPromotionID uint) (*dtos.MerchantPromotionUpdateResponse, error)
 }
 
 type merchantPromotionService struct {
@@ -122,6 +123,10 @@ func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.Mer
 	}
 
 	response := dtos.NewMerchantPromotionDetails(result)
-	
+
 	return response, nil
+}
+
+func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID uint) (*dtos.MerchantPromotionUpdateResponse, error) {
+	return nil, nil
 }

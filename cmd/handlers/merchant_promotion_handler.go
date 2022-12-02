@@ -80,3 +80,33 @@ func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) MerchantPromotionUpdate(c *gin.Context) {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	var request *dtos.MerchantPromotionUpdateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	merchantPromotionIDUint64, err := strconv.ParseUint(c.Param("merchant-voucher-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionID := uint(merchantPromotionIDUint64)
+
+	merchantPromotionUpdateResponse, err := h.merchantPromotionService.Update(userID, merchantPromotionID)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantPromotionUpdateResponse, nil)
+}

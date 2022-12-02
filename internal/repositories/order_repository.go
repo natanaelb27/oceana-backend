@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"strings"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -46,11 +47,22 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			merchants.name AS shop_name,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) AS total_price
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Where("transactions.user_id = ?", id)
+
+	if query.Search != "" {
+		subQuerySearch := r.db.Model(&models.Order{}).
+			Select("DISTINCT orders.id").
+			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
+			Joins("JOIN order_details ON order_details.order_id = orders.id").
+			Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+			Where("merchants.name ILIKE @search OR product_snapshots.name ILIKE @search", sql.Named("search", "%"+query.Search+"%"))
+
+		queryResult.Where("orders.id IN (?)", subQuerySearch)
+	}
 
 	if strings.EqualFold(query.FilterOrderStatus, constants.OngoingStatus) {
 		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
@@ -64,6 +76,8 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 				constants.DeliveredStatus,
 				constants.ComplainedStatus)
 		}
+	} else if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
+		queryResult.Where("orders.status ILIKE ?", "%canceled%")
 	} else {
 		if query.FilterOrderStatus != "" && !strings.EqualFold(query.FilterOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOrderStatus)

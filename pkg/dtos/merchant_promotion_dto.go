@@ -89,3 +89,21 @@ func NewMerchantPromotionDetails(source *models.MerchantPromotion) (target *Merc
 
 	return
 }
+
+type MerchantPromotionUpdateRequest struct {
+	Name                     string                                   `json:"name" binding:"required"`
+	StartDatetime            time.Time                                `json:"start_date_time" binding:"required"`
+	EndDatetime              time.Time                                `json:"end_date_time" binding:"required"`
+	ProductIDList            []int64                                  `json:"product_id_list" binding:"required"`
+	ProductMerchantPromotion []*ProductMerchantPromotionCreateRequest `json:"product_merchant_promotion" binding:"required"`
+}
+
+type MerchantPromotionUpdateResponse struct {
+	ID            uint      `json:"id"`
+	MerchantId    uint      `json:"merchant_id"`
+	Name          string    `json:"name"`
+	StartDatetime time.Time `json:"start_date_time"`
+	EndDatetime   time.Time `json:"end_date_time"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
