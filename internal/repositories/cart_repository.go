@@ -68,7 +68,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			products.id AS product_id,
 			products.name AS product_name,
 			carts.product_item_id AS product_item_id,
-			(@all_product_items_quantity) AS quantity,
+			carts.quantity AS quantity,
 			product_items.price AS price,
 			-- count price after discount
 			(
@@ -113,13 +113,19 @@ func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_
 	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
 		merchants.id AS merchant_id,
 		merchants.name AS name,
+		provinces.name AS merchant_province,
 		NULL as products
 	`).
 		Where("carts.user_id = ?", userId).
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
 		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
-		Group("products.id, merchants.id").
+		Joins("JOIN addresses ON merchants.address_id = addresses.id"). 
+		Joins("JOIN sub_districts ON addresses.sub_district_id = sub_districts.id"). 
+		Joins("JOIN districts ON sub_districts.district_id = districts.id"). 
+		Joins("JOIN cities ON districts.city_id = cities.id"). 
+		Joins("JOIN provinces ON cities.province_id = provinces.id").
+		Group("products.id, merchants.id, provinces.name").
 		Find(&result)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
