@@ -60,15 +60,28 @@ func (r *cartRepository) subQueryCartsQuantitySum(merchantId uint, userId uuid.U
 	return query
 }
 
+func (r *cartRepository) subQueryProductVariations() *gorm.DB {
+	query := r.db.
+		Table("product_variations pvariations").
+		Select(`string_agg(CONCAT(pvarianttype."name", ':', pvariants."name"),', ' ORDER BY pvarianttype.id) AS value`).
+		Joins(`JOIN product_variants pvariants ON pvariants.id = pvariations.product_variant_id `).
+		Joins(`JOIN product_variant_types pvarianttype ON pvarianttype.id = pvariants.product_variant_type_id  `).
+		Where("pvariations.product_item_id = carts.product_item_id").
+		Group("pvariations.product_item_id")
+	return query
+}
+
 func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, userId uuid.UUID) (result []*in_cart_dtos.Product, err error) {
 	sqTotalViewCount := sql.Named("all_product_items_quantity", r.subQueryCartsQuantitySum(merchantId, userId))
+	subQueryProductVariations := sql.Named("subQueryProductVariations", r.subQueryProductVariations())
 	queryResult := r.db.Model(&models.Cart{}).Select(`
 			carts.id AS carts_id,
 			carts.user_id AS user_id,
 			products.id AS product_id,
 			products.name AS product_name,
 			carts.product_item_id AS product_item_id,
-			(@all_product_items_quantity) AS quantity,
+			carts.quantity AS quantity,
+			product_items.stock_quantity AS stock_quantity,
 			product_items.price AS price,
 			-- count price after discount
 			(
@@ -89,9 +102,11 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 						)
 				ELSE product_items.price
 				END		
-			) AS price_after_discount
+			) AS price_after_discount,
+			(@subQueryProductVariations) AS product_variation
 		`,
 		sqTotalViewCount,
+		subQueryProductVariations,
 	).
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
@@ -113,13 +128,19 @@ func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_
 	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
 		merchants.id AS merchant_id,
 		merchants.name AS name,
+		provinces.name AS merchant_province,
 		NULL as products
 	`).
 		Where("carts.user_id = ?", userId).
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
 		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
-		Group("products.id, merchants.id").
+		Joins("JOIN addresses ON merchants.address_id = addresses.id").
+		Joins("JOIN sub_districts ON addresses.sub_district_id = sub_districts.id").
+		Joins("JOIN districts ON sub_districts.district_id = districts.id").
+		Joins("JOIN cities ON districts.city_id = cities.id").
+		Joins("JOIN provinces ON cities.province_id = provinces.id").
+		Group("products.id, merchants.id, provinces.name").
 		Find(&result)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
