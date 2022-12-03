@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Handler) MerchantGetInformationByID(c *gin.Context) {
-	merchantIDUint64, err := strconv.ParseUint(c.Param("merchantId"), 10, 64)
+	merchantIDUint64, err := strconv.ParseUint(c.Param("merchant-id"), 10, 64)
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
