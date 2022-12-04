@@ -13,6 +13,9 @@ func shop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 		publicRoute.GET("/vouchers", h.MerchantVoucherGetAll)
 		publicRoute.GET("/vouchers/:merchant-voucher-id", h.MerchantVoucherGetByID)
 		publicRoute.GET("/:merchantId/products", h.ShopProductGetAll)
-
+	}
+	privateRoute := private.Group(path)
+	{
+		privateRoute.GET("/vouchers/buyer", h.MerchantVoucherGetAllByBuyer)
 	}
 }

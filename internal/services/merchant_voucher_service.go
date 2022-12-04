@@ -16,6 +16,7 @@ type MerchantVoucherService interface {
 	Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error)
 	GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error)
 	GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error)
+	GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error)
 }
 
 type merchantVoucherService struct {
@@ -234,4 +235,19 @@ func (s *merchantVoucherService) GetByID(id uint) (*dtos.MerchantVoucherGetByIDR
 	}
 
 	return dtos.NewMerchantVoucherGetByIDResponse(merchantVoucherDetails), nil
+}
+
+func (s *merchantVoucherService) GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error) {
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	merchantVoucherDetails, pagination, err := s.merchantVoucherRepository.GetAllDetailsByBuyer(id, query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dtos.NewMerchantVoucherGetAllResponse(merchantVoucherDetails), pagination, nil
 }
