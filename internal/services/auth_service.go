@@ -109,6 +109,11 @@ func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest
 }
 
 func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error) {
+	if userLoginRequest.Password == "" {
+		// to prevent users who refreshed/closed the page during username/phone-number/password form
+		// in register-google from logging in with no password
+		return nil, e.ErrInvalidPassword
+	}
 	user, err := u.userRepository.GetByUsername(userLoginRequest.LoginCredentials)
 	if err == nil {
 		userLoginData, err := utils.AuthenticateUser(user, userLoginRequest.Password)
@@ -181,12 +186,10 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {
 	email, err := u.emailRepository.GetByEmail(userLoginWithGoogleRequest.Email)
 	if err != nil {
-		return nil, err
+		return nil, e.ErrRegisterGoogle
 	}
 	user, err := u.userRepository.GetByEmailID(email.ID)
 	if err != nil {
-		// TODO: user first time login with Google
-		// MAYBE: for security, hash google_id for user first time login with Google
 		return nil, err
 	}
 	err = utils.CheckHash(*user.GoogleID, userLoginWithGoogleRequest.GoogleID)

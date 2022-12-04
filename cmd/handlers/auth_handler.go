@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"os"
 	"strconv"
 
@@ -40,7 +41,7 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	userLoginResponse := &externalDtos.UserLoginResponse{
 		Role: userLoginData.Role,
 	}
-	
+
 	err = h.setLoginCookies(c, userLoginData)
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -57,6 +58,10 @@ func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
 	}
 	userLoginData, err := h.authService.LoginWithGoogle(c, request)
 	if err != nil {
+		if err.Error() == e.ErrRegisterGoogle.Error() {
+			utils.Response(c, http.StatusContinue, nil, nil, nil, http.StatusText(http.StatusContinue))
+			return
+		}
 		utils.ResponseError(c, err)
 		return
 	}

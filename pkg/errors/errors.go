@@ -125,7 +125,8 @@ var (
 	ErrSendingEmailFailed            = errors.New("sending email failed")
 	ErrInternalOperationFailed       = errors.New("internal operation failed")
 
-	ErrUnknown = errors.New("unknown")
+	ErrUnknown        = errors.New("unknown")
+	ErrRegisterGoogle = errors.New("register with google")
 )
 
 func GetStatusCode(err error) int {
