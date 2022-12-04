@@ -77,6 +77,9 @@ type UserLoginResponse struct {
 
 type UserLoginWithGoogleRequest struct {
 	GoogleID string `json:"google_id" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
+	ImageURL string `json:"image_url"`
 }
 
 type AuthStepUpPasswordRequest struct {

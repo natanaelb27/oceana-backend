@@ -179,12 +179,21 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 }
 
 func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {
-	user, err := u.userRepository.GetByGoogleID(userLoginWithGoogleRequest.GoogleID)
+	email, err := u.emailRepository.GetByEmail(userLoginWithGoogleRequest.Email)
+	if err != nil {
+		return nil, err
+	}
+	user, err := u.userRepository.GetByEmailID(email.ID)
 	if err != nil {
 		// TODO: user first time login with Google
 		// MAYBE: for security, hash google_id for user first time login with Google
 		return nil, err
 	}
+	err = utils.CheckHash(*user.GoogleID, userLoginWithGoogleRequest.GoogleID)
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := utils.GenerateUserTokenString(user)
 	if err != nil {
 		return nil, err
