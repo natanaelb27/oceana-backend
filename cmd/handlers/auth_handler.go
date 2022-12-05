@@ -73,7 +73,7 @@ func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
 	userLoginData, err := h.authService.LoginWithGoogle(c, request)
 	if err != nil {
 		if err.Error() == e.ErrRegisterGoogle.Error() {
-			utils.Response(c, http.StatusContinue, nil, nil, nil, http.StatusText(http.StatusContinue))
+			utils.Response(c, http.StatusSeeOther, nil, nil, nil, http.StatusText(http.StatusSeeOther))
 			return
 		}
 		utils.ResponseError(c, err)
