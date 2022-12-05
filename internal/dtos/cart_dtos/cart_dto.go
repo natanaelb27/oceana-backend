@@ -24,6 +24,7 @@ type Product struct {
 	CartsID            uint     `json:"carts_id"`
 	ProductID          uint     `json:"product_id"`
 	ProductItemID      uint     `json:"product_item_id"`
+	PromoID            uint     `json:"promo_id"`
 	ProductName        string   `json:"product_name"`
 	ProductVariation   string   `json:"product_variation"`
 	Quantity           uint     `json:"quantity"`

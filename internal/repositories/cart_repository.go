@@ -79,6 +79,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			carts.user_id AS user_id,
 			products.id AS product_id,
 			products.name AS product_name,
+			pmp.merchant_promotion_id AS promo_id,
 			carts.product_item_id AS product_item_id,
 			carts.quantity AS quantity,
 			product_items.stock_quantity AS stock_quantity,
