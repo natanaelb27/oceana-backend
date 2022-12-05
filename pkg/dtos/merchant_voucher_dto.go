@@ -276,3 +276,75 @@ func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails) (ta
 
 	return
 }
+
+type BuyerMerchantVoucherQuery struct {
+	SearchVoucherCode         string `json:"search-voucher-code"`
+	FilterVoucherStatus       string `json:"filter-voucher-status"`
+	FilterVoucherAvailability string `json:"filter-voucher-availability"`
+	MerchantID                uint   `json:"merchant-id"`
+	SortBy                    string `json:"sort-by"`
+	Sort                      string `json:"sort"`
+	Limit                     uint   `json:"limit"`
+	Page                      uint   `json:"page"`
+}
+
+func NewBuyerMerchantVoucherQuery(c *gin.Context) *BuyerMerchantVoucherQuery {
+	var query BuyerMerchantVoucherQuery
+
+	searchVoucherCode := c.Query("search-voucher-code")
+	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
+	filterVoucherAvailability := strings.ToLower(c.Query("filter-voucher-availability"))
+	merchantID := c.Query("merchant-id")
+	sortBy := strings.ToLower(c.Query("sort-by"))
+	sort := strings.ToLower(c.Query("sort"))
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	query.SearchVoucherCode = searchVoucherCode
+	query.FilterVoucherStatus = filterVoucherStatus
+	query.FilterVoucherAvailability = filterVoucherAvailability
+
+	merchantIDInt, err := strconv.Atoi(merchantID)
+
+	if err != nil {
+		query.MerchantID = 0
+	} else if merchantIDInt <= 0 {
+		query.MerchantID = 0
+	} else {
+		query.MerchantID = uint(merchantIDInt)
+	}
+
+	if sortBy == "end_datetime" {
+		query.SortBy = "end_datetime"
+	} else {
+		query.SortBy = "start_datetime"
+	}
+
+	if sort == "asc" {
+		query.Sort = "ASC"
+	} else {
+		query.Sort = "DESC"
+	}
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
+}

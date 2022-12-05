@@ -108,6 +108,7 @@ var (
 	ErrStockIsNotAvailable                                        = errors.New("stock is not available")
 	ErrStatusIsNotPendingSeller                                   = errors.New("status is not pending seller")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 90 days")
+	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -238,7 +239,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
-		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) {
+		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
+		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) {
 		return http.StatusUnprocessableEntity
 	}
 

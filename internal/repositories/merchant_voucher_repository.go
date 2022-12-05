@@ -9,6 +9,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -19,6 +20,7 @@ type MerchantVoucherRepository interface {
 	GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error)
 	Update(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
 	Delete(id uint) (model *models.MerchantVoucher, err error)
+	GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error)
 }
 
 type merchantVoucherRepository struct {
@@ -179,4 +181,76 @@ func (r *merchantVoucherRepository) Delete(id uint) (model *models.MerchantVouch
 	}
 
 	return
+}
+
+func (r *merchantVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error) {
+	var merchantVoucherDetails []*dtos.MerchantVoucherDetails
+
+	subQueryUnavailableVoucher := r.db.Model(&models.Order{}).
+		Select(`
+			order_merchant_vouchers.merchant_voucher_id
+		`).
+		Joins("JOIN transactions ON transactions.id = orders.transaction_id").
+		Joins("JOIN order_merchant_vouchers ON order_merchant_vouchers.order_id = orders.id").
+		Where("transactions.user_id = ?", id)
+
+	queryResult := r.db.Model(&models.MerchantVoucher{}).
+		Select(`
+			id, 
+			merchant_id, 
+			code, 
+			start_datetime, 
+			end_datetime, 
+			discount_type, 
+			discount, 
+			minimum_spend_amount, 
+			maximum_discount_amount, 
+			maximum_quota, 
+			current_quota, 
+			(
+				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
+				AND end_datetime::timestamp THEN 'ongoing'
+				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
+				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
+			) AS voucher_status
+		`)
+
+	if query.SearchVoucherCode != "" {
+		queryResult.Where("code = ?", query.SearchVoucherCode)
+	}
+
+	if query.FilterVoucherStatus == "ongoing" {
+		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
+	}
+
+	if query.FilterVoucherStatus == "upcoming" {
+		queryResult.Where("start_datetime::timestamp > NOW()::timestamp")
+	}
+
+	if query.FilterVoucherStatus == "ended" {
+		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
+	}
+
+	if query.MerchantID != 0 {
+		queryResult.Where("merchant_id = ?", query.MerchantID)
+	}
+
+	if query.FilterVoucherAvailability == "available" {
+		queryResult.Where("merchant_vouchers.id NOT IN (?)", subQueryUnavailableVoucher)
+	}
+
+	if query.FilterVoucherAvailability == "unavailable" {
+		queryResult.Where("merchant_vouchers.id IN (?)", subQueryUnavailableVoucher)
+	}
+
+	queryResult.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&merchantVoucherDetails)
+
+	if queryResult.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return merchantVoucherDetails, pagination, nil
 }
