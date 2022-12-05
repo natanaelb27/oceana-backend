@@ -50,6 +50,20 @@ func (h *Handler) UserLogin(c *gin.Context) {
 	utils.ResponseSuccess(c, userLoginResponse, nil)
 }
 
+func (h *Handler) UserRegisterWithGoogle(c *gin.Context) {
+	var request *externalDtos.UserRegisterWithGoogleRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	responseData, err := h.authService.RegisterWithGoogle(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
 func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
 	var request *externalDtos.UserLoginWithGoogleRequest
 	if err := c.ShouldBindJSON(&request); err != nil {

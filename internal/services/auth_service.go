@@ -20,6 +20,7 @@ import (
 type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
+	RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error)
 	LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
@@ -181,6 +182,9 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 		return userLoginData, nil
 	}
 	return nil, e.ErrUserNotFound
+}
+func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error) {
+	return nil, nil
 }
 
 func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {

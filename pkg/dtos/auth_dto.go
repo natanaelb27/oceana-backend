@@ -75,13 +75,6 @@ type UserLoginResponse struct {
 	Role string `json:"role"`
 }
 
-type UserLoginWithGoogleRequest struct {
-	GoogleID string `json:"google_id" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	FullName string `json:"full_name" binding:"required"`
-	ImageURL string `json:"image_url"`
-}
-
 type UserRegisterWithGoogleRequest struct {
 	GoogleID    string `json:"google_id" binding:"required"`
 	FullName    string `json:"full_name" binding:"required"`
@@ -91,6 +84,13 @@ type UserRegisterWithGoogleRequest struct {
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	Role        string `json:"role" binding:"required"`
 	ImageURL    string `json:"image_url"`
+}
+
+type UserLoginWithGoogleRequest struct {
+	GoogleID string `json:"google_id" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
+	ImageURL string `json:"image_url"`
 }
 
 type AuthStepUpPasswordRequest struct {
