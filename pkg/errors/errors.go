@@ -64,6 +64,7 @@ var (
 	ErrEmailAddressAlreadyExist                  = errors.New("email address is already registered")
 	ErrUsernameAlreadyExist                      = errors.New("username is already registered")
 	ErrPhoneNumberAlreadyExist                   = errors.New("phone number is already registered")
+	ErrGoogleIDAlreadyExist                      = errors.New("google id is already registered")
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
 	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
@@ -198,6 +199,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUsernameAlreadyExist) ||
 		errors.Is(err, ErrPasswordCannotBeTheSameAsPreviousPassword) ||
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
+		errors.Is(err, ErrGoogleIDAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||

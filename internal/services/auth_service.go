@@ -184,7 +184,56 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 	return nil, e.ErrUserNotFound
 }
 func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error) {
-	return nil, nil
+	_, err := u.userRepository.GetByUsername(userRegisterWithGoogleRequest.Username)
+	if err != e.ErrDataNotFound {
+		return nil, e.ErrUsernameAlreadyExist
+	}
+	_, err = u.userRepository.GetByPhoneNumber(userRegisterWithGoogleRequest.PhoneNumber)
+	if err != e.ErrDataNotFound {
+		return nil, e.ErrPhoneNumberAlreadyExist
+	}
+
+	email := &models.Email{
+		Address: userRegisterWithGoogleRequest.Email,
+	}
+	createdEmail, err := u.emailRepository.Create(email)
+	if err != nil {
+		return nil, err
+	}
+	user := userRegisterWithGoogleRequest.ToModel()
+	user.EmailID = email.ID
+
+	hashedGoogleID, err := utils.Hash(*userRegisterWithGoogleRequest.GoogleID)
+	if err != nil {
+		return nil, err
+	}
+	user.GoogleID = &hashedGoogleID
+
+	hashedPassword, err := utils.Hash(userRegisterWithGoogleRequest.Password)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = hashedPassword
+	
+	createdUser, err := u.userRepository.Create(user)
+	if err != nil {
+		return nil, err
+	}
+	wallet := &models.Wallet{
+		UserID:          createdUser.ID,
+		Balance:         0,
+		Pin:             "",
+		IsActive:        false,
+		InvalidPinCount: 0,
+	}
+	_, err = u.walletRepository.Create(wallet)
+	if err != nil {
+		return nil, err
+	}
+	responseData := externalDtos.NewUserCreateResponse(createdUser)
+	responseData.Email = createdEmail.Address
+	responseData.GoogleID = nil
+	return responseData, nil
 }
 
 func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {
@@ -198,6 +247,8 @@ func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest
 	}
 	err = utils.CheckHash(*user.GoogleID, userLoginWithGoogleRequest.GoogleID)
 	if err != nil {
+		// TODO: possible error when user has registered regularly, but then
+		// logs in with Google, google_id field is empty
 		return nil, err
 	}
 

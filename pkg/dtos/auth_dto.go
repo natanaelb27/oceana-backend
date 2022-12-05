@@ -76,14 +76,27 @@ type UserLoginResponse struct {
 }
 
 type UserRegisterWithGoogleRequest struct {
-	GoogleID    string `json:"google_id" binding:"required"`
-	FullName    string `json:"full_name" binding:"required"`
-	Username    string `json:"username" binding:"required"`
-	Email       string `json:"email" binding:"required"`
-	Password    string `json:"password" binding:"required"`
-	PhoneNumber string `json:"phone_number" binding:"required"`
-	Role        string `json:"role" binding:"required"`
-	ImageURL    string `json:"image_url"`
+	GoogleID    *string `json:"google_id" binding:"required"`
+	FullName    string  `json:"full_name" binding:"required"`
+	Username    string  `json:"username" binding:"required"`
+	Email       string  `json:"email" binding:"required"`
+	Password    string  `json:"password" binding:"required"`
+	PhoneNumber string  `json:"phone_number" binding:"required"`
+	Role        string  `json:"role" binding:"required"`
+	ImageURL    string  `json:"image_url"`
+}
+
+func (source *UserRegisterWithGoogleRequest) ToModel() (target *models.User) {
+	target = &models.User{
+		FullName:    source.FullName,
+		Username:    source.Username,
+		PhoneNumber: source.PhoneNumber,
+		Role:        source.Role,
+	}
+	if source.ImageURL != "" {
+		target.Photo = &source.ImageURL
+	}
+	return
 }
 
 type UserLoginWithGoogleRequest struct {
