@@ -1,10 +1,12 @@
 package dtos
 
-import "time"
+import (
+	"time"
+)
 
 type UserLoginData struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	ExpiresAt    time.Time `json:"expires_at"`
-	Role         string    `json:"role"`
+	AccessToken    string        `json:"access_token"`
+	RefreshToken   string        `json:"refresh_token"`
+	ExpireDuration time.Duration `json:"expire_duration"`
+	Role           string        `json:"role"`
 }

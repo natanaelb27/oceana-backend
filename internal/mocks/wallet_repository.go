@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	models "git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	mock "github.com/stretchr/testify/mock"
+
+	models "git.garena.com/azmi-adhani/group-project-backend/internal/models"
 
 	uuid "github.com/google/uuid"
 )
@@ -70,6 +72,29 @@ func (_m *WalletRepository) GetByUserId(id uuid.UUID) (*models.Wallet, error) {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Wallet)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetWalletTransactionHistory provides a mock function with given fields: id
+func (_m *WalletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.WalletTransactionHistory, error) {
+	ret := _m.Called(id)
+
+	var r0 []*dtos.WalletTransactionHistory
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []*dtos.WalletTransactionHistory); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*dtos.WalletTransactionHistory)
 		}
 	}
 

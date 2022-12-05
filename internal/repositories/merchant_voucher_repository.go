@@ -38,7 +38,7 @@ func NewMerchantVoucherRepository(c *MerchantVoucherRepositoryConfig) MerchantVo
 func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error) {
 	queryResult := r.db.
 		Where("code = ?", newModel.Code).
-		Where("end_datetime::date >= ?::date", time.Now()).
+		Where("end_datetime::timestamp >= ?::timestamptz", time.Now()).
 		Where("merchant_id = ?", newModel.MerchantID).
 		FirstOrCreate(&newModel)
 
@@ -74,7 +74,7 @@ func (r *merchantVoucherRepository) GetAllDetails(query *externalDtos.MerchantVo
 			current_quota, 
 			(
 				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
-				AND end_datetime::timestamp THEN 'ongoing' 
+				AND end_datetime::timestamp THEN 'ongoing'
 				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
 				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
 			) AS voucher_status

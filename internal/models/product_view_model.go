@@ -3,12 +3,13 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type ProductView struct {
 	ID           uint
-	UserId       uint
+	UserId       uuid.UUID
 	User         User
 	ProductId    uint
 	Product      Product

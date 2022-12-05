@@ -31,7 +31,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 
 	subQueryVariants := r.db.Table("product_snapshots AS ps").
 		Select(`
-			STRING_AGG(product_variation_snapshots.value, ', ')
+			STRING_AGG(product_variation_snapshots.variant, ', ')
 		`).
 		Joins("JOIN product_variation_snapshots ON ps.id = product_variation_snapshots.product_snapshot_id").
 		Where("ps.id = product_snapshots.id").

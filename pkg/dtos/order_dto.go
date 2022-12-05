@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type OrderListQuery struct {
-	FilterOrderStatus          string     `json:"filter_order_status"`
-	FilterOngoingOrderStatus   string     `json:"filter_ongoing_order_status"`
-	FilterStartTransactionDate *time.Time `json:"filter_start_transaction_date"`
-	FilterEndTransactionDate   *time.Time `json:"filter_end_transaction_date"`
+	Search                     string     `json:"string"`
+	FilterOrderStatus          string     `json:"filter-order-status"`
+	FilterOngoingOrderStatus   string     `json:"filter-ongoing-order-status"`
+	FilterStartTransactionDate *time.Time `json:"filter-start-transaction-date"`
+	FilterEndTransactionDate   *time.Time `json:"filter-end-transaction-date"`
 	Limit                      uint       `json:"limit"`
 	Page                       uint       `json:"page"`
 }
@@ -22,14 +23,16 @@ type OrderListQuery struct {
 func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	var query OrderListQuery
 
-	filterOrderStatus := c.Query("filter_order_status")
-	filterOngoingOrderStatus := c.Query("filter_ongoing_order_status")
-	filterStartTransactionDate := c.Query("filter_start_transaction_date")
-	filterEndTransactionDate := c.Query("filter_end_transaction_date")
+	search := c.Query("search")
+	filterOrderStatus := c.Query("filter-order-status")
+	filterOngoingOrderStatus := c.Query("filter-ongoing-order-status")
+	filterStartTransactionDate := c.Query("filter-start-transaction-date")
+	filterEndTransactionDate := c.Query("filter-end-transaction-date")
 
 	limit := c.Query("limit")
 	page := c.Query("page")
 
+	query.Search = search
 	query.FilterOrderStatus = filterOrderStatus
 	query.FilterOngoingOrderStatus = filterOngoingOrderStatus
 
@@ -79,18 +82,13 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 }
 
 type OrderListGetAllResponse struct {
-	Pagination *utils.Pagination `json:"pagination"`
-	OrderList  []*dtos.OrderList `json:"order_list"`
+	OrderList []*dtos.OrderList `json:"order_list"`
 }
 
-func NewOrderListGetAllResponse(source []*dtos.OrderList, pagination *utils.Pagination) (target *OrderListGetAllResponse) {
-	if pagination == nil {
-		return nil
-	}
+func NewOrderListGetAllResponse(source []*dtos.OrderList) (target *OrderListGetAllResponse) {
 
 	target = &OrderListGetAllResponse{
-		Pagination: pagination,
-		OrderList:  source,
+		OrderList: source,
 	}
 
 	return
@@ -99,6 +97,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList, pagination *utils.Pagi
 type OrderListDetailsGetByIDResponse struct {
 	TransactionID                   uuid.UUID                    `json:"transaction_id"`
 	OrderID                         uuid.UUID                    `json:"oder_id"`
+	InvoiceNumber                   string                       `json:"invoice_number"`
 	MerchantID                      uint                         `json:"merchant_id"`
 	ShopName                        string                       `json:"shop_name"`
 	OrderDetails                    []*dtos.OrderDetailList      `json:"order_details"`
@@ -120,6 +119,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 	target = &OrderListDetailsGetByIDResponse{
 		TransactionID:                   source.TransactionID,
 		OrderID:                         source.OrderID,
+		InvoiceNumber:                   source.InvoiceNumber,
 		MerchantID:                      source.MerchantID,
 		ShopName:                        source.ShopName,
 		OrderDetails:                    source.OrderDetails,
@@ -138,4 +138,22 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 	}
 
 	return
+}
+
+type OrderProcessOrderRequest struct {
+	CourierServiceID uint `json:"courier_service_id" binding:"required"`
+}
+
+type OrderProcessOrderResponse struct {
+	ID               uuid.UUID `json:"id"`
+	CourierServiceID uint      `json:"courier_service_id"`
+	Status           string    `json:"status"`
+}
+
+func NewOrderProcessOrderResponse(source *models.Order) *OrderProcessOrderResponse {
+	return &OrderProcessOrderResponse{
+		ID:               source.ID,
+		CourierServiceID: source.CourierServiceID,
+		Status:           source.Status,
+	}
 }

@@ -22,10 +22,13 @@ var (
 	ErrEmptyQuantity       = errors.New("quantity should not be empty")
 	ErrEmptyPrice          = errors.New("price should not be empty")
 	ErrEmptyEventID        = errors.New("event id should not be empty")
+	ErrEmptyRequstBody     = errors.New("request body should not be empty")
+	ErrRequestBodyTooLarge = errors.New("request body must not be larger than 1MB")
 
 	ErrInvalidEmailAddress            = errors.New("invalid email address")
 	ErrInvalidPassword                = errors.New("invalid password")
 	ErrInvalidAmount                  = errors.New("invalid amount")
+	ErrInvalidOrderDetailID           = errors.New("invalid order detail id")
 	ErrInvalidMembershipID            = errors.New("invalid membership id")
 	ErrInvalidName                    = errors.New("invalid name")
 	ErrInvalidImage                   = errors.New("invalid image")
@@ -51,8 +54,6 @@ var (
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
-	ErrVoucherNotFound                = errors.New("voucher not found")
-	ErrOrderNotFound                  = errors.New("order not found")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -64,6 +65,9 @@ var (
 	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
 	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
+	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
+	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
+	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 
 	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound             = errors.New("user not found")
@@ -72,30 +76,44 @@ var (
 	ErrStepUpNotFound           = errors.New("step up authenticaiton not found")
 	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
 	ErrVerificationCodeNotFound = errors.New("verification code not found")
+	ErrProductNotFound          = errors.New("product not found")
+	ErrVoucherNotFound          = errors.New("voucher not found")
+	ErrPromotionNotFound        = errors.New("promotion not found")
+	ErrOrderNotFound            = errors.New("order not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
 
-	ErrInsufficientBalance                               = errors.New("insufficient balance")
-	ErrEventAlreadyBookmarked                            = errors.New("event is already bookmarked")
-	ErrEventAlreadyPaid                                  = errors.New("event is already paid")
-	ErrMerchandiseAlreadyPaid                            = errors.New("merchandise is already paid")
-	ErrEventHasNotBeenPaid                               = errors.New("event has not been paid")
-	ErrMerchandiseAlreadyInCart                          = errors.New("merchandise already in cart")
-	ErrExceedEventCapacity                               = errors.New("event has reached maximum capacity")
-	ErrExceedMerchandiseStock                            = errors.New("merchandise has no stock left")
-	ErrWalletIsNotActive                                 = errors.New("wallet is not active")
-	ErrDiscountExceedMinimumSpendAmount                  = errors.New("discount is exceeding the minimum spend amount")
-	ErrExceedDiscountPercentage                          = errors.New("discount is more than 100%")
-	ErrMaximumDiscountAmountExceedMinimumSpendAmount     = errors.New("maximum discount amount is exceeding the minimum spend amount")
-	ErrVoucherStartDatetimeEarlierThanNow                = errors.New("voucher start period is earlier than now")
-	ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime = errors.New("voucher end period is earlier than the start period")
-	ErrVoucherPeriodMinimumOneHour                       = errors.New("voucher period must be at least 1 hour")
-	ErrVoucherStartDatetimeMinimumOneDayFromNow          = errors.New("voucher start period must be at least 1 day from now")
-	ErrVoucherHasEnded                                   = errors.New("voucher has ended")
-	ErrMaximumQuotaLowerThanCurrentQuota                 = errors.New("voucher maximum quota is lower than current quota")
-	ErrVoucherEndDatetimeEarlierThanNow                  = errors.New("voucher end period is earlier than now")
-	ErrVoucherNotUpcoming                                = errors.New("voucher is not upcoming")
+	ErrInsufficientBalance                                        = errors.New("insufficient balance")
+	ErrEventAlreadyBookmarked                                     = errors.New("event is already bookmarked")
+	ErrEventAlreadyPaid                                           = errors.New("event is already paid")
+	ErrMerchandiseAlreadyPaid                                     = errors.New("merchandise is already paid")
+	ErrEventHasNotBeenPaid                                        = errors.New("event has not been paid")
+	ErrMerchandiseAlreadyInCart                                   = errors.New("merchandise already in cart")
+	ErrExceedEventCapacity                                        = errors.New("event has reached maximum capacity")
+	ErrExceedMerchandiseStock                                     = errors.New("merchandise has no stock left")
+	ErrWalletIsNotActive                                          = errors.New("wallet is not active")
+	ErrDiscountExceedMinimumSpendAmount                           = errors.New("discount is exceeding the minimum spend amount")
+	ErrExceedDiscountPercentage                                   = errors.New("discount is more than 100%")
+	ErrMaximumDiscountAmountExceedMinimumSpendAmount              = errors.New("maximum discount amount is exceeding the minimum spend amount")
+	ErrVoucherStartDatetimeEarlierThanNow                         = errors.New("voucher start period is earlier than now")
+	ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime          = errors.New("voucher end period is earlier than the start period")
+	ErrVoucherPeriodMinimumOneHour                                = errors.New("voucher period must be at least 1 hour")
+	ErrVoucherStartDatetimeMinimumOneDayFromNow                   = errors.New("voucher start period must be at least 1 day from now")
+	ErrVoucherHasEnded                                            = errors.New("voucher has ended")
+	ErrOngoingStartDatetimeUpdated                                = errors.New("ongoing voucher start period cannot be updated")
+	ErrMaximumQuotaLowerThanCurrentQuota                          = errors.New("voucher maximum quota is lower than current quota")
+	ErrVoucherEndDatetimeEarlierThanNow                           = errors.New("voucher end period is earlier than now")
+	ErrVoucherNotUpcoming                                         = errors.New("voucher is not upcoming")
+	ErrStockIsNotAvailable                                        = errors.New("stock is not available")
+	ErrStatusIsNotPendingSeller                                   = errors.New("status is not pending seller")
+	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 90 days")
+
+	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
+	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
+	ErrPromotionPeriodMinimumOneHour                       = errors.New("promotion period must be at least 1 hour")
+	ErrPromotionStartDatetimeMinimumOneDayFromNow          = errors.New("promotion start period must be at least 1 day from now")
+	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 180 days")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -104,6 +122,7 @@ var (
 	ErrHashingFailed                 = errors.New("hashing failed")
 	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 	ErrSendingEmailFailed            = errors.New("sending email failed")
+	ErrInternalOperationFailed       = errors.New("internal operation failed")
 
 	ErrUnknown = errors.New("unknown")
 )
@@ -125,9 +144,12 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEmptyQuantity) ||
 		errors.Is(err, ErrEmptyPrice) ||
 		errors.Is(err, ErrEmptyEventID) ||
+		errors.Is(err, ErrEmptyRequstBody) ||
+		errors.Is(err, ErrRequestBodyTooLarge) ||
 		errors.Is(err, ErrInvalidEmailAddress) ||
 		errors.Is(err, ErrInvalidPassword) ||
 		errors.Is(err, ErrInvalidAmount) ||
+		errors.Is(err, ErrInvalidOrderDetailID) ||
 		errors.Is(err, ErrInvalidMembershipID) ||
 		errors.Is(err, ErrInvalidName) ||
 		errors.Is(err, ErrInvalidImage) ||
@@ -164,8 +186,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUserNotFound) ||
 		errors.Is(err, ErrEmailNotFound) ||
 		errors.Is(err, ErrVoucherNotFound) ||
-		errors.Is(err, ErrVoucherNotFound) ||
-		errors.Is(err, ErrOrderNotFound) {
+		errors.Is(err, ErrPromotionNotFound) ||
+		errors.Is(err, ErrOrderNotFound) ||
+		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
 		errors.Is(err, ErrWalletAlreadyActive) ||
@@ -174,7 +197,10 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
-		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) {
+		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
+		errors.Is(err, ErrMerchantPromotionProductConflict) ||
+		errors.Is(err, ErrDeleteDefaultAddressConflict) ||
+		errors.Is(err, ErrDeleteShopAddressConflict) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
 		errors.Is(err, ErrForbiddenMerchant) ||
@@ -199,9 +225,20 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherPeriodMinimumOneHour) ||
 		errors.Is(err, ErrVoucherStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrVoucherHasEnded) ||
+		errors.Is(err, ErrOngoingStartDatetimeUpdated) ||
 		errors.Is(err, ErrMaximumQuotaLowerThanCurrentQuota) ||
 		errors.Is(err, ErrVoucherEndDatetimeEarlierThanNow) ||
-		errors.Is(err, ErrVoucherNotUpcoming) {
+		errors.Is(err, ErrVoucherNotUpcoming) ||
+		errors.Is(err, ErrPromotionStartDatetimeEarlierThanNow) ||
+		errors.Is(err, ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime) ||
+		errors.Is(err, ErrPromotionPeriodMinimumOneHour) ||
+		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
+		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
+		errors.Is(err, ErrPromotionPeriodExceedMaximumDays) ||
+		errors.Is(err, ErrStockIsNotAvailable) ||
+		errors.Is(err, ErrStatusIsNotPendingSeller) ||
+		errors.Is(err, ErrVoucherNotUpcoming) ||
+		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) {
 		return http.StatusUnprocessableEntity
 	}
 

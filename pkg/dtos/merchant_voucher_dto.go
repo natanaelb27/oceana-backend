@@ -7,7 +7,6 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -21,7 +20,6 @@ type MerchantVoucherCreateRequest struct {
 	MinimumSpendAmount    uint      `json:"minimum_spend_amount" binding:"required"`
 	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota" binding:"required"`
-	CurrentQuota          uint      `json:"current_quota"`
 }
 
 func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.MerchantVoucher) {
@@ -35,7 +33,7 @@ func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.Mer
 		MinimumSpendAmount:    source.MinimumSpendAmount,
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
-		CurrentQuota:          source.CurrentQuota,
+		CurrentQuota:          0,
 	}
 	return
 }
@@ -199,10 +197,10 @@ func NewMerchantVoucherGetByIDResponse(source *dtos.MerchantVoucherDetails) (tar
 }
 
 type MerchantVoucherQuery struct {
-	SearchVoucherCode   string `json:"search_voucher_code"`
-	FilterVoucherStatus string `json:"filter_voucher_status"`
-	MerchantID          uint   `json:"merchant_id"`
-	SortBy              string `json:"sort_by"`
+	SearchVoucherCode   string `json:"search-voucher-code"`
+	FilterVoucherStatus string `json:"filter-voucher-status"`
+	MerchantID          uint   `json:"merchant-id"`
+	SortBy              string `json:"sort-by"`
 	Sort                string `json:"sort"`
 	Limit               uint   `json:"limit"`
 	Page                uint   `json:"page"`
@@ -211,10 +209,10 @@ type MerchantVoucherQuery struct {
 func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 	var query MerchantVoucherQuery
 
-	searchVoucherCode := c.Query("search_voucher_code")
-	filterVoucherStatus := strings.ToLower(c.Query("filter_voucher_status"))
-	merchantID := c.Query("merchant_id")
-	sortBy := strings.ToLower(c.Query("sort_by"))
+	searchVoucherCode := c.Query("search-voucher-code")
+	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
+	merchantID := c.Query("merchant-id")
+	sortBy := strings.ToLower(c.Query("sort-by"))
 	sort := strings.ToLower(c.Query("sort"))
 	limit := c.Query("limit")
 	page := c.Query("page")
@@ -268,17 +266,11 @@ func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 }
 
 type MerchantVoucherGetAllResponse struct {
-	Pagination      *utils.Pagination              `json:"pagination"`
 	MerchantVoucher []*dtos.MerchantVoucherDetails `json:"merchant_voucher"`
 }
 
-func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails, pagination *utils.Pagination) (target *MerchantVoucherGetAllResponse) {
-	if pagination == nil {
-		return nil
-	}
-
+func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails) (target *MerchantVoucherGetAllResponse) {
 	target = &MerchantVoucherGetAllResponse{
-		Pagination:      pagination,
 		MerchantVoucher: source,
 	}
 

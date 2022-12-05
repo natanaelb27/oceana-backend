@@ -16,6 +16,30 @@ func Init() *Handler {
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
+
+	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
+		DB: db.Get(),
+	})
+	productItemService := services.NewProductItemService(&services.ProductItemServiceConfig{
+		ProductItemRepository: productItemRepository,
+	})
+
+	productVariationRepository := repositories.NewProductVariationRepository(&repositories.ProductVariationRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productViewRepository := repositories.NewProductViewRepository(&repositories.ProductViewRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productFavoriteRepository := repositories.NewProductFavoriteRepository(&repositories.ProductFavoriteRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -29,21 +53,27 @@ func Init() *Handler {
 	emailRepository := repositories.NewEmailRepository(&repositories.EmailRepositoryConfig{
 		DB: db.Get(),
 	})
-	refreshTokenRepository := repositories.NewRefreshTokenRepository(&repositories.RefreshTokenRepositoryConfig{
+	addressRepository := repositories.NewAddressRepository(&repositories.AddressRepositoryConfig{
 		DB: db.Get(),
 	})
 	authService := services.NewAuthService(&services.AuthServiceConfig{
-		UserRepository:         userRepository,
-		EmailRepository:        emailRepository,
-		WalletRepository:       walletRepository,
-		RefreshTokenRepository: refreshTokenRepository,
-		RedisRepository:        redisRepository,
+		UserRepository:   userRepository,
+		EmailRepository:  emailRepository,
+		WalletRepository: walletRepository,
+		RedisRepository:  redisRepository,
 	})
 	categoryRepository := repositories.NewCategoryRepository(&repositories.CategoryRepositoryConfig{
 		DB: db.Get(),
 	})
 	categoryService := services.NewCategoryService(&services.CategoryServiceConfig{
 		CategoryRepository: categoryRepository,
+	})
+	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
+		DB: db.Get(),
+	})
+	addressService := services.NewAddressService(&services.AddressServiceConfig{
+		AddressRepository:  addressRepository,
+		MerchantRepository: merchantRepository,
 	})
 
 	orderRepository := repositories.NewOrderRepository(&repositories.OrderRepositoryConfig{
@@ -61,7 +91,16 @@ func Init() *Handler {
 	orderTrackingRepository := repositories.NewOrderTrackingRepository(&repositories.OrderTrackingRepositoryConfig{
 		DB: db.Get(),
 	})
-
+	productReviewRepository := repositories.NewProductReviewRepository(&repositories.ProductReviewRepositoryConfig{
+		DB: db.Get(),
+	})
+	productReviewMediaRepository := repositories.NewProductReviewMediaRepository(&repositories.ProductReviewMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+	productReviewService := services.NewProductReviewService(&services.ProductReviewServiceConfig{
+		ProductReviewRepository:      productReviewRepository,
+		ProductReviewMediaRepository: productReviewMediaRepository,
+	})
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
 		OrderRepository:           orderRepository,
 		OrderDetailRepository:     orderDetailRepository,
@@ -80,9 +119,6 @@ func Init() *Handler {
 		SealabsPayRepository: sealabsPayRepository,
 	})
 
-	merchantRepository := repositories.NewMerchantRepository(&repositories.MerchantRepositoryConfig{
-		DB: db.Get(),
-	})
 	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -99,33 +135,71 @@ func Init() *Handler {
 		RedisRepository: redisRepository,
 	})
 
-	productRepository := repositories.NewProductRepository(&repositories.ProductRepositoryConfig{
+	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
 		DB: db.Get(),
 	})
-	productService := services.NewProductService(&services.ProductServiceConfig{
-		ProductRepository: productRepository,
-	})
-
-	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
-		DB: db.Get(),
-	})
-	productItemService := services.NewProductItemService(&services.ProductItemServiceConfig{
+	cartService := services.NewCartService(&services.CartServiceConfig{
+		CartRepository:        cartRepository,
 		ProductItemRepository: productItemRepository,
 	})
 
+	productService := services.NewProductService(&services.ProductServiceConfig{
+		ProductRepository:          productRepository,
+		MerchantRepository:         merchantRepository,
+		ProductItemRepository:      productItemRepository,
+		ProductVariationRepository: productVariationRepository,
+		ProductViewRepository:      productViewRepository,
+		ProductFavoriteRepository:  productFavoriteRepository,
+	})
+
+	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	productMerchantPromotionRepository := repositories.NewProductMerchantPromotionRepositoryConfig(&repositories.ProductMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantPromotionService := services.NewMerchantPromotionService(&services.MerchantPromotionServiceConfig{
+		MerchantRepository:                 merchantRepository,
+		MerchantPromotionRepository:        merchantPromotionRepository,
+		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
+	})
+	provinceRepository := repositories.NewProvinceRepository(&repositories.ProvinceRepositoryConfig{
+		DB: db.Get(),
+	})
+	citiesRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
+		DB: db.Get(),
+	})
+	districtRepository := repositories.NewDistrictRepository(&repositories.DistrictRepositoryConfig{
+		DB: db.Get(),
+	})
+	subDistrictRepository := repositories.NewSubDistrictRepository(&repositories.SubDistrictRepositoryConfig{
+		DB: db.Get(),
+	})
+	subDistrictService := services.NewSubDistrictService(&services.SubDistrictServiceConfig{
+		ProvinceRepository:    provinceRepository,
+		CityRepository:        citiesRepository,
+		DistrictRepository:    districtRepository,
+		SubDistrictRepository: subDistrictRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:            roleService,
-		WalletService:          walletService,
-		AuthService:            authService,
-		CategoryService:        categoryService,
-		UserService:            userService,
-		ProfileService:         profileService,
-		SealabsPayService:      sealabsPayService,
-		MerchantVoucherService: merchantVoucherService,
-		MerchantService:        merchantService,
-		OrderService:           orderService,
-		ProductService:         productService,
-		ProductItemService:     productItemService,
+		RoleService:              roleService,
+		WalletService:            walletService,
+		AuthService:              authService,
+		CategoryService:          categoryService,
+		UserService:              userService,
+		ProfileService:           profileService,
+		SealabsPayService:        sealabsPayService,
+		MerchantVoucherService:   merchantVoucherService,
+		ProductService:           productService,
+		ProductItemService:       productItemService,
+		AddressService:           addressService,
+		MerchantService:          merchantService,
+		OrderService:             orderService,
+		ProductReviewService:     productReviewService,
+		MerchantPromotionService: merchantPromotionService,
+		CartService:              cartService,
+		SubDistrictService:       subDistrictService,
 	})
 
 	return h
