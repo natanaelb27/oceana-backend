@@ -40,6 +40,7 @@ func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.Mer
 
 type MerchantVoucherCreateResponse struct {
 	ID                    uint      `json:"id"`
+	MerchantID            uint      `json:"merchant_id"`
 	Code                  string    `json:"code"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -56,6 +57,7 @@ type MerchantVoucherCreateResponse struct {
 func NewMerchantVoucherCreateResponse(source *models.MerchantVoucher) (target *MerchantVoucherCreateResponse) {
 	target = &MerchantVoucherCreateResponse{
 		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
 		Code:                  source.Code,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -97,6 +99,7 @@ func (source *MerchantVoucherUpdateRequest) ToModel(id uint) (target *models.Mer
 
 type MerchantVoucherUpdateResponse struct {
 	ID                    uint      `json:"id"`
+	MerchantID            uint      `json:"merchant_id"`
 	Code                  string    `json:"code"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -113,6 +116,7 @@ type MerchantVoucherUpdateResponse struct {
 func NewMerchantVoucherUpdateResponse(source *models.MerchantVoucher) (target *MerchantVoucherUpdateResponse) {
 	target = &MerchantVoucherUpdateResponse{
 		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
 		Code:                  source.Code,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -130,6 +134,7 @@ func NewMerchantVoucherUpdateResponse(source *models.MerchantVoucher) (target *M
 
 type MerchantVoucherDeleteResponse struct {
 	ID                    uint           `json:"id"`
+	MerchantID            uint           `json:"merchant_id"`
 	Code                  string         `json:"code"`
 	StartDatetime         time.Time      `json:"start_datetime"`
 	EndDatetime           time.Time      `json:"end_datetime"`
@@ -147,6 +152,7 @@ type MerchantVoucherDeleteResponse struct {
 func NewMerchantVoucherDeleteResponse(source *models.MerchantVoucher) (target *MerchantVoucherDeleteResponse) {
 	target = &MerchantVoucherDeleteResponse{
 		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
 		Code:                  source.Code,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
