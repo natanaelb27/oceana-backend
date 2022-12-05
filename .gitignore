@@ -22,3 +22,6 @@ go.work
 .vscode
 # env file
 .env
+
+# misc.
+tmp/

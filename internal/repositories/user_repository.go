@@ -49,7 +49,7 @@ func (u *userRepository) Create(newModel *models.User) (model *models.User, err 
 func (u *userRepository) GetByPhoneNumber(phoneNumber string) (model *models.User, err error) {
 	result := u.db.Model(&models.User{}).Where("phone_number = ?", phoneNumber).Find(&model)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 	return
@@ -58,7 +58,7 @@ func (u *userRepository) GetByPhoneNumber(phoneNumber string) (model *models.Use
 func (u *userRepository) GetByUsername(username string) (model *models.User, err error) {
 	result := u.db.Model(&models.User{}).Where("username = ?", username).Find(&model)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 	return
@@ -67,7 +67,7 @@ func (u *userRepository) GetByUsername(username string) (model *models.User, err
 func (u *userRepository) GetByEmailID(emailID uuid.UUID) (model *models.User, err error) {
 	result := u.db.Model(&models.User{}).Where("email_id = ?", emailID).Find(&model)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 	return
@@ -76,7 +76,7 @@ func (u *userRepository) GetByEmailID(emailID uuid.UUID) (model *models.User, er
 func (u *userRepository) GetByID(id uuid.UUID) (model *models.User, err error) {
 	result := u.db.First(&model, id)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 
@@ -86,7 +86,7 @@ func (u *userRepository) GetByID(id uuid.UUID) (model *models.User, err error) {
 func (u *userRepository) GetByIDJoinsEmail(id uuid.UUID) (model *models.User, err error) {
 	result := u.db.Joins("Email").First(&model, id)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 
@@ -96,7 +96,7 @@ func (u *userRepository) GetByIDJoinsEmail(id uuid.UUID) (model *models.User, er
 func (u *userRepository) GetByGoogleID(googleID string) (model *models.User, err error) {
 	result := u.db.Where("google_id = ?", googleID).First(&model)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 
@@ -106,7 +106,7 @@ func (u *userRepository) GetByGoogleID(googleID string) (model *models.User, err
 func (u *userRepository) Update(id uuid.UUID, newModel *models.User) (model *models.User, err error) {
 	result := u.db.Model(&model).Where("id = ?", id).Updates(&newModel)
 	if result.RowsAffected == 0 {
-		err = e.ErrUserNotFound
+		err = e.ErrDataNotFound
 		return
 	}
 
