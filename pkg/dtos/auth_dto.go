@@ -80,7 +80,7 @@ type UserRegisterWithGoogleRequest struct {
 	FullName    string `json:"full_name" binding:"required"`
 	Username    string `json:"username" binding:"required"`
 	Email       string `json:"email" binding:"required"`
-	Password    string `json:"passowrd" binding:"required"`
+	Password    string `json:"password" binding:"required"`
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	Role        string `json:"role" binding:"required"`
 	ImageURL    string `json:"image_url"`
