@@ -151,6 +151,9 @@ func Init() *Handler {
 		CourierServiceRepository: courierServiceRepository,
 	})
 
+	merchantConfigurationRepository := repositories.NewMerchantConfigurationRepository(&repositories.MerchantConfigurationRepositoryConfig{
+		DB: db.Get(),
+	})
 	merchantCourierServiceRepository := repositories.NewMerchantCourierServiceRepository(&repositories.MerchantCourierServiceRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -160,6 +163,8 @@ func Init() *Handler {
 		MerchantCourierServiceRepository: merchantCourierServiceRepository,
 		UserRepository:                   userRepository,
 		MerchantRepository:               merchantRepository,
+		MerchantConfigurationRepository:  merchantConfigurationRepository,
+		ProductRepository:                productRepository,
 	})
 
 	productService := services.NewProductService(&services.ProductServiceConfig{

@@ -57,6 +57,7 @@ var (
 	ErrVoucherNotFound                = errors.New("voucher not found")
 	ErrPromotionNotFound              = errors.New("promotion not found")
 	ErrOrderNotFound                  = errors.New("order not found")
+	ErrInvalidModel                   = errors.New("invalid model")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -172,7 +173,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||
-		errors.Is(err, ErrInvalidResetPasswordID) {
+		errors.Is(err, ErrInvalidResetPasswordID) ||
+		errors.Is(err, ErrInvalidModel) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||

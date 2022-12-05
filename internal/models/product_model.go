@@ -19,6 +19,7 @@ type Product struct {
 	PackageSize string
 	Condition   string
 	Status      string
+	PreorderDay uint
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt
