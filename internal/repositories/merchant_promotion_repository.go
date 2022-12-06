@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -76,15 +77,15 @@ func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.Merch
 		queryResult.Where("name = ?", query.SearchPromotionName)
 	}
 
-	if query.FilterPromotionStatus == "ongoing" {
+	if query.FilterPromotionStatus == constants.OngoingPromotionOrVoucher {
 		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
 	}
 
-	if query.FilterPromotionStatus == "upcoming" {
+	if query.FilterPromotionStatus == constants.UpcomingPromotionOrVoucher {
 		queryResult.Where("start_datetime::timestamp > NOW()::timestamp")
 	}
 
-	if query.FilterPromotionStatus == "ended" {
+	if query.FilterPromotionStatus == constants.EndedPromotionOrVoucher {
 		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
 	}
 

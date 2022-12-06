@@ -71,18 +71,18 @@ var (
 	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
 	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 
-	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
-	ErrUserNotFound             = errors.New("user not found")
-	ErrForbidden                = errors.New("you don't have permission to access this resource")
-	ErrResourceDoesNotExist     = errors.New("resource does not exist")
-	ErrStepUpNotFound           = errors.New("step up authenticaiton not found")
-	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
-	ErrVerificationCodeNotFound = errors.New("verification code not found")
-	ErrProductNotFound          = errors.New("product not found")
-	ErrVoucherNotFound          = errors.New("voucher not found")
-	ErrPromotionNotFound        = errors.New("promotion not found")
+	ErrUnauthorized                     = errors.New("access is denied due to invalid credentials")
+	ErrUserNotFound                     = errors.New("user not found")
+	ErrForbidden                        = errors.New("you don't have permission to access this resource")
+	ErrResourceDoesNotExist             = errors.New("resource does not exist")
+	ErrStepUpNotFound                   = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect             = errors.New("incorrect step up scope")
+	ErrVerificationCodeNotFound         = errors.New("verification code not found")
+	ErrProductNotFound                  = errors.New("product not found")
+	ErrVoucherNotFound                  = errors.New("voucher not found")
+	ErrPromotionNotFound                = errors.New("promotion not found")
 	ErrProductMerchantPromotionNotFound = errors.New("product merchant promotion not found")
-	ErrOrderNotFound            = errors.New("order not found")
+	ErrOrderNotFound                    = errors.New("order not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
@@ -104,7 +104,7 @@ var (
 	ErrVoucherPeriodMinimumOneHour                                = errors.New("voucher period must be at least 1 hour")
 	ErrVoucherStartDatetimeMinimumOneDayFromNow                   = errors.New("voucher start period must be at least 1 day from now")
 	ErrVoucherHasEnded                                            = errors.New("voucher has ended")
-	ErrOngoingStartDatetimeUpdated                                = errors.New("ongoing voucher start period cannot be updated")
+	ErrOngoingStartDatetimeUpdated                                = errors.New("ongoing voucher/promotion start period cannot be updated")
 	ErrMaximumQuotaLowerThanCurrentQuota                          = errors.New("voucher maximum quota is lower than current quota")
 	ErrVoucherEndDatetimeEarlierThanNow                           = errors.New("voucher end period is earlier than now")
 	ErrVoucherNotUpcoming                                         = errors.New("voucher is not upcoming")
@@ -119,6 +119,8 @@ var (
 	ErrPromotionPeriodMinimumOneHour                       = errors.New("promotion period must be at least 1 hour")
 	ErrPromotionStartDatetimeMinimumOneDayFromNow          = errors.New("promotion start period must be at least 1 day from now")
 	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 180 days")
+	ErrPromotionHasEnded                                   = errors.New("promotion has ended")
+	ErrPromotionDatetimeUpdatedBeyondRange                 = errors.New("updated promotion start/end period must be between current start/end period")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -244,6 +246,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrPromotionPeriodExceedMaximumDays) ||
+		errors.Is(err, ErrPromotionHasEnded) ||
+		errors.Is(err, ErrPromotionDatetimeUpdatedBeyondRange) ||
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||

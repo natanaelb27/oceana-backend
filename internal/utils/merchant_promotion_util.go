@@ -3,10 +3,11 @@ package utils
 import (
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
-func ValidateMerchantPromotionDatetime(startDatetime, endDatetime time.Time) error {
+func ValidateMpCreateDatetime(startDatetime, endDatetime time.Time) error {
 	if startDatetime.Before(time.Now()) {
 		return e.ErrPromotionStartDatetimeEarlierThanNow
 	}
@@ -27,5 +28,28 @@ func ValidateMerchantPromotionDatetime(startDatetime, endDatetime time.Time) err
 		return e.ErrPromotionPeriodExceedMaximumDays
 	}
 
+	return nil
+}
+
+func ValidateMpUpdateDatetime(startDatetime, endDatetime, currentStartDatetime, currentEndDatetime time.Time, promotionStatus string) error {
+	// promotion ended, no updates allowed
+	if promotionStatus == constants.EndedPromotionOrVoucher {
+		return e.ErrPromotionHasEnded
+	}
+	// promotion ongoing, cannot update start time
+	if promotionStatus == constants.OngoingPromotionOrVoucher {
+		if startDatetime != currentStartDatetime {
+			return e.ErrOngoingStartDatetimeUpdated
+		}
+	}
+	// promotion upcoming
+	if promotionStatus == constants.UpcomingPromotionOrVoucher {
+		if startDatetime.Before(currentStartDatetime) {
+			return e.ErrPromotionDatetimeUpdatedBeyondRange
+		}
+		if endDatetime.After(currentEndDatetime) {
+			return e.ErrPromotionDatetimeUpdatedBeyondRange
+		}
+	}
 	return nil
 }

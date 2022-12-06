@@ -3,6 +3,7 @@ package services
 import (
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -113,11 +114,11 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 		return nil, e.ErrForbiddenMerchant
 	}
 
-	if merchantVoucherDetails.VoucherStatus == "ended" {
+	if merchantVoucherDetails.VoucherStatus == constants.EndedPromotionOrVoucher {
 		return nil, e.ErrVoucherHasEnded
 	}
 
-	if merchantVoucherDetails.VoucherStatus == "ongoing" {
+	if merchantVoucherDetails.VoucherStatus == constants.OngoingPromotionOrVoucher {
 		if int(merchantVoucherDetails.StartDatetime.Sub(request.StartDatetime).Minutes()) != 0 {
 			return nil, e.ErrOngoingStartDatetimeUpdated
 		}
