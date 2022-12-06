@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
@@ -160,6 +162,7 @@ func Init() *Handler {
 		MerchantPromotionRepository:        merchantPromotionRepository,
 		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
 	})
+
 	provinceRepository := repositories.NewProvinceRepository(&repositories.ProvinceRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -177,6 +180,12 @@ func Init() *Handler {
 		CityRepository:        citiesRepository,
 		DistrictRepository:    districtRepository,
 		SubDistrictRepository: subDistrictRepository,
+	})
+	rajaOngkirRepository := repositories.NewRajaOngkirRepository(&repositories.RajaOngkirRepositoryConfig{
+		Client: http.Client{},
+	})
+	rajaOngkirService := services.NewRajaOngkirService(&services.RajaOngkirServiceConfig{
+		RajaOngkirRepository: rajaOngkirRepository,
 	})
 
 	h := New(&HandlerConfig{
@@ -196,6 +205,7 @@ func Init() *Handler {
 		MerchantPromotionService: merchantPromotionService,
 		CartService:              cartService,
 		SubDistrictService:       subDistrictService,
+		RajaOngkirService:        rajaOngkirService,
 	})
 
 	return h
