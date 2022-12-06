@@ -1,7 +1,10 @@
 package repositories
 
 import (
+	"database/sql"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -10,6 +13,7 @@ import (
 type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
+	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
 }
 
 type productItemRepository struct {
@@ -102,4 +106,38 @@ func (r *productItemRepository) GetById(id uint) (model *models.ProductItem, err
 	}
 
 	return
+}
+
+func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error) {
+	var productModels []*internalProductDtos.ProductItem
+
+	sqVariant := r.db.Table("product_variants p_variants").
+		Select(`
+			p_variants.id as id,
+			-- get row number (start from 0 because of -1 in the end) of product variants partitioned by product_variants_type_id that which ordered ascending by  product variants id
+			(ROW_NUMBER() OVER (PARTITION BY p_variants.product_variant_type_id ORDER BY p_variants.id ASC))-1 AS index
+			`)
+	sqVariantIndex := r.db.Table("product_variations p_variations").
+		Select("ARRAY_AGG(p_variants.index)").
+		Joins("JOIN (?) p_variants ON p_variants.id = p_variations.product_variant_id", sqVariant).
+		Where("p_variations.product_item_id = pi.id")
+	queryResult := r.db.Table("product_items pi").
+		Select(`
+			pi.id AS id,
+			pi.sku AS sku,
+			pi.stock_quantity AS stock_quantity,
+			pi.price AS price,
+			COALESCE((@sqVariantIndex),'{}') AS variant_index 
+			`,
+			sql.Named("sqVariantIndex", sqVariantIndex),
+		).
+		Joins("JOIN products ON pi.product_id = products.id").
+		Where("products.id = ?", productID).
+		Order("pi.id ASC").
+		Find(&productModels)
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return productModels, nil
 }

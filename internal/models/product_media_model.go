@@ -11,6 +11,7 @@ type ProductMedia struct {
 	ProductID uint
 	Product   Product
 	MediaURL  string
+	Type      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt
