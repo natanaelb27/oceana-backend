@@ -1,6 +1,10 @@
 package utils
 
-import "time"
+import (
+	"time"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+)
 
 func IsDateMoreThanOneDay(date time.Time) bool {
 	now := time.Now()
@@ -12,10 +16,10 @@ func IsDateMoreThanOneDay(date time.Time) bool {
 func PromotionOrVoucherStatus(startDatetime, endDatetime time.Time) string {
 	now := time.Now()
 	if now.Before(startDatetime) {
-		return "upcoming"
+		return constants.UpcomingPromotionOrVoucher
 	} else if now.After(endDatetime) {
-		return "ended"
+		return constants.EndedPromotionOrVoucher
 	} else {
-		return "ongoing"
+		return constants.OngoingPromotionOrVoucher
 	}
 }

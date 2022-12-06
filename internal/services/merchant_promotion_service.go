@@ -1,8 +1,7 @@
 package services
 
 import (
-	"sort"
-
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -39,7 +38,7 @@ func NewMerchantPromotionService(c *MerchantPromotionServiceConfig) MerchantProm
 }
 
 func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error) {
-	err := utils.ValidateMerchantPromotionDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime)
+	err := utils.ValidateMpCreateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime)
 	if err != nil {
 		return nil, err
 	}
@@ -124,12 +123,38 @@ func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.Mer
 }
 
 func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error) {
-	err := utils.ValidateMerchantPromotionDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime)
+	merchant, err := mp.merchantRepository.GetByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	merchant, err := mp.merchantRepository.GetByUserID(userID)
+	currentMp, err := mp.GetByID(merchantPromotionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// MP validations
+	// name
+	if mpRequest.Name == "" {
+		return nil, e.ErrEmptyName
+	}
+	// datetime
+	err = utils.ValidateMpUpdateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime, currentMp.StartDatetime, currentMp.EndDatetime, currentMp.PromotionStatus)
+	if err != nil {
+		return nil, err
+	}
+	// match product ID list with PMP
+	// convert ProductIDList []int64 -> []int
+	var mpRequestProductIDList []int
+	for _, productID := range mpRequest.ProductIDList {
+		mpRequestProductIDList = append(mpRequestProductIDList, int(productID))
+	}
+	// convert PMP request to product ID list
+	var pmpRequestProductIDList []int
+	for _, pmp := range mpRequest.ProductMerchantPromotion {
+		pmpRequestProductIDList = append(pmpRequestProductIDList, int(pmp.ProductID))
+	}
+	err = utils.ValidateMpProductIDList(mpRequestProductIDList, pmpRequestProductIDList)
 	if err != nil {
 		return nil, err
 	}
@@ -143,45 +168,62 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	}
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
-	// currenttly existing PMPs
-	currentPmp, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
+	// currently existing PMPs
+	currentPmpList, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
 	if err != nil {
 		return nil, err
 	}
 	var currentPmpProductIDList []int
-	for _, pmp := range currentPmp {
+	for _, pmp := range currentPmpList {
 		currentPmpProductIDList = append(currentPmpProductIDList, int(pmp.ProductID))
 	}
 
-	// create/update PMP
 	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
-		if pmpRequest.DiscountType == "nominal" {
-			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
+		// PMP validation
+		// ongoing promotion, no updates allowed to PMP
+		if currentMp.PromotionStatus == constants.OngoingPromotionOrVoucher {
+			return nil, e.ErrPromotionIsOngoing
+		}
+		// validate discount and type
+		err := utils.ValidatePmpDiscountAndType(pmpRequest.DiscountType, pmpRequest.Discount)
+		if err != nil {
+			return nil, err
 		}
 
-		if pmpRequest.DiscountType == "percentage" {
-			if pmpRequest.Discount > 100 {
-				return nil, e.ErrExceedDiscountPercentage
-			}
+		if pmpRequest.DiscountType == constants.Nominal {
+			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
+		}
+		// validate quota before update
+		currentPmpModel, err := mp.productMerchantPromotionRepository.GetByMpAndProductID(merchantPromotionID, pmpRequest.ProductID)
+		if err != nil {
+			return nil, err
+		}
+		err = utils.ValidatePmpQuota(currentPmpModel.CurrentQuota, pmpRequest.MaximumQuota, pmpRequest.MaximumUserLimit)
+		if err != nil {
+			return nil, err
 		}
 
 		// search PMP based on productIDList
-		existsInCurrentPmp := sort.SearchInts(currentPmpProductIDList, int(pmpRequest.ProductID))
-		pmpModel := pmpRequest.ToModel(updatedMpModel.ID)
+		existsInCurrentPmp := utils.ContainsInt(currentPmpProductIDList, int(pmpRequest.ProductID))
 		var updatedPmpModel *models.ProductMerchantPromotion
-		switch existsInCurrentPmp {
-		case len(currentPmpProductIDList):
-			// create
-			var pmpModelSlice []*models.ProductMerchantPromotion
-			pmpModelSlice = append(pmpModelSlice, pmpModel)
-			createdPmpModel, err := mp.productMerchantPromotionRepository.CreateProductMerchantPromotion(pmpModelSlice)
+		if !existsInCurrentPmp {
+			// CREATE
+			var newPmpModelSlice []*models.ProductMerchantPromotion
+			newPmpModel := pmpRequest.ToModel(updatedMpModel.ID)
+			newPmpModelSlice = append(newPmpModelSlice, newPmpModel)
+			createdPmpModel, err := mp.productMerchantPromotionRepository.CreateProductMerchantPromotion(newPmpModelSlice)
 			if err != nil {
 				return nil, err
 			}
 			updatedPmpModel = createdPmpModel[0]
-		default:
-			// update
-			updatedPmpModel, err = mp.productMerchantPromotionRepository.Update(pmpModel)
+		} else {
+			// UPDATE
+			currentPmpModel.DiscountType = pmpRequest.DiscountType
+			currentPmpModel.Discount = pmpRequest.Discount
+			currentPmpModel.MaximumDiscountAmount = pmpRequest.MaximumDiscountAmount
+			currentPmpModel.MaximumQuota = pmpRequest.MaximumQuota
+			currentPmpModel.MaximumUserLimit = pmpRequest.MaximumUserLimit
+			updatedPmpModel, err = mp.productMerchantPromotionRepository.Update(currentPmpModel)
 			if err != nil {
 				return nil, err
 			}
@@ -189,19 +231,10 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		updatedPmpResponse = append(updatedPmpResponse, dtos.NewProductMerchantPromotionResponse(updatedPmpModel))
 	}
 
-	// convert ProductIDList []int64 -> []int and sort ASC for SearchInts
-	var productIDListIntSlice []int
-	for _, productID := range mpRequest.ProductIDList {
-		productIDListIntSlice = append(productIDListIntSlice, int(productID))
-	}
-	sort.SliceStable(productIDListIntSlice, func(i, j int) bool {
-		return productIDListIntSlice[i] < productIDListIntSlice[j]
-	})
-	// delete
+	// DELETE
 	for _, productID := range currentPmpProductIDList {
-		existsInPmpRequest := sort.SearchInts(productIDListIntSlice, productID)
-		switch existsInPmpRequest {
-		case len(productIDListIntSlice):
+		existsInPmpRequest := utils.ContainsInt(mpRequestProductIDList, productID)
+		if !existsInPmpRequest {
 			_, err := mp.productMerchantPromotionRepository.DeleteByProductID(uint(productID))
 			if err != nil {
 				return nil, err
