@@ -76,3 +76,22 @@ func NewMerchantGetInformationByIDResponse(source *dtos.MerchantInformation) (ta
 	}
 	return
 }
+
+type MerchantGetProfileResponse struct {
+	ID        uint      `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Name      string    `json:"name"`
+	AddressID uuid.UUID `json:"address_id"`
+	Photo     *string   `json:"photo"`
+}
+
+func NewMerchantGetProfileResponse(source *models.Merchant) (target *MerchantGetProfileResponse) {
+	target = &MerchantGetProfileResponse{
+		ID:        source.ID,
+		UserID:    source.UserID,
+		Name:      source.Name,
+		AddressID: source.AddressID,
+		Photo:     source.Photo,
+	}
+	return
+}

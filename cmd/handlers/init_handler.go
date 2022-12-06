@@ -174,6 +174,7 @@ func Init() *Handler {
 		ProductVariationRepository: productVariationRepository,
 		ProductViewRepository:      productViewRepository,
 		ProductFavoriteRepository:  productFavoriteRepository,
+		CategoryRepository:         categoryRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
@@ -186,6 +187,24 @@ func Init() *Handler {
 		MerchantRepository:                 merchantRepository,
 		MerchantPromotionRepository:        merchantPromotionRepository,
 		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
+	})
+	provinceRepository := repositories.NewProvinceRepository(&repositories.ProvinceRepositoryConfig{
+		DB: db.Get(),
+	})
+	citiesRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
+		DB: db.Get(),
+	})
+	districtRepository := repositories.NewDistrictRepository(&repositories.DistrictRepositoryConfig{
+		DB: db.Get(),
+	})
+	subDistrictRepository := repositories.NewSubDistrictRepository(&repositories.SubDistrictRepositoryConfig{
+		DB: db.Get(),
+	})
+	subDistrictService := services.NewSubDistrictService(&services.SubDistrictServiceConfig{
+		ProvinceRepository:    provinceRepository,
+		CityRepository:        citiesRepository,
+		DistrictRepository:    districtRepository,
+		SubDistrictRepository: subDistrictRepository,
 	})
 
 	h := New(&HandlerConfig{
@@ -206,6 +225,7 @@ func Init() *Handler {
 		CartService:              cartService,
 		CourierService:           courierService,
 		LogisticService:          logisticService,
+		SubDistrictService:       subDistrictService,
 	})
 
 	return h

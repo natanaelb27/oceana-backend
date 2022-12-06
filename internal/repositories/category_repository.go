@@ -9,6 +9,8 @@ import (
 type CategoryRepository interface {
 	GetAllCategories() (model []*models.Category, err error)
 	GetAllSubCategoriesByParentID(ID uint) (model []*models.Category, err error)
+	GetAllByID(ID uint) (model []*models.Category, err error)
+	GetByID(ID uint) (model *models.Category, err error)
 }
 
 type categoryRepository struct {
@@ -39,6 +41,34 @@ func (r *categoryRepository) GetAllCategories() (model []*models.Category, err e
 func (r *categoryRepository) GetAllSubCategoriesByParentID(ID uint) (model []*models.Category, err error) {
 	queryResult := r.db.Where("parent_id = ?", ID).Find(&model)
 
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *categoryRepository) GetAllByID(ID uint) (model []*models.Category, err error) {
+	queryResult := r.db.Find(&model, ID)
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *categoryRepository) GetByID(ID uint) (model *models.Category, err error) {
+	queryResult := r.db.First(&model, ID)
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
