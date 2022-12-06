@@ -24,6 +24,7 @@ type Handler struct {
 	merchantPromotionService services.MerchantPromotionService
 	cartService              services.CartService
 	courierService           services.CourierService
+	logisticService          services.LogisticService
 	subDistrictService       services.SubDistrictService
 }
 
@@ -44,6 +45,7 @@ type HandlerConfig struct {
 	MerchantPromotionService services.MerchantPromotionService
 	CartService              services.CartService
 	CourierService           services.CourierService
+	LogisticService          services.LogisticService
 	SubDistrictService       services.SubDistrictService
 }
 
@@ -65,6 +67,7 @@ func New(c *HandlerConfig) *Handler {
 		merchantPromotionService: c.MerchantPromotionService,
 		cartService:              c.CartService,
 		courierService:           c.CourierService,
+		logisticService:          c.LogisticService,
 		subDistrictService:       c.SubDistrictService,
 	}
 }
