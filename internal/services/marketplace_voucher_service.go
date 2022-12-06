@@ -8,6 +8,7 @@ import (
 type MarketplaceVoucherService interface {
 	Create(marketplaceVoucher *models.MarketplaceVoucher) (*models.MarketplaceVoucher, error)
 	GetAll() ([]*models.MarketplaceVoucher, error)
+	GetAllByActive() ([]*models.MarketplaceVoucher, error)
 	GetById(id uint) (*models.MarketplaceVoucher, error)
 	Update(id uint, newModel *models.MarketplaceVoucher) (*models.MarketplaceVoucher, error)
 	Delete(id uint) (*models.MarketplaceVoucher, error)
@@ -33,6 +34,10 @@ func (p *marketplaceVoucherService) Create(model *models.MarketplaceVoucher) (*m
 
 func (p *marketplaceVoucherService) GetAll() ([]*models.MarketplaceVoucher, error) {
 	return p.marketplaceVoucherRepository.GetAll()
+}
+
+func (p *marketplaceVoucherService) GetAllByActive() ([]*models.MarketplaceVoucher, error) {
+	return p.marketplaceVoucherRepository.GetAllByActive()
 }
 
 func (p *marketplaceVoucherService) GetById(id uint) (*models.MarketplaceVoucher, error) {

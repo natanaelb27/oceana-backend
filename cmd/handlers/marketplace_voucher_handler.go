@@ -25,6 +25,22 @@ func (h *Handler) MarketplaceVoucherGetAll(c *gin.Context) {
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
+func (h *Handler) MarketplaceVoucherGetAllByActive(c *gin.Context) {
+	results, err := h.marketplaceVoucherService.GetAllByActive()
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	var responseData []*dtos.MarketplaceVoucherGetResponse = make([]*dtos.MarketplaceVoucherGetResponse, 0)
+
+	for _, result := range results {
+		responseData = append(responseData, dtos.NewMarketplaceVoucherGetResponse(result))
+	}
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
 func (h *Handler) MarketplaceVoucherGetById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

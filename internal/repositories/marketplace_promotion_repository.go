@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -9,6 +11,7 @@ import (
 type MarketplaceVoucherRepository interface {
 	Create(marketplaceVoucher *models.MarketplaceVoucher) (model *models.MarketplaceVoucher, err error)
 	GetAll() (model []*models.MarketplaceVoucher, err error)
+	GetAllByActive() (model []*models.MarketplaceVoucher, err error)
 	GetById(id uint) (model *models.MarketplaceVoucher, err error)
 	Update(id uint, newModel *models.MarketplaceVoucher) (err error)
 	Delete(id uint) (model *models.MarketplaceVoucher, err error)
@@ -40,6 +43,23 @@ func (r *marketplaceVoucherRepository) Create(newModel *models.MarketplaceVouche
 	}
 
 	model = newModel
+
+	return
+}
+
+func (r *marketplaceVoucherRepository) GetAllByActive() (model []*models.MarketplaceVoucher, err error) {
+	queryResult := r.db.Debug().
+		Where("start_datetime <= ?", time.Now()).
+		Where("end_datetime >= ?", time.Now()).
+		Find(&model)
+	if queryResult.Error != nil && queryResult.Error != e.ErrDataNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.Error == e.ErrDataNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }
