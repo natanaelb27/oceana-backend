@@ -19,6 +19,7 @@ type ProductRepository interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
+	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
 }
 
 type productRepository struct {
@@ -429,7 +430,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	// filter by price category
 	if queryParams.CategoryID != 0 {
-		query.Where("products.category_id = ?", queryParams.CategoryID)
+		query.Where("products.category_id IN ?", queryParams.Categories)
 	}
 
 	// filter by price minimum
@@ -472,4 +473,14 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	}
 
 	return ProductDetails, pagination, nil
+}
+
+func (r *productRepository) UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error) {
+	result := r.db.Model(&models.Product{}).Where(conditionMap).Updates(&modelMap)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
 }

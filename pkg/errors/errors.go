@@ -25,41 +25,43 @@ var (
 	ErrEmptyRequstBody     = errors.New("request body should not be empty")
 	ErrRequestBodyTooLarge = errors.New("request body must not be larger than 1MB")
 
-	ErrInvalidEmailAddress              = errors.New("invalid email address")
-	ErrInvalidPassword                  = errors.New("invalid password")
-	ErrInvalidAmount                    = errors.New("invalid amount")
-	ErrInvalidOrderDetailID             = errors.New("invalid order detail id")
-	ErrInvalidMembershipID              = errors.New("invalid membership id")
-	ErrInvalidName                      = errors.New("invalid name")
-	ErrInvalidImage                     = errors.New("invalid image")
-	ErrInvalidDescription               = errors.New("invalid description")
-	ErrInvalidStartTime                 = errors.New("invalid start time")
-	ErrInvalidDurationMinute            = errors.New("invalid duration minute")
-	ErrInvalidCapacity                  = errors.New("invalid capacity")
-	ErrInvalidStock                     = errors.New("invalid stock")
-	ErrInvalidCategoryID                = errors.New("invalid category id")
-	ErrInvalidMerchandiseID             = errors.New("invalid merchandise id")
-	ErrInvalidQuantity                  = errors.New("invalid quantity")
-	ErrInvalidPrice                     = errors.New("invalid price")
-	ErrInvalidEventID                   = errors.New("invalid event id")
-	ErrDataNotFound                     = errors.New("data not found")
-	ErrMerchantNotFound                 = errors.New("merchant not found")
-	ErrEmailNotFound                    = errors.New("email not found")
-	ErrInvalidRequest                   = errors.New("invalid request")
-	ErrInvalidIdentifier                = errors.New("invalid identifier")
-	ErrInvalidToken                     = errors.New("invalid token")
-	ErrPasswordCannotContainsUsername   = errors.New("password cannot contains username")
-	ErrInvalidVerificationCode          = errors.New("invalid verification code")
-	ErrInvalidSealabsPayAccountNumber   = errors.New("invalid sealabs pay account number")
-	ErrInvalidMerchantVoucherCode       = errors.New("invalid voucher code")
-	ErrInvalidParams                    = errors.New("invalid params")
-	ErrInvalidResetPasswordID           = errors.New("invalid reset password id")
+	ErrInvalidEmailAddress            = errors.New("invalid email address")
+	ErrInvalidPassword                = errors.New("invalid password")
+	ErrInvalidAmount                  = errors.New("invalid amount")
+	ErrInvalidOrderDetailID           = errors.New("invalid order detail id")
+	ErrInvalidMembershipID            = errors.New("invalid membership id")
+	ErrInvalidName                    = errors.New("invalid name")
+	ErrInvalidImage                   = errors.New("invalid image")
+	ErrInvalidDescription             = errors.New("invalid description")
+	ErrInvalidStartTime               = errors.New("invalid start time")
+	ErrInvalidDurationMinute          = errors.New("invalid duration minute")
+	ErrInvalidCapacity                = errors.New("invalid capacity")
+	ErrInvalidStock                   = errors.New("invalid stock")
+	ErrInvalidCategoryID              = errors.New("invalid category id")
+	ErrInvalidMerchandiseID           = errors.New("invalid merchandise id")
+	ErrInvalidQuantity                = errors.New("invalid quantity")
+	ErrInvalidPrice                   = errors.New("invalid price")
+	ErrInvalidEventID                 = errors.New("invalid event id")
+	ErrDataNotFound                   = errors.New("data not found")
+	ErrMerchantNotFound               = errors.New("merchant not found")
+	ErrEmailNotFound                  = errors.New("email not found")
+	ErrInvalidRequest                 = errors.New("invalid request")
+	ErrInvalidIdentifier              = errors.New("invalid identifier")
+	ErrInvalidToken                   = errors.New("invalid token")
+	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
+	ErrInvalidVerificationCode        = errors.New("invalid verification code")
+	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
+	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
+	ErrInvalidParams                  = errors.New("invalid params")
+	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
+	ErrInvalidModel                   = errors.New("invalid model")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
 	ErrEmailAddressAlreadyExist                  = errors.New("email address is already registered")
 	ErrUsernameAlreadyExist                      = errors.New("username is already registered")
 	ErrPhoneNumberAlreadyExist                   = errors.New("phone number is already registered")
+	ErrGoogleIDAlreadyExist                      = errors.New("google id is already registered")
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
 	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
@@ -127,7 +129,8 @@ var (
 	ErrSendingEmailFailed            = errors.New("sending email failed")
 	ErrInternalOperationFailed       = errors.New("internal operation failed")
 
-	ErrUnknown = errors.New("unknown")
+	ErrUnknown        = errors.New("unknown")
+	ErrRegisterGoogle = errors.New("register with google")
 )
 
 func GetStatusCode(err error) int {
@@ -175,7 +178,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||
-		errors.Is(err, ErrInvalidResetPasswordID) {
+		errors.Is(err, ErrInvalidResetPasswordID) ||
+		errors.Is(err, ErrInvalidModel) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -199,6 +203,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUsernameAlreadyExist) ||
 		errors.Is(err, ErrPasswordCannotBeTheSameAsPreviousPassword) ||
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
+		errors.Is(err, ErrGoogleIDAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
@@ -242,9 +247,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
-		errors.Is(err, ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime) ||
-		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) ||
-		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) {
+		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
+		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) {
 		return http.StatusUnprocessableEntity
 	}
 

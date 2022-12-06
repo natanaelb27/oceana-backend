@@ -140,6 +140,33 @@ func Init() *Handler {
 		ProductItemRepository: productItemRepository,
 	})
 
+	courierServiceRepository := repositories.NewCourierServiceRepository(&repositories.CourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierRepository := repositories.NewCourierRepository(&repositories.CourierRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierService := services.NewCourierService(&services.CourierServiceConfig{
+		CourierRepository:        courierRepository,
+		CourierServiceRepository: courierServiceRepository,
+	})
+
+	merchantConfigurationRepository := repositories.NewMerchantConfigurationRepository(&repositories.MerchantConfigurationRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantCourierServiceRepository := repositories.NewMerchantCourierServiceRepository(&repositories.MerchantCourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	logisticService := services.NewLogisticService(&services.LogisticServiceConfig{
+		CourierRepository:                courierRepository,
+		CourierServiceRepository:         courierServiceRepository,
+		MerchantCourierServiceRepository: merchantCourierServiceRepository,
+		UserRepository:                   userRepository,
+		MerchantRepository:               merchantRepository,
+		MerchantConfigurationRepository:  merchantConfigurationRepository,
+		ProductRepository:                productRepository,
+	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
 		ProductRepository:          productRepository,
 		MerchantRepository:         merchantRepository,
@@ -147,6 +174,7 @@ func Init() *Handler {
 		ProductVariationRepository: productVariationRepository,
 		ProductViewRepository:      productViewRepository,
 		ProductFavoriteRepository:  productFavoriteRepository,
+		CategoryRepository:         categoryRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
@@ -159,6 +187,24 @@ func Init() *Handler {
 		MerchantRepository:                 merchantRepository,
 		MerchantPromotionRepository:        merchantPromotionRepository,
 		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
+	})
+	provinceRepository := repositories.NewProvinceRepository(&repositories.ProvinceRepositoryConfig{
+		DB: db.Get(),
+	})
+	citiesRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
+		DB: db.Get(),
+	})
+	districtRepository := repositories.NewDistrictRepository(&repositories.DistrictRepositoryConfig{
+		DB: db.Get(),
+	})
+	subDistrictRepository := repositories.NewSubDistrictRepository(&repositories.SubDistrictRepositoryConfig{
+		DB: db.Get(),
+	})
+	subDistrictService := services.NewSubDistrictService(&services.SubDistrictServiceConfig{
+		ProvinceRepository:    provinceRepository,
+		CityRepository:        citiesRepository,
+		DistrictRepository:    districtRepository,
+		SubDistrictRepository: subDistrictRepository,
 	})
 
 	h := New(&HandlerConfig{
@@ -177,6 +223,9 @@ func Init() *Handler {
 		ProductReviewService:     productReviewService,
 		MerchantPromotionService: merchantPromotionService,
 		CartService:              cartService,
+		CourierService:           courierService,
+		LogisticService:          logisticService,
+		SubDistrictService:       subDistrictService,
 	})
 
 	return h
