@@ -55,6 +55,8 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrInvalidModel                   = errors.New("invalid model")
+	ErrInvalidDiscountType            = errors.New("invalid discount type")
+	ErrInvalidDiscount                = errors.New("invalid discount")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -105,7 +107,8 @@ var (
 	ErrVoucherStartDatetimeMinimumOneDayFromNow                   = errors.New("voucher start period must be at least 1 day from now")
 	ErrVoucherHasEnded                                            = errors.New("voucher has ended")
 	ErrOngoingStartDatetimeUpdated                                = errors.New("ongoing voucher/promotion start period cannot be updated")
-	ErrMaximumQuotaLowerThanCurrentQuota                          = errors.New("voucher maximum quota is lower than current quota")
+	ErrMaximumQuotaLowerThanCurrentQuota                          = errors.New("voucher/promotion maximum quota is lower than current quota")
+	ErrMaximumQuotaLowerThanMaximumUserLimit                      = errors.New("promotion maximum quota is than maximum user limit")
 	ErrVoucherEndDatetimeEarlierThanNow                           = errors.New("voucher end period is earlier than now")
 	ErrVoucherNotUpcoming                                         = errors.New("voucher is not upcoming")
 	ErrStockIsNotAvailable                                        = errors.New("stock is not available")
@@ -119,6 +122,7 @@ var (
 	ErrPromotionPeriodMinimumOneHour                       = errors.New("promotion period must be at least 1 hour")
 	ErrPromotionStartDatetimeMinimumOneDayFromNow          = errors.New("promotion start period must be at least 1 day from now")
 	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 180 days")
+	ErrPromotionIsOngoing                                  = errors.New("promotion is ongoing")
 	ErrPromotionHasEnded                                   = errors.New("promotion has ended")
 	ErrPromotionDatetimeUpdatedBeyondRange                 = errors.New("updated promotion start/end period must be between current start/end period")
 	ErrPromotionUpdateProductIDListMismatch                = errors.New("updated promotion product id list and product merchant promotion are mismatched")
@@ -182,7 +186,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||
 		errors.Is(err, ErrInvalidResetPasswordID) ||
-		errors.Is(err, ErrInvalidModel) {
+		errors.Is(err, ErrInvalidModel) ||
+		errors.Is(err, ErrInvalidDiscountType) ||
+		errors.Is(err, ErrInvalidDiscount) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -239,6 +245,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherHasEnded) ||
 		errors.Is(err, ErrOngoingStartDatetimeUpdated) ||
 		errors.Is(err, ErrMaximumQuotaLowerThanCurrentQuota) ||
+		errors.Is(err, ErrMaximumQuotaLowerThanMaximumUserLimit) ||
 		errors.Is(err, ErrVoucherEndDatetimeEarlierThanNow) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
 		errors.Is(err, ErrPromotionStartDatetimeEarlierThanNow) ||
@@ -247,6 +254,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrPromotionStartDatetimeMinimumOneDayFromNow) ||
 		errors.Is(err, ErrPromotionPeriodExceedMaximumDays) ||
+		errors.Is(err, ErrPromotionIsOngoing) ||
 		errors.Is(err, ErrPromotionHasEnded) ||
 		errors.Is(err, ErrPromotionDatetimeUpdatedBeyondRange) ||
 		errors.Is(err, ErrPromotionUpdateProductIDListMismatch) ||

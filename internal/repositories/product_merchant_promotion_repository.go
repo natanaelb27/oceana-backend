@@ -9,6 +9,7 @@ import (
 
 type ProductMerchantPromotionRepository interface {
 	CreateProductMerchantPromotion(newModels []*models.ProductMerchantPromotion) (models []*models.ProductMerchantPromotion, err error)
+	GetByMpAndProductID(merchantPromotionID, productID uint) (model *models.ProductMerchantPromotion, err error)
 	GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error)
 	Update(newModel *models.ProductMerchantPromotion) (model *models.ProductMerchantPromotion, err error)
 	DeleteByProductID(productID uint) (model *models.ProductMerchantPromotion, err error)
@@ -40,6 +41,22 @@ func (pmp *productMerchantPromotionRepository) CreateProductMerchantPromotion(ne
 	}
 
 	models = newModels
+
+	return
+}
+
+func (pmp *productMerchantPromotionRepository) GetByMpAndProductID(merchantPromotionID, productID uint) (model *models.ProductMerchantPromotion, err error) {
+	queryResult := pmp.db.Where("merchant_promotion_id = ? AND product_id = ?", merchantPromotionID, productID).First(&model)
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrProductMerchantPromotionNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 
 	return
 }

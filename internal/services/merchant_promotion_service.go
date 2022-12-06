@@ -1,6 +1,7 @@
 package services
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -158,44 +159,62 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
 	// currently existing PMPs
-	currentPmp, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
+	currentPmpList, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
 	if err != nil {
 		return nil, err
 	}
 	var currentPmpProductIDList []int
-	for _, pmp := range currentPmp {
+	for _, pmp := range currentPmpList {
 		currentPmpProductIDList = append(currentPmpProductIDList, int(pmp.ProductID))
 	}
 
 	// PMP create/update & PMP validation
 	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
-
-		if pmpRequest.DiscountType == "nominal" {
-			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
+		// PMP validation
+		// ongoing promotion, no updates allowed to PMP
+		if currentMp.PromotionStatus == constants.OngoingPromotionOrVoucher {
+			return nil, e.ErrPromotionIsOngoing
+		}
+		// validate discount and type
+		err := utils.ValidatePmpDiscountAndType(pmpRequest.DiscountType, pmpRequest.Discount)
+		if err != nil {
+			return nil, err
 		}
 
-		if pmpRequest.DiscountType == "percentage" {
-			if pmpRequest.Discount > 100 {
-				return nil, e.ErrExceedDiscountPercentage
-			}
+		if pmpRequest.DiscountType == constants.Nominal {
+			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
+		}
+		// validate quota before update
+		currentPmpModel, err := mp.productMerchantPromotionRepository.GetByMpAndProductID(merchantPromotionID, pmpRequest.ProductID)
+		if err != nil {
+			return nil, err
+		}
+		err = utils.ValidatePmpQuota(currentPmpModel.CurrentQuota, pmpRequest.MaximumQuota, pmpRequest.MaximumUserLimit)
+		if err != nil {
+			return nil, err
 		}
 
 		// search PMP based on productIDList
 		existsInCurrentPmp := utils.ContainsInt(currentPmpProductIDList, int(pmpRequest.ProductID))
-		pmpModel := pmpRequest.ToModel(updatedMpModel.ID)
 		var updatedPmpModel *models.ProductMerchantPromotion
 		if !existsInCurrentPmp {
-			// create
-			var pmpModelSlice []*models.ProductMerchantPromotion
-			pmpModelSlice = append(pmpModelSlice, pmpModel)
-			createdPmpModel, err := mp.productMerchantPromotionRepository.CreateProductMerchantPromotion(pmpModelSlice)
+			// CREATE
+			var newPmpModelSlice []*models.ProductMerchantPromotion
+			newPmpModel := pmpRequest.ToModel(updatedMpModel.ID)
+			newPmpModelSlice = append(newPmpModelSlice, newPmpModel)
+			createdPmpModel, err := mp.productMerchantPromotionRepository.CreateProductMerchantPromotion(newPmpModelSlice)
 			if err != nil {
 				return nil, err
 			}
 			updatedPmpModel = createdPmpModel[0]
 		} else {
-			// update
-			updatedPmpModel, err = mp.productMerchantPromotionRepository.Update(pmpModel)
+			// UPDATE
+			currentPmpModel.DiscountType = pmpRequest.DiscountType
+			currentPmpModel.Discount = pmpRequest.Discount
+			currentPmpModel.MaximumDiscountAmount = pmpRequest.MaximumDiscountAmount
+			currentPmpModel.MaximumQuota = pmpRequest.MaximumQuota
+			currentPmpModel.MaximumUserLimit = pmpRequest.MaximumUserLimit
+			updatedPmpModel, err = mp.productMerchantPromotionRepository.Update(currentPmpModel)
 			if err != nil {
 				return nil, err
 			}
@@ -203,7 +222,7 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		updatedPmpResponse = append(updatedPmpResponse, dtos.NewProductMerchantPromotionResponse(updatedPmpModel))
 	}
 
-	// delete
+	// DELETE
 	for _, productID := range currentPmpProductIDList {
 		existsInPmpRequest := utils.ContainsInt(mpRequestProductIDList, productID)
 		if !existsInPmpRequest {
