@@ -178,7 +178,6 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		currentPmpProductIDList = append(currentPmpProductIDList, int(pmp.ProductID))
 	}
 
-	// PMP create/update & PMP validation
 	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
 		// PMP validation
 		// ongoing promotion, no updates allowed to PMP

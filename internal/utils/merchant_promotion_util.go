@@ -44,13 +44,11 @@ func ValidateMpUpdateDatetime(startDatetime, endDatetime, currentStartDatetime, 
 	}
 	// promotion upcoming
 	if promotionStatus == constants.UpcomingPromotionOrVoucher {
-		if startDatetime.Before(currentStartDatetime) {
-			return e.ErrPromotionDatetimeUpdatedBeyondRange
-		}
-		if endDatetime.After(currentEndDatetime) {
+		if startDatetime.Before(currentStartDatetime) || endDatetime.After(currentEndDatetime) {
 			return e.ErrPromotionDatetimeUpdatedBeyondRange
 		}
 	}
+
 	return nil
 }
 
