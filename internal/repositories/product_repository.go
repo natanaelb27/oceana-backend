@@ -432,7 +432,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	// filter by price category
 	if queryParams.CategoryID != 0 {
-		query.Where("products.category_id = ?", queryParams.CategoryID)
+		query.Where("products.category_id IN ?", queryParams.Categories)
 	}
 
 	// filter by price minimum

@@ -174,6 +174,7 @@ func Init() *Handler {
 		ProductVariationRepository:       productVariationRepository,
 		ProductViewRepository:            productViewRepository,
 		ProductFavoriteRepository:        productFavoriteRepository,
+		CategoryRepository:               categoryRepository,
 		MerchantCourierServiceRepository: merchantCourierServiceRepository,
 	})
 

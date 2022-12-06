@@ -3,7 +3,7 @@ package services
 import (
 	"time"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
+	productInternalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -13,13 +13,13 @@ import (
 )
 
 type ProductService interface {
-	GetAll(query *internalDtos.ProductQuery) ([]*internalDtos.Product, *utils.Pagination, error)
+	GetAll(query *productInternalDtos.ProductQuery) ([]*productInternalDtos.Product, *utils.Pagination, error)
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, quantity *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error)
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
-	GetUpdateByMerchantID(ID uint) (*internalDtos.ProductModel, error)
+	GetUpdateByMerchantID(ID uint) (*productInternalDtos.ProductModel, error)
 }
 
 type productService struct {
@@ -30,6 +30,7 @@ type productService struct {
 	productViewRepository            r.ProductViewRepository
 	productFavoriteRepository        r.ProductFavoriteRepository
 	merchantCourierServiceRepository r.MerchantCourierServiceRepository
+	categoryRepository               r.CategoryRepository
 }
 
 type ProductServiceConfig struct {
@@ -40,6 +41,7 @@ type ProductServiceConfig struct {
 	ProductViewRepository            r.ProductViewRepository
 	ProductFavoriteRepository        r.ProductFavoriteRepository
 	MerchantCourierServiceRepository r.MerchantCourierServiceRepository
+	CategoryRepository               r.CategoryRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
@@ -51,6 +53,7 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productViewRepository:            c.ProductViewRepository,
 		productFavoriteRepository:        c.ProductFavoriteRepository,
 		merchantCourierServiceRepository: c.MerchantCourierServiceRepository,
+		categoryRepository:               c.CategoryRepository,
 	}
 }
 
@@ -90,10 +93,20 @@ func (s *productService) GetPurchaseQuantitiesByID(userID uuid.UUID, query *dtos
 	return dtos.NewGetPurchaseQuantitiesByIDResponse(purchaseQuantities), nil
 }
 
-func (s *productService) GetAll(query *internalDtos.ProductQuery) (productDetails []*internalDtos.Product, pagination *utils.Pagination, err error) {
+func (s *productService) GetAll(query *productInternalDtos.ProductQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error) {
 	pagination = &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
+	}
+
+	if query.CategoryID != 0 {
+		var categories []uint
+		categories, err = s.GetCategoryIds(query.CategoryID)
+		if err != nil {
+			return
+		}
+
+		query.Categories = categories
 	}
 
 	productDetails, pagination, err = s.productRepository.GetAll(query, pagination)
@@ -102,6 +115,46 @@ func (s *productService) GetAll(query *internalDtos.ProductQuery) (productDetail
 	}
 
 	return productDetails, pagination, nil
+}
+
+func (d *productService) GetAllSubCategories(categoryData []*models.Category) ([]uint, error) {
+	category := []uint{}
+
+	for _, cat := range categoryData {
+		subCategoryData, err := d.categoryRepository.GetAllSubCategoriesByParentID(cat.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		category = append(category, cat.ID)
+
+		if len(subCategoryData) > 0 {
+			subCategory, err := d.GetAllSubCategories(subCategoryData)
+			if err != nil {
+				return nil, err
+			}
+
+			category = append(category, subCategory...)
+		}
+	}
+
+	return category, nil
+}
+
+func (s *productService) GetCategoryIds(id uint) ([]uint, error) {
+	categoryData, err := s.categoryRepository.GetAllSubCategoriesByParentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := s.GetAllSubCategories(categoryData)
+	if err != nil {
+		return nil, err
+	}
+
+	category = append(category, id)
+
+	return category, nil
 }
 
 func (s *productService) ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error) {
@@ -204,7 +257,7 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
 }
 
-func (s *productService) GetUpdateByMerchantID(merchantID uint) (*internalDtos.ProductModel, error) {
+func (s *productService) GetUpdateByMerchantID(merchantID uint) (*productInternalDtos.ProductModel, error) {
 	// product
 	productModel, err := s.productRepository.GetUpdateByMerchantID(merchantID)
 	if err != nil {

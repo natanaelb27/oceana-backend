@@ -61,6 +61,7 @@ var (
 	ErrEmailAddressAlreadyExist                  = errors.New("email address is already registered")
 	ErrUsernameAlreadyExist                      = errors.New("username is already registered")
 	ErrPhoneNumberAlreadyExist                   = errors.New("phone number is already registered")
+	ErrGoogleIDAlreadyExist                      = errors.New("google id is already registered")
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
 	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
@@ -70,17 +71,18 @@ var (
 	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
 	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 
-	ErrUnauthorized             = errors.New("access is denied due to invalid credentials")
-	ErrUserNotFound             = errors.New("user not found")
-	ErrForbidden                = errors.New("you don't have permission to access this resource")
-	ErrResourceDoesNotExist     = errors.New("resource does not exist")
-	ErrStepUpNotFound           = errors.New("step up authenticaiton not found")
-	ErrStepUpScopeIncorrect     = errors.New("incorrect step up scope")
-	ErrVerificationCodeNotFound = errors.New("verification code not found")
-	ErrProductNotFound          = errors.New("product not found")
-	ErrVoucherNotFound          = errors.New("voucher not found")
-	ErrPromotionNotFound        = errors.New("promotion not found")
-	ErrOrderNotFound            = errors.New("order not found")
+	ErrUnauthorized                     = errors.New("access is denied due to invalid credentials")
+	ErrUserNotFound                     = errors.New("user not found")
+	ErrForbidden                        = errors.New("you don't have permission to access this resource")
+	ErrResourceDoesNotExist             = errors.New("resource does not exist")
+	ErrStepUpNotFound                   = errors.New("step up authenticaiton not found")
+	ErrStepUpScopeIncorrect             = errors.New("incorrect step up scope")
+	ErrVerificationCodeNotFound         = errors.New("verification code not found")
+	ErrProductNotFound                  = errors.New("product not found")
+	ErrVoucherNotFound                  = errors.New("voucher not found")
+	ErrPromotionNotFound                = errors.New("promotion not found")
+	ErrOrderNotFound                    = errors.New("order not found")
+	ErrProductMerchantPromotionNotFound = errors.New("product merchant promotion not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
@@ -126,7 +128,8 @@ var (
 	ErrSendingEmailFailed            = errors.New("sending email failed")
 	ErrInternalOperationFailed       = errors.New("internal operation failed")
 
-	ErrUnknown = errors.New("unknown")
+	ErrUnknown        = errors.New("unknown")
+	ErrRegisterGoogle = errors.New("register with google")
 )
 
 func GetStatusCode(err error) int {
@@ -190,6 +193,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEmailNotFound) ||
 		errors.Is(err, ErrVoucherNotFound) ||
 		errors.Is(err, ErrPromotionNotFound) ||
+		errors.Is(err, ErrProductMerchantPromotionNotFound) ||
 		errors.Is(err, ErrOrderNotFound) ||
 		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
@@ -198,6 +202,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUsernameAlreadyExist) ||
 		errors.Is(err, ErrPasswordCannotBeTheSameAsPreviousPassword) ||
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
+		errors.Is(err, ErrGoogleIDAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
 		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
