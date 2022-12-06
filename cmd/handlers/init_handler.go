@@ -147,6 +147,7 @@ func Init() *Handler {
 		ProductVariationRepository: productVariationRepository,
 		ProductViewRepository:      productViewRepository,
 		ProductFavoriteRepository:  productFavoriteRepository,
+		CategoryRepository:         categoryRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
