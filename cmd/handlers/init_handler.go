@@ -179,23 +179,31 @@ func Init() *Handler {
 		SubDistrictRepository: subDistrictRepository,
 	})
 
+	marketplaceVoucherRepository := repositories.NewMarketplaceVoucherRepository(&repositories.MarketplaceVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+	marketplaceVoucherService := services.NewMarketplaceVoucherService(&services.MarketplaceVoucherServiceConfig{
+		MarketplaceVoucherRepository: marketplaceVoucherRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:              roleService,
-		WalletService:            walletService,
-		AuthService:              authService,
-		CategoryService:          categoryService,
-		UserService:              userService,
-		ProfileService:           profileService,
-		SealabsPayService:        sealabsPayService,
-		MerchantVoucherService:   merchantVoucherService,
-		ProductService:           productService,
-		AddressService:           addressService,
-		MerchantService:          merchantService,
-		OrderService:             orderService,
-		ProductReviewService:     productReviewService,
-		MerchantPromotionService: merchantPromotionService,
-		CartService:              cartService,
-		SubDistrictService:       subDistrictService,
+		RoleService:               roleService,
+		WalletService:             walletService,
+		AuthService:               authService,
+		CategoryService:           categoryService,
+		UserService:               userService,
+		ProfileService:            profileService,
+		SealabsPayService:         sealabsPayService,
+		MerchantVoucherService:    merchantVoucherService,
+		ProductService:            productService,
+		AddressService:            addressService,
+		MerchantService:           merchantService,
+		OrderService:              orderService,
+		ProductReviewService:      productReviewService,
+		MerchantPromotionService:  merchantPromotionService,
+		CartService:               cartService,
+		SubDistrictService:        subDistrictService,
+		MarketplaceVoucherService: marketplaceVoucherService,
 	})
 
 	return h
