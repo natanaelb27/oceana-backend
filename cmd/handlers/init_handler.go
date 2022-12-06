@@ -140,6 +140,33 @@ func Init() *Handler {
 		ProductItemRepository: productItemRepository,
 	})
 
+	courierServiceRepository := repositories.NewCourierServiceRepository(&repositories.CourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierRepository := repositories.NewCourierRepository(&repositories.CourierRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierService := services.NewCourierService(&services.CourierServiceConfig{
+		CourierRepository:        courierRepository,
+		CourierServiceRepository: courierServiceRepository,
+	})
+
+	merchantConfigurationRepository := repositories.NewMerchantConfigurationRepository(&repositories.MerchantConfigurationRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantCourierServiceRepository := repositories.NewMerchantCourierServiceRepository(&repositories.MerchantCourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	logisticService := services.NewLogisticService(&services.LogisticServiceConfig{
+		CourierRepository:                courierRepository,
+		CourierServiceRepository:         courierServiceRepository,
+		MerchantCourierServiceRepository: merchantCourierServiceRepository,
+		UserRepository:                   userRepository,
+		MerchantRepository:               merchantRepository,
+		MerchantConfigurationRepository:  merchantConfigurationRepository,
+		ProductRepository:                productRepository,
+	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
 		ProductRepository:          productRepository,
 		MerchantRepository:         merchantRepository,
@@ -196,6 +223,8 @@ func Init() *Handler {
 		MerchantPromotionService: merchantPromotionService,
 		CartService:              cartService,
 		SubDistrictService:       subDistrictService,
+		CourierService:           courierService,
+		LogisticService:          logisticService,
 	})
 
 	return h

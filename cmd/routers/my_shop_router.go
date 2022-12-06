@@ -22,5 +22,8 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.PUT("/promotions/:merchant-promotion-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionUpdate)
 		// orders
 		privateRoute.PATCH("/orders/:order-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
+		// logistic
+		privateRoute.GET("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGet)
+		privateRoute.PATCH("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticUpdate)
 	}
 }

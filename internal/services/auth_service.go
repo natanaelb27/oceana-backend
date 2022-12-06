@@ -120,12 +120,14 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 		}
 		refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
 		refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+		fmt.Println("MASUK")
 		err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), refreshTokenCode, refreshTokenDuration)
 		if err != nil {
 			return nil, err
 		}
 		userLoginData.RefreshToken = refreshTokenCode
 		userLoginData.ExpireDuration = refreshTokenDuration
+		fmt.Println("MASUK")
 		return userLoginData, nil
 	}
 
