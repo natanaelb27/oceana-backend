@@ -121,7 +121,7 @@ func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*interna
 		Select("ARRAY_AGG(p_variants.index)").
 		Joins("JOIN (?) p_variants ON p_variants.id = p_variations.product_variant_id", sqVariant).
 		Where("p_variations.product_item_id = pi.id")
-	queryResult := r.db.Debug().Table("product_items pi").
+	queryResult := r.db.Table("product_items pi").
 		Select(`
 			pi.id AS id,
 			pi.sku AS sku,
