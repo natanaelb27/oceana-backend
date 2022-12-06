@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"time"
 
 	productInternalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -105,7 +104,6 @@ func (s *productService) GetAll(query *productInternalDtos.ProductQuery) (produc
 
 		query.Categories = categories
 	}
-	fmt.Println(query.Categories)
 
 	productDetails, pagination, err = s.productRepository.GetAll(query, pagination)
 	if err != nil {
