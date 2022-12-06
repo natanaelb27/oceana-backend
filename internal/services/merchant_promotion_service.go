@@ -122,7 +122,28 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		return nil, err
 	}
 
+	// MP validations
+	// name
+	if mpRequest.Name == "" {
+		return nil, e.ErrEmptyName
+	}
+	// datetime
 	err = utils.ValidateMpUpdateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime, currentMp.StartDatetime, currentMp.EndDatetime, currentMp.PromotionStatus)
+	if err != nil {
+		return nil, err
+	}
+	// match product ID list with PMP
+	// convert ProductIDList []int64 -> []int
+	var mpRequestProductIDList []int
+	for _, productID := range mpRequest.ProductIDList {
+		mpRequestProductIDList = append(mpRequestProductIDList, int(productID))
+	}
+	// convert PMP request to product ID list
+	var pmpRequestProductIDList []int
+	for _, pmp := range mpRequest.ProductMerchantPromotion {
+		pmpRequestProductIDList = append(pmpRequestProductIDList, int(pmp.ProductID))
+	}
+	err = utils.ValidateMpProductIDList(mpRequestProductIDList, pmpRequestProductIDList)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +157,7 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	}
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
-	// currenttly existing PMPs
+	// currently existing PMPs
 	currentPmp, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
 	if err != nil {
 		return nil, err
@@ -182,14 +203,9 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		updatedPmpResponse = append(updatedPmpResponse, dtos.NewProductMerchantPromotionResponse(updatedPmpModel))
 	}
 
-	// convert ProductIDList []int64 -> []int and sort ASC for SearchInts
-	var productIDListIntSlice []int
-	for _, productID := range mpRequest.ProductIDList {
-		productIDListIntSlice = append(productIDListIntSlice, int(productID))
-	}
 	// delete
 	for _, productID := range currentPmpProductIDList {
-		existsInPmpRequest := utils.ContainsInt(productIDListIntSlice, productID)
+		existsInPmpRequest := utils.ContainsInt(mpRequestProductIDList, productID)
 		if !existsInPmpRequest {
 			_, err := mp.productMerchantPromotionRepository.DeleteByProductID(uint(productID))
 			if err != nil {

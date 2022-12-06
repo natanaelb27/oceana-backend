@@ -53,3 +53,15 @@ func ValidateMpUpdateDatetime(startDatetime, endDatetime, currentStartDatetime, 
 	}
 	return nil
 }
+
+func ValidateMpProductIDList(mpRequestProductIDList, pmpRequestProductIDList []int) error {
+	if len(mpRequestProductIDList) != len(pmpRequestProductIDList) {
+		return e.ErrPromotionUpdateProductIDListMismatch
+	}
+	for i := 0; i < len(mpRequestProductIDList); i++ {
+		if mpRequestProductIDList[i] != pmpRequestProductIDList[i] {
+			return e.ErrPromotionUpdateProductIDListMismatch
+		}
+	}
+	return nil
+}

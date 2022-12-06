@@ -121,6 +121,7 @@ var (
 	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 180 days")
 	ErrPromotionHasEnded                                   = errors.New("promotion has ended")
 	ErrPromotionDatetimeUpdatedBeyondRange                 = errors.New("updated promotion start/end period must be between current start/end period")
+	ErrPromotionUpdateProductIDListMismatch                = errors.New("updated promotion product id list and product merchant promotion are mismatched")
 
 	ErrInsertFailed                  = errors.New("insert failed")
 	ErrDatabaseOperationFailed       = errors.New("database operation failed")
@@ -248,6 +249,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrPromotionHasEnded) ||
 		errors.Is(err, ErrPromotionDatetimeUpdatedBeyondRange) ||
+		errors.Is(err, ErrPromotionUpdateProductIDListMismatch) ||
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
