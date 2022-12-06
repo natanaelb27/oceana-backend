@@ -45,7 +45,7 @@ func (pmp *productMerchantPromotionRepository) CreateProductMerchantPromotion(ne
 }
 
 func (pmp *productMerchantPromotionRepository) GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error) {
-	queryResult := pmp.db.Where("merchant_promotion_id = ?", merchantPromotionID).Find(&models).Order("product_id ASC")
+	queryResult := pmp.db.Where("merchant_promotion_id = ?", merchantPromotionID).Order("product_id ASC").Find(&models)
 
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrProductMerchantPromotionNotFound

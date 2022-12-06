@@ -71,12 +71,13 @@ func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
 }
 
 type MerchantPromotionDetails struct {
-	ID              uint      `json:"id"`
-	MerchantId      uint      `json:"merchant_id"`
-	Name            string    `json:"name"`
-	StartDatetime   time.Time `json:"start_date_time"`
-	EndDatetime     time.Time `json:"end_date_time"`
-	PromotionStatus string    `json:"promotion_status"`
+	ID                       uint                                `json:"id"`
+	MerchantId               uint                                `json:"merchant_id"`
+	Name                     string                              `json:"name"`
+	StartDatetime            time.Time                           `json:"start_date_time"`
+	EndDatetime              time.Time                           `json:"end_date_time"`
+	PromotionStatus          string                              `json:"promotion_status"`
+	ProductMerchantPromotion []*ProductMerchantPromotionResponse `json:"product_merchant_promotion"`
 }
 
 func NewMerchantPromotionDetails(source *models.MerchantPromotion) (target *MerchantPromotionDetails) {
