@@ -13,7 +13,7 @@ import (
 type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
-	GetUpsertModelByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
+	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
 }
 
 type productItemRepository struct {
@@ -105,7 +105,7 @@ func (r *productItemRepository) GetById(id uint) (model *models.ProductItem, err
 	return
 }
 
-func (r *productItemRepository) GetUpsertModelByProductID(productID uint) ([]*internalProductDtos.ProductItem, error) {
+func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error) {
 	var productModels []*internalProductDtos.ProductItem
 
 	sqVariant := r.db.Table("product_variants p_variants").

@@ -19,7 +19,7 @@ type ProductService interface {
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
-	GetUpsertModelByMerchantID(ID uint) (*internalDtos.ProductModel, error)
+	GetUpdateByMerchantID(ID uint) (*internalDtos.ProductModel, error)
 }
 
 type productService struct {
@@ -204,14 +204,14 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
 }
 
-func (s *productService) GetUpsertModelByMerchantID(merchantID uint) (*internalDtos.ProductModel, error) {
+func (s *productService) GetUpdateByMerchantID(merchantID uint) (*internalDtos.ProductModel, error) {
 	// product
-	productModel, err := s.productRepository.GetUpsertModelByMerchantID(merchantID)
+	productModel, err := s.productRepository.GetUpdateByMerchantID(merchantID)
 	if err != nil {
 		return nil, err
 	}
 
-	productItems, err := s.productItemRepository.GetUpsertModelByProductID(productModel.ID)
+	productItems, err := s.productItemRepository.GetUpdateByProductID(productModel.ID)
 	// product_items
 	if err != nil {
 		return nil, err
@@ -219,7 +219,7 @@ func (s *productService) GetUpsertModelByMerchantID(merchantID uint) (*internalD
 	productModel.ProductItems = productItems
 
 	// variants
-	variants, err := s.productVariationRepository.GetUpsertModelByProductID(productModel.ID)
+	variants, err := s.productVariationRepository.GetUpdateByProductID(productModel.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -229,14 +229,14 @@ func (s *productService) GetUpsertModelByMerchantID(merchantID uint) (*internalD
 	// get all merchant courier service left join product courier service and add to its courier
 
 	// couriers
-	couriers, err := s.merchantCourierServiceRepository.GetAllCouriersByMerchantIDForProductUpsertModel(merchantID)
+	couriers, err := s.merchantCourierServiceRepository.GetAllCouriersByMerchantIDForProductUpdate(merchantID)
 	if err != nil && err != e.ErrDataNotFound {
 		return nil, err
 	}
 	productModel.Couriers = couriers
 	//  courier > courier_services
 	for iC := range couriers {
-		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpsertModel(merchantID, productModel.ID)
+		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID, productModel.ID)
 		if err != nil && err != e.ErrDataNotFound {
 			return nil, err
 		}

@@ -161,7 +161,7 @@ func (h *Handler) ProductModelById(c *gin.Context) {
 		return
 	}
 
-	productModel, err := h.productService.GetUpsertModelByMerchantID(uint(productID))
+	productModel, err := h.productService.GetUpdateByMerchantID(uint(productID))
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

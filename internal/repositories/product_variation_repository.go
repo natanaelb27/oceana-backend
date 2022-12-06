@@ -10,7 +10,7 @@ import (
 
 type ProductVariationRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductVariation, error)
-	GetUpsertModelByProductID(productID uint) ([]*internalProductDtos.Variants, error)
+	GetUpdateByProductID(productID uint) ([]*internalProductDtos.Variants, error)
 }
 
 type productVariationRepository struct {
@@ -85,7 +85,7 @@ func (r *productVariationRepository) GetByProductID(productID uint) ([]*dtos.Pro
 	return productVariations, nil
 }
 
-func (r *productVariationRepository) GetUpsertModelByProductID(productID uint) ([]*internalProductDtos.Variants, error) {
+func (r *productVariationRepository) GetUpdateByProductID(productID uint) ([]*internalProductDtos.Variants, error) {
 	var result []*internalProductDtos.Variants
 
 	subQueryOptions := r.db.Model(&models.ProductVariant{}).

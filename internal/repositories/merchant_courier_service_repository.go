@@ -16,8 +16,8 @@ type MerchantCourierServiceRepository interface {
 	GetByMerchantIDCourierServiceID(merchantID uint, courierServiceID uint) (model *models.MerchantCourierService, err error)
 	UpsertUsingMap(modelMap map[string]any) (err error)
 	Create(newModel *models.MerchantCourierService) (model *models.MerchantCourierService, err error)
-	GetAllCouriersByMerchantIDForProductUpsertModel(merchantID uint) (model []*internalProductDtos.Courier, err error)
-	GetAllCourierServicesByMerchantIDProductIDForProductUpsertModel(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error)
+	GetAllCouriersByMerchantIDForProductUpdate(merchantID uint) (model []*internalProductDtos.Courier, err error)
+	GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error)
 }
 
 type merchantCourierServiceRepository struct {
@@ -124,7 +124,7 @@ func (w *merchantCourierServiceRepository) Create(newModel *models.MerchantCouri
 	return
 }
 
-func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductUpsertModel(merchantID uint) (model []*internalProductDtos.Courier, err error) {
+func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductUpdate(merchantID uint) (model []*internalProductDtos.Courier, err error) {
 	result := r.db.
 		Table("merchant_courier_services mcs").
 		Select(`
@@ -149,7 +149,7 @@ func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductU
 	return
 }
 
-func (r *merchantCourierServiceRepository) GetAllCourierServicesByMerchantIDProductIDForProductUpsertModel(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error) {
+func (r *merchantCourierServiceRepository) GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error) {
 	result := r.db.
 		Table("merchant_courier_services mcs").
 		Select(`

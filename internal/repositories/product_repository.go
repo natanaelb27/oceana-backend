@@ -21,7 +21,7 @@ type ProductRepository interface {
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
-	GetUpsertModelByMerchantID(id uint) (model *product_dtos.ProductModel, err error)
+	GetUpdateByMerchantID(id uint) (model *product_dtos.ProductModel, err error)
 }
 
 type productRepository struct {
@@ -487,7 +487,7 @@ func (r *productRepository) UpdateUsingMapByMapCondition(conditionMap map[string
 	return
 }
 
-func (r *productRepository) GetUpsertModelByMerchantID(id uint) (productModel *product_dtos.ProductModel, err error) {
+func (r *productRepository) GetUpdateByMerchantID(id uint) (productModel *product_dtos.ProductModel, err error) {
 	sqProductMediaImage := r.db.Model(&models.ProductMedia{}).
 		Select("ARRAY_AGG(media_url)").
 		Where("product_media.type = ?", product_media_constants.TypeImage).
