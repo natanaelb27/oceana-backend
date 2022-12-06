@@ -19,6 +19,7 @@ type ProductRepository interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
+	GetByProductItemID(productItemID uint) (*models.Product, error)
 }
 
 type productRepository struct {
@@ -472,4 +473,17 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	}
 
 	return ProductDetails, pagination, nil
+}
+
+func (r *productRepository) GetByProductItemID(productItemID uint) (*models.Product, error) {
+	var model *models.Product
+
+	result := r.db.Joins("LEFT JOIN product_items ON id = product_items.product_id").
+		First(&model, "product_items.id = ?", productItemID)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, e.ErrProductNotFound
+	}
+
+	return model, result.Error
 }

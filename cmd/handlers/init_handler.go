@@ -138,6 +138,8 @@ func Init() *Handler {
 	cartService := services.NewCartService(&services.CartServiceConfig{
 		CartRepository:        cartRepository,
 		ProductItemRepository: productItemRepository,
+		WalletRepository:      walletRepository,
+		RedisRepository:       redisRepository,
 	})
 
 	productService := services.NewProductService(&services.ProductServiceConfig{

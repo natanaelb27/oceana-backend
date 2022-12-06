@@ -38,3 +38,30 @@ type Merchant struct {
 	MerchantProvince string     `json:"merchant_province"`
 	Products         []*Product `json:"products" gorm:"-"`
 }
+
+type OrderCartItem struct {
+	ProductItemID      uint
+	Quantity           *uint
+	Message            *string
+	Price              uint
+	PriceAfterDiscount uint
+}
+
+type CartOrderItem struct {
+	OrderCartItems          []OrderCartItem
+	MerchantID              uint
+	MerchantVoucherID       *uint
+	MerchantPromotionID     *uint
+	CourierServiceID        uint
+	TotalPrice              uint
+	TotalPriceAfterDiscount uint
+}
+
+type CartPayment struct {
+	UserID                  uuid.UUID
+	CartOrderItems          []CartOrderItem
+	MarketplaceVoucherID    *uint
+	AddressID               uint
+	TotalPrice              uint
+	TotalPriceAfterDiscount uint
+}
