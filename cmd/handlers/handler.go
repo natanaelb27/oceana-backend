@@ -23,6 +23,8 @@ type Handler struct {
 	productReviewService     services.ProductReviewService
 	merchantPromotionService services.MerchantPromotionService
 	cartService              services.CartService
+	courierService           services.CourierService
+	logisticService          services.LogisticService
 	subDistrictService       services.SubDistrictService
 	rajaOngkirService        services.RajaOngkirService
 }
@@ -43,6 +45,8 @@ type HandlerConfig struct {
 	ProductReviewService     services.ProductReviewService
 	MerchantPromotionService services.MerchantPromotionService
 	CartService              services.CartService
+	CourierService           services.CourierService
+	LogisticService          services.LogisticService
 	SubDistrictService       services.SubDistrictService
 	RajaOngkirService        services.RajaOngkirService
 }
@@ -64,6 +68,8 @@ func New(c *HandlerConfig) *Handler {
 		productReviewService:     c.ProductReviewService,
 		merchantPromotionService: c.MerchantPromotionService,
 		cartService:              c.CartService,
+		courierService:           c.CourierService,
+		logisticService:          c.LogisticService,
 		subDistrictService:       c.SubDistrictService,
 		rajaOngkirService:        c.RajaOngkirService,
 	}

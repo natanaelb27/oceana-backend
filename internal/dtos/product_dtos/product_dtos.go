@@ -57,6 +57,8 @@ type ProductQuery struct {
 	PriceMaximum    uint
 	MerchantCities  []string
 	CourierServices []string
+	// Categories
+	Categories []uint
 }
 
 func NewProductQuery(c *gin.Context) *ProductQuery {

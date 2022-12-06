@@ -14,6 +14,7 @@ type UserRepository interface {
 	GetByEmailID(emailID uuid.UUID) (model *models.User, err error)
 	GetByID(id uuid.UUID) (model *models.User, err error)
 	GetByIDJoinsEmail(id uuid.UUID) (model *models.User, err error)
+	GetByGoogleID(googleID string) (model *models.User, err error)
 	Update(id uuid.UUID, newModel *models.User) (model *models.User, err error)
 }
 
@@ -84,6 +85,16 @@ func (u *userRepository) GetByID(id uuid.UUID) (model *models.User, err error) {
 
 func (u *userRepository) GetByIDJoinsEmail(id uuid.UUID) (model *models.User, err error) {
 	result := u.db.Joins("Email").First(&model, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (u *userRepository) GetByGoogleID(googleID string) (model *models.User, err error) {
+	result := u.db.Where("google_id = ?", googleID).First(&model)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
