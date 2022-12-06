@@ -36,6 +36,7 @@ func Init(h *handlers.Handler) {
 	cart(public, private, h)
 	product(public, private, h)
 	review(public, private, h)
+	courier(public, private, h)
 	subDistrict(public, private, h)
 
 	r.NoRoute(h.NotFound)
