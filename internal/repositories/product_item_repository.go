@@ -33,12 +33,14 @@ func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductM
 		Select(`
 			product_variants.product_variant_type_id AS product_variant_type_id, 
 			product_variants.id AS product_variant_id, 
-			ROW_NUMBER () OVER (PARTITION BY product_variants.product_variant_type_id ORDER BY product_variants.id ASC) - 1 AS variation_index 
+			ROW_NUMBER () OVER (PARTITION BY product_variants.product_variant_type_id ORDER BY product_variants.id ASC) - 1 AS variation_index,
+			name AS name
 		`)
 
 	subQueryProductItemVariationIndex := r.db.Model(&models.ProductItem{}).
 		Select(`
 			product_items.id AS product_item_id, 
+			STRING_AGG(tbl_variation_index.name, ', ' ORDER BY tbl_variation_index.product_variant_type_id ASC) AS product_variations,
 			ARRAY_AGG(variation_index ORDER BY tbl_variation_index.product_variant_type_id ASC) AS variation_index
 		`).
 		Joins("JOIN product_variations ON product_variations.product_item_id = product_items.id").
@@ -76,7 +78,8 @@ func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductM
 					ELSE product_items.price - LEAST((product_items.price * product_discount_agg.discount) / 100.0, product_discount_agg.maximum_discount_amount)
 				END
 			) AS price_after_discount,
-			product_item_variation_index.variation_index AS variation_index
+			product_item_variation_index.variation_index AS variation_index,
+			product_item_variation_index.product_variations AS product_variations
 		`).
 		Joins("JOIN products ON product_items.product_id = products.id").
 		Joins("LEFT JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
