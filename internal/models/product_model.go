@@ -19,6 +19,7 @@ type Product struct {
 	PackageSize string
 	Condition   string
 	Status      string
+	ProcessDay  uint
 	PreorderDay uint
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	internalLogisticDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
+	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -15,6 +16,8 @@ type MerchantCourierServiceRepository interface {
 	GetByMerchantIDCourierServiceID(merchantID uint, courierServiceID uint) (model *models.MerchantCourierService, err error)
 	UpsertUsingMap(modelMap map[string]any) (err error)
 	Create(newModel *models.MerchantCourierService) (model *models.MerchantCourierService, err error)
+	GetAllCouriersByMerchantIDForProductUpsertModel(merchantID uint) (model []*internalProductDtos.Courier, err error)
+	GetAllCourierServicesByMerchantIDProductIDForProductUpsertModel(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error)
 }
 
 type merchantCourierServiceRepository struct {
@@ -117,6 +120,62 @@ func (w *merchantCourierServiceRepository) Create(newModel *models.MerchantCouri
 	}
 
 	model = newModel
+
+	return
+}
+
+func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductUpsertModel(merchantID uint) (model []*internalProductDtos.Courier, err error) {
+	result := r.db.
+		Table("merchant_courier_services mcs").
+		Select(`
+			c.id AS id,
+			c.code AS code,
+			c.name AS name
+		`).
+		Joins("JOIN courier_services cs ON  mcs.courier_service_id = cs.id ").
+		Joins("JOIN couriers c ON cs.courier_id = c.id ").
+		Where("merchant_id = ?", merchantID).
+		Group("c.id").
+		Find(&model)
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *merchantCourierServiceRepository) GetAllCourierServicesByMerchantIDProductIDForProductUpsertModel(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error) {
+	result := r.db.
+		Table("merchant_courier_services mcs").
+		Select(`
+			cs.id AS id,
+			cs.code AS code,
+			cs.description AS description,
+			(
+				CASE
+					WHEN pcs.id IS NOT NULL
+						THEN TRUE
+					ELSE FALSE
+				END
+			) AS is_active
+		`).
+		Joins("JOIN courier_services cs ON  mcs.courier_service_id = cs.id ").
+		Joins("LEFT JOIN product_courier_services pcs ON  mcs.id = pcs.merchant_courier_service_id AND (?) = pcs.product_id", productID).
+		Where("merchant_id = ?", merchantID).
+		Find(&model)
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }

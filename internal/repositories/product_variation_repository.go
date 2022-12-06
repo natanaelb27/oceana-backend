@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -9,6 +10,7 @@ import (
 
 type ProductVariationRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductVariation, error)
+	GetUpsertModelByProductID(productID uint) ([]*internalProductDtos.Variants, error)
 }
 
 type productVariationRepository struct {
@@ -81,4 +83,39 @@ func (r *productVariationRepository) GetByProductID(productID uint) ([]*dtos.Pro
 	}
 
 	return productVariations, nil
+}
+
+func (r *productVariationRepository) GetUpsertModelByProductID(productID uint) ([]*internalProductDtos.Variants, error) {
+	var result []*internalProductDtos.Variants
+
+	subQueryOptions := r.db.Model(&models.ProductVariant{}).
+		Select(`
+		product_variant_types.id AS product_variant_type_id, 
+		ARRAY_AGG(product_variants.name ORDER BY product_variants.id ASC) AS options
+	`).
+		Joins("JOIN product_variant_types ON product_variant_types.id = product_variants.product_variant_type_id").
+		Group("product_variant_types.id").
+		Order("product_variant_types.id ASC")
+	subQueryVariantImage := r.db.Model(&models.ProductVariantMedia{}).
+		Select(`
+		product_variants.product_variant_type_id AS product_variant_type_id, 
+		ARRAY_AGG(product_variant_media.media_url ORDER BY product_variant_media.product_variant_id ASC) AS images
+	`).
+		Joins("JOIN product_variants ON product_variant_media.product_variant_id = product_variants.id").
+		Group("product_variants.product_variant_type_id")
+	queryResult := r.db.Model(&models.ProductVariantType{}).
+		Select(`
+			product_variant_types.name AS name,
+			option.options AS options,
+			COALESCE(variant_image.images, '{}') AS images
+		`).
+		Joins("JOIN (?) option ON product_variant_types.id = option.product_variant_type_id", subQueryOptions).
+		Joins("LEFT JOIN (?) variant_image ON product_variant_types.id = variant_image.product_variant_type_id", subQueryVariantImage).
+		Where("product_variant_types.product_id = ?", productID).
+		Find(&result)
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return result, nil
 }

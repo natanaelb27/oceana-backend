@@ -8,6 +8,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 type Merchant struct {
@@ -118,4 +119,59 @@ func NewShopProductQuery(c *gin.Context) (query *ProductQuery, err error) {
 	query.MerchantID = uint(merchantId)
 
 	return
+}
+
+type CourierService struct {
+	ID          uint   `json:"id"`
+	Code        string `json:"code"`
+	Description string `json:"name"`
+	IsActive    bool   `json:"is_active"`
+}
+
+type Courier struct {
+	ID             uint              `json:"id"`
+	Code           string            `json:"code"`
+	Name           string            `json:"name"`
+	IsActive       bool              `json:"is_active" gorm:"-"`
+	CourierService []*CourierService `json:"courier_service" gorm:"-"`
+}
+
+type Logistics struct {
+	Price     uint `json:"price"`
+	IsEnabled bool `json:"is_enabled"`
+}
+
+type Variants struct {
+	Name    string         `json:"name"`
+	Options pq.StringArray `json:"options" gorm:"type:text[]"`
+	Images  pq.StringArray `json:"images" gorm:"type:text[]"`
+}
+
+type ProductItem struct {
+	ID  uint   `json:"id"`
+	SKU string `json:"sku"`
+	// pq.Int64Array which is integer[] in gorm can receive array of integer from sql (for example array_agg)
+	VariantIndex  pq.Int64Array `json:"variant_index" gorm:"type:integer[]"`
+	Price         uint          `json:"price"`
+	StockQuantity uint          `json:"stock_quantity"`
+}
+
+type ProductModel struct {
+	ID          uint           `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CategoryID  uint           `json:"category_id"`
+	Weight      uint           `json:"weight"`
+	IsHazardous bool           `json:"is_hazardous"`
+	PackageSize string         `json:"package_size"`
+	Condition   string         `json:"condition"`
+	Status      string         `json:"status"`
+	ProcessDay  uint           `json:"process_day"`
+	PreorderDay uint           `json:"preorder_day"`
+	Images      pq.StringArray `json:"images" gorm:"type:text[]"`
+	Videos      pq.StringArray `json:"videos" gorm:"type:text[]"`
+	// gorm:"-" tells gorm ignore this field when write and read with struct
+	ProductItems []*ProductItem `json:"product_items" gorm:"-"`
+	Variants     []*Variants    `json:"variants" gorm:"-"`
+	Couriers     []*Courier     `json:"couriers" gorm:"-"`
 }

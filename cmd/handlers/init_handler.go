@@ -168,12 +168,13 @@ func Init() *Handler {
 	})
 
 	productService := services.NewProductService(&services.ProductServiceConfig{
-		ProductRepository:          productRepository,
-		MerchantRepository:         merchantRepository,
-		ProductItemRepository:      productItemRepository,
-		ProductVariationRepository: productVariationRepository,
-		ProductViewRepository:      productViewRepository,
-		ProductFavoriteRepository:  productFavoriteRepository,
+		ProductRepository:                productRepository,
+		MerchantRepository:               merchantRepository,
+		ProductItemRepository:            productItemRepository,
+		ProductVariationRepository:       productVariationRepository,
+		ProductViewRepository:            productViewRepository,
+		ProductFavoriteRepository:        productFavoriteRepository,
+		MerchantCourierServiceRepository: merchantCourierServiceRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
