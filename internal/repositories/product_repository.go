@@ -160,21 +160,33 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 
 	subQueryUserCart := r.db.Model(&models.Cart{}).
 		Select(`
+			carts.user_id AS user_id,
 			product_items.product_id AS product_id, 
 			SUM(carts.quantity) AS total_quantity
 		`).
 		Joins("JOIN product_items ON carts.product_item_id = product_items.id").
 		Where("carts.user_id = ?", userID).
+		Where("product_items.product_id = ?", productID).
 		Group("carts.user_id, product_items.product_id")
 
-	subQueryUserUsage := r.db.Model(&models.UserMerchantPromotion{}).
+	subQueryUserMerchantPromotion := r.db.Model(&models.UserMerchantPromotion{}).
 		Select(`
-			user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
-			user_merchant_promotions.usage + COALESCE(user_cart.total_quantity, 0) AS total_usage
+		user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
+		product_merchant_promotions.product_id AS product_id,
+		user_merchant_promotions.usage AS user_merchant_promotion_usage
 		`).
 		Joins("JOIN product_merchant_promotions ON product_merchant_promotions.id = user_merchant_promotions.product_merchant_promotion_id").
+		Where("user_merchant_promotions.user_id = ?", userID).
+		Where("product_merchant_promotions.product_id = ?", productID)
+
+	subQueryUserUsage := r.db.Model(&models.ProductMerchantPromotion{}).
+		Select(`
+			product_merchant_promotions.id AS product_merchant_promotion_id, 
+			COALESCE(user_cart.total_quantity, 0) + COALESCE(user_merchant_promo.user_merchant_promotion_usage, 0) AS total_usage
+		`).
 		Joins("LEFT JOIN (?) user_cart ON product_merchant_promotions.product_id = user_cart.product_id", subQueryUserCart).
-		Where("user_merchant_promotions.user_id = ?", userID)
+		Joins("LEFT JOIN (?) user_merchant_promo ON product_merchant_promotions.id = user_merchant_promo.product_merchant_promotion_id", subQueryUserMerchantPromotion).
+		Where("product_merchant_promotions.product_id = ?", productID)
 
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
@@ -417,7 +429,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	// filter by price category
 	if queryParams.CategoryID != 0 {
-		query.Where("products.category_id = ?", queryParams.CategoryID)
+		query.Where("products.category_id IN ?", queryParams.Categories)
 	}
 
 	// filter by price minimum
