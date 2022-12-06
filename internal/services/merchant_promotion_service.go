@@ -110,6 +110,16 @@ func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.Mer
 
 	response := dtos.NewMerchantPromotionDetails(result)
 
+	// get all PMPs related to the promotion
+	merchantPromotionModels, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
+	if err != nil {
+		return nil, err
+	}
+	for _, merchantPromotionModel := range merchantPromotionModels {
+		pmpResponse := dtos.NewProductMerchantPromotionResponse(merchantPromotionModel)
+		response.ProductMerchantPromotion = append(response.ProductMerchantPromotion, pmpResponse)
+	}
+
 	return response, nil
 }
 
