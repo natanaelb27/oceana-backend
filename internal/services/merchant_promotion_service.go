@@ -193,15 +193,6 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		if pmpRequest.DiscountType == constants.Nominal {
 			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
 		}
-		// validate quota before update
-		currentPmpModel, err := mp.productMerchantPromotionRepository.GetByMpAndProductID(merchantPromotionID, pmpRequest.ProductID)
-		if err != nil {
-			return nil, err
-		}
-		err = utils.ValidatePmpQuota(currentPmpModel.CurrentQuota, pmpRequest.MaximumQuota, pmpRequest.MaximumUserLimit)
-		if err != nil {
-			return nil, err
-		}
 
 		// search PMP based on productIDList
 		existsInCurrentPmp := utils.ContainsInt(currentPmpProductIDList, int(pmpRequest.ProductID))
@@ -218,6 +209,15 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 			updatedPmpModel = createdPmpModel[0]
 		} else {
 			// UPDATE
+			// validate quota before update
+			currentPmpModel, err := mp.productMerchantPromotionRepository.GetByMpAndProductID(merchantPromotionID, pmpRequest.ProductID)
+			if err != nil {
+				return nil, err
+			}
+			err = utils.ValidatePmpQuota(currentPmpModel.CurrentQuota, pmpRequest.MaximumQuota, pmpRequest.MaximumUserLimit)
+			if err != nil {
+				return nil, err
+			}
 			currentPmpModel.DiscountType = pmpRequest.DiscountType
 			currentPmpModel.Discount = pmpRequest.Discount
 			currentPmpModel.MaximumDiscountAmount = pmpRequest.MaximumDiscountAmount
