@@ -10,6 +10,7 @@ import (
 type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
+	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
 }
 
 type productItemRepository struct {
@@ -99,4 +100,33 @@ func (r *productItemRepository) GetById(id uint) (model *models.ProductItem, err
 	}
 
 	return
+}
+
+func (r *productItemRepository) GetDetailsById(ID uint) (*dtos.ProductItemDetails, error) {
+	var productItemDetails *dtos.ProductItemDetails
+	result := r.db.Model(&models.ProductItem{}).
+		Select(`
+			product_items.id AS product_item_id,
+			product_items.sku AS sku,
+			product_items.stock_quantity AS stock_quantity,
+			product_items.price AS price,
+			products.category_id AS category_id,
+			products.id AS product_id,
+			products.merchant_id AS merchant_id,
+			products.name AS name,
+			products.description AS description,
+			products.is_hazardous AS is_hazardous,
+			products.weight AS weight,
+			products.package_size AS package_size,
+			products.condition AS condition
+		`).
+		Joins("JOIN products ON products.id = product_items.product_id").
+		Where("product_items.id = ?", ID).
+		First(&productItemDetails)
+
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return productItemDetails, nil
 }

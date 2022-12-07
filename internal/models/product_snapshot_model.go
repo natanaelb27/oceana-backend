@@ -10,10 +10,14 @@ type ProductSnapshot struct {
 	ID          uint
 	CategoryID  uint
 	Category    Category
-	ProductID   int
+	ProductID   uint
 	Product     Product
 	Name        string
 	Description string
+	IsHazardous bool
+	Weight      uint
+	PackageSize string
+	Condition   string
 	SKU         string
 	Price       uint
 	CreatedAt   time.Time

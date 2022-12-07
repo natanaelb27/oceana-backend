@@ -9,6 +9,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -19,6 +20,7 @@ type MerchantVoucherRepository interface {
 	GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error)
 	Update(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
 	Delete(id uint) (model *models.MerchantVoucher, err error)
+	ValidateMerchantVoucherByBuyer(merchantVoucherID uint, userID uuid.UUID) (resultMerchantVoucherID *uint, err error)
 }
 
 type merchantVoucherRepository struct {
@@ -170,6 +172,30 @@ func (r *merchantVoucherRepository) Delete(id uint) (model *models.MerchantVouch
 
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrVoucherNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *merchantVoucherRepository) ValidateMerchantVoucherByBuyer(merchantVoucherID uint, userID uuid.UUID) (resultMerchantVoucherID *uint, err error) {
+	queryResult := r.db.Debug().Model(&models.Order{}).
+		Select(`
+			order_merchant_vouchers.merchant_voucher_id
+		`).
+		Joins("JOIN transactions ON transactions.id = orders.transaction_id").
+		Joins("JOIN order_merchant_vouchers ON order_merchant_vouchers.order_id = orders.id").
+		Where("transactions.user_id = ?", userID).
+		Where("order_merchant_vouchers.merchant_voucher_id = ?", merchantVoucherID).
+		First(&resultMerchantVoucherID)
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
 		return
 	}
 

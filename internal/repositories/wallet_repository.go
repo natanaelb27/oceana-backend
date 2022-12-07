@@ -104,20 +104,48 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 	}
 	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
 		Select(`
-			id, wallet_id, amount, transaction_date, 'Top Up Transaction' AS transaction_type
+			id, 
+			wallet_id, 
+			amount, 
+			transaction_date, 
+			'Top Up Transaction' AS transaction_type,
+			'Debit' AS type
 		`).
 		Where("wallet_id = ?", id)
 
 	queryWalletTransactionsAsBuyer := w.db.Model(&models.Transaction{}).
 		Select(`
-			transactions.id, wallet_transaction_payments.wallet_id, transactions.total_price_with_shipping_fee AS amount, transactions.transaction_datetime, 'Payment Transaction' AS transaction_type
+			transactions.id AS id, 
+			wallet_transaction_payments.wallet_id AS wallet_id, 
+			transactions.total_price_with_shipping_fee AS amount, 
+			transactions.transaction_datetime, 
+			'Payment Transaction' AS transaction_type,
+			'Credit' AS type
 		`).
 		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
 		Where("wallet_transaction_payments.wallet_id = ? AND transactions.user_id = ?", id, wallet.UserID)
 
+	// queryRefundTransactions := w.db.Model(&models.Refund{}).
+	// 	Select(`
+	// 			transactions.id, wallet_transaction_payments.wallet_id, SUM(refund_details.amount_user_get) AS amount, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
+	// 		`).
+	// 	Joins("JOIN refund_details ON refunds.id = refund_details.refund_id").
+	// 	Joins("JOIN order_details ON refunds.order_detail_id = order_details.id").
+	// 	Joins("JOIN orders ON order_details.order_id = orders.id").
+	// 	Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+	// 	Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
+	// 	Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
+	// 	Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id).
+	// 	Group("transactions.id, wallet_transaction_payments.wallet_id")
+
 	queryRefundTransactions := w.db.Model(&models.Refund{}).
 		Select(`
-				transactions.id, wallet_transaction_payments.wallet_id, SUM(refund_details.amount_user_get) AS amount, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
+				refunds.order_detail_id AS id,
+				wallet_transaction_payments.wallet_id,
+				refund_details.amount_user_get AS amount, 
+				transactions.transaction_datetime, 
+				'Refund Transaction' AS transaction_type,
+				'Debit' AS type
 			`).
 		Joins("JOIN refund_details ON refunds.id = refund_details.refund_id").
 		Joins("JOIN order_details ON refunds.order_detail_id = order_details.id").
@@ -125,8 +153,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
-		Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id).
-		Group("transactions.id, wallet_transaction_payments.wallet_id")
+		Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id)
 
 	result = w.db.Model(&models.Merchant{}).Where("user_id = ?", wallet.UserID).First(&merchant)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -142,7 +169,12 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 
 		queryWalletTransactionsAsSeller := w.db.Model(&models.Order{}).
 			Select(`
-				transactions.id, wallets.id, (orders.total_price_after_discount - (?)) AS amount, transactions.transaction_datetime, 'Received Payment Transaction' AS transaction_type
+				transactions.id AS id, 
+				wallets.id AS wallet_id, 
+				(orders.total_price_after_discount - (?)) AS amount,
+				transactions.transaction_datetime, 
+				'Received Payment Transaction' AS transaction_type,
+				'Debit' AS type
 			`, subQuery).
 			Joins("JOIN transactions ON transactions.id = orders.transaction_id").
 			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
