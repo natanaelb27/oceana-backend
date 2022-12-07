@@ -51,3 +51,12 @@ func NewSealabsPayDeleteResponse(source *models.SealabsPay) (target *SealabsPayD
 
 	return
 }
+
+type SealabsPayCallbackResponse struct {
+	TxnID        string `json:"txn_id"`
+	Amount       string `json:"amount"`
+	MerchantCode string `json:"merchant_code"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	Signature    string `json:"signature"`
+}

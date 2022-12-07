@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -87,3 +89,15 @@ func (h *Handler) SealabsPayDelete(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) SealabsPayTest(c *gin.Context) {
+	var response *dtos.SealabsPayCallbackResponse
+	err := c.ShouldBindJSON(&response)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	fmt.Println(response)
+	utils.ResponseSuccess(c, response, nil)
+}
+
