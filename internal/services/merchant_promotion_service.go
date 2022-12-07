@@ -128,18 +128,18 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		return nil, err
 	}
 
-	currentMp, err := mp.GetByID(merchantPromotionID)
+	currentMp, err := mp.merchantPromotionRepository.GetByID(merchantPromotionID)
 	if err != nil {
 		return nil, err
 	}
-
+	currentMpStatus := utils.PromotionOrVoucherStatus(currentMp.StartDatetime, currentMp.EndDatetime)
 	// MP validations
 	// name
 	if mpRequest.Name == "" {
 		return nil, e.ErrEmptyName
 	}
 	// datetime
-	err = utils.ValidateMpUpdateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime, currentMp.StartDatetime, currentMp.EndDatetime, currentMp.PromotionStatus)
+	err = utils.ValidateMpUpdateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime, currentMp.StartDatetime, currentMp.EndDatetime, currentMpStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -169,10 +169,7 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
 	// currently existing PMPs
-	currentPmpList, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
-	if err != nil {
-		return nil, err
-	}
+	currentPmpList, _ := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
 	var currentPmpProductIDList []int
 	for _, pmp := range currentPmpList {
 		currentPmpProductIDList = append(currentPmpProductIDList, int(pmp.ProductID))
@@ -181,7 +178,7 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
 		// PMP validation
 		// ongoing promotion, no updates allowed to PMP
-		if currentMp.PromotionStatus == constants.OngoingPromotionOrVoucher {
+		if currentMpStatus == constants.OngoingPromotionOrVoucher {
 			return nil, e.ErrPromotionIsOngoing
 		}
 		// validate discount and type
