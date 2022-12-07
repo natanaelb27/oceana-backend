@@ -10,6 +10,5 @@ func rajaOngkir(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.H
 	publicRoute := public.Group(path)
 	{
 		publicRoute.POST("/shipping-cost", h.GetRajaOngkirShippingCost)
-
 	}
 }
