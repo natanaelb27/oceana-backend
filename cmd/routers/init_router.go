@@ -37,6 +37,9 @@ func Init(h *handlers.Handler) {
 	product(public, private, h)
 	review(public, private, h)
 	subDistrict(public, private, h)
+	rajaOngkir(public, private, h)
+	marketplaceVoucher(public, private, h)
+	courier(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

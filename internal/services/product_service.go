@@ -3,7 +3,7 @@ package services
 import (
 	"time"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
+	productInternalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -13,40 +13,47 @@ import (
 )
 
 type ProductService interface {
-	GetAll(query *internalDtos.ProductQuery) ([]*internalDtos.Product, *utils.Pagination, error)
+	GetAll(query *productInternalDtos.ProductQuery) ([]*productInternalDtos.Product, *utils.Pagination, error)
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, quantity *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error)
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
+	GetUpdateByMerchantID(ID uint) (*productInternalDtos.ProductModel, error)
 }
 
 type productService struct {
-	productRepository         r.ProductRepository
-	merchantRepository        r.MerchantRepository
-	productItemRepository     r.ProductItemRepository
-	productVariantRepository  r.ProductVariationRepository
-	productViewRepository     r.ProductViewRepository
-	productFavoriteRepository r.ProductFavoriteRepository
+	productRepository                r.ProductRepository
+	merchantRepository               r.MerchantRepository
+	productItemRepository            r.ProductItemRepository
+	productVariationRepository       r.ProductVariationRepository
+	productViewRepository            r.ProductViewRepository
+	productFavoriteRepository        r.ProductFavoriteRepository
+	merchantCourierServiceRepository r.MerchantCourierServiceRepository
+	categoryRepository               r.CategoryRepository
 }
 
 type ProductServiceConfig struct {
-	ProductRepository          r.ProductRepository
-	MerchantRepository         r.MerchantRepository
-	ProductItemRepository      r.ProductItemRepository
-	ProductVariationRepository r.ProductVariationRepository
-	ProductViewRepository      r.ProductViewRepository
-	ProductFavoriteRepository  r.ProductFavoriteRepository
+	ProductRepository                r.ProductRepository
+	MerchantRepository               r.MerchantRepository
+	ProductItemRepository            r.ProductItemRepository
+	ProductVariationRepository       r.ProductVariationRepository
+	ProductViewRepository            r.ProductViewRepository
+	ProductFavoriteRepository        r.ProductFavoriteRepository
+	MerchantCourierServiceRepository r.MerchantCourierServiceRepository
+	CategoryRepository               r.CategoryRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
 	return &productService{
-		productRepository:         c.ProductRepository,
-		merchantRepository:        c.MerchantRepository,
-		productItemRepository:     c.ProductItemRepository,
-		productVariantRepository:  c.ProductVariationRepository,
-		productViewRepository:     c.ProductViewRepository,
-		productFavoriteRepository: c.ProductFavoriteRepository,
+		productRepository:                c.ProductRepository,
+		merchantRepository:               c.MerchantRepository,
+		productItemRepository:            c.ProductItemRepository,
+		productVariationRepository:       c.ProductVariationRepository,
+		productViewRepository:            c.ProductViewRepository,
+		productFavoriteRepository:        c.ProductFavoriteRepository,
+		merchantCourierServiceRepository: c.MerchantCourierServiceRepository,
+		categoryRepository:               c.CategoryRepository,
 	}
 }
 
@@ -65,7 +72,7 @@ func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDet
 
 	productDetails.ProductModel = productModels
 
-	productVariation, err := s.productVariantRepository.GetByProductID(productID)
+	productVariation, err := s.productVariationRepository.GetByProductID(productID)
 
 	if err != nil {
 		return nil, err
@@ -86,10 +93,20 @@ func (s *productService) GetPurchaseQuantitiesByID(userID uuid.UUID, query *dtos
 	return dtos.NewGetPurchaseQuantitiesByIDResponse(purchaseQuantities), nil
 }
 
-func (s *productService) GetAll(query *internalDtos.ProductQuery) (productDetails []*internalDtos.Product, pagination *utils.Pagination, err error) {
+func (s *productService) GetAll(query *productInternalDtos.ProductQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error) {
 	pagination = &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
+	}
+
+	if query.CategoryID != 0 {
+		var categories []uint
+		categories, err = s.GetCategoryIds(query.CategoryID)
+		if err != nil {
+			return
+		}
+
+		query.Categories = categories
 	}
 
 	productDetails, pagination, err = s.productRepository.GetAll(query, pagination)
@@ -98,6 +115,46 @@ func (s *productService) GetAll(query *internalDtos.ProductQuery) (productDetail
 	}
 
 	return productDetails, pagination, nil
+}
+
+func (d *productService) GetAllSubCategories(categoryData []*models.Category) ([]uint, error) {
+	category := []uint{}
+
+	for _, cat := range categoryData {
+		subCategoryData, err := d.categoryRepository.GetAllSubCategoriesByParentID(cat.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		category = append(category, cat.ID)
+
+		if len(subCategoryData) > 0 {
+			subCategory, err := d.GetAllSubCategories(subCategoryData)
+			if err != nil {
+				return nil, err
+			}
+
+			category = append(category, subCategory...)
+		}
+	}
+
+	return category, nil
+}
+
+func (s *productService) GetCategoryIds(id uint) ([]uint, error) {
+	categoryData, err := s.categoryRepository.GetAllSubCategoriesByParentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := s.GetAllSubCategories(categoryData)
+	if err != nil {
+		return nil, err
+	}
+
+	category = append(category, id)
+
+	return category, nil
 }
 
 func (s *productService) ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error) {
@@ -198,4 +255,55 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 	}
 
 	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
+}
+
+func (s *productService) GetUpdateByMerchantID(merchantID uint) (*productInternalDtos.ProductModel, error) {
+	// product
+	productModel, err := s.productRepository.GetUpdateByMerchantID(merchantID)
+	if err != nil {
+		return nil, err
+	}
+
+	productItems, err := s.productItemRepository.GetUpdateByProductID(productModel.ID)
+	// product_items
+	if err != nil {
+		return nil, err
+	}
+	productModel.ProductItems = productItems
+
+	// variants
+	variants, err := s.productVariationRepository.GetUpdateByProductID(productModel.ID)
+	if err != nil {
+		return nil, err
+	}
+	productModel.Variants = variants
+
+	// get all courier on merchant courier service join to courier group by courier id
+	// get all merchant courier service left join product courier service and add to its courier
+
+	// couriers
+	couriers, err := s.merchantCourierServiceRepository.GetAllCouriersByMerchantIDForProductUpdate(merchantID)
+	if err != nil && err != e.ErrDataNotFound {
+		return nil, err
+	}
+	productModel.Couriers = couriers
+	//  courier > courier_services
+	for iC := range couriers {
+		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID, productModel.ID)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
+
+		csIsActive := false
+		for _, cs := range courierServices {
+			if cs.IsActive {
+				csIsActive = true
+			}
+		}
+
+		productModel.Couriers[iC].CourierService = courierServices
+		productModel.Couriers[iC].IsActive = csIsActive
+	}
+
+	return productModel, nil
 }

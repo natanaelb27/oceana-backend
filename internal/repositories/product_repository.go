@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"github.com/google/uuid"
 
@@ -20,6 +21,8 @@ type ProductRepository interface {
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 	GetByProductItemID(productItemID uint) (*models.Product, error)
+	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
+	GetUpdateByMerchantID(id uint) (model *product_dtos.ProductModel, err error)
 }
 
 type productRepository struct {
@@ -430,7 +433,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	// filter by price category
 	if queryParams.CategoryID != 0 {
-		query.Where("products.category_id = ?", queryParams.CategoryID)
+		query.Where("products.category_id IN ?", queryParams.Categories)
 	}
 
 	// filter by price minimum
@@ -486,4 +489,58 @@ func (r *productRepository) GetByProductItemID(productItemID uint) (*models.Prod
 	}
 
 	return model, result.Error
+}
+
+func (r *productRepository) UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error) {
+	result := r.db.Model(&models.Product{}).Where(conditionMap).Updates(&modelMap)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productRepository) GetUpdateByMerchantID(id uint) (productModel *product_dtos.ProductModel, err error) {
+	sqProductMediaImage := r.db.Model(&models.ProductMedia{}).
+		Select("ARRAY_AGG(media_url)").
+		Where("product_media.type = ?", product_media_constants.TypeImage).
+		Where("product_media.product_id = products.id")
+	sqProductMediaVideo := r.db.Model(&models.ProductMedia{}).
+		Select("ARRAY_AGG(media_url)").
+		Where("product_media.type = ?", product_media_constants.TypeVideo).
+		Where("product_media.product_id = products.id")
+	result := r.db.
+		Table("products").
+		Select(`
+			products.id AS id,
+			products.name AS name,
+			products.description AS description,
+			products.category_id AS category_id,
+			products.weight AS weight,
+			products.is_hazardous AS is_hazardous,
+			products.package_size AS package_size,
+			products.condition AS condition,
+			products.status AS status,
+			products.process_day AS process_day,
+			products.preorder_day AS preorder_day,
+			(@sqProductMediaImage) AS images,
+			(@sqProductMediaVideo) AS videos,
+			NULL AS product_items
+		`,
+			sql.Named("sqProductMediaImage", sqProductMediaImage),
+			sql.Named("sqProductMediaVideo", sqProductMediaVideo),
+		).
+		Where("id = ?", id).
+		First(&productModel)
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
 }

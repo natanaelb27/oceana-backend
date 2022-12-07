@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
@@ -132,13 +134,46 @@ func Init() *Handler {
 		RedisRepository: redisRepository,
 	})
 
+	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	courierServiceRepository := repositories.NewCourierServiceRepository(&repositories.CourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierRepository := repositories.NewCourierRepository(&repositories.CourierRepositoryConfig{
+		DB: db.Get(),
+	})
+	courierService := services.NewCourierService(&services.CourierServiceConfig{
+		CourierRepository:        courierRepository,
+		CourierServiceRepository: courierServiceRepository,
+	})
+
+	merchantConfigurationRepository := repositories.NewMerchantConfigurationRepository(&repositories.MerchantConfigurationRepositoryConfig{
+		DB: db.Get(),
+	})
+	merchantCourierServiceRepository := repositories.NewMerchantCourierServiceRepository(&repositories.MerchantCourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+	logisticService := services.NewLogisticService(&services.LogisticServiceConfig{
+		CourierRepository:                courierRepository,
+		CourierServiceRepository:         courierServiceRepository,
+		MerchantCourierServiceRepository: merchantCourierServiceRepository,
+		UserRepository:                   userRepository,
+		MerchantRepository:               merchantRepository,
+		MerchantConfigurationRepository:  merchantConfigurationRepository,
+		ProductRepository:                productRepository,
+	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
-		ProductRepository:          productRepository,
-		MerchantRepository:         merchantRepository,
-		ProductItemRepository:      productItemRepository,
-		ProductVariationRepository: productVariationRepository,
-		ProductViewRepository:      productViewRepository,
-		ProductFavoriteRepository:  productFavoriteRepository,
+		ProductRepository:                productRepository,
+		MerchantRepository:               merchantRepository,
+		ProductItemRepository:            productItemRepository,
+		ProductVariationRepository:       productVariationRepository,
+		ProductViewRepository:            productViewRepository,
+		ProductFavoriteRepository:        productFavoriteRepository,
+		CategoryRepository:               categoryRepository,
+		MerchantCourierServiceRepository: merchantCourierServiceRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
@@ -152,6 +187,7 @@ func Init() *Handler {
 		MerchantPromotionRepository:        merchantPromotionRepository,
 		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
 	})
+
 	provinceRepository := repositories.NewProvinceRepository(&repositories.ProvinceRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -170,6 +206,19 @@ func Init() *Handler {
 		DistrictRepository:    districtRepository,
 		SubDistrictRepository: subDistrictRepository,
 	})
+	rajaOngkirRepository := repositories.NewRajaOngkirRepository(&repositories.RajaOngkirRepositoryConfig{
+		Client: http.Client{},
+	})
+	rajaOngkirService := services.NewRajaOngkirService(&services.RajaOngkirServiceConfig{
+		RajaOngkirRepository: rajaOngkirRepository,
+	})
+
+	marketplaceVoucherRepository := repositories.NewMarketplaceVoucherRepository(&repositories.MarketplaceVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+	marketplaceVoucherService := services.NewMarketplaceVoucherService(&services.MarketplaceVoucherServiceConfig{
+		MarketplaceVoucherRepository: marketplaceVoucherRepository,
+	})
 
 	productSnapshotRepository := repositories.NewProductSnapshotRepository(&repositories.ProductSnapshotRepositoryConfig{
 		DB: db.Get(),
@@ -184,14 +233,6 @@ func Init() *Handler {
 	})
 
 	userMerchantPromotionRepository := repositories.NewUserMerchantPromotionRepository(&repositories.UserMerchantPromotionRepositoryConfig{
-		DB: db.Get(),
-	})
-
-	marketplaceVoucherRepository := repositories.NewMarketplaceVoucherRepository(&repositories.MarketplaceVoucherRepositoryConfig{
-		DB: db.Get(),
-	})
-
-	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
 		DB: db.Get(),
 	})
 
@@ -212,22 +253,26 @@ func Init() *Handler {
 	})
 
 	h := New(&HandlerConfig{
-		RoleService:              roleService,
-		WalletService:            walletService,
-		AuthService:              authService,
-		CategoryService:          categoryService,
-		UserService:              userService,
-		ProfileService:           profileService,
-		SealabsPayService:        sealabsPayService,
-		MerchantVoucherService:   merchantVoucherService,
-		ProductService:           productService,
-		AddressService:           addressService,
-		MerchantService:          merchantService,
-		OrderService:             orderService,
-		ProductReviewService:     productReviewService,
-		MerchantPromotionService: merchantPromotionService,
-		CartService:              cartService,
-		SubDistrictService:       subDistrictService,
+		RoleService:               roleService,
+		WalletService:             walletService,
+		AuthService:               authService,
+		CategoryService:           categoryService,
+		UserService:               userService,
+		ProfileService:            profileService,
+		SealabsPayService:         sealabsPayService,
+		MerchantVoucherService:    merchantVoucherService,
+		ProductService:            productService,
+		AddressService:            addressService,
+		MerchantService:           merchantService,
+		OrderService:              orderService,
+		ProductReviewService:      productReviewService,
+		MerchantPromotionService:  merchantPromotionService,
+		CartService:               cartService,
+		SubDistrictService:        subDistrictService,
+		RajaOngkirService:         rajaOngkirService,
+		MarketplaceVoucherService: marketplaceVoucherService,
+		CourierService:            courierService,
+		LogisticService:           logisticService,
 	})
 
 	return h

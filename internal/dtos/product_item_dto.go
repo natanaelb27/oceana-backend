@@ -10,6 +10,7 @@ type ProductModel struct {
 	StockQuantity      uint          `json:"stock_quantity"`
 	Price              uint          `json:"price"`
 	PriceAfterDiscount *float64      `json:"price_after_discount"`
+	ProductVariations  string        `json:"product_variations"`
 	VariationIndex     pq.Int64Array `json:"variation_index" gorm:"type:integer[]"`
 }
 

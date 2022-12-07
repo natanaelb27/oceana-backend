@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -33,6 +34,8 @@ func newErrorMessage(ve validator.FieldError) (msg string) {
 }
 
 func TranslateError(err error) (message string, responseErr string, code int) {
+	var unmarshalTypeError *json.UnmarshalTypeError
+
 	switch {
 	// case if error is validator error
 	case errors.As(err, &validator.ValidationErrors{}):
@@ -51,6 +54,9 @@ func TranslateError(err error) (message string, responseErr string, code int) {
 	// io.ErrUnexpectedEOF error for syntax errors in the JSON
 	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
 		err = e.ErrEmptyRequstBody
+
+	case errors.As(err, &unmarshalTypeError):
+		err = fmt.Errorf("request body contains an invalid value for the %q field, type should be %v, instead got %v", unmarshalTypeError.Field, unmarshalTypeError.Type, unmarshalTypeError.Value)
 
 	// case if the request body is too large.
 	case err.Error() == "http: request body too large":

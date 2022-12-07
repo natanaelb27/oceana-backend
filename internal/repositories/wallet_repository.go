@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"errors"
-	"fmt"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -157,7 +156,6 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 
 	result = w.db.Model(&models.Merchant{}).Where("user_id = ?", wallet.UserID).First(&merchant)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		fmt.Println("here")
 		subQuery := w.db.Model(&models.RefundDetail{}).Select(`
 			SUM(refund_details.amount_merchant_lost)
 		`).
