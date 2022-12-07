@@ -155,31 +155,27 @@ func (h *Handler) FavoriteProduct(c *gin.Context) {
 }
 
 func (h *Handler) ProductCreate(c *gin.Context) {
-	merchantIDUint64, err := strconv.ParseUint(c.Param("merchant_id"), 10, 64)
+	merchantIDInt, err := strconv.Atoi(c.Param("merchant_id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidParams)
 		return
 	}
 
-	merchantID := uint(merchantIDUint64)
-
-	var request *dtos.ProductCreateRequest
+	var request *product_dtos.ProductModel
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	model := request.ToModel(merchantID)
+	request.MerchantID = uint(merchantIDInt)
 
-	result, err := h.productService.CreateProduct(model)
+	response, err := h.productService.CreateProduct(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	responseData := dtos.NewProductCreateResponse(result)
-
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, response, nil)
 }
 
 func (h *Handler) ProductModelById(c *gin.Context) {
@@ -189,7 +185,7 @@ func (h *Handler) ProductModelById(c *gin.Context) {
 		return
 	}
 
-	productModel, err := h.productService.GetUpdateByMerchantID(uint(productID))
+	productModel, err := h.productService.GetUpdateModelByProductID(uint(productID))
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

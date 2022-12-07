@@ -19,8 +19,8 @@ type ProductService interface {
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
-	CreateProduct(product *models.Product) (*models.Product, error)
-	GetUpdateByMerchantID(ID uint) (*productInternalDtos.ProductModel, error)
+	CreateProduct(request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
+	GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error)
 }
 
 type productService struct {
@@ -32,6 +32,10 @@ type productService struct {
 	productFavoriteRepository        r.ProductFavoriteRepository
 	merchantCourierServiceRepository r.MerchantCourierServiceRepository
 	categoryRepository               r.CategoryRepository
+	productVariantTypeRepository     r.ProductVariantTypeRepository
+	productVariantMediaRepository    r.ProductVariantMediaRepository
+	productVariantRepository         r.ProductVariantRepository
+	productCourierServiceRepository  r.ProductCourierServiceRepository
 }
 
 type ProductServiceConfig struct {
@@ -43,6 +47,10 @@ type ProductServiceConfig struct {
 	ProductFavoriteRepository        r.ProductFavoriteRepository
 	MerchantCourierServiceRepository r.MerchantCourierServiceRepository
 	CategoryRepository               r.CategoryRepository
+	ProductVariantTypeRepository     r.ProductVariantTypeRepository
+	ProductVariantMediaRepository    r.ProductVariantMediaRepository
+	ProductVariantRepository         r.ProductVariantRepository
+	ProductCourierServiceRepository  r.ProductCourierServiceRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
@@ -55,6 +63,10 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productFavoriteRepository:        c.ProductFavoriteRepository,
 		merchantCourierServiceRepository: c.MerchantCourierServiceRepository,
 		categoryRepository:               c.CategoryRepository,
+		productVariantTypeRepository:     c.ProductVariantTypeRepository,
+		productVariantMediaRepository:    c.ProductVariantMediaRepository,
+		productVariantRepository:         c.ProductVariantRepository,
+		productCourierServiceRepository:  c.ProductCourierServiceRepository,
 	}
 }
 
@@ -258,13 +270,137 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
 }
 
-func (p *productService) CreateProduct(model *models.Product) (*models.Product, error) {
-	return p.productRepository.CreateProduct(model)
+func (s *productService) CreateProduct(request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error) {
+	// create product
+	// check if category exist
+	product := &models.Product{
+		MerchantID:  request.MerchantID,
+		CategoryID:  request.CategoryID,
+		Name:        request.Name,
+		Description: request.Description,
+		IsHazardous: request.IsHazardous,
+		Weight:      request.Weight,
+		PackageSize: request.PackageSize,
+		Condition:   request.Condition,
+		Status:      request.Status,
+		ProcessDay:  request.ProcessDay,
+		PreorderDay: request.PreorderDay,
+	}
+	createdProduct, err := s.productRepository.CreateProduct(product)
+	if err != nil {
+		return nil, err
+	}
+
+	// map product variant for later use to identify product variations
+	productVariantMap := make([][]uint, len(request.Variants))
+	// productVariants := []*models.ProductVariantType{}
+	for iVariant, variant := range request.Variants {
+		// declare product variant map with options length
+		productVariantMap[iVariant] = make([]uint, len(variant.Options))
+		// create product variant types
+		productVariantType := &models.ProductVariantType{
+			Name:      variant.Name,
+			ProductID: createdProduct.ID,
+		}
+		createdProductVariantType, err := s.productVariantTypeRepository.Create(productVariantType)
+		if err != nil {
+			return nil, err
+		}
+
+		for iOption, option := range variant.Options {
+			// create product variant
+			productVariants := &models.ProductVariant{
+				Name:                 option,
+				ProductVariantTypeID: createdProductVariantType.ID,
+			}
+			createdProductVariant, err := s.productVariantRepository.Create(productVariants)
+			if err != nil {
+				return nil, err
+			}
+
+			// set product variant id to product variant map with certain position
+			productVariantMap[iVariant][iOption] = productVariants.ID
+
+			// create product variant media on first variant only
+			if iVariant == 0 {
+				productVariantMedia := &models.ProductVariantMedia{
+					ProductVariantID: createdProductVariant.ID,
+					MediaURL:         variant.Images[iOption],
+				}
+				_, err = s.productVariantMediaRepository.Create(productVariantMedia)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	// create product item
+	for _, pi := range request.ProductItems {
+		productItem := &models.ProductItem{
+			ProductID:     product.ID,
+			SKU:           pi.SKU,
+			Price:         pi.Price,
+			StockQuantity: pi.StockQuantity,
+		}
+		createdProductItem, err := s.productItemRepository.CreateProductItem(productItem)
+		if err != nil {
+			return nil, err
+		}
+		// create product variation
+		for iVi, vi := range pi.VariantIndex {
+			productVariation := &models.ProductVariation{
+				ProductItemID:    createdProductItem.ID,
+				ProductVariantID: productVariantMap[iVi][vi],
+			}
+			_, err := s.productVariationRepository.Create(productVariation)
+			if err != nil {
+				return nil, err
+			}
+
+		}
+	}
+
+	for _, c := range request.Couriers {
+		for _, cs := range c.CourierServices {
+			// if is active false then continue to next iteration
+			if !cs.IsActive {
+				continue
+			}
+			// get merchant courier service
+			merchantCourierServiceConditionMap := map[string]any{
+				"courier_service_id": cs.ID,
+				"merchant_id":        request.MerchantID,
+				"is_active":          true,
+			}
+			merchantCourierService, err := s.merchantCourierServiceRepository.GetByConditionMap(merchantCourierServiceConditionMap)
+			if err != nil {
+				return nil, err
+			}
+			// create product courier service
+			productCourierService := &models.ProductCourierService{
+				MerchantCourierServiceID: merchantCourierService.ID,
+				ProductId:                createdProduct.ID,
+			}
+			_, err = s.productCourierServiceRepository.Create(productCourierService)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// get created product model
+	productModel, err := s.GetUpdateModelByProductID(createdProduct.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return productModel, nil
 }
 
-func (s *productService) GetUpdateByMerchantID(merchantID uint) (*productInternalDtos.ProductModel, error) {
+func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {
 	// product
-	productModel, err := s.productRepository.GetUpdateByMerchantID(merchantID)
+	productModel, err := s.productRepository.GetUpdateByProductID(productID)
 	if err != nil {
 		return nil, err
 	}
@@ -287,14 +423,15 @@ func (s *productService) GetUpdateByMerchantID(merchantID uint) (*productInterna
 	// get all merchant courier service left join product courier service and add to its courier
 
 	// couriers
-	couriers, err := s.merchantCourierServiceRepository.GetAllCouriersByMerchantIDForProductUpdate(merchantID)
+	couriers, err := s.merchantCourierServiceRepository.GetAllCouriersByMerchantIDForProductUpdate(productModel.MerchantID)
 	if err != nil && err != e.ErrDataNotFound {
 		return nil, err
 	}
 	productModel.Couriers = couriers
+
 	//  courier > courier_services
 	for iC := range couriers {
-		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID, productModel.ID)
+		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpdate(productModel.MerchantID, productModel.ID)
 		if err != nil && err != e.ErrDataNotFound {
 			return nil, err
 		}
@@ -306,7 +443,7 @@ func (s *productService) GetUpdateByMerchantID(merchantID uint) (*productInterna
 			}
 		}
 
-		productModel.Couriers[iC].CourierService = courierServices
+		productModel.Couriers[iC].CourierServices = courierServices
 		productModel.Couriers[iC].IsActive = csIsActive
 	}
 

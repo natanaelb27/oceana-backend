@@ -170,6 +170,19 @@ func Init() *Handler {
 		ProductRepository:                productRepository,
 	})
 
+	productVariantTypeRepository := repositories.NewProductVariantTypeRepository(&repositories.ProductVariantTypeRepositoryConfig{
+		DB: db.Get(),
+	})
+	productVariantMediaRepository := repositories.NewProductVariantMediaRepository(&repositories.ProductVariantMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+	productVariantRepository := repositories.NewProductVariantRepository(&repositories.ProductVariantRepositoryConfig{
+		DB: db.Get(),
+	})
+	productCourierServiceRepository := repositories.NewProductCourierServiceRepository(&repositories.ProductCourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
 		ProductRepository:                productRepository,
 		MerchantRepository:               merchantRepository,
@@ -179,6 +192,10 @@ func Init() *Handler {
 		ProductFavoriteRepository:        productFavoriteRepository,
 		CategoryRepository:               categoryRepository,
 		MerchantCourierServiceRepository: merchantCourierServiceRepository,
+		ProductVariantTypeRepository:     productVariantTypeRepository,
+		ProductVariantMediaRepository:    productVariantMediaRepository,
+		ProductVariantRepository:         productVariantRepository,
+		ProductCourierServiceRepository:  productCourierServiceRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{

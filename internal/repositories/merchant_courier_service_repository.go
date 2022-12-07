@@ -18,6 +18,7 @@ type MerchantCourierServiceRepository interface {
 	Create(newModel *models.MerchantCourierService) (model *models.MerchantCourierService, err error)
 	GetAllCouriersByMerchantIDForProductUpdate(merchantID uint) (model []*internalProductDtos.Courier, err error)
 	GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error)
+	GetByConditionMap(conditionMap map[string]any) (model *models.MerchantCourierService, err error)
 }
 
 type merchantCourierServiceRepository struct {
@@ -165,9 +166,23 @@ func (r *merchantCourierServiceRepository) GetAllCourierServicesByMerchantIDProd
 			) AS is_active
 		`).
 		Joins("JOIN courier_services cs ON  mcs.courier_service_id = cs.id ").
-		Joins("LEFT JOIN product_courier_services pcs ON  mcs.id = pcs.merchant_courier_service_id AND (?) = pcs.product_id", productID).
+		Joins("LEFT JOIN product_courier_services pcs ON mcs.id = pcs.merchant_courier_service_id AND (?) = pcs.product_id", productID).
 		Where("merchant_id = ?", merchantID).
 		Find(&model)
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *merchantCourierServiceRepository) GetByConditionMap(conditionMap map[string]any) (model *models.MerchantCourierService, err error) {
+	result := r.db.Where(conditionMap).First(&model)
 	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
 		err = e.ErrDatabaseOperationFailed
 		return

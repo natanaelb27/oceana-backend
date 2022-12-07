@@ -131,11 +131,11 @@ type CourierService struct {
 }
 
 type Courier struct {
-	ID             uint              `json:"id"`
-	Code           string            `json:"code"`
-	Name           string            `json:"name"`
-	IsActive       bool              `json:"is_active" gorm:"-"`
-	CourierService []*CourierService `json:"courier_service" gorm:"-"`
+	ID              uint              `json:"id"`
+	Code            string            `json:"code"`
+	Name            string            `json:"name"`
+	IsActive        bool              `json:"is_active" gorm:"-"`
+	CourierServices []*CourierService `json:"courier_services" gorm:"-"`
 }
 
 type Logistics struct {
@@ -163,6 +163,7 @@ type ProductModel struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	CategoryID  uint           `json:"category_id"`
+	MerchantID  uint           `json:"merchant_id"`
 	Weight      uint           `json:"weight"`
 	IsHazardous bool           `json:"is_hazardous"`
 	PackageSize string         `json:"package_size"`
