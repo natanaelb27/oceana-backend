@@ -19,7 +19,7 @@ type OrderRepository interface {
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 	GetByID(id uuid.UUID) (model *models.Order, err error)
 	Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error)
-	GetOrderCount() (count *int64, err error)
+	GetOrderCount() (*int64, error)
 	Create(newModel []*models.Order) (model []*models.Order, err error)
 }
 
@@ -206,14 +206,15 @@ func (r *orderRepository) Update(id uuid.UUID, newModel *models.Order) (model *m
 	return
 }
 
-func (r *orderRepository) GetOrderCount() (count *int64, err error) {
-	queryResult := r.db.Model(&models.Order{}).Count(count)
+func (r *orderRepository) GetOrderCount() (*int64, error) {
+	var count int64
+	queryResult := r.db.Model(&models.Order{}).Count(&count)
 
 	if queryResult.Error != nil {
 		return nil, e.ErrDatabaseOperationFailed
 	}
 
-	return
+	return &count, nil
 }
 
 func (r *orderRepository) Create(newModel []*models.Order) (model []*models.Order, err error) {

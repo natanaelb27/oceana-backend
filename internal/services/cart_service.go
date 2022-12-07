@@ -61,8 +61,8 @@ type CartServiceConfig struct {
 	ProductItemRepository                   r.ProductItemRepository
 	ProductMerchantPromotionRepository      r.ProductMerchantPromotionRepository
 	ProductSnapshotRepository               r.ProductSnapshotRepository
-	ProductVariationSnapshotRepository      r.ProductVariationSnapshotRepository
 	ProductMediaSnapshotRepository          r.ProductMediaSnapshotRepository
+	ProductVariationSnapshotRepository      r.ProductVariationSnapshotRepository
 	MerchantVoucherRepository               r.MerchantVoucherRepository
 	MerchantPromotionRepository             r.MerchantPromotionRepository
 	MarketplaceVoucherRepository            r.MarketplaceVoucherRepository
@@ -86,8 +86,8 @@ func NewCartService(c *CartServiceConfig) CartService {
 		productItemRepository:                   c.ProductItemRepository,
 		productMerchantPromotionRepository:      c.ProductMerchantPromotionRepository,
 		productSnapshotRepository:               c.ProductSnapshotRepository,
-		productVariationSnapshotRepository:      c.ProductVariationSnapshotRepository,
 		productMediaSnapshotRepository:          c.ProductMediaSnapshotRepository,
+		productVariationSnapshotRepository:      c.ProductVariationSnapshotRepository,
 		merchantVoucherRepository:               c.MerchantVoucherRepository,
 		merchantPromotionRepository:             c.MerchantPromotionRepository,
 		marketplaceVoucherRepository:            c.MarketplaceVoucherRepository,
@@ -269,7 +269,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 		newOrder := &models.Order{
 			ID:                uuid.New(),
-			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder))),
+			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1)),
 			TransactionID:     newTransaction.ID,
 			MerchantID:        cartOrderItem.MerchantID,
 			AddressSnapshotID: addressSnapshot.ID,
@@ -537,7 +537,13 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
-	_, err = p.orderMerchantVoucherRepository.Create(newOrderMerchantVoucherList)
+	if len(newOrderMerchantVoucherList) > 0 {
+		_, err = p.orderMerchantVoucherRepository.Create(newOrderMerchantVoucherList)
+
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if err != nil {
 		return nil, err
@@ -549,7 +555,19 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
-	_, err = p.orderDetailMerchantPromotionRepository.Create(newOrderDetailMerchantPromotionList)
+	if len(newOrderDetailMerchantPromotionList) > 0 {
+		_, err = p.orderDetailMerchantPromotionRepository.Create(newOrderDetailMerchantPromotionList)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	newWallet := &models.Wallet{
+		Balance: wallet.Balance - uint(math.Round(newTransaction.TotalPriceWithShippingFee)),
+	}
+
+	_, err = p.walletRepository.Update(wallet.ID, newWallet)
 
 	if err != nil {
 		return nil, err

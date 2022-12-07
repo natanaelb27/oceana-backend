@@ -248,6 +248,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	orderDetailMerchantPromotionRepository := repositories.NewOrderDetailMerchantPromotionRepository(&repositories.OrderDetailMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	orderMerchantVoucherRepository := repositories.NewOrderMerchantVoucherRepository(&repositories.OrderMerchantVoucherRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -257,7 +261,9 @@ func Init() *Handler {
 		CartRepository:                          cartRepository,
 		OrderRepository:                         orderRepository,
 		OrderDetailRepository:                   orderDetailRepository,
+		OrderDetailMerchantPromotionRepository:  orderDetailMerchantPromotionRepository,
 		OrderMerchantVoucherRepository:          orderMerchantVoucherRepository,
+		ProductRepository:                       productRepository,
 		ProductItemRepository:                   productItemRepository,
 		ProductMerchantPromotionRepository:      productMerchantPromotionRepository,
 		ProductSnapshotRepository:               productSnapshotRepository,
