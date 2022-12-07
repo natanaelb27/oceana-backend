@@ -285,10 +285,14 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			productMerchantPromotion := &internalDtos.ProductMerchantPromotionDetails{}
 
 			if product.ProductMerchantPromotionID != nil {
-				productMerchantPromotion, err := p.productMerchantPromotionRepository.GetDetailsByID(*product.ProductMerchantPromotionID)
+				productMerchantPromotion, err = p.productMerchantPromotionRepository.GetDetailsByID(*product.ProductMerchantPromotionID)
 
 				if err != nil {
 					return nil, err
+				}
+
+				if productMerchantPromotion.ProductID != product.ProductID {
+					return nil, errors.New("merchant promotion prod id is not same as the prod id yg dibeli")
 				}
 
 				if productMerchantPromotion.PromotionStatus != constants.OngoingPromotionOrVoucher {
@@ -304,6 +308,10 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 				if err != nil {
 					return nil, err
+				}
+
+				if pi.ProductID != product.ProductID {
+					return nil, errors.New("PRODUCT GA PNY PRODUCT ITEM ITU")
 				}
 
 				if pi.MerchantID != cartOrderItem.MerchantID {
@@ -357,7 +365,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 						totalDiscountODMP = float64(productMerchantPromotion.Discount * productItems.Quantity)
 						totalPriceAfterDiscountOrderDetails = math.Max((float64(totalPriceOrderDetails) - totalDiscountODMP), 0)
 					} else {
-						totalDiscountODMP = math.Min(float64(productMerchantPromotion.Discount/100.0*pi.Price), float64(productMerchantPromotion.MaximumDiscountAmount)) * float64(productItems.Quantity)
+						totalDiscountODMP = math.Min(float64(productMerchantPromotion.Discount)/100.0*float64(pi.Price), float64(productMerchantPromotion.MaximumDiscountAmount)) * float64(productItems.Quantity)
 						totalPriceAfterDiscountOrderDetails = float64(totalPriceOrderDetails) - totalDiscountODMP
 					}
 				}
@@ -371,7 +379,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					ProductSnapshotID:       productSnapshot.ID,
 					Quantity:                productItems.Quantity,
 					TotalPrice:              totalPriceOrderDetails,
-					TotalPriceAfterDiscount: totalPriceAfterDiscountOrderDetails,
+					TotalPriceAfterDiscount: math.Round(totalPriceAfterDiscountOrderDetails),
 				}
 
 				newOrderDetailList = append(newOrderDetailList, newOrderDetail)
@@ -380,18 +388,22 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					newOrderDetailMerchantPromotion := &models.OrderDetailMerchantPromotion{
 						OrderDetailID:       newOrderDetail.ID,
 						MerchantPromotionID: productMerchantPromotion.ProductMerchantPromotionID,
-						TotalDiscount:       totalDiscountODMP,
+						TotalDiscount:       math.Round(totalDiscountODMP),
 					}
 
 					newOrderDetailMerchantPromotionList = append(newOrderDetailMerchantPromotionList, newOrderDetailMerchantPromotion)
 				}
 
-				fmt.Println("order detail: ", totalPriceOrderDetails)
-				fmt.Println("order detail disc: ", totalDiscountODMP)
-				fmt.Println("order detail a4 disc: ", totalPriceAfterDiscountOrderDetails)
+				_, err = p.productItemRepository.SubtractProductStock(productItems.ProductItemID, productItems.Quantity)
+
+				if err != nil {
+					return nil, err
+				}
+
 			}
 
 			if product.ProductMerchantPromotionID != nil {
+
 				if productMerchantPromotion.MaximumQuota != -1 && int(productMerchantPromotion.CurrentQuota+sumQuantity) > productMerchantPromotion.MaximumQuota {
 					return nil, errors.New("PURCHASED QTY MELEBIHI PMP GLOBAL QUOTA LIMIT")
 				}
@@ -430,8 +442,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 			}
 
-			fmt.Println("product item sum: ", sumProductItem)
-
 			sumProduct += sumProductItem
 		}
 
@@ -447,13 +457,13 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				totalDiscountOMV = float64(merchantVoucher.Discount)
 				totalPriceAfterDiscountOrders = math.Max((sumProduct - totalDiscountOMV), 0)
 			} else {
-				totalDiscountOMV = math.Min(float64(merchantVoucher.Discount/100.0*uint(sumProduct)), float64(merchantVoucher.MaximumDiscountAmount))
+				totalDiscountOMV = math.Min(float64(merchantVoucher.Discount)/100.0*sumProduct, float64(merchantVoucher.MaximumDiscountAmount))
 				totalPriceAfterDiscountOrders = sumProduct - totalDiscountOMV
 			}
 		}
 
-		newOrder.TotalPrice = sumProduct
-		newOrder.TotalPriceAfterDiscount = totalPriceAfterDiscountOrders
+		newOrder.TotalPrice = math.Round(sumProduct)
+		newOrder.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountOrders)
 
 		newOrderList = append(newOrderList, newOrder)
 
@@ -461,7 +471,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			newOrderMerchantVoucher := &models.OrderMerchantVoucher{
 				OrderID:           newOrder.ID,
 				MerchantVoucherID: *cartOrderItem.MerchantVoucherID,
-				TotalDiscount:     totalDiscountOMV,
+				TotalDiscount:     math.Round(totalDiscountOMV),
 			}
 
 			newOrderMerchantVoucherList = append(newOrderMerchantVoucherList, newOrderMerchantVoucher)
@@ -483,20 +493,20 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			totalDiscountTMV = float64(marketplaceVoucher.Discount)
 			totalPriceAfterDiscountTransactions = math.Max((sumOrder - totalDiscountTMV), 0)
 		} else {
-			totalDiscountTMV = math.Min(float64(marketplaceVoucher.Discount/100.0*uint(sumOrder)), float64(marketplaceVoucher.MaximumDiscountAmount))
+			totalDiscountTMV = math.Min(float64(marketplaceVoucher.Discount)/100.0*sumOrder, float64(marketplaceVoucher.MaximumDiscountAmount))
 			totalPriceAfterDiscountTransactions = sumOrder - totalDiscountTMV
 		}
 
 		newTransactionMarketplaceVoucher = &models.TransactionMarketplaceVoucher{
 			TransactionID:        newTransaction.ID,
 			MarketplaceVoucherID: *request.MarketplaceVoucherID,
-			TotalDiscount:        totalDiscountTMV,
+			TotalDiscount:        math.Round(totalDiscountTMV),
 		}
 	}
 
-	newTransaction.TotalPrice = sumOrder
-	newTransaction.TotalPriceAfterDiscount = totalPriceAfterDiscountTransactions
-	newTransaction.TotalPriceWithShippingFee = totalPriceAfterDiscountTransactions + sumShippingFee
+	newTransaction.TotalPrice = math.Round(sumOrder)
+	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
+	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, errors.New("ada promo or disc yang berubah makany final pricenya beda")

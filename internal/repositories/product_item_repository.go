@@ -15,6 +15,7 @@ type ProductItemRepository interface {
 	GetById(id uint) (model *models.ProductItem, err error)
 	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
+	SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error)
 }
 
 type productItemRepository struct {
@@ -170,4 +171,23 @@ func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*interna
 	}
 
 	return productModels, nil
+}
+
+func (r *productItemRepository) SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error) {
+	var model *models.ProductItem
+
+	result := r.db.
+		Model(&models.ProductItem{}).
+		Where("id = ?", ID).
+		Update("stock_quantity", gorm.Expr("stock_quantity - ?", amount))
+
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return model, nil
 }
