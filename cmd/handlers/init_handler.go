@@ -170,13 +170,14 @@ func Init() *Handler {
 	})
 
 	productService := services.NewProductService(&services.ProductServiceConfig{
-		ProductRepository:          productRepository,
-		MerchantRepository:         merchantRepository,
-		ProductItemRepository:      productItemRepository,
-		ProductVariationRepository: productVariationRepository,
-		ProductViewRepository:      productViewRepository,
-		ProductFavoriteRepository:  productFavoriteRepository,
-		CategoryRepository:         categoryRepository,
+		ProductRepository:                productRepository,
+		MerchantRepository:               merchantRepository,
+		ProductItemRepository:            productItemRepository,
+		ProductVariationRepository:       productVariationRepository,
+		ProductViewRepository:            productViewRepository,
+		ProductFavoriteRepository:        productFavoriteRepository,
+		CategoryRepository:               categoryRepository,
+		MerchantCourierServiceRepository: merchantCourierServiceRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
@@ -216,26 +217,34 @@ func Init() *Handler {
 		RajaOngkirRepository: rajaOngkirRepository,
 	})
 
+	marketplaceVoucherRepository := repositories.NewMarketplaceVoucherRepository(&repositories.MarketplaceVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+	marketplaceVoucherService := services.NewMarketplaceVoucherService(&services.MarketplaceVoucherServiceConfig{
+		MarketplaceVoucherRepository: marketplaceVoucherRepository,
+	})
+
 	h := New(&HandlerConfig{
-		RoleService:              roleService,
-		WalletService:            walletService,
-		AuthService:              authService,
-		CategoryService:          categoryService,
-		UserService:              userService,
-		ProfileService:           profileService,
-		SealabsPayService:        sealabsPayService,
-		MerchantVoucherService:   merchantVoucherService,
-		ProductService:           productService,
-		AddressService:           addressService,
-		MerchantService:          merchantService,
-		OrderService:             orderService,
-		ProductReviewService:     productReviewService,
-		MerchantPromotionService: merchantPromotionService,
-		CartService:              cartService,
-		CourierService:           courierService,
-		LogisticService:          logisticService,
-		SubDistrictService:       subDistrictService,
-		RajaOngkirService:        rajaOngkirService,
+		RoleService:               roleService,
+		WalletService:             walletService,
+		AuthService:               authService,
+		CategoryService:           categoryService,
+		UserService:               userService,
+		ProfileService:            profileService,
+		SealabsPayService:         sealabsPayService,
+		MerchantVoucherService:    merchantVoucherService,
+		ProductService:            productService,
+		AddressService:            addressService,
+		MerchantService:           merchantService,
+		OrderService:              orderService,
+		ProductReviewService:      productReviewService,
+		MerchantPromotionService:  merchantPromotionService,
+		CartService:               cartService,
+		SubDistrictService:        subDistrictService,
+		RajaOngkirService:         rajaOngkirService,
+		MarketplaceVoucherService: marketplaceVoucherService,
+		CourierService:            courierService,
+		LogisticService:           logisticService,
 	})
 
 	return h

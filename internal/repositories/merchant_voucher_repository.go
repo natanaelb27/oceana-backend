@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -86,15 +87,15 @@ func (r *merchantVoucherRepository) GetAllDetails(query *externalDtos.MerchantVo
 		queryResult.Where("code = ?", query.SearchVoucherCode)
 	}
 
-	if query.FilterVoucherStatus == "ongoing" {
+	if query.FilterVoucherStatus == constants.OngoingPromotionOrVoucher {
 		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
 	}
 
-	if query.FilterVoucherStatus == "upcoming" {
+	if query.FilterVoucherStatus == constants.UpcomingPromotionOrVoucher {
 		queryResult.Where("start_datetime::timestamp > NOW()::timestamp")
 	}
 
-	if query.FilterVoucherStatus == "ended" {
+	if query.FilterVoucherStatus == constants.EndedPromotionOrVoucher {
 		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
 	}
 

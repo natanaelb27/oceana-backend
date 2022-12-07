@@ -9,6 +9,7 @@ import (
 
 type ProductMerchantPromotionRepository interface {
 	CreateProductMerchantPromotion(newModels []*models.ProductMerchantPromotion) (models []*models.ProductMerchantPromotion, err error)
+	GetByMpAndProductID(merchantPromotionID, productID uint) (model *models.ProductMerchantPromotion, err error)
 	GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error)
 	Update(newModel *models.ProductMerchantPromotion) (model *models.ProductMerchantPromotion, err error)
 	DeleteByProductID(productID uint) (model *models.ProductMerchantPromotion, err error)
@@ -44,8 +45,24 @@ func (pmp *productMerchantPromotionRepository) CreateProductMerchantPromotion(ne
 	return
 }
 
+func (pmp *productMerchantPromotionRepository) GetByMpAndProductID(merchantPromotionID, productID uint) (model *models.ProductMerchantPromotion, err error) {
+	queryResult := pmp.db.Where("merchant_promotion_id = ? AND product_id = ?", merchantPromotionID, productID).First(&model)
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrProductMerchantPromotionNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
 func (pmp *productMerchantPromotionRepository) GetByMerchantPromotionID(merchantPromotionID uint) (models []*models.ProductMerchantPromotion, err error) {
-	queryResult := pmp.db.Where("merchant_promotion_id = ?", merchantPromotionID).Find(&models).Order("product_id ASC")
+	queryResult := pmp.db.Where("merchant_promotion_id = ?", merchantPromotionID).Order("product_id ASC").Find(&models)
 
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrProductMerchantPromotionNotFound

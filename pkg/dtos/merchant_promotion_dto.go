@@ -10,8 +10,8 @@ import (
 
 type MerchantPromotionRequest struct {
 	Name                     string                             `json:"name" binding:"required"`
-	StartDatetime            time.Time                          `json:"start_date_time" binding:"required"`
-	EndDatetime              time.Time                          `json:"end_date_time" binding:"required"`
+	StartDatetime            time.Time                          `json:"start_datetime" binding:"required"`
+	EndDatetime              time.Time                          `json:"end_datetime" binding:"required"`
 	ProductIDList            []int64                            `json:"product_id_list" binding:"required"`
 	ProductMerchantPromotion []*ProductMerchantPromotionRequest `json:"product_merchant_promotion" binding:"required"`
 }
@@ -31,8 +31,8 @@ type MerchantPromotionResponse struct {
 	ID                       uint                                `json:"id"`
 	MerchantId               uint                                `json:"merchant_id"`
 	Name                     string                              `json:"name"`
-	StartDatetime            time.Time                           `json:"start_date_time"`
-	EndDatetime              time.Time                           `json:"end_date_time"`
+	StartDatetime            time.Time                           `json:"start_datetime"`
+	EndDatetime              time.Time                           `json:"end_datetime"`
 	CreatedAt                time.Time                           `json:"created_at"`
 	UpdatedAt                time.Time                           `json:"updated_at"`
 	ProductMerchantPromotion []*ProductMerchantPromotionResponse `json:"product_merchant_promotion"`
@@ -71,12 +71,13 @@ func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
 }
 
 type MerchantPromotionDetails struct {
-	ID              uint      `json:"id"`
-	MerchantId      uint      `json:"merchant_id"`
-	Name            string    `json:"name"`
-	StartDatetime   time.Time `json:"start_date_time"`
-	EndDatetime     time.Time `json:"end_date_time"`
-	PromotionStatus string    `json:"promotion_status"`
+	ID                       uint                                `json:"id"`
+	MerchantId               uint                                `json:"merchant_id"`
+	Name                     string                              `json:"name"`
+	StartDatetime            time.Time                           `json:"start_datetime"`
+	EndDatetime              time.Time                           `json:"end_datetime"`
+	PromotionStatus          string                              `json:"promotion_status"`
+	ProductMerchantPromotion []*ProductMerchantPromotionResponse `json:"product_merchant_promotion"`
 }
 
 func NewMerchantPromotionDetails(source *models.MerchantPromotion) (target *MerchantPromotionDetails) {

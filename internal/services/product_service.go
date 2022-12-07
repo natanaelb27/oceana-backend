@@ -19,37 +19,41 @@ type ProductService interface {
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
+	GetUpdateByMerchantID(ID uint) (*productInternalDtos.ProductModel, error)
 }
 
 type productService struct {
-	productRepository         r.ProductRepository
-	merchantRepository        r.MerchantRepository
-	productItemRepository     r.ProductItemRepository
-	productVariantRepository  r.ProductVariationRepository
-	productViewRepository     r.ProductViewRepository
-	productFavoriteRepository r.ProductFavoriteRepository
-	categoryRepository        r.CategoryRepository
+	productRepository                r.ProductRepository
+	merchantRepository               r.MerchantRepository
+	productItemRepository            r.ProductItemRepository
+	productVariationRepository       r.ProductVariationRepository
+	productViewRepository            r.ProductViewRepository
+	productFavoriteRepository        r.ProductFavoriteRepository
+	merchantCourierServiceRepository r.MerchantCourierServiceRepository
+	categoryRepository               r.CategoryRepository
 }
 
 type ProductServiceConfig struct {
-	ProductRepository          r.ProductRepository
-	MerchantRepository         r.MerchantRepository
-	ProductItemRepository      r.ProductItemRepository
-	ProductVariationRepository r.ProductVariationRepository
-	ProductViewRepository      r.ProductViewRepository
-	ProductFavoriteRepository  r.ProductFavoriteRepository
-	CategoryRepository         r.CategoryRepository
+	ProductRepository                r.ProductRepository
+	MerchantRepository               r.MerchantRepository
+	ProductItemRepository            r.ProductItemRepository
+	ProductVariationRepository       r.ProductVariationRepository
+	ProductViewRepository            r.ProductViewRepository
+	ProductFavoriteRepository        r.ProductFavoriteRepository
+	MerchantCourierServiceRepository r.MerchantCourierServiceRepository
+	CategoryRepository               r.CategoryRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
 	return &productService{
-		productRepository:         c.ProductRepository,
-		merchantRepository:        c.MerchantRepository,
-		productItemRepository:     c.ProductItemRepository,
-		productVariantRepository:  c.ProductVariationRepository,
-		productViewRepository:     c.ProductViewRepository,
-		productFavoriteRepository: c.ProductFavoriteRepository,
-		categoryRepository:        c.CategoryRepository,
+		productRepository:                c.ProductRepository,
+		merchantRepository:               c.MerchantRepository,
+		productItemRepository:            c.ProductItemRepository,
+		productVariationRepository:       c.ProductVariationRepository,
+		productViewRepository:            c.ProductViewRepository,
+		productFavoriteRepository:        c.ProductFavoriteRepository,
+		merchantCourierServiceRepository: c.MerchantCourierServiceRepository,
+		categoryRepository:               c.CategoryRepository,
 	}
 }
 
@@ -68,7 +72,7 @@ func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDet
 
 	productDetails.ProductModel = productModels
 
-	productVariation, err := s.productVariantRepository.GetByProductID(productID)
+	productVariation, err := s.productVariationRepository.GetByProductID(productID)
 
 	if err != nil {
 		return nil, err
@@ -251,4 +255,55 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 	}
 
 	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
+}
+
+func (s *productService) GetUpdateByMerchantID(merchantID uint) (*productInternalDtos.ProductModel, error) {
+	// product
+	productModel, err := s.productRepository.GetUpdateByMerchantID(merchantID)
+	if err != nil {
+		return nil, err
+	}
+
+	productItems, err := s.productItemRepository.GetUpdateByProductID(productModel.ID)
+	// product_items
+	if err != nil {
+		return nil, err
+	}
+	productModel.ProductItems = productItems
+
+	// variants
+	variants, err := s.productVariationRepository.GetUpdateByProductID(productModel.ID)
+	if err != nil {
+		return nil, err
+	}
+	productModel.Variants = variants
+
+	// get all courier on merchant courier service join to courier group by courier id
+	// get all merchant courier service left join product courier service and add to its courier
+
+	// couriers
+	couriers, err := s.merchantCourierServiceRepository.GetAllCouriersByMerchantIDForProductUpdate(merchantID)
+	if err != nil && err != e.ErrDataNotFound {
+		return nil, err
+	}
+	productModel.Couriers = couriers
+	//  courier > courier_services
+	for iC := range couriers {
+		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpdate(merchantID, productModel.ID)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
+
+		csIsActive := false
+		for _, cs := range courierServices {
+			if cs.IsActive {
+				csIsActive = true
+			}
+		}
+
+		productModel.Couriers[iC].CourierService = courierServices
+		productModel.Couriers[iC].IsActive = csIsActive
+	}
+
+	return productModel, nil
 }
