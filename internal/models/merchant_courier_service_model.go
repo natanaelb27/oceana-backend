@@ -8,9 +8,9 @@ import (
 
 type MerchantCourierService struct {
 	ID               uint
-	CourierServiceId uint
+	CourierServiceId uint `gorm:"uniqueIndex:idx_merchant_courier_service;"`
 	CourierService   CourierService
-	MerchantID       uint
+	MerchantID       uint `gorm:"uniqueIndex:idx_merchant_courier_service;"`
 	Merchant         Merchant
 	IsActive         bool
 	CreatedAt        time.Time
