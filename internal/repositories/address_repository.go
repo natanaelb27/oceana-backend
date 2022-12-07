@@ -119,12 +119,12 @@ func (a *addressRepository) GetProfileAddressById(id uuid.UUID) (addressDetails 
 		First(&addressDetails)
 
 	if queryResult.Error != nil {
-		err = queryResult.Error
-		return
-	}
+		if queryResult.RowsAffected == 0 {
+			err = e.ErrDataNotFound
+			return
+		}
 
-	if queryResult.RowsAffected == 0 {
-		err = e.ErrDataNotFound
+		err = queryResult.Error
 		return
 	}
 

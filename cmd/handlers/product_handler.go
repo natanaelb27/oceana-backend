@@ -181,3 +181,19 @@ func (h *Handler) ProductCreate(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) ProductModelById(c *gin.Context) {
+	productID, err := strconv.Atoi(c.Param("product-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	productModel, err := h.productService.GetUpdateByMerchantID(uint(productID))
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, productModel, nil)
+}

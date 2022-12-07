@@ -12,6 +12,8 @@ func auth(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	{
 		publicRoute.POST("/register", h.UserCreate)
 		publicRoute.POST("/login", h.UserLogin)
+		publicRoute.POST("/register-google", h.UserRegisterWithGoogle)
+		publicRoute.POST("/login-google", h.UserLoginWithGoogle)
 		publicRoute.POST("/reset-password/verify", h.UserVerifyResetPassword)
 		publicRoute.POST("/reset-password/:resetPasswordID", h.UserResetPassword)
 	}

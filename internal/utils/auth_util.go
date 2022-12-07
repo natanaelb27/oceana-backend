@@ -15,11 +15,11 @@ func AuthenticateUser(user *models.User, providedPassword string) (*internalDtos
 	if err != nil {
 		return nil, err
 	}
-	userLoginResponse := &internalDtos.UserLoginData{
+	userLoginData := &internalDtos.UserLoginData{
 		AccessToken: token,
 		Role:        user.Role,
 	}
-	return userLoginResponse, nil
+	return userLoginData, nil
 }
 
 func GenerateUserTokenString(user *models.User) (string, error) {

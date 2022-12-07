@@ -119,3 +119,21 @@ func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {
 
 	utils.ResponseSuccess(c, merchantVouherGetByIDResponse, nil)
 }
+
+func (h *Handler) MerchantVoucherGetAllByBuyer(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewBuyerMerchantVoucherQuery(c)
+	merchantVouherGetAllResponse, pagination, err := h.merchantVoucherService.GetAllByBuyer(id, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantVouherGetAllResponse, pagination)
+}
