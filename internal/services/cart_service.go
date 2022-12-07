@@ -27,55 +27,76 @@ type CartService interface {
 }
 
 type cartService struct {
-	addressSnapshotRepository          r.AddressSnapshotRepository
-	cartRepository                     r.CartRepository
-	productRepository                  r.ProductRepository
-	productItemRepository              r.ProductItemRepository
-	walletRepository                   r.WalletRepository
-	productMerchantPromotionRepository r.ProductMerchantPromotionRepository
-	productSnapshotRepository          r.ProductSnapshotRepository
-	productMediaSnapshotRepository     r.ProductMediaSnapshotRepository
-	productVariationSnapshotRepository r.ProductVariationSnapshotRepository
-	merchantVoucherRepository          r.MerchantVoucherRepository
-	merchantPromotionRepository        r.MerchantPromotionRepository
-	marketplaceVoucherRepository       r.MarketplaceVoucherRepository
-	redisRepository                    r.RedisRepository
-	userMerchantPromotionRepository    r.UserMerchantPromotionRepository
+	addressSnapshotRepository               r.AddressSnapshotRepository
+	cartRepository                          r.CartRepository
+	orderRepository                         r.OrderRepository
+	orderDetailRepository                   r.OrderDetailRepository
+	orderDetailMerchantPromotionRepository  r.OrderDetailMerchantPromotionRepository
+	orderMerchantVoucherRepository          r.OrderMerchantVoucherRepository
+	productRepository                       r.ProductRepository
+	productItemRepository                   r.ProductItemRepository
+	productMerchantPromotionRepository      r.ProductMerchantPromotionRepository
+	productSnapshotRepository               r.ProductSnapshotRepository
+	productMediaSnapshotRepository          r.ProductMediaSnapshotRepository
+	productVariationSnapshotRepository      r.ProductVariationSnapshotRepository
+	merchantVoucherRepository               r.MerchantVoucherRepository
+	merchantPromotionRepository             r.MerchantPromotionRepository
+	marketplaceVoucherRepository            r.MarketplaceVoucherRepository
+	redisRepository                         r.RedisRepository
+	transactionRepository                   r.TransactionRepository
+	transactionMarketplaceVoucherRepository r.TransactionMarketplaceVoucherRepository
+	userMerchantPromotionRepository         r.UserMerchantPromotionRepository
+	walletRepository                        r.WalletRepository
+	walletTransactionPaymentRepository      r.WalletTransactionPaymentRepository
 }
 
 type CartServiceConfig struct {
-	AddressSnapshotRepository          r.AddressSnapshotRepository
-	CartRepository                     r.CartRepository
-	ProductRepository                  r.ProductRepository
-	ProductItemRepository              r.ProductItemRepository
-	WalletRepository                   r.WalletRepository
-	ProductMerchantPromotionRepository r.ProductMerchantPromotionRepository
-	ProductSnapshotRepository          r.ProductSnapshotRepository
-	ProductVariationSnapshotRepository r.ProductVariationSnapshotRepository
-	ProductMediaSnapshotRepository     r.ProductMediaSnapshotRepository
-	MerchantVoucherRepository          r.MerchantVoucherRepository
-	MerchantPromotionRepository        r.MerchantPromotionRepository
-	MarketplaceVoucherRepository       r.MarketplaceVoucherRepository
-	RedisRepository                    r.RedisRepository
-	UserMerchantPromotionRepository    r.UserMerchantPromotionRepository
+	AddressSnapshotRepository               r.AddressSnapshotRepository
+	CartRepository                          r.CartRepository
+	OrderRepository                         r.OrderRepository
+	OrderDetailRepository                   r.OrderDetailRepository
+	OrderDetailMerchantPromotionRepository  r.OrderDetailMerchantPromotionRepository
+	OrderMerchantVoucherRepository          r.OrderMerchantVoucherRepository
+	ProductRepository                       r.ProductRepository
+	ProductItemRepository                   r.ProductItemRepository
+	ProductMerchantPromotionRepository      r.ProductMerchantPromotionRepository
+	ProductSnapshotRepository               r.ProductSnapshotRepository
+	ProductVariationSnapshotRepository      r.ProductVariationSnapshotRepository
+	ProductMediaSnapshotRepository          r.ProductMediaSnapshotRepository
+	MerchantVoucherRepository               r.MerchantVoucherRepository
+	MerchantPromotionRepository             r.MerchantPromotionRepository
+	MarketplaceVoucherRepository            r.MarketplaceVoucherRepository
+	RedisRepository                         r.RedisRepository
+	TransactionRepository                   r.TransactionRepository
+	TransactionMarketplaceVoucherRepository r.TransactionMarketplaceVoucherRepository
+	UserMerchantPromotionRepository         r.UserMerchantPromotionRepository
+	WalletRepository                        r.WalletRepository
+	WalletTransactionPaymentRepository      r.WalletTransactionPaymentRepository
 }
 
 func NewCartService(c *CartServiceConfig) CartService {
 	return &cartService{
-		addressSnapshotRepository:          c.AddressSnapshotRepository,
-		cartRepository:                     c.CartRepository,
-		productRepository:                  c.ProductRepository,
-		productItemRepository:              c.ProductItemRepository,
-		walletRepository:                   c.WalletRepository,
-		productMerchantPromotionRepository: c.ProductMerchantPromotionRepository,
-		productSnapshotRepository:          c.ProductSnapshotRepository,
-		productVariationSnapshotRepository: c.ProductVariationSnapshotRepository,
-		productMediaSnapshotRepository:     c.ProductMediaSnapshotRepository,
-		merchantVoucherRepository:          c.MerchantVoucherRepository,
-		merchantPromotionRepository:        c.MerchantPromotionRepository,
-		marketplaceVoucherRepository:       c.MarketplaceVoucherRepository,
-		redisRepository:                    c.RedisRepository,
-		userMerchantPromotionRepository:    c.UserMerchantPromotionRepository,
+		addressSnapshotRepository:               c.AddressSnapshotRepository,
+		cartRepository:                          c.CartRepository,
+		orderRepository:                         c.OrderRepository,
+		orderDetailRepository:                   c.OrderDetailRepository,
+		orderDetailMerchantPromotionRepository:  c.OrderDetailMerchantPromotionRepository,
+		orderMerchantVoucherRepository:          c.OrderMerchantVoucherRepository,
+		productRepository:                       c.ProductRepository,
+		productItemRepository:                   c.ProductItemRepository,
+		productMerchantPromotionRepository:      c.ProductMerchantPromotionRepository,
+		productSnapshotRepository:               c.ProductSnapshotRepository,
+		productVariationSnapshotRepository:      c.ProductVariationSnapshotRepository,
+		productMediaSnapshotRepository:          c.ProductMediaSnapshotRepository,
+		merchantVoucherRepository:               c.MerchantVoucherRepository,
+		merchantPromotionRepository:             c.MerchantPromotionRepository,
+		marketplaceVoucherRepository:            c.MarketplaceVoucherRepository,
+		redisRepository:                         c.RedisRepository,
+		transactionRepository:                   c.TransactionRepository,
+		transactionMarketplaceVoucherRepository: c.TransactionMarketplaceVoucherRepository,
+		userMerchantPromotionRepository:         c.UserMerchantPromotionRepository,
+		walletRepository:                        c.WalletRepository,
+		walletTransactionPaymentRepository:      c.WalletTransactionPaymentRepository,
 	}
 }
 
@@ -163,23 +184,41 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 	// validasi marketplace voucher
 
-	transaction := &models.Transaction{
+	marketplaceVoucher := &internalDtos.MarketplaceVoucherDetails{}
+
+	if request.MarketplaceVoucherID != nil {
+		marketplaceVoucher, err = p.marketplaceVoucherRepository.GetDetailsByID(*request.MarketplaceVoucherID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if marketplaceVoucher.VoucherStatus != constants.OngoingPromotionOrVoucher {
+			return nil, errors.New("marketplace voucher not ongoing")
+		}
+
+		if marketplaceVoucher.CurrentQuota >= marketplaceVoucher.MaximumQuota {
+			return nil, errors.New("marketplace voucher udah full quotanya")
+		}
+
+	}
+
+	newTransaction := &models.Transaction{
 		ID:                  uuid.New(),
 		UserID:              request.UserID,
 		TransactionDatetime: time.Now(),
-		PaymentMethodID:     1, //ganti constant
+		PaymentMethodID:     constants.WalletID,
 		IsPaid:              true,
 	}
 
-	// fmt.Println(transaction)
-
-	orderList := []*models.Order{}
-	orderDetailList := []*models.OrderDetail{}
-	orderDetailMerchantPromotionList := []*models.OrderDetailMerchantPromotion{}
-	orderMerchantVoucher := []*models.OrderMerchantVoucher{}
+	newOrderList := []*models.Order{}
+	newOrderDetailList := []*models.OrderDetail{}
+	newOrderDetailMerchantPromotionList := []*models.OrderDetailMerchantPromotion{}
+	newOrderMerchantVoucherList := []*models.OrderMerchantVoucher{}
+	newTransactionMarketplaceVoucher := &models.TransactionMarketplaceVoucher{}
 
 	var sumOrder float64 = 0
-	var sumShippingFee uint = 0
+	var sumShippingFee float64 = 0
 
 	addressSnapshot, err := p.addressSnapshotRepository.Create(request.AddressID)
 
@@ -191,7 +230,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		merchantVoucher := &internalDtos.MerchantVoucherDetails{}
 
 		if cartOrderItem.MerchantVoucherID != nil {
-			resultMerchantVoucherID, err := p.merchantVoucherRepository.ValidateMerchantVoucherByBuyer(*cartOrderItem.MerchantVoucherID, request.UserID)
+			validateMerchantVoucherID, err := p.merchantVoucherRepository.ValidateMerchantVoucherByBuyer(*cartOrderItem.MerchantVoucherID, request.UserID)
 
 			if errors.Is(err, e.ErrDataNotFound) {
 				break
@@ -199,7 +238,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				return nil, err
 			}
 
-			if resultMerchantVoucherID != nil {
+			if validateMerchantVoucherID != nil {
 				return nil, errors.New("merchant voucher used by user")
 			}
 
@@ -213,7 +252,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				return nil, errors.New("error merchant id")
 			}
 
-			if merchantVoucher.VoucherStatus != constants.OngoingVoucherStatus {
+			if merchantVoucher.VoucherStatus != constants.OngoingPromotionOrVoucher {
 				return nil, errors.New("merchant voucher not ongoing")
 			}
 
@@ -222,10 +261,16 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			}
 		}
 
+		countOrder, err := p.orderRepository.GetOrderCount()
+
+		if err != nil {
+			return nil, err
+		}
+
 		newOrder := &models.Order{
 			ID:                uuid.New(),
-			InvoiceNumber:     "get count order dl trus ntr disambung",
-			TransactionID:     transaction.ID,
+			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder))),
+			TransactionID:     newTransaction.ID,
 			MerchantID:        cartOrderItem.MerchantID,
 			AddressSnapshotID: addressSnapshot.ID,
 			CourierServiceID:  cartOrderItem.CourierServiceID,
@@ -246,7 +291,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					return nil, err
 				}
 
-				if productMerchantPromotion.PromotionStatus != constants.OngoingVoucherStatus {
+				if productMerchantPromotion.PromotionStatus != constants.OngoingPromotionOrVoucher {
 					return nil, errors.New("merchant promotion not ongoing")
 				}
 			}
@@ -308,7 +353,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				var totalDiscountODMP float64 = 0
 
 				if product.ProductMerchantPromotionID != nil {
-					// if !reflect.DeepEqual(productMerchantPromotion, &internalDtos.ProductMerchantPromotionDetails{}) {
 					if strings.EqualFold(productMerchantPromotion.DiscountType, constants.NominalDiscountType) {
 						totalDiscountODMP = float64(productMerchantPromotion.Discount * productItems.Quantity)
 						totalPriceAfterDiscountOrderDetails = math.Max((float64(totalPriceOrderDetails) - totalDiscountODMP), 0)
@@ -330,17 +374,16 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					TotalPriceAfterDiscount: totalPriceAfterDiscountOrderDetails,
 				}
 
-				orderDetailList = append(orderDetailList, newOrderDetail)
+				newOrderDetailList = append(newOrderDetailList, newOrderDetail)
 
 				if product.ProductMerchantPromotionID != nil {
-					// if !reflect.DeepEqual(productMerchantPromotion, &internalDtos.ProductMerchantPromotionDetails{}) {
 					newOrderDetailMerchantPromotion := &models.OrderDetailMerchantPromotion{
 						OrderDetailID:       newOrderDetail.ID,
 						MerchantPromotionID: productMerchantPromotion.ProductMerchantPromotionID,
 						TotalDiscount:       totalDiscountODMP,
 					}
 
-					orderDetailMerchantPromotionList = append(orderDetailMerchantPromotionList, newOrderDetailMerchantPromotion)
+					newOrderDetailMerchantPromotionList = append(newOrderDetailMerchantPromotionList, newOrderDetailMerchantPromotion)
 				}
 
 				fmt.Println("order detail: ", totalPriceOrderDetails)
@@ -349,7 +392,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			}
 
 			if product.ProductMerchantPromotionID != nil {
-				// if !reflect.DeepEqual(productMerchantPromotion, &internalDtos.ProductMerchantPromotionDetails{}) {
 				if productMerchantPromotion.MaximumQuota != -1 && int(productMerchantPromotion.CurrentQuota+sumQuantity) > productMerchantPromotion.MaximumQuota {
 					return nil, errors.New("PURCHASED QTY MELEBIHI PMP GLOBAL QUOTA LIMIT")
 				}
@@ -388,7 +430,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 			}
 
-			fmt.Println("order sum: ", sumProductItem)
+			fmt.Println("product item sum: ", sumProductItem)
 
 			sumProduct += sumProductItem
 		}
@@ -398,7 +440,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 		if cartOrderItem.MerchantVoucherID != nil {
 			if merchantVoucher.MinimumSpendAmount > uint(sumProduct) {
-				return nil, errors.New("min spend amount > sum order")
+				return nil, errors.New("min spend amount > sum product")
 			}
 
 			if strings.EqualFold(merchantVoucher.DiscountType, constants.NominalDiscountType) {
@@ -408,13 +450,12 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				totalDiscountOMV = math.Min(float64(merchantVoucher.Discount/100.0*uint(sumProduct)), float64(merchantVoucher.MaximumDiscountAmount))
 				totalPriceAfterDiscountOrders = sumProduct - totalDiscountOMV
 			}
-
 		}
 
 		newOrder.TotalPrice = sumProduct
 		newOrder.TotalPriceAfterDiscount = totalPriceAfterDiscountOrders
 
-		orderList = append(orderList, newOrder)
+		newOrderList = append(newOrderList, newOrder)
 
 		if cartOrderItem.MerchantVoucherID != nil {
 			newOrderMerchantVoucher := &models.OrderMerchantVoucher{
@@ -423,14 +464,96 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				TotalDiscount:     totalDiscountOMV,
 			}
 
-			orderMerchantVoucher = append(orderMerchantVoucher, newOrderMerchantVoucher)
+			newOrderMerchantVoucherList = append(newOrderMerchantVoucherList, newOrderMerchantVoucher)
 		}
 
 		sumOrder += sumProduct
-		sumShippingFee += cartOrderItem.ShippingFee
+		sumShippingFee += float64(cartOrderItem.ShippingFee)
 	}
 
-	transaction.TotalPrice = sumOrder
+	var totalPriceAfterDiscountTransactions float64 = sumOrder
+	var totalDiscountTMV float64 = 0
+
+	if request.MarketplaceVoucherID != nil {
+		if marketplaceVoucher.MinimumSpendAmount > uint(sumOrder) {
+			return nil, errors.New("min spend amount > sum order")
+		}
+
+		if strings.EqualFold(marketplaceVoucher.DiscountType, constants.NominalDiscountType) {
+			totalDiscountTMV = float64(marketplaceVoucher.Discount)
+			totalPriceAfterDiscountTransactions = math.Max((sumOrder - totalDiscountTMV), 0)
+		} else {
+			totalDiscountTMV = math.Min(float64(marketplaceVoucher.Discount/100.0*uint(sumOrder)), float64(marketplaceVoucher.MaximumDiscountAmount))
+			totalPriceAfterDiscountTransactions = sumOrder - totalDiscountTMV
+		}
+
+		newTransactionMarketplaceVoucher = &models.TransactionMarketplaceVoucher{
+			TransactionID:        newTransaction.ID,
+			MarketplaceVoucherID: *request.MarketplaceVoucherID,
+			TotalDiscount:        totalDiscountTMV,
+		}
+	}
+
+	newTransaction.TotalPrice = sumOrder
+	newTransaction.TotalPriceAfterDiscount = totalPriceAfterDiscountTransactions
+	newTransaction.TotalPriceWithShippingFee = totalPriceAfterDiscountTransactions + sumShippingFee
+
+	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
+		return nil, errors.New("ada promo or disc yang berubah makany final pricenya beda")
+	}
+
+	if float64(wallet.Balance) < newTransaction.TotalPriceWithShippingFee {
+		return nil, errors.New("wallet balance kurang")
+	}
+
+	_, err = p.transactionRepository.Create(newTransaction)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newWalletTransactionPayment := &models.WalletTransactionPayment{
+		TransactionID: newTransaction.ID,
+		WalletID:      wallet.ID,
+	}
+
+	_, err = p.walletTransactionPaymentRepository.Create(newWalletTransactionPayment)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if request.MarketplaceVoucherID != nil {
+		_, err = p.transactionMarketplaceVoucherRepository.Create(newTransactionMarketplaceVoucher)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = p.orderRepository.Create(newOrderList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.orderMerchantVoucherRepository.Create(newOrderMerchantVoucherList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.orderDetailRepository.Create(newOrderDetailList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.orderDetailMerchantPromotionRepository.Create(newOrderDetailMerchantPromotionList)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// TRANSACTION IS PAID SET TO TRUE KARNA WALLET
 

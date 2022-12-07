@@ -28,5 +28,5 @@ type PayCartWithWalletRequest struct {
 	MarketplaceVoucherID *uint            `json:"marketplace_voucher_id"`
 	AddressID            uuid.UUID        `json:"address_id" binding:"required"`
 	Pin                  string           `json:"pin" binding:"required,len=6"`
-	TotalPayment         uint             `json:"total_payment" binding:"required"`
+	TotalPayment         float64          `json:"total_payment" binding:"required"`
 }

@@ -236,20 +236,42 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	walletTransactionPaymentRepository := repositories.NewWalletTransactionPaymentRepository(&repositories.WalletTransactionPaymentRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	transactionRepository := repositories.NewTransactionRepository(&repositories.TransactionRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	transactionMarketplaceVoucherRepository := repositories.NewTransactionMarketplaceVoucherRepository(&repositories.TransactionMarketplaceVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderMerchantVoucherRepository := repositories.NewOrderMerchantVoucherRepository(&repositories.OrderMerchantVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	cartService := services.NewCartService(&services.CartServiceConfig{
-		AddressSnapshotRepository:          addressSnapshotRepository,
-		CartRepository:                     cartRepository,
-		ProductItemRepository:              productItemRepository,
-		WalletRepository:                   walletRepository,
-		ProductMerchantPromotionRepository: productMerchantPromotionRepository,
-		ProductSnapshotRepository:          productSnapshotRepository,
-		ProductMediaSnapshotRepository:     productMediaSnapshotRepository,
-		ProductVariationSnapshotRepository: productVariationSnapshotRepository,
-		MerchantVoucherRepository:          merchantVoucherRepository,
-		MerchantPromotionRepository:        merchantPromotionRepository,
-		MarketplaceVoucherRepository:       marketplaceVoucherRepository,
-		RedisRepository:                    redisRepository,
-		UserMerchantPromotionRepository:    userMerchantPromotionRepository,
+		AddressSnapshotRepository:               addressSnapshotRepository,
+		CartRepository:                          cartRepository,
+		OrderRepository:                         orderRepository,
+		OrderDetailRepository:                   orderDetailRepository,
+		OrderMerchantVoucherRepository:          orderMerchantVoucherRepository,
+		ProductItemRepository:                   productItemRepository,
+		ProductMerchantPromotionRepository:      productMerchantPromotionRepository,
+		ProductSnapshotRepository:               productSnapshotRepository,
+		ProductMediaSnapshotRepository:          productMediaSnapshotRepository,
+		ProductVariationSnapshotRepository:      productVariationSnapshotRepository,
+		MerchantVoucherRepository:               merchantVoucherRepository,
+		MerchantPromotionRepository:             merchantPromotionRepository,
+		MarketplaceVoucherRepository:            marketplaceVoucherRepository,
+		RedisRepository:                         redisRepository,
+		TransactionRepository:                   transactionRepository,
+		TransactionMarketplaceVoucherRepository: transactionMarketplaceVoucherRepository,
+		UserMerchantPromotionRepository:         userMerchantPromotionRepository,
+		WalletRepository:                        walletRepository,
+		WalletTransactionPaymentRepository:      walletTransactionPaymentRepository,
 	})
 
 	h := New(&HandlerConfig{
