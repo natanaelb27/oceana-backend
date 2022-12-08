@@ -24,9 +24,6 @@ func Init() *Handler {
 	productItemRepository := repositories.NewProductItemRepository(&repositories.ProductItemRepositoryConfig{
 		DB: db.Get(),
 	})
-	productItemService := services.NewProductItemService(&services.ProductItemServiceConfig{
-		ProductItemRepository: productItemRepository,
-	})
 
 	productVariationRepository := repositories.NewProductVariationRepository(&repositories.ProductVariationRepositoryConfig{
 		DB: db.Get(),
@@ -245,7 +242,6 @@ func Init() *Handler {
 		SealabsPayService:         sealabsPayService,
 		MerchantVoucherService:    merchantVoucherService,
 		ProductService:            productService,
-		ProductItemService:        productItemService,
 		AddressService:            addressService,
 		MerchantService:           merchantService,
 		OrderService:              orderService,
