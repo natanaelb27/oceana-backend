@@ -20,6 +20,7 @@ type ProductRepository interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
+	GetByProductItemID(productItemID uint) (*models.Product, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
 	GetUpdateByMerchantID(id uint) (model *product_dtos.ProductModel, err error)
 }
@@ -174,9 +175,9 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 
 	subQueryUserMerchantPromotion := r.db.Model(&models.UserMerchantPromotion{}).
 		Select(`
-		user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
-		product_merchant_promotions.product_id AS product_id,
-		user_merchant_promotions.usage AS user_merchant_promotion_usage
+			user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
+			product_merchant_promotions.product_id AS product_id,
+			user_merchant_promotions.usage AS user_merchant_promotion_usage
 		`).
 		Joins("JOIN product_merchant_promotions ON product_merchant_promotions.id = user_merchant_promotions.product_merchant_promotion_id").
 		Where("user_merchant_promotions.user_id = ?", userID).
@@ -475,6 +476,19 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	}
 
 	return ProductDetails, pagination, nil
+}
+
+func (r *productRepository) GetByProductItemID(productItemID uint) (*models.Product, error) {
+	var model *models.Product
+
+	result := r.db.Joins("LEFT JOIN product_items ON id = product_items.product_id").
+		First(&model, "product_items.id = ?", productItemID)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, e.ErrProductNotFound
+	}
+
+	return model, result.Error
 }
 
 func (r *productRepository) UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error) {

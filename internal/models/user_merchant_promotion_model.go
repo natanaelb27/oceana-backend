@@ -9,9 +9,9 @@ import (
 
 type UserMerchantPromotion struct {
 	ID                         uint
-	UserID                     uuid.UUID
+	UserID                     uuid.UUID `gorm:"uniqueIndex:idx_user_merchant_promotion;"`
 	User                       User
-	ProductMerchantPromotionID uint
+	ProductMerchantPromotionID uint `gorm:"uniqueIndex:idx_user_merchant_promotion;"`
 	ProductMerchantPromotion   ProductMerchantPromotion
 	Usage                      uint
 	CreatedAt                  time.Time

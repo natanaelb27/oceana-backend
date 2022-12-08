@@ -11,18 +11,18 @@ type OrderDetail struct {
 	ID                      uuid.UUID
 	OrderID                 uuid.UUID
 	Order                   Order
+	Message                 string
 	ProductSnapshotID       uint
 	ProductSnapshot         ProductSnapshot
 	Quantity                uint
 	TotalPrice              uint
-	TotalPriceAfterDiscount uint
-	Status                  string
+	TotalPriceAfterDiscount float64
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 	DeletedAt               gorm.DeletedAt
 }
 
-func (m *OrderDetail) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = uuid.New()
-	return
-}
+// func (m *OrderDetail) BeforeCreate(tx *gorm.DB) (err error) {
+// 	m.ID = uuid.New()
+// 	return
+// }
