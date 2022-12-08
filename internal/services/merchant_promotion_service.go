@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -128,18 +130,18 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 		return nil, err
 	}
 
-	currentMp, err := mp.GetByID(merchantPromotionID)
+	currentMp, err := mp.merchantPromotionRepository.GetByID(merchantPromotionID)
 	if err != nil {
 		return nil, err
 	}
-
+	currentMpStatus := utils.PromotionOrVoucherStatus(currentMp.StartDatetime, currentMp.EndDatetime)
 	// MP validations
 	// name
 	if mpRequest.Name == "" {
 		return nil, e.ErrEmptyName
 	}
 	// datetime
-	err = utils.ValidateMpUpdateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime, currentMp.StartDatetime, currentMp.EndDatetime, currentMp.PromotionStatus)
+	err = utils.ValidateMpUpdateDatetime(mpRequest.StartDatetime, mpRequest.EndDatetime, currentMp.StartDatetime, currentMp.EndDatetime, currentMpStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +172,7 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
 	// currently existing PMPs
 	currentPmpList, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
-	if err != nil {
+	if err != nil && !errors.Is(err, e.ErrProductMerchantPromotionNotFound) {
 		return nil, err
 	}
 	var currentPmpProductIDList []int
@@ -181,7 +183,7 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 	for _, pmpRequest := range mpRequest.ProductMerchantPromotion {
 		// PMP validation
 		// ongoing promotion, no updates allowed to PMP
-		if currentMp.PromotionStatus == constants.OngoingPromotionOrVoucher {
+		if currentMpStatus == constants.OngoingPromotionOrVoucher {
 			return nil, e.ErrPromotionIsOngoing
 		}
 		// validate discount and type
@@ -192,15 +194,6 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 
 		if pmpRequest.DiscountType == constants.Nominal {
 			pmpRequest.MaximumDiscountAmount = pmpRequest.Discount
-		}
-		// validate quota before update
-		currentPmpModel, err := mp.productMerchantPromotionRepository.GetByMpAndProductID(merchantPromotionID, pmpRequest.ProductID)
-		if err != nil {
-			return nil, err
-		}
-		err = utils.ValidatePmpQuota(currentPmpModel.CurrentQuota, pmpRequest.MaximumQuota, pmpRequest.MaximumUserLimit)
-		if err != nil {
-			return nil, err
 		}
 
 		// search PMP based on productIDList
@@ -218,6 +211,15 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 			updatedPmpModel = createdPmpModel[0]
 		} else {
 			// UPDATE
+			// validate quota before update
+			currentPmpModel, err := mp.productMerchantPromotionRepository.GetByMpAndProductID(merchantPromotionID, pmpRequest.ProductID)
+			if err != nil {
+				return nil, err
+			}
+			err = utils.ValidatePmpQuota(currentPmpModel.CurrentQuota, pmpRequest.MaximumQuota, pmpRequest.MaximumUserLimit)
+			if err != nil {
+				return nil, err
+			}
 			currentPmpModel.DiscountType = pmpRequest.DiscountType
 			currentPmpModel.Discount = pmpRequest.Discount
 			currentPmpModel.MaximumDiscountAmount = pmpRequest.MaximumDiscountAmount
