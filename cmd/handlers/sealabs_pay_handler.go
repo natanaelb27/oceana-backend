@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	url "net/url"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -164,8 +164,17 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 	}
 
 	var errResponse *dtos.SealabsPayRedirectResponseError
-	bodyBytes2, _ := ioutil.ReadAll(res.Body)
-	json.Unmarshal(bodyBytes2, &errResponse)
+	responseBodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInternalOperationFailed)
+		return
+	}
+
+	err = json.Unmarshal(responseBodyBytes, &errResponse)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInternalOperationFailed)
+		return
+	}
 	if res.StatusCode != http.StatusSeeOther {
 		utils.Response(c, res.StatusCode, errResponse, nil, nil, res.Status)
 		return
@@ -176,6 +185,6 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 		utils.ResponseError(c, e.ErrUnknown)
 		return
 	}
-	
+
 	utils.ResponseSuccess(c, otpURL[0], nil)
 }
