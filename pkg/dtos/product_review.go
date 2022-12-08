@@ -1,0 +1,107 @@
+package dtos
+
+import (
+	"mime/multipart"
+	"strconv"
+	"time"
+
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+type ProductReviewCreateRequest struct {
+	UserID        uuid.UUID
+	OrderDetailID uuid.UUID
+	ProductID     uint                  `form:"product_id" json:"product_id" binding:"required"`
+	Rating        uint                  `form:"rating" json:"rating" binding:"required"`
+	Review        string                `form:"review" json:"review" binding:"required"`
+	Photo1        *multipart.FileHeader `form:"photo_1"`
+	Photo2        *multipart.FileHeader `form:"photo_2"`
+	Photo3        *multipart.FileHeader `form:"photo_3"`
+	Photo4        *multipart.FileHeader `form:"photo_4"`
+	Photo5        *multipart.FileHeader `form:"photo_5"`
+	Video         *multipart.FileHeader `form:"video"`
+}
+
+func (p *ProductReviewCreateRequest) ToModel() *models.ProductReview {
+	return &models.ProductReview{
+		UserID:        p.UserID,
+		OrderDetailID: p.OrderDetailID,
+		ProductID:     p.ProductID,
+		Rating:        p.Rating,
+		Review:        p.Review,
+	}
+}
+
+type ProductReviewCreateResponse struct {
+	ID            uint
+	UserID        uuid.UUID
+	OrderDetailID uuid.UUID
+	ProductID     uint
+	Rating        uint
+	Review        string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+func NewProductReviewCreateResponse(source *models.ProductReview) (target *ProductReviewCreateResponse) {
+	target = &ProductReviewCreateResponse{
+		ID:            source.ID,
+		UserID:        source.UserID,
+		OrderDetailID: source.OrderDetailID,
+		ProductID:     source.ProductID,
+		Rating:        source.Rating,
+		Review:        source.Review,
+		CreatedAt:     source.CreatedAt,
+		UpdatedAt:     source.UpdatedAt,
+	}
+	return
+}
+
+type ProductReviewQuery struct {
+	Limit uint `json:"limit"`
+	Page  uint `json:"page"`
+}
+
+func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
+	var query ProductReviewQuery
+
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
+}
+
+type ProductReviewGetByProductIDResponse struct {
+	ProductReview []*internalDtos.ProductReviewGetByProductID `json:"product_review"`
+}
+
+func NewProductReviewGetByIDResponse(source []*internalDtos.ProductReviewGetByProductID) (target *ProductReviewGetByProductIDResponse) {
+	target = &ProductReviewGetByProductIDResponse{
+		ProductReview: source,
+	}
+
+	return
+}

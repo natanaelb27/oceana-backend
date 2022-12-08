@@ -64,6 +64,29 @@ func (_m *WalletService) ChangePin(c *gin.Context, userId uuid.UUID, request *dt
 	return r0, r1
 }
 
+// GetWalletDetails provides a mock function with given fields: id
+func (_m *WalletService) GetWalletDetails(id uuid.UUID) (*dtos.WalletDetailsResponse, error) {
+	ret := _m.Called(id)
+
+	var r0 *dtos.WalletDetailsResponse
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *dtos.WalletDetailsResponse); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dtos.WalletDetailsResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewWalletService interface {
 	mock.TestingT
 	Cleanup(func())

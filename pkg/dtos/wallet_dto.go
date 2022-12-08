@@ -3,6 +3,7 @@ package dtos
 import (
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/google/uuid"
 )
@@ -63,6 +64,33 @@ func NewWalletChangePinResponse(source *models.Wallet) (target *WalletChangePinR
 		ID:        source.ID,
 		CreatedAt: source.CreatedAt,
 		UpdatedAt: source.UpdatedAt,
+	}
+	return
+}
+
+type WalletDetailsResponse struct {
+	ID                       uuid.UUID                        `json:"id"`
+	UserID                   uuid.UUID                        `json:"user_id"`
+	Balance                  uint                             `json:"balance"`
+	WalletTransactionHistory []*dtos.WalletTransactionHistory `json:"wallet_transaction_history"`
+	IsActive                 bool                             `json:"is_active"`
+	InvalidPinCount          int                              `json:"invalid_pin_count"`
+	BlockedExpirationTime    *time.Time                       `json:"blocked_expiration_time,omitempty"`
+	CreatedAt                time.Time                        `json:"created_at"`
+	UpdatedAt                time.Time                        `json:"updated_at"`
+}
+
+func NewWalletDetailsResponse(sourceModel *models.Wallet, sourceDto []*dtos.WalletTransactionHistory) (target *WalletDetailsResponse) {
+	target = &WalletDetailsResponse{
+		ID:                       sourceModel.ID,
+		UserID:                   sourceModel.UserID,
+		Balance:                  sourceModel.Balance,
+		WalletTransactionHistory: sourceDto,
+		IsActive:                 sourceModel.IsActive,
+		InvalidPinCount:          sourceModel.InvalidPinCount,
+		BlockedExpirationTime:    sourceModel.BlockedExpirationTime,
+		CreatedAt:                sourceModel.CreatedAt,
+		UpdatedAt:                sourceModel.UpdatedAt,
 	}
 	return
 }

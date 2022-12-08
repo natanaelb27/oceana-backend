@@ -13,7 +13,7 @@ type OrderMerchantVoucher struct {
 	Order             Order
 	MerchantVoucherID uint
 	MerchantVoucher   MerchantVoucher
-	TotalDiscount     uint
+	TotalDiscount     float64
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         gorm.DeletedAt

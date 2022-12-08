@@ -7,7 +7,9 @@ import (
 )
 
 func (h *Handler) CategoryGetAll(c *gin.Context) {
-	results, err := h.categoryService.GetAll()
+	query := dtos.NewCategoryQuery(c)
+
+	results, err := h.categoryService.GetAll(query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

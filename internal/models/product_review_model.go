@@ -9,10 +9,12 @@ import (
 
 type ProductReview struct {
 	ID            uint
-	UserId        uint
+	UserID        uuid.UUID
 	User          User
-	OrderDetailId uuid.UUID
+	OrderDetailID uuid.UUID
 	OrderDetail   OrderDetail
+	ProductID     uint
+	Product       Product
 	Rating        uint
 	Review        string
 	CreatedAt     time.Time

@@ -1,19 +1,20 @@
 package handlers
 
 import (
+	"net/http"
 	"os"
 	"strconv"
-	"time"
 
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 func (h *Handler) UserCreate(c *gin.Context) {
-	var request *dtos.UserCreateRequest
+	var request *externalDtos.UserCreateRequest
 	if err := c.ShouldBind(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -27,25 +28,80 @@ func (h *Handler) UserCreate(c *gin.Context) {
 }
 
 func (h *Handler) UserLogin(c *gin.Context) {
-	var request *dtos.UserLoginRequest
+	var request *externalDtos.UserLoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	userLoginData, err := h.authService.Login(request)
+	userLoginData, err := h.authService.Login(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	userLoginResponse := &dtos.UserLoginResponse{
+	userLoginResponse := &externalDtos.UserLoginResponse{
 		Role: userLoginData.Role,
 	}
-	expirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
-	accessTokenExpirationSeconds := 3600 * expirationHours
-	refreshTokenExpirationSeconds := int(time.Time(userLoginData.ExpiresAt).Unix()) - int(time.Now().Unix())
-	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", "localhost", false, true)
-	c.SetCookie("refresh_token", userLoginData.RefreshToken, refreshTokenExpirationSeconds, "/", "localhost", false, true)
+
+	err = h.setLoginCookies(c, userLoginData)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
 	utils.ResponseSuccess(c, userLoginResponse, nil)
+}
+
+func (h *Handler) UserRegisterWithGoogle(c *gin.Context) {
+	var request *externalDtos.UserRegisterWithGoogleRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	responseData, err := h.authService.RegisterWithGoogle(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
+	var request *externalDtos.UserLoginWithGoogleRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	userLoginData, err := h.authService.LoginWithGoogle(c, request)
+	if err != nil {
+		if err.Error() == e.ErrRegisterGoogle.Error() {
+			utils.Response(c, http.StatusSeeOther, nil, nil, nil, http.StatusText(http.StatusSeeOther))
+			return
+		}
+		utils.ResponseError(c, err)
+		return
+	}
+	userLoginResponse := &externalDtos.UserLoginResponse{
+		Role: userLoginData.Role,
+	}
+
+	err = h.setLoginCookies(c, userLoginData)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, userLoginResponse, nil)
+}
+
+func (h *Handler) setLoginCookies(c *gin.Context, userLoginData *internalDtos.UserLoginData) error {
+	jwtExpirationHours, err := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
+	if err != nil {
+		return err
+	}
+	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
+	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("refresh_token", userLoginData.RefreshToken, int(userLoginData.ExpireDuration), "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
+	return nil
 }
 
 func (h *Handler) StepUpPassword(c *gin.Context) {
@@ -55,7 +111,7 @@ func (h *Handler) StepUpPassword(c *gin.Context) {
 		return
 	}
 
-	var request *dtos.AuthStepUpPasswordRequest
+	var request *externalDtos.AuthStepUpPasswordRequest
 	if err := c.ShouldBind(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -67,13 +123,13 @@ func (h *Handler) StepUpPassword(c *gin.Context) {
 		return
 	}
 
-	responseData := dtos.NewAuthStepUpPasswordResponse(result)
+	responseData := externalDtos.NewAuthStepUpPasswordResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
 func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
-	var request *dtos.UserVerifyResetPasswordRequest
+	var request *externalDtos.UserVerifyResetPasswordRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -83,13 +139,13 @@ func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	responseData := dtos.NewUserVerifyResetPasswordResponse(result)
+	responseData := externalDtos.NewUserVerifyResetPasswordResponse(result)
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
 func (h *Handler) UserResetPassword(c *gin.Context) {
-	var request *dtos.ResetPasswordRequest
-	resetPasswordID := c.Param("resetPasswordID")
+	var request *externalDtos.ResetPasswordRequest
+	resetPasswordID := c.Param("reset-password-id")
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -100,4 +156,24 @@ func (h *Handler) UserResetPassword(c *gin.Context) {
 		return
 	}
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) RefreshAccessToken(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrUnauthorized)
+		return
+	}
+
+	accessToken, err := h.authService.RefreshAccessToken(c, id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	jwtExpirationHours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_HOURS"))
+	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
+	c.SetCookie("access_token", accessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
+
+	utils.ResponseSuccess(c, nil, nil)
 }

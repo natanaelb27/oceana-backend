@@ -57,6 +57,20 @@ func (h *Handler) WalletChangePin(c *gin.Context) {
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
+func (h *Handler) WalletGetDetails(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	responseData, err := h.walletService.GetWalletDetails(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
 func (h *Handler) WalletTopUpCallback(c *gin.Context) {
 	var request *dtos.TopUpWalletRequest
 	if err := c.ShouldBindJSON(&request); err != nil {

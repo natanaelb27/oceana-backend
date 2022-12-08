@@ -1,0 +1,24 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type RefundDetail struct {
+	ID                 uuid.UUID
+	RefundID           uuid.UUID
+	Refund             Refund
+	AmountUserGet      uint
+	AmountMerchantLost uint
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	DeletedAt          gorm.DeletedAt
+}
+
+func (m *RefundDetail) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	return
+}

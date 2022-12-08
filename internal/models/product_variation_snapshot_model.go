@@ -8,10 +8,10 @@ import (
 
 type ProductVariationSnapshot struct {
 	ID                uint
-	ProductSnapshotID uint
+	ProductSnapshotID uint `json:"product_snapshot_id"`
 	ProductSnapshot   ProductSnapshot
-	Variant           string
-	Value             string
+	VariantType       string `json:"variant_type"`
+	Variant           string `json:"variant"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         gorm.DeletedAt

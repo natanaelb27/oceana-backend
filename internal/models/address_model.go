@@ -20,3 +20,8 @@ type Address struct {
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt
 }
+
+func (m *Address) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	return
+}

@@ -11,18 +11,26 @@ func AuthenticateUser(user *models.User, providedPassword string) (*internalDtos
 	if err != nil {
 		return nil, e.ErrInvalidPassword
 	}
-	jwtWrapper, err := NewJwtWrapper()
+	token, err := GenerateUserTokenString(user)
 	if err != nil {
 		return nil, err
+	}
+	userLoginData := &internalDtos.UserLoginData{
+		AccessToken: token,
+		Role:        user.Role,
+	}
+	return userLoginData, nil
+}
+
+func GenerateUserTokenString(user *models.User) (string, error) {
+	jwtWrapper, err := NewJwtWrapper()
+	if err != nil {
+		return "", err
 	}
 	jwtUser := internalDtos.NewJwtUser(user)
 	token, err := jwtWrapper.GenerateToken(jwtUser)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	userLoginResponse := &internalDtos.UserLoginData{
-		AccessToken: token,
-		Role:        user.Role,
-	}
-	return userLoginResponse, nil
+	return token, nil
 }
