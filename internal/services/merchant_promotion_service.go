@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -169,7 +171,10 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 
 	var updatedPmpResponse []*dtos.ProductMerchantPromotionResponse
 	// currently existing PMPs
-	currentPmpList, _ := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
+	currentPmpList, err := mp.productMerchantPromotionRepository.GetByMerchantPromotionID(merchantPromotionID)
+	if err != nil && !errors.Is(err, e.ErrProductMerchantPromotionNotFound) {
+		return nil, err
+	}
 	var currentPmpProductIDList []int
 	for _, pmp := range currentPmpList {
 		currentPmpProductIDList = append(currentPmpProductIDList, int(pmp.ProductID))
