@@ -23,7 +23,7 @@ import (
 type CartService interface {
 	Update(request *in_cart_dtos.CartRequest) (*models.Cart, error)
 	GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error)
-	PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (interface{}, error)
+	PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.WalletPaymentResponse, error)
 }
 
 type cartService struct {
@@ -142,7 +142,7 @@ func (p *cartService) GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant
 	return cartsMerchants, err
 }
 
-func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (interface{}, error) {
+func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.WalletPaymentResponse, error) {
 	redisKey := "wallet-pin-failed-count:" + request.UserID.String()
 	redisValue, err := p.redisRepository.Get(c, redisKey)
 
@@ -182,8 +182,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, e.ErrWrongWalletPin
 	}
 
-	// validasi marketplace voucher
-
 	marketplaceVoucher := &internalDtos.MarketplaceVoucherDetails{}
 
 	if request.MarketplaceVoucherID != nil {
@@ -194,11 +192,11 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		}
 
 		if marketplaceVoucher.VoucherStatus != constants.OngoingPromotionOrVoucher {
-			return nil, errors.New("marketplace voucher not ongoing")
+			return nil, e.ErrMarketplaceVoucherNotOngoing
 		}
 
 		if marketplaceVoucher.CurrentQuota >= marketplaceVoucher.MaximumQuota {
-			return nil, errors.New("marketplace voucher udah full quotanya")
+			return nil, e.ErrMarketplaceVoucherQuotaFull
 		}
 
 	}
@@ -230,18 +228,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		merchantVoucher := &internalDtos.MerchantVoucherDetails{}
 
 		if cartOrderItem.MerchantVoucherID != nil {
-			validateMerchantVoucherID, err := p.merchantVoucherRepository.ValidateMerchantVoucherByBuyer(*cartOrderItem.MerchantVoucherID, request.UserID)
-
-			if errors.Is(err, e.ErrDataNotFound) {
-				break
-			} else if err != nil {
-				return nil, err
-			}
-
-			if validateMerchantVoucherID != nil {
-				return nil, errors.New("merchant voucher used by user")
-			}
-
 			merchantVoucher, err = p.merchantVoucherRepository.GetDetailsByID(*cartOrderItem.MerchantVoucherID)
 
 			if err != nil {
@@ -249,15 +235,27 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			}
 
 			if cartOrderItem.MerchantID != merchantVoucher.MerchantID {
-				return nil, errors.New("error merchant id")
+				return nil, e.ErrRequestedVoucherNotMerchant
 			}
 
 			if merchantVoucher.VoucherStatus != constants.OngoingPromotionOrVoucher {
-				return nil, errors.New("merchant voucher not ongoing")
+				return nil, e.ErrMerchantVoucherNotOngoing
 			}
 
 			if merchantVoucher.CurrentQuota >= merchantVoucher.MaximumQuota {
-				return nil, errors.New("merchant voucher udah full quotanya")
+				return nil, e.ErrMerchantVoucherQuotaFull
+			}
+
+			validateMerchantVoucherID, err := p.merchantVoucherRepository.ValidateMerchantVoucherByBuyer(*cartOrderItem.MerchantVoucherID, request.UserID)
+
+			if errors.Is(err, e.ErrDataNotFound) {
+
+			} else if err != nil {
+				return nil, err
+			}
+
+			if validateMerchantVoucherID != nil {
+				return nil, e.ErrMerchantVoucherUsedByUser
 			}
 		}
 
@@ -292,11 +290,11 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 				}
 
 				if productMerchantPromotion.ProductID != product.ProductID {
-					return nil, errors.New("merchant promotion prod id is not same as the prod id yg dibeli")
+					return nil, e.ErrRequestedPromotionNotProduct
 				}
 
 				if productMerchantPromotion.PromotionStatus != constants.OngoingPromotionOrVoucher {
-					return nil, errors.New("merchant promotion not ongoing")
+					return nil, e.ErrMerchantPromotionNotOngoing
 				}
 			}
 
@@ -310,16 +308,16 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					return nil, err
 				}
 
-				if pi.ProductID != product.ProductID {
-					return nil, errors.New("PRODUCT GA PNY PRODUCT ITEM ITU")
+				if pi.MerchantID != cartOrderItem.MerchantID {
+					return nil, e.ErrMerchantDoesNotHaveThatProductItem
 				}
 
-				if pi.MerchantID != cartOrderItem.MerchantID {
-					return nil, errors.New("MERCHANT GA PNY PRODUCT ITEM ITU")
+				if pi.ProductID != product.ProductID {
+					return nil, e.ErrProductDoesNotHaveThatProductItem
 				}
 
 				if pi.StockQuantity < productItems.Quantity {
-					return nil, errors.New("PRODUK STOCK KURANG")
+					return nil, e.ErrProductStockNotEnough
 				}
 
 				newProductSnapshot := &models.ProductSnapshot{
@@ -405,19 +403,19 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			if product.ProductMerchantPromotionID != nil {
 
 				if productMerchantPromotion.MaximumQuota != -1 && int(productMerchantPromotion.CurrentQuota+sumQuantity) > productMerchantPromotion.MaximumQuota {
-					return nil, errors.New("PURCHASED QTY MELEBIHI PMP GLOBAL QUOTA LIMIT")
+					return nil, e.ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota
 				}
 
 				userMerchantPromotion, err := p.userMerchantPromotionRepository.GetUserUsage(request.UserID, *product.ProductMerchantPromotionID)
 
 				if errors.Is(err, e.ErrDataNotFound) {
-					break
+
 				} else if err != nil {
 					return nil, err
-				}
-
-				if productMerchantPromotion.MaximumUserLimit != -1 && int(userMerchantPromotion.Usage+sumQuantity) > productMerchantPromotion.MaximumUserLimit {
-					return nil, errors.New("PURCHASED QTY MELEBIHI PMP USER LIMIT")
+				} else {
+					if productMerchantPromotion.MaximumUserLimit != -1 && int(userMerchantPromotion.Usage+sumQuantity) > productMerchantPromotion.MaximumUserLimit {
+						return nil, e.ErrPurchasedQuantityExceedRemainingUserLimit
+					}
 				}
 
 				newUserMerchantPromotionMap := map[string]any{
@@ -425,8 +423,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					"product_merchant_promotion_id": product.ProductMerchantPromotionID,
 					"usage":                         userMerchantPromotion.Usage + sumQuantity,
 				}
-
-				// ADD USER USAGE LIMIT DI USER MERCHANT PROMO & ADD CURRENT LIMIT TO PMP BY sumQuantity
 
 				_, err = p.productMerchantPromotionRepository.AddCurrentQuota(*product.ProductMerchantPromotionID, sumQuantity)
 
@@ -450,7 +446,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 		if cartOrderItem.MerchantVoucherID != nil {
 			if merchantVoucher.MinimumSpendAmount > uint(sumProduct) {
-				return nil, errors.New("min spend amount > sum product")
+				return nil, e.ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount
 			}
 
 			if strings.EqualFold(merchantVoucher.DiscountType, constants.NominalDiscountType) {
@@ -468,6 +464,12 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		newOrderList = append(newOrderList, newOrder)
 
 		if cartOrderItem.MerchantVoucherID != nil {
+			_, err = p.merchantVoucherRepository.AddCurrentQuota(*cartOrderItem.MerchantVoucherID, 1)
+
+			if err != nil {
+				return nil, err
+			}
+
 			newOrderMerchantVoucher := &models.OrderMerchantVoucher{
 				OrderID:           newOrder.ID,
 				MerchantVoucherID: *cartOrderItem.MerchantVoucherID,
@@ -477,7 +479,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			newOrderMerchantVoucherList = append(newOrderMerchantVoucherList, newOrderMerchantVoucher)
 		}
 
-		sumOrder += sumProduct
+		sumOrder += totalPriceAfterDiscountOrders
 		sumShippingFee += float64(cartOrderItem.ShippingFee)
 	}
 
@@ -486,7 +488,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 	if request.MarketplaceVoucherID != nil {
 		if marketplaceVoucher.MinimumSpendAmount > uint(sumOrder) {
-			return nil, errors.New("min spend amount > sum order")
+			return nil, e.ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount
 		}
 
 		if strings.EqualFold(marketplaceVoucher.DiscountType, constants.NominalDiscountType) {
@@ -509,14 +511,14 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
-		return nil, errors.New("ada promo or disc yang berubah makany final pricenya beda")
+		return nil, e.ErrDifferentTotalPayment
 	}
 
 	if float64(wallet.Balance) < newTransaction.TotalPriceWithShippingFee {
-		return nil, errors.New("wallet balance kurang")
+		return nil, e.ErrWalletBalanceNotEnough
 	}
 
-	_, err = p.transactionRepository.Create(newTransaction)
+	newTransactionCreated, err := p.transactionRepository.Create(newTransaction)
 
 	if err != nil {
 		return nil, err
@@ -534,6 +536,12 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	}
 
 	if request.MarketplaceVoucherID != nil {
+		_, err = p.marketplaceVoucherRepository.AddCurrentQuota(*request.MarketplaceVoucherID, 1)
+
+		if err != nil {
+			return nil, err
+		}
+
 		_, err = p.transactionMarketplaceVoucherRepository.Create(newTransactionMarketplaceVoucher)
 
 		if err != nil {
@@ -583,59 +591,5 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
-	// TRANSACTION IS PAID SET TO TRUE KARNA WALLET
-
-	// for _, cartOrderItem := range request.CartOrderItems {
-	// 	merchantVoucher, err := p.merchantVoucherRepository.GetDetailsByID(*cartOrderItem.MerchantVoucherID)
-
-	// 	if err != nil && err != e.ErrDataNotFound {
-	// 		return nil, err
-	// 	}
-
-	// 	for _, orderCartItem := range cartOrderItem.OrderCartItems {
-	// 		orderCartItemPrice := 0
-	// 		if cartOrderItem.MerchantPromotionID != nil {
-	// 			productItem, err := p.productItemRepository.GetById(orderCartItem.ProductItemID)
-
-	// 			if err != nil {
-	// 				return nil, err
-	// 			}
-
-	// 			productMerchantPromotion, err := p.productMerchantPromotionRepository.GetOnGoingByProductID(productItem.ProductID)
-
-	// 			if err != nil && err != e.ErrDataNotFound {
-	// 				return nil, err
-	// 			}
-
-	// 			if err == nil {
-	// 				totalPrice := productItem.Price * *orderCartItem.Quantity
-	// 				discount := uint(0)
-
-	// 				if productMerchantPromotion.DiscountType == constants.NominalDiscountType {
-	// 					discount = productMerchantPromotion.Discount
-	// 				}
-
-	// 				if productMerchantPromotion.DiscountType == constants.PercentageDiscountType {
-	// 					discount = uint(float32(float32(totalPrice) * float32(discount/100)))
-
-	// 					if discount > productMerchantPromotion.MaximumDiscountAmount {
-	// 						discount = productMerchantPromotion.MaximumDiscountAmount
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// TO-DO: validate user wallet balance
-
-	// TO-DO: validate user wallet balance
-
-	// TO-DO: validate product quantity
-
-	// TO-DO: create snapshot for bunch of stuffs
-
-	// TO-DO: do payment stuffs
-
-	return request, nil
+	return dtos.NewWalletPaymentResponse(newTransactionCreated), nil
 }

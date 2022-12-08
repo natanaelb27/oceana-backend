@@ -23,6 +23,7 @@ type MerchantVoucherRepository interface {
 	Delete(id uint) (model *models.MerchantVoucher, err error)
 	ValidateMerchantVoucherByBuyer(merchantVoucherID uint, userID uuid.UUID) (resultMerchantVoucherID *uint, err error)
 	GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error)
+	AddCurrentQuota(ID uint, amount uint) (*models.MerchantVoucher, error)
 }
 
 type merchantVoucherRepository struct {
@@ -266,17 +267,36 @@ func (r *merchantVoucherRepository) ValidateMerchantVoucherByBuyer(merchantVouch
 		Joins("JOIN order_merchant_vouchers ON order_merchant_vouchers.order_id = orders.id").
 		Where("transactions.user_id = ?", userID).
 		Where("order_merchant_vouchers.merchant_voucher_id = ?", merchantVoucherID).
-		First(&resultMerchantVoucherID)
-
-	if queryResult.RowsAffected == 0 {
-		err = e.ErrDataNotFound
-		return
-	}
+		Scan(&resultMerchantVoucherID)
 
 	if queryResult.Error != nil {
+		if queryResult.RowsAffected == 0 {
+			err = e.ErrDataNotFound
+			return
+		}
+
 		err = e.ErrDatabaseOperationFailed
 		return
 	}
 
 	return
+}
+
+func (r *merchantVoucherRepository) AddCurrentQuota(ID uint, amount uint) (*models.MerchantVoucher, error) {
+	var model *models.MerchantVoucher
+
+	result := r.db.
+		Model(&models.MerchantVoucher{}).
+		Where("id = ?", ID).
+		Update("current_quota", gorm.Expr("current_quota + ?", amount))
+
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return model, nil
 }

@@ -15,6 +15,7 @@ type MarketplaceVoucherRepository interface {
 	Update(id uint, newModel *models.MarketplaceVoucher) (err error)
 	Delete(id uint) (model *models.MarketplaceVoucher, err error)
 	GetDetailsByID(id uint) (*dtos.MarketplaceVoucherDetails, error)
+	AddCurrentQuota(ID uint, amount uint) (*models.MarketplaceVoucher, error)
 }
 
 type marketplaceVoucherRepository struct {
@@ -162,4 +163,23 @@ func (r *marketplaceVoucherRepository) GetDetailsByID(id uint) (*dtos.Marketplac
 	}
 
 	return marketplaceVoucherDetails, nil
+}
+
+func (r *marketplaceVoucherRepository) AddCurrentQuota(ID uint, amount uint) (*models.MarketplaceVoucher, error) {
+	var model *models.MarketplaceVoucher
+
+	result := r.db.
+		Model(&models.MarketplaceVoucher{}).
+		Where("id = ?", ID).
+		Update("current_quota", gorm.Expr("current_quota + ?", amount))
+
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return model, nil
 }

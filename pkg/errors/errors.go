@@ -140,6 +140,27 @@ var (
 
 	ErrUnknown        = errors.New("unknown")
 	ErrRegisterGoogle = errors.New("register with google")
+
+	// bad request
+	ErrRequestedVoucherNotMerchant                             = errors.New("the requested voucher is not the merchant's voucher")
+	ErrRequestedPromotionNotProduct                            = errors.New("product does not have that promotion")
+	ErrMerchantDoesNotHaveThatProductItem                      = errors.New("merchant does not have that product item")
+	ErrProductDoesNotHaveThatProductItem                       = errors.New("product does not have that product item")
+	ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount    = errors.New("purchased amount does not exceed the merchant voucher's minimum purchased amount")
+	ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount = errors.New("purchased amount does not exceed the marketplace voucher's minimum purchased amount")
+
+	// 422
+	ErrMarketplaceVoucherNotOngoing                           = errors.New("marketplace voucher is not ongoing")
+	ErrMarketplaceVoucherQuotaFull                            = errors.New("marketplace voucher's quota is full")
+	ErrMerchantVoucherNotOngoing                              = errors.New("merchant voucher is not ongoing")
+	ErrMerchantVoucherQuotaFull                               = errors.New("merchant voucher's quota is full")
+	ErrMerchantVoucherUsedByUser                              = errors.New("merchant voucher has been used by the user")
+	ErrMerchantPromotionNotOngoing                            = errors.New("merchant promotion is not ongoing")
+	ErrProductStockNotEnough                                  = errors.New("product stock is not enough")
+	ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota = errors.New("the amount purchased exceeds the remaining merchant promotion quota")
+	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
+	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
+	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
 )
 
 func GetStatusCode(err error) int {
@@ -190,7 +211,13 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidResetPasswordID) ||
 		errors.Is(err, ErrInvalidModel) ||
 		errors.Is(err, ErrInvalidDiscountType) ||
-		errors.Is(err, ErrInvalidDiscount) {
+		errors.Is(err, ErrInvalidDiscount) ||
+		errors.Is(err, ErrRequestedVoucherNotMerchant) ||
+		errors.Is(err, ErrRequestedPromotionNotProduct) ||
+		errors.Is(err, ErrMerchantDoesNotHaveThatProductItem) ||
+		errors.Is(err, ErrProductDoesNotHaveThatProductItem) ||
+		errors.Is(err, ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount) ||
+		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -266,7 +293,18 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrVoucherNotUpcoming) ||
 		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrBlockedWallet) ||
-		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) {
+		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) ||
+		errors.Is(err, ErrMarketplaceVoucherNotOngoing) ||
+		errors.Is(err, ErrMarketplaceVoucherQuotaFull) ||
+		errors.Is(err, ErrMerchantVoucherNotOngoing) ||
+		errors.Is(err, ErrMerchantVoucherQuotaFull) ||
+		errors.Is(err, ErrMerchantVoucherUsedByUser) ||
+		errors.Is(err, ErrMerchantPromotionNotOngoing) ||
+		errors.Is(err, ErrProductStockNotEnough) ||
+		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
+		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
+		errors.Is(err, ErrDifferentTotalPayment) ||
+		errors.Is(err, ErrWalletBalanceNotEnough) {
 		return http.StatusUnprocessableEntity
 	}
 
