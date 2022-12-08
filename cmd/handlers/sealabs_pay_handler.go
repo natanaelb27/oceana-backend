@@ -101,14 +101,14 @@ func (h *Handler) SealabsPayDelete(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayTest(c *gin.Context) {
-	var response *dtos.SealabsPayCallbackResponse
-	err := c.ShouldBindJSON(&response)
+	var request *dtos.SealabsPayCallbackRequest
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	fmt.Println(response)
-	utils.ResponseSuccess(c, response, nil)
+	fmt.Println(request)
+	utils.ResponseSuccess(c, request, nil)
 }
 
 func (h *Handler) SealabsPayPayment(c *gin.Context) {
@@ -150,7 +150,7 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 	encodedOutboundRequest := outboundRequest.Encode()
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/pay", apiURL), strings.NewReader(encodedOutboundRequest))
 	if err != nil {
-		utils.ResponseError(c, e.ErrDataNotFound)
+		utils.ResponseError(c, e.ErrUnknown)
 		return
 	}
 
@@ -159,7 +159,7 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		utils.ResponseError(c, e.ErrCacheOperationFailed)
+		utils.ResponseError(c, e.ErrUnknown)
 		return
 	}
 
@@ -176,10 +176,6 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 		utils.ResponseError(c, e.ErrUnknown)
 		return
 	}
-
-	successResponse := &dtos.SealabsPayRedirectResponseSuccess{
-		RedirectURL: otpURL[0],
-	}
-
-	utils.ResponseSuccess(c, successResponse, nil)
+	
+	utils.ResponseSuccess(c, otpURL[0], nil)
 }

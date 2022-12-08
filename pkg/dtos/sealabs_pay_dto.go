@@ -76,7 +76,7 @@ type SealabsPayRedirectResponseSuccess struct {
 	RedirectURL string `json:"redirect_url"`
 }
 
-type SealabsPayCallbackResponse struct {
+type SealabsPayCallbackRequest struct {
 	TxnID        string `json:"txn_id"`
 	Amount       string `json:"amount"`
 	MerchantCode string `json:"merchant_code"`
