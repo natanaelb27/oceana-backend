@@ -6,9 +6,15 @@ import (
 )
 
 func sealabsPay(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
-	path := "/external/sealabs-pay"
-	publicRoute := public.Group(path)
+	externalPath := "/external/sealabs-pay"
+	externalRoute := public.Group(externalPath)
 	{
-		publicRoute.POST("", h.SealabsPayTest)
+		externalRoute.POST("", h.SealabsPayTest)
+	}
+
+	internalPath := "/sealabs-pay"
+	publicRoute := public.Group(internalPath)
+	{
+		publicRoute.POST("/pay", h.SealabsPayPayment)
 	}
 }
