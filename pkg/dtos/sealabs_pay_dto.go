@@ -51,3 +51,36 @@ func NewSealabsPayDeleteResponse(source *models.SealabsPay) (target *SealabsPayD
 
 	return
 }
+
+type SealabsPayPaymentInboundRequest struct {
+	CardNumber string `json:"card_number"`
+	Amount     string `json:"amount"`
+}
+
+type SealabsPayPaymentOutboundRequest struct {
+	CardNumber   string `json:"card_number"`
+	Amount       string `json:"amount"`
+	MerchantCode string `json:"merchant_code"`
+	RedirectURL  string `json:"redirect_url"`
+	CallbackURL  string `json:"callback_url"`
+	Signature    string `json:"signature"`
+}
+
+type SealabsPayRedirectResponseError struct {
+	Code    interface{} `json:"code"`
+	Message interface{} `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+type SealabsPayRedirectResponseSuccess struct {
+	RedirectURL string `json:"redirect_url"`
+}
+
+type SealabsPayCallbackRequest struct {
+	TxnID        string `json:"txn_id"`
+	Amount       string `json:"amount"`
+	MerchantCode string `json:"merchant_code"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	Signature    string `json:"signature"`
+}
