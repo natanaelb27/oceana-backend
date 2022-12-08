@@ -10,6 +10,7 @@ func sealabsPay(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.H
 	externalRoute := public.Group(externalPath)
 	{
 		externalRoute.POST("", h.SealabsPayTest)
+		externalRoute.POST("/top-up", h.SealabsPayTopUp)
 	}
 
 	internalPath := "/sealabs-pay"

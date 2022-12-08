@@ -116,6 +116,7 @@ func Init() *Handler {
 	})
 	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
 		SealabsPayRepository: sealabsPayRepository,
+		RedisRepository:      redisRepository,
 	})
 
 	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{

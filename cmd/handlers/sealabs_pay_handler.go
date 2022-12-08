@@ -107,7 +107,6 @@ func (h *Handler) SealabsPayTest(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	fmt.Println(request)
 	utils.ResponseSuccess(c, request, nil)
 }
 
@@ -130,8 +129,8 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 	apiKey := os.Getenv("SEALABSPAY_API_KEY")
 	merchantCode := os.Getenv("SEALABSPAY_MERCHANT_CODE")
 	unusedRedirectURL := os.Getenv("SEALABSPAY_REDIRECT_URL")
-	callbackURL := os.Getenv("SEALABSPAY_CALLBACK_URL")
-
+	callbackBaseURL := os.Getenv("SEALABSPAY_CALLBACK_URL")
+	callbackURL := fmt.Sprintf("%s/top-up", callbackBaseURL)
 	// hashing signature
 	hasher := hmac.New(sha256.New, []byte(apiKey))
 	signatureStringToEncrypt := fmt.Sprintf("%s:%s:%s", inboundRequest.CardNumber, inboundRequest.Amount, merchantCode)
@@ -170,11 +169,7 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 		return
 	}
 
-	err = json.Unmarshal(responseBodyBytes, &errResponse)
-	if err != nil {
-		utils.ResponseError(c, e.ErrInternalOperationFailed)
-		return
-	}
+	json.Unmarshal(responseBodyBytes, &errResponse)
 	if res.StatusCode != http.StatusSeeOther {
 		utils.Response(c, res.StatusCode, errResponse, nil, nil, res.Status)
 		return
@@ -187,4 +182,20 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, otpURL[0], nil)
+}
+
+func (h *Handler) SealabsPayTopUp(c *gin.Context) {
+	var request *dtos.SealabsPayCallbackRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	err = h.sealabsPayService.StoreSignature(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, request, nil)
 }
