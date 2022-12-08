@@ -3,6 +3,7 @@ package services
 import (
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	productInternalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -36,6 +37,7 @@ type productService struct {
 	productVariantMediaRepository    r.ProductVariantMediaRepository
 	productVariantRepository         r.ProductVariantRepository
 	productCourierServiceRepository  r.ProductCourierServiceRepository
+	productMediaRepository           r.ProductMediaRepository
 }
 
 type ProductServiceConfig struct {
@@ -51,6 +53,7 @@ type ProductServiceConfig struct {
 	ProductVariantMediaRepository    r.ProductVariantMediaRepository
 	ProductVariantRepository         r.ProductVariantRepository
 	ProductCourierServiceRepository  r.ProductCourierServiceRepository
+	ProductMediaRepository           r.ProductMediaRepository
 }
 
 func NewProductService(c *ProductServiceConfig) ProductService {
@@ -67,6 +70,7 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productVariantMediaRepository:    c.ProductVariantMediaRepository,
 		productVariantRepository:         c.ProductVariantRepository,
 		productCourierServiceRepository:  c.ProductCourierServiceRepository,
+		productMediaRepository:           c.ProductMediaRepository,
 	}
 }
 
@@ -289,6 +293,32 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 	createdProduct, err := s.productRepository.CreateProduct(product)
 	if err != nil {
 		return nil, err
+	}
+
+	// create product media from images
+	for _, iI := range request.Images {
+		product := &models.ProductMedia{
+			ProductID: product.ID,
+			MediaURL:  iI,
+			Type:      product_media_constants.TypeImage,
+		}
+		_, err := s.productMediaRepository.Create(product)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// create product media from videos
+	for _, iV := range request.Videos {
+		product := &models.ProductMedia{
+			ProductID: product.ID,
+			MediaURL:  iV,
+			Type:      product_media_constants.TypeVideo,
+		}
+		_, err := s.productMediaRepository.Create(product)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// map product variant for later use to identify product variations

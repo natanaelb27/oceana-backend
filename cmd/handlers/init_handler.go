@@ -167,6 +167,9 @@ func Init() *Handler {
 		ProductRepository:                productRepository,
 	})
 
+	productMediaRepository := repositories.NewProductMediaRepository(&repositories.ProductMediaRepositoryConfig{
+		DB: db.Get(),
+	})
 	productVariantTypeRepository := repositories.NewProductVariantTypeRepository(&repositories.ProductVariantTypeRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -193,6 +196,7 @@ func Init() *Handler {
 		ProductVariantMediaRepository:    productVariantMediaRepository,
 		ProductVariantRepository:         productVariantRepository,
 		ProductCourierServiceRepository:  productCourierServiceRepository,
+		ProductMediaRepository:           productMediaRepository,
 	})
 
 	merchantPromotionRepository := repositories.NewMerchantPromotionRepository(&repositories.MerchantPromotionRepositoryConfig{
