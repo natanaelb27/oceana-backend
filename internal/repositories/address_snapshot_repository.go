@@ -10,6 +10,7 @@ import (
 
 type AddressSnapshotRepository interface {
 	GetByOrderID(id uuid.UUID) (*dtos.AddressSnapshotDetails, error)
+	Create(id uuid.UUID) (*models.AddressSnapshot, error)
 }
 
 type addressSnapshotRepository struct {
@@ -51,4 +52,32 @@ func (r *addressSnapshotRepository) GetByOrderID(id uuid.UUID) (*dtos.AddressSna
 	}
 
 	return addressSnapshotDetails, nil
+}
+
+func (r *addressSnapshotRepository) Create(id uuid.UUID) (*models.AddressSnapshot, error) {
+	var newModel *models.AddressSnapshot
+
+	queryResult := r.db.Model(&models.Address{}).
+		Select(`
+			detail AS address,
+			sub_district_id
+		`).
+		Where("id = ?", id).
+		First(&newModel)
+
+	if queryResult.Error != nil {
+		if queryResult.RowsAffected == 0 {
+			return nil, e.ErrDataNotFound
+		}
+
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	queryResult = r.db.Create(&newModel)
+
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return newModel, nil
 }

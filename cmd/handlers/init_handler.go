@@ -137,10 +137,6 @@ func Init() *Handler {
 	cartRepository := repositories.NewCartRepository(&repositories.CartRepositoryConfig{
 		DB: db.Get(),
 	})
-	cartService := services.NewCartService(&services.CartServiceConfig{
-		CartRepository:        cartRepository,
-		ProductItemRepository: productItemRepository,
-	})
 
 	courierServiceRepository := repositories.NewCourierServiceRepository(&repositories.CourierServiceRepositoryConfig{
 		DB: db.Get(),
@@ -222,6 +218,66 @@ func Init() *Handler {
 	})
 	marketplaceVoucherService := services.NewMarketplaceVoucherService(&services.MarketplaceVoucherServiceConfig{
 		MarketplaceVoucherRepository: marketplaceVoucherRepository,
+	})
+
+	productSnapshotRepository := repositories.NewProductSnapshotRepository(&repositories.ProductSnapshotRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productMediaSnapshotRepository := repositories.NewProductMediaSnapshotRepository(&repositories.ProductMediaSnapshotRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productVariationSnapshotRepository := repositories.NewProductVariationSnapshotRepository(&repositories.ProductVariationSnapshotRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	userMerchantPromotionRepository := repositories.NewUserMerchantPromotionRepository(&repositories.UserMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	walletTransactionPaymentRepository := repositories.NewWalletTransactionPaymentRepository(&repositories.WalletTransactionPaymentRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	transactionRepository := repositories.NewTransactionRepository(&repositories.TransactionRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	transactionMarketplaceVoucherRepository := repositories.NewTransactionMarketplaceVoucherRepository(&repositories.TransactionMarketplaceVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderDetailMerchantPromotionRepository := repositories.NewOrderDetailMerchantPromotionRepository(&repositories.OrderDetailMerchantPromotionRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	orderMerchantVoucherRepository := repositories.NewOrderMerchantVoucherRepository(&repositories.OrderMerchantVoucherRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	cartService := services.NewCartService(&services.CartServiceConfig{
+		AddressSnapshotRepository:               addressSnapshotRepository,
+		CartRepository:                          cartRepository,
+		OrderRepository:                         orderRepository,
+		OrderDetailRepository:                   orderDetailRepository,
+		OrderDetailMerchantPromotionRepository:  orderDetailMerchantPromotionRepository,
+		OrderMerchantVoucherRepository:          orderMerchantVoucherRepository,
+		ProductRepository:                       productRepository,
+		ProductItemRepository:                   productItemRepository,
+		ProductMerchantPromotionRepository:      productMerchantPromotionRepository,
+		ProductSnapshotRepository:               productSnapshotRepository,
+		ProductMediaSnapshotRepository:          productMediaSnapshotRepository,
+		ProductVariationSnapshotRepository:      productVariationSnapshotRepository,
+		MerchantVoucherRepository:               merchantVoucherRepository,
+		MerchantPromotionRepository:             merchantPromotionRepository,
+		MarketplaceVoucherRepository:            marketplaceVoucherRepository,
+		RedisRepository:                         redisRepository,
+		TransactionRepository:                   transactionRepository,
+		TransactionMarketplaceVoucherRepository: transactionMarketplaceVoucherRepository,
+		UserMerchantPromotionRepository:         userMerchantPromotionRepository,
+		WalletRepository:                        walletRepository,
+		WalletTransactionPaymentRepository:      walletTransactionPaymentRepository,
 	})
 
 	h := New(&HandlerConfig{

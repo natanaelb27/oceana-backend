@@ -46,3 +46,23 @@ func (h *Handler) CartUpdate(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) PayCartWithWallet(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+
+	var request *dtos.PayCartWithWalletRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	request.UserID = id
+
+	result, err := h.cartService.PayCartWithWallet(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, result, nil)
+}
