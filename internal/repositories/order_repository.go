@@ -19,6 +19,8 @@ type OrderRepository interface {
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 	GetByID(id uuid.UUID) (model *models.Order, err error)
 	Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error)
+	GetOrderCount() (*int64, error)
+	Create(newModel []*models.Order) (model []*models.Order, err error)
 }
 
 type orderRepository struct {
@@ -51,7 +53,8 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
-		Where("transactions.user_id = ?", id)
+		Where("transactions.user_id = ?", id).
+		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
 	if query.Search != "" {
 		subQuerySearch := r.db.Model(&models.Order{}).
@@ -68,8 +71,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
 		} else {
-			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
-				constants.PendingPaymentStatus,
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
 				constants.PendingSellerStatus,
 				constants.OnProcessStatus,
 				constants.OutForDeliveryStatus,
@@ -200,6 +202,30 @@ func (r *orderRepository) Update(id uuid.UUID, newModel *models.Order) (model *m
 
 	model = newModel
 	model.ID = id
+
+	return
+}
+
+func (r *orderRepository) GetOrderCount() (*int64, error) {
+	var count int64
+	queryResult := r.db.Model(&models.Order{}).Count(&count)
+
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return &count, nil
+}
+
+func (r *orderRepository) Create(newModel []*models.Order) (model []*models.Order, err error) {
+	queryResult := r.db.Create(newModel)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
 
 	return
 }

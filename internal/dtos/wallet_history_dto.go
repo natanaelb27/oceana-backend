@@ -12,4 +12,5 @@ type WalletTransactionHistory struct {
 	Amount          int
 	TransactionDate time.Time
 	TransactionType string
+	Type            string
 }

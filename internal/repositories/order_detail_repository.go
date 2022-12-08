@@ -10,6 +10,7 @@ import (
 
 type OrderDetailRepository interface {
 	OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error)
+	Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error)
 }
 
 type orderDetailRepository struct {
@@ -68,4 +69,17 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 	}
 
 	return orderDetailList, nil
+}
+
+func (r *orderDetailRepository) Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error) {
+	queryResult := r.db.Create(newModel)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
 }
