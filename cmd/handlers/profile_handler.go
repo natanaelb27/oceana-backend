@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"os"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -72,4 +74,17 @@ func (h *Handler) ProfileRequestChangePasswordVerificationCode(c *gin.Context) {
 	responseData := dtos.NewProfileRequestChangePasswordVerificationCodeResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UserLogout(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	c.SetCookie("access_token", "", -1, "/", os.Getenv("DOMAIN"), true, true)
+	c.SetCookie("refresh_token", "", -1, "/", os.Getenv("DOMAIN"), true, true)
+	c.SetCookie("access_token_verifier", "", -1, "/", os.Getenv("DOMAIN"), true, true)
+	utils.ResponseSuccess(c, nil, nil)
 }

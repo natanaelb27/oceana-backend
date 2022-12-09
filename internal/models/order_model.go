@@ -9,6 +9,7 @@ import (
 
 type Order struct {
 	ID                      uuid.UUID
+	InvoiceNumber           string
 	TransactionID           uuid.UUID
 	Transaction             Transaction
 	MerchantID              uint
@@ -17,8 +18,8 @@ type Order struct {
 	AddressSnapshot         AddressSnapshot
 	CourierServiceID        uint
 	CourierService          CourierService
-	TotalPrice              uint
-	TotalPriceAfterDiscount uint
+	TotalPrice              float64
+	TotalPriceAfterDiscount float64
 	ShippingFee             uint
 	Status                  string
 	ClaimStatus             bool
@@ -27,7 +28,7 @@ type Order struct {
 	DeletedAt               gorm.DeletedAt
 }
 
-func (m *Order) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = uuid.New()
-	return
-}
+// func (m *Order) BeforeCreate(tx *gorm.DB) (err error) {
+// 	m.ID = uuid.New()
+// 	return
+// }

@@ -46,7 +46,7 @@ func (h *Handler) MerchantVoucherUpdate(c *gin.Context) {
 		return
 	}
 
-	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchant-voucher-id"), 10, 64)
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -54,14 +54,14 @@ func (h *Handler) MerchantVoucherUpdate(c *gin.Context) {
 
 	merchantVoucherID := uint(merchantVoucherIDUint64)
 
-	merchantVouherUpdateResponse, err := h.merchantVoucherService.Update(id, merchantVoucherID, request)
+	merchantVoucherUpdateResponse, err := h.merchantVoucherService.Update(id, merchantVoucherID, request)
 
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, merchantVouherUpdateResponse, nil)
+	utils.ResponseSuccess(c, merchantVoucherUpdateResponse, nil)
 }
 
 func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
@@ -71,7 +71,7 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 		return
 	}
 
-	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchant-voucher-id"), 10, 64)
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -91,18 +91,18 @@ func (h *Handler) MerchantVoucherDelete(c *gin.Context) {
 
 func (h *Handler) MerchantVoucherGetAll(c *gin.Context) {
 	query := dtos.NewMerchantVoucherQuery(c)
-	merchantVouherGetAllResponse, err := h.merchantVoucherService.GetAll(query)
+	merchantVouherGetAllResponse, pagination, err := h.merchantVoucherService.GetAll(query)
 
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, merchantVouherGetAllResponse, nil)
+	utils.ResponseSuccess(c, merchantVouherGetAllResponse, pagination)
 }
 
 func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {
-	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchantVoucherId"), 10, 64)
+	merchantVoucherIDUint64, err := strconv.ParseUint(c.Param("merchant-voucher-id"), 10, 64)
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -118,4 +118,22 @@ func (h *Handler) MerchantVoucherGetByID(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, merchantVouherGetByIDResponse, nil)
+}
+
+func (h *Handler) MerchantVoucherGetAllByBuyer(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewBuyerMerchantVoucherQuery(c)
+	merchantVouherGetAllResponse, pagination, err := h.merchantVoucherService.GetAllByBuyer(id, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantVouherGetAllResponse, pagination)
 }

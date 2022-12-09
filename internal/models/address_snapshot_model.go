@@ -8,8 +8,8 @@ import (
 
 type AddressSnapshot struct {
 	ID            uint
-	Address       string
-	SubDistrictID uint
+	Address       string `json:"address"`
+	SubDistrictID uint   `json:"sub_district_id"`
 	SubDistrict   SubDistrict
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

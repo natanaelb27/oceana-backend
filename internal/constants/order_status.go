@@ -1,13 +1,16 @@
 package constants
 
 const (
-	AllStatus            = "All"
-	OngoingStatus        = "Ongoing"
-	PendingPaymentStatus = "Pending Payment"
-	PendingSellerStatus  = "Pending Seller"
-	OutForDeliveryStatus = "Out for Delivery"
-	DeliveredStatus      = "Delivered"
-	ComplainedStatus     = "Complained"
-	CanceledStatus       = "Canceled"
-	CompletedStatus      = "Completed"
+	AllStatus            = "all"
+	OngoingStatus        = "ongoing"
+	PendingPaymentStatus = "pending payment"
+	PendingSellerStatus  = "pending seller"
+	OnProcessStatus      = "on process"
+	OutForDeliveryStatus = "out for delivery"
+	DeliveredStatus      = "delivered"
+	ComplainedStatus     = "complained"
+	CanceledStatus       = "canceled"
+	BuyerCanceledStatus  = "canceled by buyer"
+	SellerCanceledStatus = "canceled by seller"
+	CompletedStatus      = "completed"
 )

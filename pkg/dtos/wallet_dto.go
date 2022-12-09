@@ -67,16 +67,17 @@ func NewWalletChangePinResponse(source *models.Wallet) (target *WalletChangePinR
 	}
 	return
 }
+
 type WalletDetailsResponse struct {
-	ID                       uuid.UUID                           `json:"id"`
-	UserID                   uuid.UUID                           `json:"user_id"`
-	Balance                  uint                                `json:"balance"`
+	ID                       uuid.UUID                        `json:"id"`
+	UserID                   uuid.UUID                        `json:"user_id"`
+	Balance                  uint                             `json:"balance"`
 	WalletTransactionHistory []*dtos.WalletTransactionHistory `json:"wallet_transaction_history"`
-	IsActive                 bool                                `json:"is_active"`
-	InvalidPinCount          int                                 `json:"invalid_pin_count"`
-	BlockedExpirationTime    *time.Time                          `json:"blocked_expiration_time,omitempty"`
-	CreatedAt                time.Time                           `json:"created_at"`
-	UpdatedAt                time.Time                           `json:"updated_at"`
+	IsActive                 bool                             `json:"is_active"`
+	InvalidPinCount          int                              `json:"invalid_pin_count"`
+	BlockedExpirationTime    *time.Time                       `json:"blocked_expiration_time,omitempty"`
+	CreatedAt                time.Time                        `json:"created_at"`
+	UpdatedAt                time.Time                        `json:"updated_at"`
 }
 
 func NewWalletDetailsResponse(sourceModel *models.Wallet, sourceDto []*dtos.WalletTransactionHistory) (target *WalletDetailsResponse) {

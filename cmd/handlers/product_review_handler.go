@@ -24,7 +24,7 @@ func (h *Handler) ProductReviewCreate(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	request.UserID = id 
+	request.UserID = id
 	request.OrderDetailID = orderDetailID
 	response, err := h.productReviewService.Create(request)
 	if err != nil {
@@ -37,10 +37,10 @@ func (h *Handler) ProductReviewCreate(c *gin.Context) {
 func (h *Handler) ProductReviewGet(c *gin.Context) {
 	productID := utils.StringToUint(c.Param("productID"))
 	query := dtos.NewProductReviewQuery(c)
-	response, err := h.productReviewService.GetByProductID(productID, query)
+	response, pagination, err := h.productReviewService.GetByProductID(productID, query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	utils.ResponseSuccess(c, response, nil)
+	utils.ResponseSuccess(c, response, pagination)
 }

@@ -9,6 +9,7 @@ import (
 type OrderList struct {
 	TransactionID       uuid.UUID          `json:"transaction_id"`
 	OrderID             uuid.UUID          `json:"order_id"`
+	InvoiceNumber       string             `json:"invoice_number"`
 	MerchantID          uint               `json:"merchant_id"`
 	ShopName            string             `json:"shop_name"`
 	OrderDetails        []*OrderDetailList `json:"order_details" gorm:"-"`
@@ -21,6 +22,7 @@ type OrderListDetails struct {
 	TransactionID                   uuid.UUID               `json:"transaction_id"`
 	UserID                          uuid.UUID               `json:"user_id"`
 	OrderID                         uuid.UUID               `json:"oder_id"`
+	InvoiceNumber                   string                  `json:"invoice_number"`
 	MerchantID                      uint                    `json:"merchant_id"`
 	ShopName                        string                  `json:"shop_name"`
 	OrderDetails                    []*OrderDetailList      `json:"order_details" gorm:"-"`

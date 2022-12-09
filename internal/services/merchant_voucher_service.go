@@ -3,6 +3,7 @@ package services
 import (
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -14,8 +15,9 @@ type MerchantVoucherService interface {
 	Create(id uuid.UUID, request *dtos.MerchantVoucherCreateRequest) (*dtos.MerchantVoucherCreateResponse, error)
 	Update(userID uuid.UUID, voucherID uint, request *dtos.MerchantVoucherUpdateRequest) (*dtos.MerchantVoucherUpdateResponse, error)
 	Delete(userID uuid.UUID, voucherID uint) (*dtos.MerchantVoucherDeleteResponse, error)
-	GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error)
+	GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error)
 	GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error)
+	GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error)
 }
 
 type merchantVoucherService struct {
@@ -54,6 +56,10 @@ func (s *merchantVoucherService) Create(id uuid.UUID, request *dtos.MerchantVouc
 
 	if int(request.EndDatetime.Sub(request.StartDatetime).Hours()) <= 0 {
 		return nil, e.ErrVoucherPeriodMinimumOneHour
+	}
+
+	if int(request.EndDatetime.Sub(request.StartDatetime).Hours()/24) > 90 {
+		return nil, e.ErrVoucherPeriodExceedMaximumDays
 	}
 
 	if request.DiscountType == "nominal" {
@@ -108,12 +114,14 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 		return nil, e.ErrForbiddenMerchant
 	}
 
-	if merchantVoucherDetails.VoucherStatus == "ended" {
+	if merchantVoucherDetails.VoucherStatus == constants.EndedPromotionOrVoucher {
 		return nil, e.ErrVoucherHasEnded
 	}
 
-	if merchantVoucherDetails.VoucherStatus == "ongoing" {
-		request.StartDatetime = merchantVoucherDetails.StartDatetime
+	if merchantVoucherDetails.VoucherStatus == constants.OngoingPromotionOrVoucher {
+		if int(merchantVoucherDetails.StartDatetime.Sub(request.StartDatetime).Minutes()) != 0 {
+			return nil, e.ErrOngoingStartDatetimeUpdated
+		}
 
 		if request.MaximumQuota < merchantVoucherDetails.CurrentQuota {
 			return nil, e.ErrMaximumQuotaLowerThanCurrentQuota
@@ -122,24 +130,28 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 		if request.EndDatetime.Before(time.Now()) {
 			return nil, e.ErrVoucherEndDatetimeEarlierThanNow
 		}
+
+		if request.EndDatetime.Sub(merchantVoucherDetails.EndDatetime).Minutes() > 0 {
+			return nil, e.ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime
+		}
 	}
 
 	if merchantVoucherDetails.VoucherStatus == "upcoming" {
 		if request.StartDatetime.Before(time.Now()) {
 			return nil, e.ErrVoucherStartDatetimeEarlierThanNow
 		}
+	}
 
-		if int(time.Until(request.StartDatetime).Hours()/24) <= 0 {
-			return nil, e.ErrVoucherStartDatetimeMinimumOneDayFromNow
-		}
-
-		if request.EndDatetime.Before(request.StartDatetime) {
-			return nil, e.ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime
-		}
+	if request.EndDatetime.Before(request.StartDatetime) {
+		return nil, e.ErrVoucherEndDatetimeEarlierThanVoucherStartDatetime
 	}
 
 	if int(request.EndDatetime.Sub(request.StartDatetime).Hours()) <= 0 {
 		return nil, e.ErrVoucherPeriodMinimumOneHour
+	}
+
+	if int(request.EndDatetime.Sub(request.StartDatetime).Hours()/24) > 90 {
+		return nil, e.ErrVoucherPeriodExceedMaximumDays
 	}
 
 	if request.DiscountType == "nominal" {
@@ -201,7 +213,7 @@ func (s *merchantVoucherService) Delete(userID uuid.UUID, voucherID uint) (*dtos
 	return dtos.NewMerchantVoucherDeleteResponse(newModel), nil
 }
 
-func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, error) {
+func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -210,10 +222,10 @@ func (s *merchantVoucherService) GetAll(query *dtos.MerchantVoucherQuery) (*dtos
 	merchantVoucherDetails, pagination, err := s.merchantVoucherRepository.GetAllDetails(query, pagination)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return dtos.NewMerchantVoucherGetAllResponse(merchantVoucherDetails, pagination), nil
+	return dtos.NewMerchantVoucherGetAllResponse(merchantVoucherDetails), pagination, nil
 }
 
 func (s *merchantVoucherService) GetByID(id uint) (*dtos.MerchantVoucherGetByIDResponse, error) {
@@ -224,4 +236,19 @@ func (s *merchantVoucherService) GetByID(id uint) (*dtos.MerchantVoucherGetByIDR
 	}
 
 	return dtos.NewMerchantVoucherGetByIDResponse(merchantVoucherDetails), nil
+}
+
+func (s *merchantVoucherService) GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMerchantVoucherQuery) (*dtos.MerchantVoucherGetAllResponse, *utils.Pagination, error) {
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	merchantVoucherDetails, pagination, err := s.merchantVoucherRepository.GetAllDetailsByBuyer(id, query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dtos.NewMerchantVoucherGetAllResponse(merchantVoucherDetails), pagination, nil
 }

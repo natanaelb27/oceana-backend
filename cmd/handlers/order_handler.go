@@ -18,14 +18,14 @@ func (h *Handler) OrderListGetAll(c *gin.Context) {
 
 	query := dtos.NewOrderListQuery(c)
 
-	orderListGetAllResponse, err := h.orderService.OrderListGetAll(id, query)
+	orderListGetAllResponse, pagination, err := h.orderService.OrderListGetAll(id, query)
 
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, orderListGetAllResponse, nil)
+	utils.ResponseSuccess(c, orderListGetAllResponse, pagination)
 }
 
 func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {
@@ -58,7 +58,7 @@ func (h *Handler) OrderProcessOrder(c *gin.Context) {
 		return
 	}
 
-	orderID, err := uuid.Parse(c.Param("orderID"))
+	orderID, err := uuid.Parse(c.Param("order-id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return

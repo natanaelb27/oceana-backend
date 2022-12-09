@@ -7,7 +7,6 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -21,7 +20,6 @@ type MerchantVoucherCreateRequest struct {
 	MinimumSpendAmount    uint      `json:"minimum_spend_amount" binding:"required"`
 	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota" binding:"required"`
-	CurrentQuota          uint      `json:"current_quota"`
 }
 
 func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.MerchantVoucher) {
@@ -35,13 +33,14 @@ func (source *MerchantVoucherCreateRequest) ToModel(id uint) (target *models.Mer
 		MinimumSpendAmount:    source.MinimumSpendAmount,
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
-		CurrentQuota:          source.CurrentQuota,
+		CurrentQuota:          0,
 	}
 	return
 }
 
 type MerchantVoucherCreateResponse struct {
 	ID                    uint      `json:"id"`
+	MerchantID            uint      `json:"merchant_id"`
 	Code                  string    `json:"code"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -58,6 +57,7 @@ type MerchantVoucherCreateResponse struct {
 func NewMerchantVoucherCreateResponse(source *models.MerchantVoucher) (target *MerchantVoucherCreateResponse) {
 	target = &MerchantVoucherCreateResponse{
 		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
 		Code:                  source.Code,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -99,6 +99,7 @@ func (source *MerchantVoucherUpdateRequest) ToModel(id uint) (target *models.Mer
 
 type MerchantVoucherUpdateResponse struct {
 	ID                    uint      `json:"id"`
+	MerchantID            uint      `json:"merchant_id"`
 	Code                  string    `json:"code"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -115,6 +116,7 @@ type MerchantVoucherUpdateResponse struct {
 func NewMerchantVoucherUpdateResponse(source *models.MerchantVoucher) (target *MerchantVoucherUpdateResponse) {
 	target = &MerchantVoucherUpdateResponse{
 		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
 		Code:                  source.Code,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -132,6 +134,7 @@ func NewMerchantVoucherUpdateResponse(source *models.MerchantVoucher) (target *M
 
 type MerchantVoucherDeleteResponse struct {
 	ID                    uint           `json:"id"`
+	MerchantID            uint           `json:"merchant_id"`
 	Code                  string         `json:"code"`
 	StartDatetime         time.Time      `json:"start_datetime"`
 	EndDatetime           time.Time      `json:"end_datetime"`
@@ -149,6 +152,7 @@ type MerchantVoucherDeleteResponse struct {
 func NewMerchantVoucherDeleteResponse(source *models.MerchantVoucher) (target *MerchantVoucherDeleteResponse) {
 	target = &MerchantVoucherDeleteResponse{
 		ID:                    source.ID,
+		MerchantID:            source.MerchantID,
 		Code:                  source.Code,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -199,10 +203,10 @@ func NewMerchantVoucherGetByIDResponse(source *dtos.MerchantVoucherDetails) (tar
 }
 
 type MerchantVoucherQuery struct {
-	SearchVoucherCode   string `json:"search_voucher_code"`
-	FilterVoucherStatus string `json:"filter_voucher_status"`
-	MerchantID          uint   `json:"merchant_id"`
-	SortBy              string `json:"sort_by"`
+	SearchVoucherCode   string `json:"search-voucher-code"`
+	FilterVoucherStatus string `json:"filter-voucher-status"`
+	MerchantID          uint   `json:"merchant-id"`
+	SortBy              string `json:"sort-by"`
 	Sort                string `json:"sort"`
 	Limit               uint   `json:"limit"`
 	Page                uint   `json:"page"`
@@ -211,10 +215,10 @@ type MerchantVoucherQuery struct {
 func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 	var query MerchantVoucherQuery
 
-	searchVoucherCode := c.Query("search_voucher_code")
-	filterVoucherStatus := strings.ToLower(c.Query("filter_voucher_status"))
-	merchantID := c.Query("merchant_id")
-	sortBy := strings.ToLower(c.Query("sort_by"))
+	searchVoucherCode := c.Query("search-voucher-code")
+	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
+	merchantID := c.Query("merchant-id")
+	sortBy := strings.ToLower(c.Query("sort-by"))
 	sort := strings.ToLower(c.Query("sort"))
 	limit := c.Query("limit")
 	page := c.Query("page")
@@ -268,19 +272,85 @@ func NewMerchantVoucherQuery(c *gin.Context) *MerchantVoucherQuery {
 }
 
 type MerchantVoucherGetAllResponse struct {
-	Pagination      *utils.Pagination              `json:"pagination"`
 	MerchantVoucher []*dtos.MerchantVoucherDetails `json:"merchant_voucher"`
 }
 
-func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails, pagination *utils.Pagination) (target *MerchantVoucherGetAllResponse) {
-	if pagination == nil {
-		return nil
-	}
-
+func NewMerchantVoucherGetAllResponse(source []*dtos.MerchantVoucherDetails) (target *MerchantVoucherGetAllResponse) {
 	target = &MerchantVoucherGetAllResponse{
-		Pagination:      pagination,
 		MerchantVoucher: source,
 	}
 
 	return
+}
+
+type BuyerMerchantVoucherQuery struct {
+	SearchVoucherCode         string `json:"search-voucher-code"`
+	FilterVoucherStatus       string `json:"filter-voucher-status"`
+	FilterVoucherAvailability string `json:"filter-voucher-availability"`
+	MerchantID                uint   `json:"merchant-id"`
+	SortBy                    string `json:"sort-by"`
+	Sort                      string `json:"sort"`
+	Limit                     uint   `json:"limit"`
+	Page                      uint   `json:"page"`
+}
+
+func NewBuyerMerchantVoucherQuery(c *gin.Context) *BuyerMerchantVoucherQuery {
+	var query BuyerMerchantVoucherQuery
+
+	searchVoucherCode := c.Query("search-voucher-code")
+	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
+	filterVoucherAvailability := strings.ToLower(c.Query("filter-voucher-availability"))
+	merchantID := c.Query("merchant-id")
+	sortBy := strings.ToLower(c.Query("sort-by"))
+	sort := strings.ToLower(c.Query("sort"))
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	query.SearchVoucherCode = searchVoucherCode
+	query.FilterVoucherStatus = filterVoucherStatus
+	query.FilterVoucherAvailability = filterVoucherAvailability
+
+	merchantIDInt, err := strconv.Atoi(merchantID)
+
+	if err != nil {
+		query.MerchantID = 0
+	} else if merchantIDInt <= 0 {
+		query.MerchantID = 0
+	} else {
+		query.MerchantID = uint(merchantIDInt)
+	}
+
+	if sortBy == "end_datetime" {
+		query.SortBy = "end_datetime"
+	} else {
+		query.SortBy = "start_datetime"
+	}
+
+	if sort == "asc" {
+		query.Sort = "ASC"
+	} else {
+		query.Sort = "DESC"
+	}
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
 }

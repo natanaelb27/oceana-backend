@@ -12,17 +12,18 @@ type Transaction struct {
 	UserID                    uuid.UUID
 	User                      User
 	TransactionDatetime       time.Time
-	TotalPrice                uint
-	TotalPriceAfterDiscount   uint
-	TotalPriceWithShippingFee uint
+	TotalPrice                float64
+	TotalPriceAfterDiscount   float64
+	TotalPriceWithShippingFee float64
 	PaymentMethodID           uint
 	PaymentMethod             PaymentMethod
+	IsPaid                    bool
 	CreatedAt                 time.Time
 	UpdatedAt                 time.Time
 	DeletedAt                 gorm.DeletedAt
 }
 
-func (m *Transaction) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = uuid.New()
-	return
-}
+// func (m *Transaction) BeforeCreate(tx *gorm.DB) (err error) {
+// 	m.ID = uuid.New()
+// 	return
+// }

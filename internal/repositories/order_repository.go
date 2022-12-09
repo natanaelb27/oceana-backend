@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"strings"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -18,6 +19,8 @@ type OrderRepository interface {
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 	GetByID(id uuid.UUID) (model *models.Order, err error)
 	Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error)
+	GetOrderCount() (*int64, error)
+	Create(newModel []*models.Order) (model []*models.Order, err error)
 }
 
 type orderRepository struct {
@@ -40,28 +43,43 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
+			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
-			transactions.transaction_date AS transaction_datetime,
+			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) AS total_price
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
-		Where("transactions.user_id = ?", id)
+		Where("transactions.user_id = ?", id).
+		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
+
+	if query.Search != "" {
+		subQuerySearch := r.db.Model(&models.Order{}).
+			Select("DISTINCT orders.id").
+			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
+			Joins("JOIN order_details ON order_details.order_id = orders.id").
+			Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+			Where("merchants.name ILIKE @search OR product_snapshots.name ILIKE @search", sql.Named("search", "%"+query.Search+"%"))
+
+		queryResult.Where("orders.id IN (?)", subQuerySearch)
+	}
 
 	if strings.EqualFold(query.FilterOrderStatus, constants.OngoingStatus) {
 		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
 		} else {
 			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
-				constants.PendingPaymentStatus,
 				constants.PendingSellerStatus,
+				constants.OnProcessStatus,
 				constants.OutForDeliveryStatus,
 				constants.DeliveredStatus,
 				constants.ComplainedStatus)
 		}
+	} else if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
+		queryResult.Where("orders.status ILIKE ?", "%canceled%")
 	} else {
 		if query.FilterOrderStatus != "" && !strings.EqualFold(query.FilterOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOrderStatus)
@@ -69,7 +87,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	}
 
 	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
-		queryResult.Where("transactions.transaction_date::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
 	}
 
 	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
@@ -118,10 +136,11 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Select(`
 			orders.transaction_id AS transaction_id,
 			transactions.user_id AS user_id,
+			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
-			transactions.transaction_date AS transaction_datetime,
+			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			courier_services.description AS courier_description,
 			payment_methods.name AS payment_method,	
@@ -183,6 +202,30 @@ func (r *orderRepository) Update(id uuid.UUID, newModel *models.Order) (model *m
 
 	model = newModel
 	model.ID = id
+
+	return
+}
+
+func (r *orderRepository) GetOrderCount() (*int64, error) {
+	var count int64
+	queryResult := r.db.Model(&models.Order{}).Count(&count)
+
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return &count, nil
+}
+
+func (r *orderRepository) Create(newModel []*models.Order) (model []*models.Order, err error) {
+	queryResult := r.db.Create(newModel)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
 
 	return
 }
