@@ -17,9 +17,28 @@ func (h *Handler) OrderListGetAll(c *gin.Context) {
 	}
 
 	query := dtos.NewOrderListQuery(c)
+	query.FilterMerchantID = 0
 
 	orderListGetAllResponse, pagination, err := h.orderService.OrderListGetAll(id, query)
 
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, orderListGetAllResponse, pagination)
+}
+
+func (h *Handler) OrderListGetAllByMerchantID(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewOrderListQuery(c)
+
+	orderListGetAllResponse, pagination, err := h.orderService.OrderListGetAllByMerchantID(id, query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

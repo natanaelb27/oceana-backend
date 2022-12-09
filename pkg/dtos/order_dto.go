@@ -7,6 +7,7 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -17,6 +18,7 @@ type OrderListQuery struct {
 	FilterOngoingOrderStatus   string     `json:"filter-ongoing-order-status"`
 	FilterStartTransactionDate *time.Time `json:"filter-start-transaction-date"`
 	FilterEndTransactionDate   *time.Time `json:"filter-end-transaction-date"`
+	FilterMerchantID           uint       `json:"filter-merchant-id"`
 	Limit                      uint       `json:"limit"`
 	Page                       uint       `json:"page"`
 }
@@ -29,6 +31,7 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	filterOngoingOrderStatus := strings.ToLower(c.Query("filter-ongoing-order-status"))
 	filterStartTransactionDate := c.Query("filter-start-transaction-date")
 	filterEndTransactionDate := c.Query("filter-end-transaction-date")
+	filterMerchantID := utils.StringToUint(c.Query("filter-merchant-id"))
 
 	limit := c.Query("limit")
 	page := c.Query("page")
@@ -36,6 +39,7 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	query.Search = search
 	query.FilterOrderStatus = filterOrderStatus
 	query.FilterOngoingOrderStatus = filterOngoingOrderStatus
+	query.FilterMerchantID = filterMerchantID
 
 	if filterStartTransactionDate != "" && filterEndTransactionDate != "" {
 		startDate, err := time.Parse("2006-01-02", filterStartTransactionDate)

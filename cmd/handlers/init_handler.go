@@ -105,6 +105,7 @@ func Init() *Handler {
 		OrderDetailRepository:     orderDetailRepository,
 		AddressSnapshotRepository: addressSnapshotRepository,
 		OrderTrackingRepository:   orderTrackingRepository,
+		MerchantRepository:        merchantRepository,
 	})
 
 	userService := services.NewUserService(&services.UserServiceConfig{

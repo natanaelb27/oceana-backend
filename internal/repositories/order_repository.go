@@ -90,6 +90,10 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
 	}
 
+	if query.FilterMerchantID != 0 {
+		queryResult.Where("merchants.id = ?", query.FilterMerchantID)
+	}
+
 	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
 		Find(&orderList)
 

@@ -14,6 +14,7 @@ import (
 
 type OrderService interface {
 	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error)
+	OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
 	Update(request *internalDtos.OrderProcessOrder) (*models.Order, error)
 }
@@ -23,6 +24,7 @@ type orderService struct {
 	orderDetailRepository     r.OrderDetailRepository
 	addressSnapshotRepository r.AddressSnapshotRepository
 	orderTrackingRepository   r.OrderTrackingRepository
+	merchantRepository        r.MerchantRepository
 }
 
 type OrderServiceConfig struct {
@@ -30,6 +32,7 @@ type OrderServiceConfig struct {
 	OrderDetailRepository     r.OrderDetailRepository
 	AddressSnapshotRepository r.AddressSnapshotRepository
 	OrderTrackingRepository   r.OrderTrackingRepository
+	MerchantRepository        r.MerchantRepository
 }
 
 func NewOrderService(c *OrderServiceConfig) OrderService {
@@ -38,6 +41,7 @@ func NewOrderService(c *OrderServiceConfig) OrderService {
 		orderDetailRepository:     c.OrderDetailRepository,
 		addressSnapshotRepository: c.AddressSnapshotRepository,
 		orderTrackingRepository:   c.OrderTrackingRepository,
+		merchantRepository:        c.MerchantRepository,
 	}
 }
 
@@ -77,6 +81,17 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 	}
 
 	return dtos.NewOrderListGetAllResponse(orderList), pagination, nil
+}
+
+func (s *orderService) OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	query.FilterMerchantID = merchant.ID
+
+	return s.OrderListGetAll(userID, query)
 }
 
 func (s *orderService) OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {
