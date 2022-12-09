@@ -70,6 +70,28 @@ func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {
 	utils.ResponseSuccess(c, orderListDetailsGetAllResponse, nil)
 }
 
+func (h *Handler) OrderListDetailsGetByIDByMerchantID(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	orderID, err := uuid.Parse(c.Param("orderId"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetByIDByMerchantID(id, orderID)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, orderListDetailsGetAllResponse, nil)
+}
+
 func (h *Handler) OrderProcessOrder(c *gin.Context) {
 	var request *dtos.OrderProcessOrderRequest
 	if err := c.ShouldBindJSON(&request); err != nil {

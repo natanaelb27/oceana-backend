@@ -16,6 +16,7 @@ type OrderService interface {
 	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos.OrderListQuery) (*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
+	OrderListDetailsGetByIDByMerchantID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
 	Update(request *internalDtos.OrderProcessOrder) (*models.Order, error)
 }
 
@@ -130,6 +131,24 @@ func (s *orderService) OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UU
 	orderData.OrderDetails = orderDetails
 
 	return dtos.NewOrderListDetailsGetByIDResponse(orderData), nil
+}
+
+func (s *orderService) OrderListDetailsGetByIDByMerchantID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := s.OrderListDetailsGetByID(userID, orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	if merchant.ID != order.MerchantID {
+		return nil, e.ErrUnauthorized
+	}
+
+	return order, err
 }
 
 func (s *orderService) Update(request *internalDtos.OrderProcessOrder) (*models.Order, error) {
