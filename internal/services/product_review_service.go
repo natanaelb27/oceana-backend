@@ -150,7 +150,7 @@ func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.Prod
 		Limit: query.Limit,
 		Page:  query.Page,
 	}
-	productReviews, pagination, err := pr.productReviewRepository.GetByProductID(id, pagination)
+	productReviews, pagination, err := pr.productReviewRepository.GetByProductID(id, pagination, query)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -161,11 +161,17 @@ func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.Prod
 		if err != nil {
 			return nil, nil, err
 		}
+
+		if query.Media && len(productReviewMedia) <= 0 {
+			continue
+		}
+
 		for _, singleProductReviewMedia := range productReviewMedia {
 			productReviewMediaLinks = append(productReviewMediaLinks, &singleProductReviewMedia.MediaURL)
 		}
 		productReviewData := internalDtos.NewProductReviewGetByProductID(productReview, productReviewMediaLinks)
 		productReviewDataList = append(productReviewDataList, productReviewData)
+
 	}
 	response := externalDtos.NewProductReviewGetByIDResponse(productReviewDataList)
 	return response, pagination, nil
