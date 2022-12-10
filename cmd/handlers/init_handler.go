@@ -263,6 +263,7 @@ func Init() *Handler {
 		OrderDetailRepository:                   orderDetailRepository,
 		OrderDetailMerchantPromotionRepository:  orderDetailMerchantPromotionRepository,
 		OrderMerchantVoucherRepository:          orderMerchantVoucherRepository,
+		OrderTrackingRepository:                 orderTrackingRepository,
 		ProductRepository:                       productRepository,
 		ProductItemRepository:                   productItemRepository,
 		ProductMerchantPromotionRepository:      productMerchantPromotionRepository,
