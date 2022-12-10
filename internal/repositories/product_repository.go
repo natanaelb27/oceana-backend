@@ -377,7 +377,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
 		Group("product_items.product_id")
 
-	query := r.db.Debug().Model(&models.Product{}).
+	query := r.db.Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -480,6 +480,10 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			sqPriceMaximum,
 			sql.Named("query_price_maximum", queryParams.PriceMaximum),
 		)
+	}
+
+	if queryParams.RatingStarMinimum > 0 {
+		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
 	}
 
 	// filter by merchant cities
