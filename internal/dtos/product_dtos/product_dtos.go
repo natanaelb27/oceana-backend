@@ -55,12 +55,13 @@ type ProductQuery struct {
 	Limit  uint
 	Page   uint
 	// Filter
-	MerchantID      uint
-	CategoryID      uint
-	PriceMinimum    uint
-	PriceMaximum    uint
-	MerchantCities  []string
-	CourierServices []string
+	MerchantID        uint
+	CategoryID        uint
+	PriceMinimum      uint
+	PriceMaximum      uint
+	RatingStarMinimum uint
+	MerchantCities    []string
+	CourierServices   []string
 	// Categories
 	Categories []uint
 }
@@ -73,6 +74,7 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.CategoryID = utils.StringToUint(c.Query("category-id"))
 	query.PriceMinimum = utils.StringToUint(c.Query("price-minimum"))
 	query.PriceMaximum = utils.StringToUint(c.Query("price-maximum"))
+	query.RatingStarMinimum = utils.StringToUint(c.Query("rating-star-minimum"))
 
 	query.Page = utils.StringToUint(c.Query("page"))
 	if query.Page == 0 {

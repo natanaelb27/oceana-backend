@@ -10,6 +10,7 @@ import (
 
 type OrderTrackingRepository interface {
 	GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error)
+	Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error)
 }
 
 type orderTrackingRepository struct {
@@ -45,4 +46,16 @@ func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrack
 	}
 
 	return orderTrackingHistory, nil
+}
+func (r *orderTrackingRepository) Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error) {
+	queryResult := r.db.Create(newModel)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
 }
