@@ -3,7 +3,7 @@ package cronservice
 import "log"
 
 func (c *Cron) Per15Seconds() {
-	c.scheduler.Every(3).Seconds().Do(func() {
+	c.scheduler.Every(15).Seconds().Do(func() {
 		// cron example, service method that will get roles from db and print its count to console
 		err := c.roleService.CronRolesCount()
 		if err != nil {
