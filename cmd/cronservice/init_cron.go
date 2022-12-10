@@ -24,4 +24,6 @@ func Init() {
 
 	// cron that runs per 15 second
 	c.Per15Seconds()
+
+	c.scheduler.StartAsync()
 }
