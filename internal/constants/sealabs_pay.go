@@ -1,5 +1,13 @@
 package constants
 
+type SealabsPayAction int
+
 const (
-	AccountNumberMaxLength = 16
+	SealabsPayRegister SealabsPayAction = 0
+	SealabsPayPayment  SealabsPayAction = 1
+	SealabsPayTopup    SealabsPayAction = 2
+)
+
+const (
+	SealabsPayAccountNumberLength = 16
 )

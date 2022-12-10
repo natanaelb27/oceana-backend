@@ -3,7 +3,6 @@ package services
 import (
 	"net/http"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -127,7 +126,7 @@ func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDeta
 
 func (p *walletService) CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error {
 	// validate card number length
-	if request.CardNumber == "" || len(request.CardNumber) != constants.AccountNumberMaxLength {
+	if !utils.ValidateSealabsPayAccountNumber(request.CardNumber) {
 		return e.ErrInvalidSealabsPayAccountNumber
 	}
 

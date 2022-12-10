@@ -1,15 +1,28 @@
 package utils
 
 import (
-	"strconv"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
 func ValidateSealabsPayAccountNumber(accountNumber string) bool {
-	if len(accountNumber) != 16 {
-		return false
+	return len(accountNumber) == constants.SealabsPayAccountNumberLength
+}
+
+func HashPaymentInfoSHA256HMAC(cardNumber, amount, merchantCode, key string) (*string, error) {
+	hasher := hmac.New(sha256.New, []byte(key))
+	signatureStringToEncrypt := fmt.Sprintf("%s:%s:%s", cardNumber, amount, merchantCode)
+	hasher.Write([]byte(signatureStringToEncrypt))
+	signatureBytes := hasher.Sum(nil)
+	signatureString := hex.EncodeToString(signatureBytes)
+	if len(signatureString) == 0 {
+		return nil, e.ErrHashingFailed
 	}
-	if _, err := strconv.ParseInt(accountNumber, 10, 64); err != nil {
-		return false
-	}
-	return true
+
+	return &signatureString, nil
 }

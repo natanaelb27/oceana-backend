@@ -60,15 +60,6 @@ type SealabsPayPaymentInboundRequest struct {
 	Amount     string `json:"amount"`
 }
 
-type SealabsPayPaymentOutboundRequest struct {
-	CardNumber   string `json:"card_number"`
-	Amount       string `json:"amount"`
-	MerchantCode string `json:"merchant_code"`
-	RedirectURL  string `json:"redirect_url"`
-	CallbackURL  string `json:"callback_url"`
-	Signature    string `json:"signature"`
-}
-
 type SealabsPayRedirectResponseError struct {
 	Code    interface{} `json:"code"`
 	Message interface{} `json:"message"`

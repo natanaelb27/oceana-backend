@@ -1,22 +1,10 @@
 package handlers
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"os"
-	"strconv"
-	"strings"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
-	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 )
 
@@ -108,71 +96,13 @@ func (h *Handler) SealabsPayTopup(c *gin.Context) {
 		return
 	}
 
-	client := &http.Client{
-		// turn off auto-redirect
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	apiURL := os.Getenv("SEALABSPAY_API_URL")
-	apiKey := os.Getenv("SEALABSPAY_API_KEY")
-	merchantCode := os.Getenv("SEALABSPAY_MERCHANT_CODE")
-	redirectBaseURL := os.Getenv("FRONTEND_URL")
-	redirectURL := fmt.Sprintf("%s/sealabs-pay/redirect?card_number=%s", redirectBaseURL, inboundRequest.CardNumber)
-	callbackBaseURL := os.Getenv("SEALABSPAY_CALLBACK_BASE_URL")
-	callbackURL := fmt.Sprintf("%s/topup", callbackBaseURL)
-	// hashing signature
-	hasher := hmac.New(sha256.New, []byte(apiKey))
-	signatureStringToEncrypt := fmt.Sprintf("%s:%s:%s", inboundRequest.CardNumber, inboundRequest.Amount, merchantCode)
-	hasher.Write([]byte(signatureStringToEncrypt))
-	signatureBytes := hasher.Sum(nil)
-	signatureString := hex.EncodeToString(signatureBytes)
-
-	outboundRequest := url.Values{}
-	outboundRequest.Set("card_number", inboundRequest.CardNumber)
-	outboundRequest.Set("amount", inboundRequest.Amount)
-	outboundRequest.Set("merchant_code", merchantCode)
-	outboundRequest.Set("redirect_url", redirectURL)
-	outboundRequest.Set("callback_url", callbackURL)
-	outboundRequest.Set("signature", signatureString)
-
-	encodedOutboundRequest := outboundRequest.Encode()
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/pay", apiURL), strings.NewReader(encodedOutboundRequest))
+	otpURL, err := h.sealabsPayService.TopupWallet(inboundRequest)
 	if err != nil {
-		utils.ResponseError(c, e.ErrUnknown)
+		utils.ResponseError(c, err)
 		return
 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Content-Length", strconv.Itoa(len(encodedOutboundRequest)))
-
-	res, err := client.Do(req)
-	if err != nil {
-		utils.ResponseError(c, e.ErrUnknown)
-		return
-	}
-
-	var errResponse *dtos.SealabsPayRedirectResponseError
-	responseBodyBytes, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		utils.ResponseError(c, e.ErrInternalOperationFailed)
-		return
-	}
-
-	json.Unmarshal(responseBodyBytes, &errResponse)
-	if res.StatusCode != http.StatusSeeOther {
-		utils.Response(c, res.StatusCode, errResponse, nil, nil, res.Status)
-		return
-	}
-
-	otpURL, ok := res.Header["Location"]
-	if !ok {
-		utils.ResponseError(c, e.ErrUnknown)
-		return
-	}
-
-	utils.ResponseSuccess(c, otpURL[0], nil)
+	utils.ResponseSuccess(c, *otpURL, nil)
 }
 
 func (h *Handler) SealabsPayTopupCallback(c *gin.Context) {

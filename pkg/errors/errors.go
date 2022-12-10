@@ -138,6 +138,8 @@ var (
 	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
 	ErrSendingEmailFailed            = errors.New("sending email failed")
 	ErrInternalOperationFailed       = errors.New("internal operation failed")
+	ErrSealabsPayOperationFailed     = errors.New("sealabs pay operation failed")
+	ErrInvalidSealabsPayAction       = errors.New("invalid sealabs pay action")
 
 	ErrUnknown        = errors.New("unknown")
 	ErrRegisterGoogle = errors.New("register with google")

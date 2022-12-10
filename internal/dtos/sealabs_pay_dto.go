@@ -25,3 +25,12 @@ func NewSealabsPayDTO(source *models.SealabsPay) (target *SealabsPayDTO) {
 	}
 	return
 }
+
+type SealabsPayInfo struct {
+	ApiURL       string
+	ApiKey       string
+	MerchantCode string
+	RedirectURL  string
+	CallbackURL  string
+	Signature    string
+}
