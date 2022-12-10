@@ -8,6 +8,7 @@ import (
 
 type CityRepository interface {
 	GetAll(query *dtos.SubDistrictQuery) (model []*models.City, err error)
+	CitiesGetAll() (model []*models.City, err error)
 }
 
 type cityRepository struct {
@@ -29,6 +30,13 @@ func (e *cityRepository) GetAll(query *dtos.SubDistrictQuery) (model []*models.C
 		Joins("LEFT JOIN provinces ON cities.province_id = provinces.id").
 		Where("cities.province_id = ?", query.Province).
 		Find(&model)
+
+	err = result.Error
+	return
+}
+
+func (e *cityRepository) CitiesGetAll() (model []*models.City, err error) {
+	result := e.db.Model(&models.City{}).Find(&model)
 
 	err = result.Error
 	return

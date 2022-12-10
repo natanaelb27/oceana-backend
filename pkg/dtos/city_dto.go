@@ -14,3 +14,14 @@ func NewCityResponse(source *models.City) (target *CityResponse) {
 	}
 	return
 }
+
+func NewCitiesResponse(source []*models.City) (target []*CityResponse) {
+	for _, result := range source {
+		target = append(target, &CityResponse{
+			ID:   result.ID,
+			Name: result.Name,
+		})
+	}
+
+	return
+}

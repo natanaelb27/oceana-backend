@@ -125,7 +125,7 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
-	citiesRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
+	cityRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
 		DB: db.Get(),
 	})
 
@@ -276,7 +276,7 @@ func Init() *Handler {
 
 	subDistrictService := services.NewSubDistrictService(&services.SubDistrictServiceConfig{
 		ProvinceRepository:    provinceRepository,
-		CityRepository:        citiesRepository,
+		CityRepository:        cityRepository,
 		DistrictRepository:    districtRepository,
 		SubDistrictRepository: subDistrictRepository,
 	})
@@ -314,6 +314,10 @@ func Init() *Handler {
 		WalletTransactionPaymentRepository:      walletTransactionPaymentRepository,
 	})
 
+	cityService := services.NewCityService(&services.CityServiceConfig{
+		CityRepository: cityRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
 		WalletService:             walletService,
@@ -335,6 +339,7 @@ func Init() *Handler {
 		MarketplaceVoucherService: marketplaceVoucherService,
 		CourierService:            courierService,
 		LogisticService:           logisticService,
+		CityService:               cityService,
 	})
 
 	return h
