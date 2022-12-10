@@ -9,6 +9,6 @@ func wallet(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 	path := "/wallet"
 	privateRoute := private.Group(path)
 	{
-		privateRoute.POST("/top-up", h.WalletTopup)
+		privateRoute.POST("/topup", h.WalletTopup)
 	}
 }

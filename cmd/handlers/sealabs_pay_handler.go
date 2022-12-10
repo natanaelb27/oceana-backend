@@ -121,7 +121,7 @@ func (h *Handler) SealabsPayTopup(c *gin.Context) {
 	redirectBaseURL := os.Getenv("FRONTEND_URL")
 	redirectURL := fmt.Sprintf("%s/sealabs-pay/redirect?card_number=%s", redirectBaseURL, inboundRequest.CardNumber)
 	callbackBaseURL := os.Getenv("SEALABSPAY_CALLBACK_BASE_URL")
-	callbackURL := fmt.Sprintf("%s/top-up", callbackBaseURL)
+	callbackURL := fmt.Sprintf("%s/topup", callbackBaseURL)
 	// hashing signature
 	hasher := hmac.New(sha256.New, []byte(apiKey))
 	signatureStringToEncrypt := fmt.Sprintf("%s:%s:%s", inboundRequest.CardNumber, inboundRequest.Amount, merchantCode)
