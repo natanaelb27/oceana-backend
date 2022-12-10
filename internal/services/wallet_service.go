@@ -16,21 +16,21 @@ import (
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
-	CreateWalletTopUp(c *gin.Context, userID uuid.UUID, request *externalDtos.TopUpWalletRequest) error
+	CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error
 	GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error)
 }
 
 type walletService struct {
 	walletRepository      r.WalletRepository
 	redisRepository       r.RedisRepository
-	walletTopUpRepository r.WalletTopUpRepository
+	walletTopupRepository r.WalletTopupRepository
 	sealabsPayRepository  r.SealabsPayRepository
 }
 
 type WalletServiceConfig struct {
 	WalletRepository      r.WalletRepository
 	RedisRepository       r.RedisRepository
-	WalletTopUpRepository r.WalletTopUpRepository
+	WalletTopupRepository r.WalletTopupRepository
 	SealabsPayRepository  r.SealabsPayRepository
 }
 
@@ -38,7 +38,7 @@ func NewWalletService(c *WalletServiceConfig) WalletService {
 	return &walletService{
 		walletRepository:      c.WalletRepository,
 		redisRepository:       c.RedisRepository,
-		walletTopUpRepository: c.WalletTopUpRepository,
+		walletTopupRepository: c.WalletTopupRepository,
 		sealabsPayRepository:  c.SealabsPayRepository,
 	}
 }
@@ -125,7 +125,7 @@ func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDeta
 	return responseData, nil
 }
 
-func (p *walletService) CreateWalletTopUp(c *gin.Context, userID uuid.UUID, request *externalDtos.TopUpWalletRequest) error {
+func (p *walletService) CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error {
 	// validate card number length
 	if request.CardNumber == "" || len(request.CardNumber) != constants.AccountNumberMaxLength {
 		return e.ErrInvalidSealabsPayAccountNumber
@@ -161,7 +161,7 @@ func (p *walletService) CreateWalletTopUp(c *gin.Context, userID uuid.UUID, requ
 	}
 	walletTopup.WalletID = wallet.ID
 	walletTopup.SealabsPayID = sealabsPayAccount.ID
-	_, err = p.walletTopUpRepository.Create(walletTopup)
+	_, err = p.walletTopupRepository.Create(walletTopup)
 	if err != nil {
 		return err
 	}

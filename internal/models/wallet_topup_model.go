@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type WalletTopUp struct {
+type WalletTopup struct {
 	ID              uuid.UUID
 	WalletID        uuid.UUID
 	Wallet          Wallet
@@ -21,7 +21,7 @@ type WalletTopUp struct {
 	DeletedAt       gorm.DeletedAt
 }
 
-func (m *WalletTopUp) BeforeCreate(tx *gorm.DB) (err error) {
+func (m *WalletTopup) BeforeCreate(tx *gorm.DB) (err error) {
 	m.ID = uuid.New()
 	return
 }

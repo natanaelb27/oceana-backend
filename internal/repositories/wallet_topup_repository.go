@@ -6,25 +6,25 @@ import (
 	"gorm.io/gorm"
 )
 
-type WalletTopUpRepository interface {
-	Create(newModel *models.WalletTopUp) (model *models.WalletTopUp, err error)
+type WalletTopupRepository interface {
+	Create(newModel *models.WalletTopup) (model *models.WalletTopup, err error)
 }
 
-type walletTopUpRepository struct {
+type walletTopupRepository struct {
 	db *gorm.DB
 }
 
-type WalletTopUpRepositoryConfig struct {
+type WalletTopupRepositoryConfig struct {
 	DB *gorm.DB
 }
 
-func NewWalletTopupRepository(c *WalletTopUpRepositoryConfig) WalletTopUpRepository {
-	return &walletTopUpRepository{
+func NewWalletTopupRepository(c *WalletTopupRepositoryConfig) WalletTopupRepository {
+	return &walletTopupRepository{
 		db: c.DB,
 	}
 }
 
-func (w *walletTopUpRepository) Create(newModel *models.WalletTopUp) (model *models.WalletTopUp, err error) {
+func (w *walletTopupRepository) Create(newModel *models.WalletTopup) (model *models.WalletTopup, err error) {
 	queryResult := w.db.Create(&newModel)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrInsertFailed

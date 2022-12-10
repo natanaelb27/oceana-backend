@@ -97,7 +97,7 @@ func NewWalletDetailsResponse(sourceModel *models.Wallet, sourceDto []*dtos.Wall
 	return
 }
 
-type TopUpWalletRequest struct {
+type TopupWalletRequest struct {
 	CardNumber   string `json:"card_number"`
 	TxID         string `json:"txn_id"`
 	Amount       string `json:"amount"`
@@ -107,14 +107,14 @@ type TopUpWalletRequest struct {
 	Signature    string `json:"signature"`
 }
 
-func (source *TopUpWalletRequest) ToModel() (target *models.WalletTopUp, err error) {
+func (source *TopupWalletRequest) ToModel() (target *models.WalletTopup, err error) {
 	amount, err := strconv.Atoi(source.Amount)
 	if err != nil {
 		err = e.ErrInvalidAmount
 		return
 	}
 
-	target = &models.WalletTopUp{
+	target = &models.WalletTopup{
 		TxID:            source.TxID,
 		Amount:          uint(amount),
 		TransactionDate: time.Now(),
