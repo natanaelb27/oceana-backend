@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"github.com/google/uuid"
@@ -9,6 +11,7 @@ import (
 
 type RoleService interface {
 	WithTx(tx *gorm.DB) *roleService
+	CronRolesCount() error
 	Create(role *models.Role) (*models.Role, error)
 	GetAll() ([]*models.Role, error)
 	GetById(id uuid.UUID) (*models.Role, error)
@@ -75,4 +78,13 @@ func (p *roleService) MultipleOperationFailingWithTransaction(model *models.Role
 	}
 
 	return result, err
+}
+
+func (p *roleService) CronRolesCount() error {
+	roles, err := p.roleRepository.GetAll()
+	if err != nil {
+		return err
+	}
+	fmt.Println("CRON: roles count is", len(roles))
+	return nil
 }
