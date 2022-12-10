@@ -8,6 +8,7 @@ import (
 )
 
 type SealabsPayCreateRequest struct {
+	NameOnCard    string `json:"name_on_card" binding:"required"`
 	AccountNumber string `json:"account_number" binding:"required"`
 }
 
@@ -15,6 +16,8 @@ func (source *SealabsPayCreateRequest) ToModel(id uuid.UUID) (target *models.Sea
 	target = &models.SealabsPay{
 		UserID:        id,
 		AccountNumber: source.AccountNumber,
+		NameOnCard:    source.NameOnCard,
+		ActiveDate:    time.Now(),
 	}
 	return
 }

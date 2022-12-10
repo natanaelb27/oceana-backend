@@ -3,6 +3,7 @@ package services
 import (
 	"net/http"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -15,27 +16,30 @@ import (
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
-	CreateWalletTopUp(request *externalDtos.TopUpWalletRequest) error
+	CreateWalletTopUp(c *gin.Context, userID uuid.UUID, request *externalDtos.TopUpWalletRequest) error
 	GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error)
 }
 
 type walletService struct {
 	walletRepository      r.WalletRepository
 	redisRepository       r.RedisRepository
-	walletTopupRepository r.WalletTopupRepository
+	walletTopUpRepository r.WalletTopUpRepository
+	sealabsPayRepository  r.SealabsPayRepository
 }
 
 type WalletServiceConfig struct {
 	WalletRepository      r.WalletRepository
 	RedisRepository       r.RedisRepository
-	WalletTopupRepository r.WalletTopupRepository
+	WalletTopUpRepository r.WalletTopUpRepository
+	SealabsPayRepository  r.SealabsPayRepository
 }
 
 func NewWalletService(c *WalletServiceConfig) WalletService {
 	return &walletService{
 		walletRepository:      c.WalletRepository,
 		redisRepository:       c.RedisRepository,
-		walletTopupRepository: c.WalletTopupRepository,
+		walletTopUpRepository: c.WalletTopUpRepository,
+		sealabsPayRepository:  c.SealabsPayRepository,
 	}
 }
 
@@ -121,11 +125,53 @@ func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDeta
 	return responseData, nil
 }
 
-func (p *walletService) CreateWalletTopUp(request *externalDtos.TopUpWalletRequest) error {
-	model := request.ToModel()
-	_, err := p.walletTopupRepository.Create(model)
+func (p *walletService) CreateWalletTopUp(c *gin.Context, userID uuid.UUID, request *externalDtos.TopUpWalletRequest) error {
+	// validate card number length
+	if request.CardNumber == "" || len(request.CardNumber) != constants.AccountNumberMaxLength {
+		return e.ErrInvalidSealabsPayAccountNumber
+	}
+
+	// check if signature matches with the one in redis
+	_, err := p.redisRepository.Get(c, request.Signature)
+	if err != nil {
+		return e.ErrInvalidSignature
+	}
+	// clean up signature from redis
+	err = p.redisRepository.Delete(c, request.Signature)
 	if err != nil {
 		return err
 	}
+
+	// get wallet_id by user id
+	wallet, err := p.walletRepository.GetByUserId(userID)
+	if err != nil {
+		return err
+	}
+
+	// get sealabs_pay_id by account number
+	sealabsPayAccount, err := p.sealabsPayRepository.GetByUserIDAndAccountNumber(userID, request.CardNumber)
+	if err != nil {
+		return err
+	}
+
+	// create wallet_topup entry
+	walletTopup, err := request.ToModel()
+	if err != nil {
+		return err
+	}
+	walletTopup.WalletID = wallet.ID
+	walletTopup.SealabsPayID = sealabsPayAccount.ID
+	_, err = p.walletTopUpRepository.Create(walletTopup)
+	if err != nil {
+		return err
+	}
+
+	// update wallet balance
+	wallet.Balance += walletTopup.Amount
+	_, err = p.walletRepository.Update(wallet.ID, wallet)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

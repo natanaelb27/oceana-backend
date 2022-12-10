@@ -42,9 +42,17 @@ func Init() *Handler {
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
+	walletTopupRepository := repositories.NewWalletTopupRepository(&repositories.WalletTopUpRepositoryConfig{
+		DB: db.Get(),
+	})
+	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
+		DB: db.Get(),
+	})
 	walletService := services.NewWalletService(&services.WalletServiceConfig{
 		WalletRepository: walletRepository,
 		RedisRepository:  redisRepository,
+		WalletTopUpRepository: walletTopupRepository,
+		SealabsPayRepository: sealabsPayRepository,
 	})
 	userRepository := repositories.NewUserRepository(&repositories.UserRepositoryConfig{
 		DB: db.Get(),
@@ -110,9 +118,6 @@ func Init() *Handler {
 	userService := services.NewUserService(&services.UserServiceConfig{
 		UserRepository:  userRepository,
 		EmailRepository: emailRepository,
-	})
-	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
-		DB: db.Get(),
 	})
 	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
 		SealabsPayRepository: sealabsPayRepository,

@@ -7,13 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type WalletTopup struct {
+type WalletTopUp struct {
 	ID              uuid.UUID
 	WalletID        uuid.UUID
 	Wallet          Wallet
 	SealabsPayID    uuid.UUID
 	SealabsPay      SealabsPay
-	TxID            int
+	TxID            string
 	Amount          uint
 	TransactionDate time.Time
 	CreatedAt       time.Time
@@ -21,7 +21,7 @@ type WalletTopup struct {
 	DeletedAt       gorm.DeletedAt
 }
 
-func (m *WalletTopup) BeforeCreate(tx *gorm.DB) (err error) {
+func (m *WalletTopUp) BeforeCreate(tx *gorm.DB) (err error) {
 	m.ID = uuid.New()
 	return
 }

@@ -101,7 +101,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 	if result.RowsAffected == 0 {
 		return nil, e.ErrDataNotFound
 	}
-	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
+	queryWalletTopUp := w.db.Model(&models.WalletTopUp{}).
 		Select(`
 			id, 
 			wallet_id, 

@@ -71,13 +71,20 @@ func (h *Handler) WalletGetDetails(c *gin.Context) {
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
-func (h *Handler) WalletTopUpCallback(c *gin.Context) {
+func (h *Handler) WalletTopUp(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
 	var request *dtos.TopUpWalletRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	err := h.walletService.CreateWalletTopUp(request)
+
+	err := h.walletService.CreateWalletTopUp(c, id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

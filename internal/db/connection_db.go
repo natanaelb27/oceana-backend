@@ -71,7 +71,7 @@ func Connect() {
 		&models.SealabsPayTransactionPayment{},
 		&models.WalletTransactionPayment{},
 		&models.UserMerchantPromotion{},
-		&models.WalletTopup{},
+		&models.WalletTopUp{},
 		&models.Refund{},
 		&models.RefundDetail{},
 		&models.Cart{},

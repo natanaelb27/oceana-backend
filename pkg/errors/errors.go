@@ -42,6 +42,7 @@ var (
 	ErrInvalidQuantity                = errors.New("invalid quantity")
 	ErrInvalidPrice                   = errors.New("invalid price")
 	ErrInvalidEventID                 = errors.New("invalid event id")
+	ErrInvalidSignature               = errors.New("invalid signature")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
 	ErrEmailNotFound                  = errors.New("email not found")
@@ -199,6 +200,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidQuantity) ||
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
+		errors.Is(err, ErrInvalidSignature) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrPasswordCannotContainsUsername) ||

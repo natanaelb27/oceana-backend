@@ -128,8 +128,9 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 	apiURL := os.Getenv("SEALABSPAY_API_URL")
 	apiKey := os.Getenv("SEALABSPAY_API_KEY")
 	merchantCode := os.Getenv("SEALABSPAY_MERCHANT_CODE")
-	unusedRedirectURL := os.Getenv("SEALABSPAY_REDIRECT_URL")
-	callbackBaseURL := os.Getenv("SEALABSPAY_CALLBACK_URL")
+	redirectBaseURL := os.Getenv("FRONTEND_URL")
+	redirectURL := fmt.Sprintf("%s/sealabs-pay/success?card_number=%s", redirectBaseURL, inboundRequest.CardNumber)
+	callbackBaseURL := os.Getenv("SEALABSPAY_CALLBACK_BASE_URL")
 	callbackURL := fmt.Sprintf("%s/top-up", callbackBaseURL)
 	// hashing signature
 	hasher := hmac.New(sha256.New, []byte(apiKey))
@@ -142,7 +143,7 @@ func (h *Handler) SealabsPayPayment(c *gin.Context) {
 	outboundRequest.Set("card_number", inboundRequest.CardNumber)
 	outboundRequest.Set("amount", inboundRequest.Amount)
 	outboundRequest.Set("merchant_code", merchantCode)
-	outboundRequest.Set("redirect_url", unusedRedirectURL)
+	outboundRequest.Set("redirect_url", redirectURL)
 	outboundRequest.Set("callback_url", callbackURL)
 	outboundRequest.Set("signature", signatureString)
 
