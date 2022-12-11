@@ -10,6 +10,11 @@ func (c *Cron) Per15Seconds() {
 			log.Print("CRON: roleService.CronExample:", err)
 		}
 
+		err = nil
+		err = c.orderTrackingService.CronOrderTrackingUpdater()
+		if err != nil {
+			log.Print("CRON: roleService.CronExample:", err)
+		}
 		// add any services that will run per 15 seconds here
 	})
 }

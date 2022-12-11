@@ -17,9 +17,21 @@ func Init() {
 		RoleRepository: roleRepository,
 	})
 
+	orderRepository := repositories.NewOrderRepository(&repositories.OrderRepositoryConfig{
+		DB: db.Get(),
+	})
+	orderTrackingRepository := repositories.NewOrderTrackingRepository(&repositories.OrderTrackingRepositoryConfig{
+		DB: db.Get(),
+	})
+	orderTrackingService := services.NewOrderTrackingService(&services.OrderTrackingServiceConfig{
+		OrderTrackingRepository: orderTrackingRepository,
+		OrderRepository:         orderRepository,
+	})
+
 	c := New(&CronConfig{
-		Scheduler:   *gocron.NewScheduler(time.UTC),
-		RoleService: roleService,
+		Scheduler:            *gocron.NewScheduler(time.UTC),
+		RoleService:          roleService,
+		OrderTrackingService: orderTrackingService,
 	})
 
 	// cron that runs per 15 second
