@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -24,8 +25,8 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	var query OrderListQuery
 
 	search := c.Query("search")
-	filterOrderStatus := c.Query("filter-order-status")
-	filterOngoingOrderStatus := c.Query("filter-ongoing-order-status")
+	filterOrderStatus := strings.ToLower(c.Query("filter-order-status"))
+	filterOngoingOrderStatus := strings.ToLower(c.Query("filter-ongoing-order-status"))
 	filterStartTransactionDate := c.Query("filter-start-transaction-date")
 	filterEndTransactionDate := c.Query("filter-end-transaction-date")
 

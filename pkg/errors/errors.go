@@ -72,6 +72,7 @@ var (
 	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
 	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
 	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
+	ErrWrongWalletPin                            = errors.New("wrong wallet pin")
 
 	ErrUnauthorized                     = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound                     = errors.New("user not found")
@@ -116,6 +117,7 @@ var (
 	ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime = errors.New("new voucher start period is earlier than the current start period")
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
+	ErrBlockedWallet                                              = errors.New("wallet is currently blocked")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -127,17 +129,39 @@ var (
 	ErrPromotionDatetimeUpdatedBeyondRange                 = errors.New("updated promotion start/end period must be between current start/end period")
 	ErrPromotionUpdateProductIDListMismatch                = errors.New("updated promotion product id list and product merchant promotion are mismatched")
 
-	ErrInsertFailed                  = errors.New("insert failed")
-	ErrDatabaseOperationFailed       = errors.New("database operation failed")
-	ErrCacheOperationFailed          = errors.New("cache operation failed")
-	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
-	ErrHashingFailed                 = errors.New("hashing failed")
-	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
-	ErrSendingEmailFailed            = errors.New("sending email failed")
-	ErrInternalOperationFailed       = errors.New("internal operation failed")
+	ErrInsertFailed                   = errors.New("insert failed")
+	ErrDatabaseOperationFailed        = errors.New("database operation failed")
+	ErrCacheOperationFailed           = errors.New("cache operation failed")
+	ErrAuthenticationOperationFailed  = errors.New("authentication operation failed")
+	ErrHashingFailed                  = errors.New("hashing failed")
+	ErrDatabaseConnectionFailed       = errors.New("database connection failed")
+	ErrSendingEmailFailed             = errors.New("sending email failed")
+	ErrInternalOperationFailed        = errors.New("internal operation failed")
+	ErrDatabaseTransactionSetUpFailed = errors.New("database transactions set up failed")
 
 	ErrUnknown        = errors.New("unknown")
 	ErrRegisterGoogle = errors.New("register with google")
+
+	// bad request
+	ErrRequestedVoucherNotMerchant                             = errors.New("the requested voucher is not the merchant's voucher")
+	ErrRequestedPromotionNotProduct                            = errors.New("product does not have that promotion")
+	ErrMerchantDoesNotHaveThatProductItem                      = errors.New("merchant does not have that product item")
+	ErrProductDoesNotHaveThatProductItem                       = errors.New("product does not have that product item")
+	ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount    = errors.New("purchased amount does not exceed the merchant voucher's minimum purchased amount")
+	ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount = errors.New("purchased amount does not exceed the marketplace voucher's minimum purchased amount")
+
+	// 422
+	ErrMarketplaceVoucherNotOngoing                           = errors.New("marketplace voucher is not ongoing")
+	ErrMarketplaceVoucherQuotaFull                            = errors.New("marketplace voucher's quota is full")
+	ErrMerchantVoucherNotOngoing                              = errors.New("merchant voucher is not ongoing")
+	ErrMerchantVoucherQuotaFull                               = errors.New("merchant voucher's quota is full")
+	ErrMerchantVoucherUsedByUser                              = errors.New("merchant voucher has been used by the user")
+	ErrMerchantPromotionNotOngoing                            = errors.New("merchant promotion is not ongoing")
+	ErrProductStockNotEnough                                  = errors.New("product stock is not enough")
+	ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota = errors.New("the amount purchased exceeds the remaining merchant promotion quota")
+	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
+	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
+	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
 )
 
 func GetStatusCode(err error) int {
@@ -188,14 +212,21 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidResetPasswordID) ||
 		errors.Is(err, ErrInvalidModel) ||
 		errors.Is(err, ErrInvalidDiscountType) ||
-		errors.Is(err, ErrInvalidDiscount) {
+		errors.Is(err, ErrInvalidDiscount) ||
+		errors.Is(err, ErrRequestedVoucherNotMerchant) ||
+		errors.Is(err, ErrRequestedPromotionNotProduct) ||
+		errors.Is(err, ErrMerchantDoesNotHaveThatProductItem) ||
+		errors.Is(err, ErrProductDoesNotHaveThatProductItem) ||
+		errors.Is(err, ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount) ||
+		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
 		errors.Is(err, ErrUnauthorized) ||
 		errors.Is(err, ErrStepUpNotFound) ||
 		errors.Is(err, ErrStepUpScopeIncorrect) ||
-		errors.Is(err, ErrVerificationCodeNotFound) {
+		errors.Is(err, ErrVerificationCodeNotFound) ||
+		errors.Is(err, ErrWrongWalletPin) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
@@ -262,7 +293,19 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
 		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
-		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) {
+		errors.Is(err, ErrBlockedWallet) ||
+		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) ||
+		errors.Is(err, ErrMarketplaceVoucherNotOngoing) ||
+		errors.Is(err, ErrMarketplaceVoucherQuotaFull) ||
+		errors.Is(err, ErrMerchantVoucherNotOngoing) ||
+		errors.Is(err, ErrMerchantVoucherQuotaFull) ||
+		errors.Is(err, ErrMerchantVoucherUsedByUser) ||
+		errors.Is(err, ErrMerchantPromotionNotOngoing) ||
+		errors.Is(err, ErrProductStockNotEnough) ||
+		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
+		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
+		errors.Is(err, ErrDifferentTotalPayment) ||
+		errors.Is(err, ErrWalletBalanceNotEnough) {
 		return http.StatusUnprocessableEntity
 	}
 

@@ -21,6 +21,7 @@ type ProductRepository interface {
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 	CreateProduct(product *models.Product) (model *models.Product, err error)
+	GetByProductItemID(productItemID uint) (*models.Product, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
 	GetUpdateByProductID(id uint) (model *product_dtos.ProductModel, err error)
 }
@@ -147,6 +148,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Joins("LEFT JOIN categories ON products.category_id = categories.id").
 		Joins("LEFT JOIN (?) product_media_agg ON products.id = product_media_agg.product_id", subQueryProductMedia).
 		Where("products.id = ?", productID).
+		Where("products.status = 'active'").
 		First(&productDetails)
 
 	if queryResult.Error != nil {
@@ -175,9 +177,9 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 
 	subQueryUserMerchantPromotion := r.db.Model(&models.UserMerchantPromotion{}).
 		Select(`
-		user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
-		product_merchant_promotions.product_id AS product_id,
-		user_merchant_promotions.usage AS user_merchant_promotion_usage
+			user_merchant_promotions.product_merchant_promotion_id AS product_merchant_promotion_id,
+			product_merchant_promotions.product_id AS product_id,
+			user_merchant_promotions.usage AS user_merchant_promotion_usage
 		`).
 		Joins("JOIN product_merchant_promotions ON product_merchant_promotions.id = user_merchant_promotions.product_merchant_promotion_id").
 		Where("user_merchant_promotions.user_id = ?", userID).
@@ -281,6 +283,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 		Joins("JOIN (?) selected_product ON products.id = selected_product.product_id", subQueryProduct).
 		Joins("LEFT JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
 		Where("products.id = ?", productID).
+		Where("products.status = 'active'").
 		First(&selectedProductPurchaseQuantities)
 
 	if queryResult.Error != nil {
@@ -348,7 +351,36 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 
 	var ProductDetails []*product_dtos.Product
 
-	query := r.db.Debug().Model(&models.Product{}).
+	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
+		Select(`
+			product_merchant_promotions.id,
+			merchant_promotions.name,
+			product_merchant_promotions.product_id,
+			product_merchant_promotions.discount_type,
+			product_merchant_promotions.discount,
+			product_merchant_promotions.maximum_discount_amount
+		`).
+		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+		Where(`
+			product_merchant_promotions.maximum_quota > 
+			CASE
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+				ELSE -2
+			END
+		`).
+		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime")
+
+	subQueryProductReview := r.db.Model(&models.ProductItem{}).
+		Select(`
+			product_items.product_id AS product_id,
+			AVG(product_reviews.rating) AS rating_star
+		`).
+		Joins("JOIN product_snapshots ON product_items.product_id = product_snapshots.product_id").
+		Joins("JOIN order_details ON product_snapshots.id = order_details.product_snapshot_id").
+		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
+		Group("product_items.product_id")
+
+	query := r.db.Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -360,7 +392,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
             products.weight,
             products.package_size,
             products.condition,
-            products.status,
+            products.status AS product_status,
 			(@price_minimum) AS price_minimum,
 			(@price_maximum) AS price_maximum,
 			-- count price minimum after discount
@@ -401,6 +433,9 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			) AS price_maximum_after_discount,
 			(@total_view_count) AS total_view_count,
 			(@total_purchase_count) AS total_purchase_count,
+			COALESCE(product_review.rating_star, 0) AS rating_star,
+			pmp.id as product_merchant_promotion_id,
+			pmp.name as merchant_promotion_name,
 			pmp.discount as discount,
 			pmp.discount_type as discount_type,
 			pmp.maximum_discount_amount as discount_maximum_discount_amount,
@@ -421,10 +456,9 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("JOIN sub_districts ON sub_districts.id = addresses.sub_district_id").
 		Joins("JOIN districts ON districts.id = sub_districts.district_id").
 		Joins("JOIN cities ON cities.id = districts.city_id").
-		Joins("LEFT JOIN product_merchant_promotions pmp ON products.id = pmp.product_id")
-
-	// group when status is active or when product got no promotion
-	query.Group("products.id, pmp.id, merchants.id, cities.id")
+		Joins("LEFT JOIN (?) product_review ON products.id = product_review.product_id", subQueryProductReview).
+		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount).
+		Where("products.status = 'active'")
 
 	// filter by merchant
 	if queryParams.MerchantID != 0 {
@@ -449,6 +483,10 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			sqPriceMaximum,
 			sql.Named("query_price_maximum", queryParams.PriceMaximum),
 		)
+	}
+
+	if queryParams.RatingStarMinimum > 0 {
+		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
 	}
 
 	// filter by merchant cities
@@ -492,6 +530,19 @@ func (p *productRepository) CreateProduct(newModel *models.Product) (model *mode
 	model = newModel
 
 	return
+}
+
+func (r *productRepository) GetByProductItemID(productItemID uint) (*models.Product, error) {
+	var model *models.Product
+
+	result := r.db.Joins("LEFT JOIN product_items ON id = product_items.product_id").
+		First(&model, "product_items.id = ?", productItemID)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, e.ErrProductNotFound
+	}
+
+	return model, result.Error
 }
 
 func (r *productRepository) UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error) {

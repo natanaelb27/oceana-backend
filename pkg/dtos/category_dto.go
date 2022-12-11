@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,4 +51,25 @@ func NewCategoryQuery(c *gin.Context) *CategoryQuery {
 	query.LevelDepth = LevelDepthInt
 
 	return &query
+}
+
+type CategoryGetAncestorsResponse struct {
+	ID       uint   `json:"id"`
+	MediaURL string `json:"media_url"`
+	Name     string `json:"name"`
+	ParentID uint   `json:"parent_id"`
+}
+
+func NewCategoryGetAncestorsResponse(source []*models.Category) (target []*CategoryGetAncestorsResponse) {
+	for _, result := range source {
+		target = append(target, &CategoryGetAncestorsResponse{
+			ID:       result.ID,
+			MediaURL: result.MediaURL,
+			Name:     result.Name,
+			ParentID: result.ParentID,
+		})
+		// responseData = append(responseData, externalDtos.NewCategoryGetAncestorsResponse(result))
+	}
+
+	return
 }
