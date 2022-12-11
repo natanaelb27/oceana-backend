@@ -10,8 +10,8 @@ import (
 
 type OrderTrackingRepository interface {
 	GetByOrderID(id uuid.UUID) ([]*internalDtos.OrderTrackingHistory, error)
-	Create(newModel *models.OrderTracking) (model *models.OrderTracking, err error)
 	GetByOrderStatus(orderStatus string) (result []*internalDtos.COTUOrderTracking, err error)
+	Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error)
 }
 
 type orderTrackingRepository struct {
@@ -80,12 +80,9 @@ func (r *orderTrackingRepository) GetByOrderStatus(orderStatus string) (result [
 	return result, nil
 }
 
-func (r *orderTrackingRepository) Create(newModel *models.OrderTracking) (model *models.OrderTracking, err error) {
-	queryResult := r.db.Create(&newModel)
-	if queryResult.RowsAffected == 0 {
-		err = e.ErrInsertFailed
-		return
-	}
+func (r *orderTrackingRepository) Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error) {
+	queryResult := r.db.Create(newModel)
+
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
