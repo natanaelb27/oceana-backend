@@ -38,6 +38,8 @@ func (p *orderTrackingService) CronOrderTrackingUpdater() error {
 		return err
 	}
 
+	newOrderTrackings := make([]*models.OrderTracking, 0)
+
 	for _, v := range orderTrackings {
 		interval, err := strconv.Atoi(os.Getenv("CRON_ORDER_TRACKING_UPDATE_INTERVAL"))
 		if err != nil {
@@ -79,17 +81,20 @@ func (p *orderTrackingService) CronOrderTrackingUpdater() error {
 		if newOrderTracking.Title != "" {
 			newOrderTracking.OrderID = v.OrderID
 			newOrderTracking.HistoryDatetime = time.Now()
-
-			_, err := p.orderTrackingRepository.Create(newOrderTracking)
-			if err != nil {
-				return err
-			}
+			newOrderTrackings = append(newOrderTrackings, newOrderTracking)
 		}
 		if newOrder.ID != uuid.Nil {
 			_, err := p.orderRepository.Update(newOrder.ID, newOrder)
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	if len(newOrderTrackings) != 0 {
+		_, err = p.orderTrackingRepository.Create(newOrderTrackings)
+		if err != nil {
+			return err
 		}
 	}
 
