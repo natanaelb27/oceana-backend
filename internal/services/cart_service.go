@@ -329,6 +329,10 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					return nil, e.ErrProductDoesNotHaveThatProductItem
 				}
 
+				if pi.Status != constants.ProductActiveStatus {
+					return nil, e.ErrProductStatusInactive
+				}
+
 				if pi.StockQuantity < productItems.Quantity {
 					return nil, e.ErrProductStockNotEnough
 				}
@@ -342,6 +346,8 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					Weight:      pi.Weight,
 					PackageSize: pi.PackageSize,
 					Condition:   pi.Condition,
+					ProcessDay:  pi.ProcessDay,
+					IsPreorder:  pi.IsPreorder,
 					SKU:         pi.SKU,
 					Price:       pi.Price,
 				}
