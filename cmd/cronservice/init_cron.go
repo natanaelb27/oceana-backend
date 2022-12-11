@@ -28,10 +28,18 @@ func Init() {
 		OrderRepository:         orderRepository,
 	})
 
+	refundRepository := repositories.NewRefundRepository(&repositories.RefundRepositoryConfig{
+		DB: db.Get(),
+	})
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		RefundRepository: refundRepository,
+	})
+
 	c := New(&CronConfig{
 		Scheduler:            *gocron.NewScheduler(time.UTC),
 		RoleService:          roleService,
 		OrderTrackingService: orderTrackingService,
+		RefundService:        refundService,
 	})
 
 	// cron that runs per 15 second
