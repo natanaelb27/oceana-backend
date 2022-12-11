@@ -8,7 +8,7 @@ import (
 
 type CityRepository interface {
 	GetAll(query *dtos.SubDistrictQuery) (model []*models.City, err error)
-	CitiesGetAll() (model []*models.City, err error)
+	CitiesGetAll(query *dtos.CitiesQuery) (model []*models.City, err error)
 }
 
 type cityRepository struct {
@@ -35,8 +35,14 @@ func (e *cityRepository) GetAll(query *dtos.SubDistrictQuery) (model []*models.C
 	return
 }
 
-func (e *cityRepository) CitiesGetAll() (model []*models.City, err error) {
-	result := e.db.Model(&models.City{}).Find(&model)
+func (e *cityRepository) CitiesGetAll(query *dtos.CitiesQuery) (model []*models.City, err error) {
+	result := e.db.Model(&models.City{})
+
+	if query.Search != "" {
+		result.Where("name ILIKE ?", "%"+query.Search+"%")
+	}
+	result.Order("name ASC").
+		Find(&model)
 
 	err = result.Error
 	return

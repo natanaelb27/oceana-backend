@@ -6,7 +6,7 @@ import (
 )
 
 type CityService interface {
-	GetAll() ([]*dtos.CityResponse, error)
+	GetAll(query *dtos.CitiesQuery) ([]*dtos.CityResponse, error)
 }
 
 type cityService struct {
@@ -23,8 +23,8 @@ func NewCityService(c *CityServiceConfig) CityService {
 	}
 }
 
-func (s *cityService) GetAll() ([]*dtos.CityResponse, error) {
-	cities, err := s.cityRepository.CitiesGetAll()
+func (s *cityService) GetAll(query *dtos.CitiesQuery) ([]*dtos.CityResponse, error) {
+	cities, err := s.cityRepository.CitiesGetAll(query)
 	if err != nil {
 		return nil, err
 	}
