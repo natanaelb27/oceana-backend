@@ -31,9 +31,9 @@ func NewRoleService(c *RoleServiceConfig) RoleService {
 	}
 }
 
-func (u *roleService) WithTx(tx *gorm.DB) *roleService {
+func (u roleService) WithTx(tx *gorm.DB) *roleService {
 	u.roleRepository = u.roleRepository.WithTx(tx)
-	return u
+	return &u
 }
 
 func (p *roleService) Create(model *models.Role) (*models.Role, error) {
