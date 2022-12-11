@@ -21,13 +21,13 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 		return
 	}
 
-	sealabsPayCreateResponse, err := h.sealabsPayService.Create(id, request)
+	_, err := h.sealabsPayService.Create(c, id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, sealabsPayCreateResponse, nil)
+	utils.ResponseSuccess(c, nil, nil)
 }
 
 func (h *Handler) SealabsPayGetAll(c *gin.Context) {
@@ -106,19 +106,13 @@ func (h *Handler) SealabsPayTopupOTP(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayRegisterOTP(c *gin.Context) {
-	var createRequest *dtos.SealabsPayCreateRequest
-	err := c.ShouldBindJSON(&createRequest)
+	var inboundRequest *dtos.SealabsPayPaymentInboundRequest
+	err := c.ShouldBindJSON(&inboundRequest)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	inboundRequest := &dtos.SealabsPayPaymentInboundRequest{
-		NameOnCard: createRequest.NameOnCard,
-		CardNumber: createRequest.CardNumber,
-		Amount:     "1",
-	}
-	
 	otpURL, err := h.sealabsPayService.RegisterOTP(inboundRequest)
 	if err != nil {
 		utils.ResponseError(c, err)

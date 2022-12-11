@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,7 +24,7 @@ import (
 )
 
 type SealabsPayService interface {
-	Create(id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
+	Create(c *gin.Context, id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (*internalDtos.SealabsPayDTO, error)
@@ -31,6 +32,7 @@ type SealabsPayService interface {
 	StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error
 	TopupWalletOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
 	RegisterOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
+	Refund(request *externalDtos.SealabsPayRefundRequest) error
 }
 
 type sealabsPayService struct {
@@ -50,15 +52,33 @@ func NewSealabsPayService(c *SealabsPayServiceConfig) SealabsPayService {
 	}
 }
 
-func (p *sealabsPayService) Create(id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+func (p *sealabsPayService) Create(c *gin.Context, id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+	refundRequest, err := externalDtos.NewSealabsPayRefundRequest(request.TxnID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.Refund(refundRequest)
+	if err != nil {
+		return nil, err
+	}
+
 	model := request.ToModel(id)
 
-	if !utils.ValidateSealabsPayCardNumber(model.CardNumber) {
+	if !utils.ValidateSealabsPayCardNumber(model.AccountNumber) {
 		return nil, e.ErrInvalidSealabsPayCardNumber
 	}
 
-	newModel, err := p.sealabsPayRepository.Create(model)
+	_, err = p.redisRepository.Get(c, request.Signature)
+	if err != nil {
+		return nil, e.ErrInvalidSignature
+	}
+	err = p.redisRepository.Delete(c, request.Signature)
+	if err != nil {
+		return nil, err
+	}
 
+	newModel, err := p.sealabsPayRepository.Create(model)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +132,7 @@ func (p *sealabsPayService) TopupWalletOTP(inboundRequest *externalDtos.SealabsP
 		return nil, err
 	}
 
-	req, err := p.generateOutboundRequest(inboundRequest, sealabsPayInfo)
+	req, err := p.generatePaymentRequest(inboundRequest, sealabsPayInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +151,7 @@ func (p *sealabsPayService) RegisterOTP(inboundRequest *externalDtos.SealabsPayP
 		return nil, err
 	}
 
-	req, err := p.generateOutboundRequest(inboundRequest, sealabsPayInfo)
+	req, err := p.generatePaymentRequest(inboundRequest, sealabsPayInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +163,25 @@ func (p *sealabsPayService) RegisterOTP(inboundRequest *externalDtos.SealabsPayP
 
 	return otpURL, nil
 
+}
+
+func (p *sealabsPayService) Refund(refundRequest *externalDtos.SealabsPayRefundRequest) error {
+	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayRegister, &externalDtos.SealabsPayPaymentInboundRequest{})
+	if err != nil {
+		return err
+	}
+
+	outboundRequest, err := p.generateRefundRequest(refundRequest, sealabsPayInfo)
+	if err != nil {
+		return err
+	}
+
+	err = p.callSealabsPayRefundApi(outboundRequest)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *sealabsPayService) generateSealabsPayInfo(action constants.SealabsPayAction, inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*internalDtos.SealabsPayInfo, error) {
@@ -194,7 +233,7 @@ func (p *sealabsPayService) generateSealabsPayInfo(action constants.SealabsPayAc
 	}, nil
 }
 
-func (p *sealabsPayService) generateOutboundRequest(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest, sealabsPayInfo *internalDtos.SealabsPayInfo) (*http.Request, error) {
+func (p *sealabsPayService) generatePaymentRequest(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest, sealabsPayInfo *internalDtos.SealabsPayInfo) (*http.Request, error) {
 
 	outboundRequestPayload := url.Values{}
 	outboundRequestPayload.Set("card_number", inboundRequest.CardNumber)
@@ -220,6 +259,23 @@ func (p *sealabsPayService) generateOutboundRequest(inboundRequest *externalDtos
 	return outboundRequest, nil
 }
 
+func (p *sealabsPayService) generateRefundRequest(refundRequest *externalDtos.SealabsPayRefundRequest, sealabsPayInfo *internalDtos.SealabsPayInfo) (*http.Request, error) {
+	data, err := json.Marshal(&refundRequest)
+	if err != nil {
+		return nil, e.ErrInternalOperationFailed
+	}
+
+	outboundRequest, err := http.NewRequest("POST", fmt.Sprintf("%s/cancel", sealabsPayInfo.ApiURL), bytes.NewBuffer(data))
+	if err != nil {
+		return nil, e.ErrInternalOperationFailed
+	}
+
+	outboundRequest.Header.Set("Content-Type", "application/json")
+	outboundRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sealabsPayInfo.ApiKey))
+
+	return outboundRequest, nil
+}
+
 func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*string, error) {
 	client := &http.Client{
 		// turn off auto-redirect
@@ -232,7 +288,7 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 		return nil, err
 	}
 
-	var errResponse *externalDtos.SealabsPayRedirectResponseError
+	var errResponse *externalDtos.SealabsPayPaymentResponseError
 	responseBodyBytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
@@ -248,4 +304,31 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 		return nil, e.ErrInternalOperationFailed
 	}
 	return &headerLocation[0], nil
+}
+
+func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error {
+	client := &http.Client{
+		// turn off auto-redirect
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		var errResponse *externalDtos.SealabsPayPaymentResponseError
+		responseBodyBytes, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return err
+		}
+		json.Unmarshal(responseBodyBytes, &errResponse)
+		return fmt.Errorf("%s", errResponse.Message)
+	}
+
+
+	return nil
 }

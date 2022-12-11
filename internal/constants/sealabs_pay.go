@@ -11,3 +11,9 @@ const (
 const (
 	SealabsPayCardNumberLength = 16
 )
+
+const (
+	SealabsPayRegistrationAmount = "1"
+	SealabsPayRegistrationReason = "registration"
+	SealabsPayRefundSuccessStatus = "SUCCESS"
+)

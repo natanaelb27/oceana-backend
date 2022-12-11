@@ -30,7 +30,7 @@ func NewSealabsPayRepository(c *SealabsPayRepositoryConfig) SealabsPayRepository
 }
 
 func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *models.SealabsPay, err error) {
-	queryResult := r.db.Where("card_number = ?", newModel.CardNumber).FirstOrCreate(&newModel)
+	queryResult := r.db.Where("account_number = ?", newModel.AccountNumber).FirstOrCreate(&newModel)
 
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed

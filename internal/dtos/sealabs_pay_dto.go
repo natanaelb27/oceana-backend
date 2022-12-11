@@ -19,7 +19,7 @@ func NewSealabsPayDTO(source *models.SealabsPay) (target *SealabsPayDTO) {
 	target = &SealabsPayDTO{
 		ID:         source.ID,
 		UserID:     source.UserID,
-		CardNumber: source.CardNumber,
+		CardNumber: source.AccountNumber,
 		ActiveDate: source.ActiveDate,
 		NameOnCard: source.NameOnCard,
 	}
