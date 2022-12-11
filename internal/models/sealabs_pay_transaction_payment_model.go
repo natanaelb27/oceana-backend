@@ -11,7 +11,7 @@ type SealabsPayTransactionPayment struct {
 	ID                      uint
 	TransactionID           uuid.UUID
 	Transaction             Transaction
-	SealabsPayAccountNumber string
+	SealabsPayCardNumber string
 	TxID                    string
 	CreatedAt               time.Time
 	UpdatedAt               time.Time

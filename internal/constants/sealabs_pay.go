@@ -9,5 +9,5 @@ const (
 )
 
 const (
-	SealabsPayAccountNumberLength = 16
+	SealabsPayCardNumberLength = 16
 )

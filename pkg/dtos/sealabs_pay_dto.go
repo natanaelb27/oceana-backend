@@ -8,37 +8,37 @@ import (
 )
 
 type SealabsPayCreateRequest struct {
-	NameOnCard    string `json:"name_on_card" binding:"required"`
-	AccountNumber string `json:"account_number" binding:"required"`
+	NameOnCard string `json:"name_on_card" binding:"required"`
+	CardNumber string `json:"card_number" binding:"required"`
 }
 
 func (source *SealabsPayCreateRequest) ToModel(id uuid.UUID) (target *models.SealabsPay) {
 	target = &models.SealabsPay{
-		UserID:        id,
-		AccountNumber: source.AccountNumber,
-		NameOnCard:    source.NameOnCard,
-		ActiveDate:    time.Now(),
+		UserID:     id,
+		CardNumber: source.CardNumber,
+		NameOnCard: source.NameOnCard,
+		ActiveDate: time.Now(),
 	}
 	return
 }
 
 type SealabsPayCreateResponse struct {
-	ID            uuid.UUID `json:"id"`
-	AccountNumber string    `json:"account_number"`
-	ActiveDate    time.Time `json:"active_date"`
-	NameOnCard    string    `json:"name_on_card"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	CardNumber string    `json:"card_number"`
+	ActiveDate time.Time `json:"active_date"`
+	NameOnCard string    `json:"name_on_card"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 func NewSealabsPayCreateResponse(source *models.SealabsPay) (target *SealabsPayCreateResponse) {
 	target = &SealabsPayCreateResponse{
-		ID:            source.ID,
-		AccountNumber: source.AccountNumber,
-		ActiveDate:    source.ActiveDate,
-		NameOnCard:    source.NameOnCard,
-		CreatedAt:     source.CreatedAt,
-		UpdatedAt:     source.UpdatedAt,
+		ID:         source.ID,
+		CardNumber: source.CardNumber,
+		ActiveDate: source.ActiveDate,
+		NameOnCard: source.NameOnCard,
+		CreatedAt:  source.CreatedAt,
+		UpdatedAt:  source.UpdatedAt,
 	}
 	return
 }
@@ -56,8 +56,9 @@ func NewSealabsPayDeleteResponse(source *models.SealabsPay) (target *SealabsPayD
 }
 
 type SealabsPayPaymentInboundRequest struct {
-	CardNumber string `json:"card_number"`
-	Amount     string `json:"amount"`
+	NameOnCard string `json:"name_on_card"`
+	CardNumber string `json:"card_number" binding:"required"`
+	Amount     string `json:"amount" binding:"required"`
 }
 
 type SealabsPayRedirectResponseError struct {

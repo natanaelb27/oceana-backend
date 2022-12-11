@@ -88,7 +88,7 @@ func (h *Handler) SealabsPayDelete(c *gin.Context) {
 	utils.ResponseSuccess(c, responseData, nil)
 }
 
-func (h *Handler) SealabsPayTopup(c *gin.Context) {
+func (h *Handler) SealabsPayTopupOTP(c *gin.Context) {
 	var inboundRequest *dtos.SealabsPayPaymentInboundRequest
 	err := c.ShouldBindJSON(&inboundRequest)
 	if err != nil {
@@ -96,7 +96,7 @@ func (h *Handler) SealabsPayTopup(c *gin.Context) {
 		return
 	}
 
-	otpURL, err := h.sealabsPayService.TopupWallet(inboundRequest)
+	otpURL, err := h.sealabsPayService.TopupWalletOTP(inboundRequest)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -105,7 +105,30 @@ func (h *Handler) SealabsPayTopup(c *gin.Context) {
 	utils.ResponseSuccess(c, *otpURL, nil)
 }
 
-func (h *Handler) SealabsPayTopupCallback(c *gin.Context) {
+func (h *Handler) SealabsPayRegisterOTP(c *gin.Context) {
+	var createRequest *dtos.SealabsPayCreateRequest
+	err := c.ShouldBindJSON(&createRequest)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	inboundRequest := &dtos.SealabsPayPaymentInboundRequest{
+		NameOnCard: createRequest.NameOnCard,
+		CardNumber: createRequest.CardNumber,
+		Amount:     "1",
+	}
+	
+	otpURL, err := h.sealabsPayService.RegisterOTP(inboundRequest)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, *otpURL, nil)
+}
+
+func (h *Handler) SealabsPayCallback(c *gin.Context) {
 	var request *dtos.SealabsPayCallbackRequest
 	err := c.ShouldBindJSON(&request)
 	if err != nil {

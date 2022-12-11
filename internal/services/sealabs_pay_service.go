@@ -26,10 +26,11 @@ type SealabsPayService interface {
 	Create(id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
-	GetByUserIDAndAccountNumber(userID uuid.UUID, accountNumber string) (*internalDtos.SealabsPayDTO, error)
+	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (*internalDtos.SealabsPayDTO, error)
 	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
 	StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error
-	TopupWallet(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
+	TopupWalletOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
+	RegisterOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
 }
 
 type sealabsPayService struct {
@@ -52,8 +53,8 @@ func NewSealabsPayService(c *SealabsPayServiceConfig) SealabsPayService {
 func (p *sealabsPayService) Create(id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
 	model := request.ToModel(id)
 
-	if !utils.ValidateSealabsPayAccountNumber(model.AccountNumber) {
-		return nil, e.ErrInvalidSealabsPayAccountNumber
+	if !utils.ValidateSealabsPayCardNumber(model.CardNumber) {
+		return nil, e.ErrInvalidSealabsPayCardNumber
 	}
 
 	newModel, err := p.sealabsPayRepository.Create(model)
@@ -75,8 +76,8 @@ func (p *sealabsPayService) GetById(id uuid.UUID) (model *models.SealabsPay, err
 	return p.sealabsPayRepository.GetById(id)
 }
 
-func (p *sealabsPayService) GetByUserIDAndAccountNumber(userID uuid.UUID, accountNumber string) (*internalDtos.SealabsPayDTO, error) {
-	model, err := p.sealabsPayRepository.GetByUserIDAndAccountNumber(userID, accountNumber)
+func (p *sealabsPayService) GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (*internalDtos.SealabsPayDTO, error) {
+	model, err := p.sealabsPayRepository.GetByUserIDAndCardNumber(userID, cardNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +106,45 @@ func (p *sealabsPayService) StoreSignature(c *gin.Context, request *externalDtos
 	return nil
 }
 
+func (p *sealabsPayService) TopupWalletOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error) {
+	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayTopup, inboundRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := p.generateOutboundRequest(inboundRequest, sealabsPayInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	otpURL, err := p.callSealabsPayPaymentApi(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return otpURL, nil
+}
+
+func (p *sealabsPayService) RegisterOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error) {
+	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayRegister, inboundRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := p.generateOutboundRequest(inboundRequest, sealabsPayInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	otpURL, err := p.callSealabsPayPaymentApi(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return otpURL, nil
+
+}
+
 func (p *sealabsPayService) generateSealabsPayInfo(action constants.SealabsPayAction, inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*internalDtos.SealabsPayInfo, error) {
 	apiURL := os.Getenv("SEALABSPAY_API_URL")
 	if len(apiURL) == 0 {
@@ -122,21 +162,20 @@ func (p *sealabsPayService) generateSealabsPayInfo(action constants.SealabsPayAc
 	if len(redirectBaseURL) == 0 {
 		return nil, e.ErrInvalidSealabsPayAction
 	}
-	redirectURL := fmt.Sprintf("%s/sealabs-pay/redirect?card_number=%s", redirectBaseURL, inboundRequest.CardNumber)
-	callbackBaseURL := os.Getenv("SEALABSPAY_CALLBACK_BASE_URL")
-	if len(callbackBaseURL) == 0 {
+	var redirectURL string
+	switch action {
+	case constants.SealabsPayRegister:
+		redirectURL = fmt.Sprintf("%s/sealabs-pay/redirect/register?card_number=%s&name_on_card=%s", redirectBaseURL, inboundRequest.CardNumber, inboundRequest.NameOnCard)
+	case constants.SealabsPayPayment:
+		redirectURL = fmt.Sprintf("%s/sealabs-pay/redirect/payment?card_number=%s", redirectBaseURL, inboundRequest.CardNumber)
+	case constants.SealabsPayTopup:
+		redirectURL = fmt.Sprintf("%s/sealabs-pay/redirect/topup?card_number=%s", redirectBaseURL, inboundRequest.CardNumber)
+	default:
 		return nil, e.ErrInvalidSealabsPayAction
 	}
 
-	var callbackURL string
-	switch action {
-	case constants.SealabsPayRegister:
-		callbackURL = fmt.Sprintf("%s/register", callbackBaseURL)
-	case constants.SealabsPayPayment:
-		callbackURL = fmt.Sprintf("%s/payment", callbackBaseURL)
-	case constants.SealabsPayTopup:
-		callbackURL = fmt.Sprintf("%s/topup", callbackBaseURL)
-	default:
+	callbackURL := os.Getenv("SEALABSPAY_CALLBACK_URL")
+	if len(callbackURL) == 0 {
 		return nil, e.ErrInvalidSealabsPayAction
 	}
 
@@ -181,59 +220,32 @@ func (p *sealabsPayService) generateOutboundRequest(inboundRequest *externalDtos
 	return outboundRequest, nil
 }
 
-func (p *sealabsPayService) handleErrorSealabsPayReidrect(response *http.Response) error {
-	var errResponse *externalDtos.SealabsPayRedirectResponseError
-	responseBodyBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-
-	json.Unmarshal(responseBodyBytes, &errResponse)
-	if response.StatusCode != http.StatusSeeOther {
-		return e.ErrSealabsPayOperationFailed
-	}
-
-	return nil
-}
-
-func (p *sealabsPayService) retrieveOTPURL(response *http.Response) (*string, error) {
-	headerLocation, ok := response.Header["Location"]
-	if !ok {
-		return nil, e.ErrInternalOperationFailed
-	}
-	return &headerLocation[0], nil
-}
-
-func (p *sealabsPayService) TopupWallet(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error) {
+func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*string, error) {
 	client := &http.Client{
 		// turn off auto-redirect
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayTopup, inboundRequest)
+	response, err := client.Do(request)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := p.generateOutboundRequest(inboundRequest, sealabsPayInfo)
+	var errResponse *externalDtos.SealabsPayRedirectResponseError
+	responseBodyBytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
+	json.Unmarshal(responseBodyBytes, &errResponse)
+	if response.StatusCode != http.StatusSeeOther {
+		return nil, e.ErrSealabsPayOperationFailed
 	}
 
-	err = p.handleErrorSealabsPayReidrect(res)
-	if err != nil {
-		return nil, err
+	headerLocation, ok := response.Header["Location"]
+	if !ok {
+		return nil, e.ErrInternalOperationFailed
 	}
-
-	otpURL, err := p.retrieveOTPURL(res)
-	if err != nil {
-		return nil, err
-	}
-	return otpURL, nil
+	return &headerLocation[0], nil
 }

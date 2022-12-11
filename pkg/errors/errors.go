@@ -51,7 +51,7 @@ var (
 	ErrInvalidToken                   = errors.New("invalid token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
 	ErrInvalidVerificationCode        = errors.New("invalid verification code")
-	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
+	ErrInvalidSealabsPayCardNumber = errors.New("invalid sealabs pay card number")
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
@@ -67,7 +67,7 @@ var (
 	ErrGoogleIDAlreadyExist                      = errors.New("google id is already registered")
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
-	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
+	ErrSealabsPayCardNumberAlreadyExist       = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
 	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
 	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
@@ -209,7 +209,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidRequest) ||
 		errors.Is(err, ErrInvalidVerificationCode) ||
 		errors.Is(err, ErrInvalidRequest) ||
-		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
+		errors.Is(err, ErrInvalidSealabsPayCardNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||
 		errors.Is(err, ErrInvalidResetPasswordID) ||
@@ -248,7 +248,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
 		errors.Is(err, ErrGoogleIDAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
-		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
+		errors.Is(err, ErrSealabsPayCardNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
 		errors.Is(err, ErrMerchantPromotionProductConflict) ||
 		errors.Is(err, ErrDeleteDefaultAddressConflict) ||

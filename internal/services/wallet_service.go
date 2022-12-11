@@ -126,8 +126,8 @@ func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDeta
 
 func (p *walletService) CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error {
 	// validate card number length
-	if !utils.ValidateSealabsPayAccountNumber(request.CardNumber) {
-		return e.ErrInvalidSealabsPayAccountNumber
+	if !utils.ValidateSealabsPayCardNumber(request.CardNumber) {
+		return e.ErrInvalidSealabsPayCardNumber
 	}
 
 	// check if signature matches with the one in redis
@@ -148,7 +148,7 @@ func (p *walletService) CreateWalletTopup(c *gin.Context, userID uuid.UUID, requ
 	}
 
 	// get sealabs_pay_id by account number
-	sealabsPayAccount, err := p.sealabsPayRepository.GetByUserIDAndAccountNumber(userID, request.CardNumber)
+	sealabsPayAccount, err := p.sealabsPayRepository.GetByUserIDAndCardNumber(userID, request.CardNumber)
 	if err != nil {
 		return err
 	}

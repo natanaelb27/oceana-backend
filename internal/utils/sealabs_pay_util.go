@@ -10,8 +10,8 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
-func ValidateSealabsPayAccountNumber(accountNumber string) bool {
-	return len(accountNumber) == constants.SealabsPayAccountNumberLength
+func ValidateSealabsPayCardNumber(cardNumber string) bool {
+	return len(cardNumber) == constants.SealabsPayCardNumberLength
 }
 
 func HashPaymentInfoSHA256HMAC(cardNumber, amount, merchantCode, key string) (*string, error) {

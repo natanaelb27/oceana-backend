@@ -8,20 +8,20 @@ import (
 )
 
 type SealabsPayDTO struct {
-	ID            uuid.UUID
-	UserID        uuid.UUID
-	AccountNumber string
-	ActiveDate    time.Time
-	NameOnCard    string
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	CardNumber string
+	ActiveDate time.Time
+	NameOnCard string
 }
 
 func NewSealabsPayDTO(source *models.SealabsPay) (target *SealabsPayDTO) {
 	target = &SealabsPayDTO{
-		ID:            source.ID,
-		UserID:        source.UserID,
-		AccountNumber: source.AccountNumber,
-		ActiveDate:    source.ActiveDate,
-		NameOnCard:    source.NameOnCard,
+		ID:         source.ID,
+		UserID:     source.UserID,
+		CardNumber: source.CardNumber,
+		ActiveDate: source.ActiveDate,
+		NameOnCard: source.NameOnCard,
 	}
 	return
 }

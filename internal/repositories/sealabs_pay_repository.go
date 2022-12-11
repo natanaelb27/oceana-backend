@@ -11,7 +11,7 @@ type SealabsPayRepository interface {
 	Create(sealabsPay *models.SealabsPay) (model *models.SealabsPay, err error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
-	GetByUserIDAndAccountNumber(userID uuid.UUID, accountNumber string) (model *models.SealabsPay, err error)
+	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error)
 	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
 }
 
@@ -30,7 +30,7 @@ func NewSealabsPayRepository(c *SealabsPayRepositoryConfig) SealabsPayRepository
 }
 
 func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *models.SealabsPay, err error) {
-	queryResult := r.db.Where("account_number = ?", newModel.AccountNumber).FirstOrCreate(&newModel)
+	queryResult := r.db.Where("card_number = ?", newModel.CardNumber).FirstOrCreate(&newModel)
 
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
@@ -38,7 +38,7 @@ func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *model
 	}
 
 	if queryResult.RowsAffected == 0 {
-		err = e.ErrSealabsPayAccountNumberAlreadyExist
+		err = e.ErrSealabsPayCardNumberAlreadyExist
 		return
 	}
 
@@ -67,8 +67,8 @@ func (r *sealabsPayRepository) GetById(id uuid.UUID) (model *models.SealabsPay, 
 	return
 }
 
-func (r *sealabsPayRepository) GetByUserIDAndAccountNumber(userID uuid.UUID, accountNumber string) (model *models.SealabsPay, err error) {
-	queryResult := r.db.Where("user_id = ? AND account_number = ?", userID, accountNumber).First(&model)
+func (r *sealabsPayRepository) GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error) {
+	queryResult := r.db.Where("user_id = ? AND account_number = ?", userID, cardNumber).First(&model)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
