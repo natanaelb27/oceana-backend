@@ -462,8 +462,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(oriProductModel.Description)
 
+	//* products
 	// product validaiton
 	// check if product status not its enum
 	if request.Status != constants.ProductStatusActive &&
@@ -500,6 +500,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// product medias to delete
 	var pmDelete = []string{}
 
+	//* product medias - check changes from images
 	// create product media from images
 	// map images original and request
 	// original images for product media map
@@ -525,6 +526,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
+	//* product mdias - check changes from videos
 	// create product media from videos
 	// map videos original and request
 	// original videos for product media map
@@ -576,6 +578,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		return nil, err
 	}
 
+	//* product variant types - check changes
 	// product variant types - req to ori comparison - append creates
 	if len(request.Variants) > len(oriProductModel.Variants) {
 		for i := len(oriProductModel.Variants); i < len(request.Variants); i++ {
@@ -608,6 +611,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			})
 		}
 
+		//* product variants - check changes
 		// product variants - req to ori comparison - append creates
 		if len(rV.Options) > len(oV.Options) {
 			for i := len(oV.Options); i < len(rV.Options); i++ {
@@ -646,7 +650,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			}
 		}
 
-		// todos: check images (product variants media) changes
+		//* product variant medias - check changes
 		// product variant medias - req to ori comparison - append creates
 		if len(rV.Images) > len(oV.Images) {
 			for i := len(oV.Images); i < len(rV.Images); i++ {
@@ -658,7 +662,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 				})
 			}
 		}
-		// product ariant medias - ori to req comparison - append updates and deletes
+		// product variant medias - ori to req comparison - append updates and deletes
 		// ? how to get variant id?
 		for iOI, oI := range oV.Images {
 			rI := rV.Images
@@ -691,7 +695,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	rPI := request.ProductItems
 	oPI := oriProductModel.ProductItems
 
-	// todo: check changes on product item
+	//* product items - check changes
 	// product items - req to ori comparison - append creates
 	if len(rPI) > len(oPI) {
 		for i := len(oPI); i < len(rPI); i++ {
@@ -741,9 +745,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	// todo: check changes on product courier service
 
-	// todo: get created product model
-
-	// todo: get updated product model
+	// todo: update
 
 	// log product variant types update info
 	for iPvt, pvt := range pvtCreates {
@@ -797,6 +799,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		fmt.Printf("\tid: %v\n\tprice: %v\n\tstock quantity: %v\n\tsku: %v\n", v.Before.ID, v.After.Price, v.After.StockQuantity, v.After.SKU)
 	}
 
+	// get updated product model
 	productModel, err := s.GetUpdateModelByProductID(product.ID)
 	if err != nil {
 		return nil, err
