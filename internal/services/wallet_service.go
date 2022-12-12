@@ -16,7 +16,7 @@ type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
 	CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error
-	GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error)
+	GetWalletDetails(id uuid.UUID, query *externalDtos.WalletDetailsQuery) (*externalDtos.WalletDetailsResponse, *utils.Pagination, error)
 }
 
 type walletService struct {
@@ -111,17 +111,23 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *ext
 	return
 }
 
-func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error) {
+func (p *walletService) GetWalletDetails(id uuid.UUID, query *externalDtos.WalletDetailsQuery) (*externalDtos.WalletDetailsResponse, *utils.Pagination, error) {
 	wallet, err := p.walletRepository.GetByUserId(id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	walletTransactionHistory, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID)
+
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	walletTransactionHistory, pagination, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID, pagination)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	responseData := externalDtos.NewWalletDetailsResponse(wallet, walletTransactionHistory)
-	return responseData, nil
+	return responseData, pagination, nil
 }
 
 func (p *walletService) CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error {

@@ -18,6 +18,7 @@ type OrderList struct {
 	TransactionDatetime time.Time          `json:"transaction_datetime"`
 	OrderStatus         string             `json:"order_status"`
 	TotalPrice          float64            `json:"total_price"`
+	RefundID            *uuid.UUID         `json:"refund_id"`
 }
 
 type OrderListDetails struct {
@@ -41,6 +42,7 @@ type OrderListDetails struct {
 	TotalMarketplaceVoucherDiscount float64                 `json:"total_marketplace_voucher_discount"`
 	ShippingFee                     uint                    `json:"shipping_fee"`
 	TotalPayment                    float64                 `json:"total_payment"`
+	RefundID                        *uuid.UUID              `json:"refund_id"`
 }
 
 type OrderProcessOrder struct {
