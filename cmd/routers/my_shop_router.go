@@ -22,7 +22,8 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.PUT("/promotions/:merchant-promotion-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionUpdate)
 		// orders
 		privateRoute.PATCH("/orders/:order-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
-		privateRoute.GET("/orders", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderListGetAllByMerchantID)
+		privateRoute.GET("/transaction-history", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderListGetAllByMerchantID)
+		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantOrderListDetailsGetByID)
 		// logistic
 		privateRoute.GET("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGet)
 		privateRoute.PATCH("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticUpdate)

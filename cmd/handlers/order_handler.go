@@ -17,7 +17,6 @@ func (h *Handler) OrderListGetAll(c *gin.Context) {
 	}
 
 	query := dtos.NewOrderListQuery(c)
-	query.FilterMerchantID = 0
 
 	orderListGetAllResponse, pagination, err := h.orderService.OrderListGetAll(id, query)
 
@@ -61,6 +60,29 @@ func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {
 	}
 
 	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetByID(id, orderID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, orderListDetailsGetAllResponse, nil)
+}
+
+func (h *Handler) MerchantOrderListDetailsGetByID(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	orderID, err := uuid.Parse(c.Param("orderId"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetByMerchantID(id, orderID)
 
 	if err != nil {
 		utils.ResponseError(c, err)

@@ -49,6 +49,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 	queryResult := r.db.Model(&models.OrderDetail{}).
 		Select(`
 			order_details.id AS order_detail_id,
+			order_details.message AS message,
 			(?) AS product_image,
 			product_snapshots.name AS product_name,
 			(?) AS product_variations,
