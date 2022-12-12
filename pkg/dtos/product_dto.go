@@ -14,6 +14,7 @@ type ProductDetailsGetByIDResponse struct {
 	Weight                uint                     `json:"weight"`
 	PackageSize           string                   `json:"package_size"`
 	Condition             string                   `json:"condition"`
+	CategoryID            uint                     `json:"category_id"`
 	Category              string                   `json:"category"`
 	Images                pq.StringArray           `json:"images" gorm:"type:text[]"`
 	Description           string                   `json:"description"`
@@ -40,6 +41,7 @@ func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *Prod
 		Weight:                source.Weight,
 		PackageSize:           source.PackageSize,
 		Condition:             source.Condition,
+		CategoryID:            source.CategoryID,
 		Category:              source.Category,
 		Images:                source.Images,
 		Description:           source.Description,

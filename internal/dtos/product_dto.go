@@ -8,6 +8,7 @@ type ProductDetails struct {
 	Weight                uint                `json:"weight"`
 	PackageSize           string              `json:"package_size"`
 	Condition             string              `json:"condition"`
+	CategoryID            uint                `json:"category_id"`
 	Category              string              `json:"category"`
 	Images                pq.StringArray      `json:"images" gorm:"type:text[]"`
 	Description           string              `json:"description"`
