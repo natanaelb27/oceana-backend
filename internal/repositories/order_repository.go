@@ -78,7 +78,8 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
 		} else {
-			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+				constants.PendingPaymentStatus,
 				constants.PendingSellerStatus,
 				constants.OnProcessStatus,
 				constants.OutForDeliveryStatus,
