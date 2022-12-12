@@ -13,7 +13,9 @@ type SealabsPayRepository interface {
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
 	GetByCardNumber(cardNumber string) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error)
+	GetDefaultByUserID(userID uuid.UUID) (model *models.SealabsPay, err error)
 	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
+	Update(id uuid.UUID, model *models.SealabsPay) (err error)
 }
 
 type sealabsPayRepository struct {
@@ -86,6 +88,15 @@ func (r *sealabsPayRepository) GetByUserIDAndCardNumber(userID uuid.UUID, cardNu
 	return
 }
 
+func (r *sealabsPayRepository) GetDefaultByUserID(userID uuid.UUID) (model *models.SealabsPay, err error) {
+	queryResult := r.db.Where("user_id = ? AND is_default = true", userID).First(&model)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	return
+}
+
 func (r *sealabsPayRepository) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
 	result := r.db.Delete(&model, id)
 	if result.RowsAffected == 0 {
@@ -94,5 +105,19 @@ func (r *sealabsPayRepository) Delete(id uuid.UUID) (model *models.SealabsPay, e
 	}
 
 	model.ID = id
+	return
+}
+
+func (r *sealabsPayRepository) Update(id uuid.UUID, model *models.SealabsPay) (err error) {
+	queryResult := r.db.Where("id = ?", id).Updates(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
 	return
 }
