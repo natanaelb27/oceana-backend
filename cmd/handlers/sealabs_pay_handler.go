@@ -38,8 +38,9 @@ func (h *Handler) SealabsPayGetAll(c *gin.Context) {
 	}
 
 	results, err := h.sealabsPayService.GetAll(id)
-	if err != nil {
+	if err != nil && err != e.ErrDataNotFound {
 		utils.ResponseError(c, err)
+		return
 	}
 
 	var responseData []*dtos.SealabsPayCreateResponse = make([]*dtos.SealabsPayCreateResponse, 0)
