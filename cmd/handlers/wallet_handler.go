@@ -63,12 +63,15 @@ func (h *Handler) WalletGetDetails(c *gin.Context) {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
-	responseData, err := h.walletService.GetWalletDetails(id)
+
+	query := dtos.NewWalletDetailsQuery(c)
+
+	responseData, pagination, err := h.walletService.GetWalletDetails(id, query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, responseData, pagination)
 }
 
 func (h *Handler) WalletTopup(c *gin.Context) {

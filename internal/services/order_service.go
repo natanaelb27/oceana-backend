@@ -79,6 +79,7 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 			TransactionDatetime: order.TransactionDatetime,
 			OrderStatus:         order.OrderStatus,
 			TotalPrice:          order.TotalPrice,
+			RefundID:            order.RefundID,
 		})
 	}
 
@@ -123,6 +124,7 @@ func (s *orderService) OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos
 			TransactionDatetime: order.TransactionDatetime,
 			OrderStatus:         order.OrderStatus,
 			TotalPrice:          order.TotalPrice,
+			RefundID:            order.RefundID,
 		})
 	}
 

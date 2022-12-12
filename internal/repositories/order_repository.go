@@ -41,7 +41,7 @@ func NewOrderRepository(c *OrderRepositoryConfig) OrderRepository {
 func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {
 	var orderList []*dtos.OrderList
 
-	queryResult := r.db.Model(&models.Order{}).
+	queryResult := r.db.Debug().Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
 			orders.invoice_number AS invoice_number,
@@ -52,11 +52,14 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			users.full_name AS user_full_name,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
+			refunds.id AS refund_id
+
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
+		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Where("transactions.user_id = ?", id).
 		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
@@ -154,7 +157,8 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			(?) AS total_merchant_voucher_discount,
 			orders.total_price_after_discount::float / transactions.total_price::float * (?) AS total_marketplace_voucher_discount,
 			orders.shipping_fee AS shipping_fee,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment,
+			refunds.id AS refund_id
 		`,
 			subQueryTotalPriceBeforeDiscount,
 			subQueryMerchantPromotion,
@@ -165,6 +169,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
+		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Where("orders.id = ?", id).
 		First(&orderListDetails)
 
@@ -250,11 +255,13 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			users.full_name AS user_full_name,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
+			refunds.id AS refund_id
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
+		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Where("orders.merchant_id = ?", merchantID).
 		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
