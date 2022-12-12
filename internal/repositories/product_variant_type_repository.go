@@ -12,6 +12,7 @@ type ProductVariantTypeRepository interface {
 	GetById(id uint) (model *models.ProductVariantType, err error)
 	Update(id uint, newModel *models.ProductVariantType) (model *models.ProductVariantType, err error)
 	Delete(id uint) (model *models.ProductVariantType, err error)
+	GetAllByProductID(productID uint) (model []*models.ProductVariantType, err error)
 }
 
 type productVariantTypeRepository struct {
@@ -64,10 +65,24 @@ func (r *productVariantTypeRepository) GetById(id uint) (model *models.ProductVa
 	return
 }
 
-func (r *productVariantTypeRepository) Update(id uint, newModel *models.ProductVariantType) (model *models.ProductVariantType, err error) {
-	result := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+func (r *productVariantTypeRepository) GetAllByProductID(productID uint) (model []*models.ProductVariantType, err error) {
+	result := r.db.Where("product_id = ?", productID).Find(&model)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productVariantTypeRepository) Update(id uint, newModel *models.ProductVariantType) (model *models.ProductVariantType, err error) {
+	queryResult := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
 		return
 	}
 
