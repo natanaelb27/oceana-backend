@@ -1,10 +1,12 @@
 package dtos
 
 import (
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -92,5 +94,31 @@ func NewWalletDetailsResponse(sourceModel *models.Wallet, sourceDto []*dtos.Wall
 		CreatedAt:                sourceModel.CreatedAt,
 		UpdatedAt:                sourceModel.UpdatedAt,
 	}
+	return
+}
+
+type TopupWalletRequest struct {
+	CardNumber   string `json:"card_number"`
+	TxID         string `json:"txn_id"`
+	Amount       string `json:"amount"`
+	Merchantcode string `json:"merchant_code"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	Signature    string `json:"signature"`
+}
+
+func (source *TopupWalletRequest) ToModel() (target *models.WalletTopup, err error) {
+	amount, err := strconv.Atoi(source.Amount)
+	if err != nil {
+		err = e.ErrInvalidAmount
+		return
+	}
+
+	target = &models.WalletTopup{
+		TxID:            source.TxID,
+		Amount:          uint(amount),
+		TransactionDate: time.Now(),
+	}
+	
 	return
 }
