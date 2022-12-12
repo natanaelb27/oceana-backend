@@ -1,7 +1,6 @@
 package services
 
 import (
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -10,7 +9,7 @@ import (
 
 type ProductReviewService interface {
 	Create(*externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error)
-	GetByProductID(id uint, query *externalDtos.ProductReviewQuery) (*externalDtos.ProductReviewGetByProductIDResponse, *utils.Pagination, error)
+	GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*externalDtos.ProductReviewGetByProductID, *utils.Pagination, error)
 }
 
 type productReviewService struct {
@@ -145,7 +144,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 	return response, nil
 }
 
-func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.ProductReviewQuery) (*externalDtos.ProductReviewGetByProductIDResponse, *utils.Pagination, error) {
+func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*externalDtos.ProductReviewGetByProductID, *utils.Pagination, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -154,7 +153,7 @@ func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.Prod
 	if err != nil {
 		return nil, nil, err
 	}
-	var productReviewDataList []*internalDtos.ProductReviewGetByProductID
+	var productReviewDataList []*externalDtos.ProductReviewGetByProductID
 	for _, productReview := range productReviews {
 		var productReviewMediaLinks []*string
 		productReviewMedia, err := pr.productReviewMediaRepository.GetByProductReviewID(productReview.ID)
@@ -167,9 +166,8 @@ func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.Prod
 		for _, singleProductReviewMedia := range productReviewMedia {
 			productReviewMediaLinks = append(productReviewMediaLinks, &singleProductReviewMedia.MediaURL)
 		}
-		productReviewData := internalDtos.NewProductReviewGetByProductID(productReview, productReviewMediaLinks)
+		productReviewData := externalDtos.NewProductReviewGetByProductID(productReview, productReviewMediaLinks)
 		productReviewDataList = append(productReviewDataList, productReviewData)
 	}
-	response := externalDtos.NewProductReviewGetByIDResponse(productReviewDataList)
-	return response, pagination, nil
+	return productReviewDataList, pagination, nil
 }
