@@ -24,7 +24,7 @@ import (
 )
 
 type SealabsPayService interface {
-	Create(c *gin.Context, id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
+	Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (*internalDtos.SealabsPayDTO, error)
@@ -52,7 +52,8 @@ func NewSealabsPayService(c *SealabsPayServiceConfig) SealabsPayService {
 	}
 }
 
-func (p *sealabsPayService) Create(c *gin.Context, id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+	// refund user
 	refundRequest, err := externalDtos.NewSealabsPayRefundRequest(request.TxnID)
 	if err != nil {
 		return nil, err
@@ -63,10 +64,16 @@ func (p *sealabsPayService) Create(c *gin.Context, id uuid.UUID, request *extern
 		return nil, err
 	}
 
-	model := request.ToModel(id)
+	model := request.ToModel(userID)
 
 	if !utils.ValidateSealabsPayCardNumber(model.AccountNumber) {
 		return nil, e.ErrInvalidSealabsPayCardNumber
+	}
+
+	// set current card as default if none currently exists
+	_, err = p.sealabsPayRepository.GetAll(userID)
+	if err == e.ErrDataNotFound {
+		model.IsDefault = true
 	}
 
 	_, err = p.redisRepository.Get(c, request.Signature)

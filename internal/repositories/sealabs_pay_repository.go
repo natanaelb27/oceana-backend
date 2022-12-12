@@ -9,7 +9,7 @@ import (
 
 type SealabsPayRepository interface {
 	Create(sealabsPay *models.SealabsPay) (model *models.SealabsPay, err error)
-	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
+	GetAll(userID uuid.UUID) (models []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
 	GetByCardNumber(cardNumber string) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error)
@@ -48,8 +48,8 @@ func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *model
 	return
 }
 
-func (r *sealabsPayRepository) GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error) {
-	queryResult := r.db.Where("user_id = ?", userID).Find(&model)
+func (r *sealabsPayRepository) GetAll(userID uuid.UUID) (models []*models.SealabsPay, err error) {
+	queryResult := r.db.Where("user_id = ?", userID).Find(&models)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
