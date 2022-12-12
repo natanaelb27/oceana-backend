@@ -197,6 +197,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	sealabsPayTransactionPaymentRepository := repositories.NewSealabsPayTransactionPaymentRepository(&repositories.SealabsPayTransactionPaymentRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
@@ -317,6 +321,11 @@ func Init() *Handler {
 		WalletTransactionPaymentRepository:      walletTransactionPaymentRepository,
 	})
 
+	transactionService := services.NewTransactionService(&services.TransactionServiceConfig{
+		TransactionRepository:                  transactionRepository,
+		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
 		WalletService:             walletService,
@@ -338,6 +347,7 @@ func Init() *Handler {
 		MarketplaceVoucherService: marketplaceVoucherService,
 		CourierService:            courierService,
 		LogisticService:           logisticService,
+		TransactionService:        transactionService,
 	})
 
 	return h

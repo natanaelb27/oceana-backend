@@ -262,8 +262,8 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
-		Where("orders.merchant_id = ?", merchantID).
-		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
+		Where("orders.merchant_id = ?", merchantID)
+		// Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
 	if query.Search != "" {
 		subQuerySearch := r.db.Model(&models.Order{}).
@@ -280,7 +280,8 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
 		} else {
-			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+				constants.PendingPaymentStatus,
 				constants.PendingSellerStatus,
 				constants.OnProcessStatus,
 				constants.OutForDeliveryStatus,

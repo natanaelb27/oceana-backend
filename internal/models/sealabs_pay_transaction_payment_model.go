@@ -8,12 +8,12 @@ import (
 )
 
 type SealabsPayTransactionPayment struct {
-	ID                      uint
-	TransactionID           uuid.UUID
-	Transaction             Transaction
+	ID                   uint
+	TransactionID        uuid.UUID
+	Transaction          Transaction
 	SealabsPayCardNumber string
-	TxID                    string
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
-	DeletedAt               gorm.DeletedAt
+	TxID                 string
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	DeletedAt            gorm.DeletedAt
 }
