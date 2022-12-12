@@ -10,6 +10,7 @@ import (
 
 type ProductDetailsGetByIDResponse struct {
 	Name                  string                   `json:"name"`
+	MerchantID            uint                     `json:"merchant_id"`
 	IsHazardous           bool                     `json:"is_hazardous"`
 	Weight                uint                     `json:"weight"`
 	PackageSize           string                   `json:"package_size"`
@@ -37,6 +38,7 @@ type ProductDetailsGetByIDResponse struct {
 func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *ProductDetailsGetByIDResponse) {
 	target = &ProductDetailsGetByIDResponse{
 		Name:                  source.Name,
+		MerchantID:            source.MerchantID,
 		IsHazardous:           source.IsHazardous,
 		Weight:                source.Weight,
 		PackageSize:           source.PackageSize,

@@ -4,6 +4,7 @@ import "github.com/lib/pq"
 
 type ProductDetails struct {
 	Name                  string              `json:"name"`
+	MerchantID            uint                `json:"merchant_id"`
 	IsHazardous           bool                `json:"is_hazardous"`
 	Weight                uint                `json:"weight"`
 	PackageSize           string              `json:"package_size"`
