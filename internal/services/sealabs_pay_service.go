@@ -146,6 +146,11 @@ func (p *sealabsPayService) TopupWalletOTP(inboundRequest *externalDtos.SealabsP
 }
 
 func (p *sealabsPayService) RegisterOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error) {
+	_, err := p.sealabsPayRepository.GetByCardNumber(inboundRequest.CardNumber)
+	if err == nil {
+		return nil, e.ErrSealabsPayCardNumberAlreadyExist
+	}
+
 	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayRegister, inboundRequest)
 	if err != nil {
 		return nil, err
@@ -328,7 +333,6 @@ func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error
 		json.Unmarshal(responseBodyBytes, &errResponse)
 		return fmt.Errorf("%s", errResponse.Message)
 	}
-
 
 	return nil
 }

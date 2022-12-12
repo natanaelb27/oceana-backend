@@ -11,6 +11,7 @@ type SealabsPayRepository interface {
 	Create(sealabsPay *models.SealabsPay) (model *models.SealabsPay, err error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
+	GetByCardNumber(cardNumber string) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error)
 	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
 }
@@ -64,6 +65,15 @@ func (r *sealabsPayRepository) GetById(id uuid.UUID) (model *models.SealabsPay, 
 		return
 	}
 
+	return
+}
+
+func (r *sealabsPayRepository) GetByCardNumber(cardNumber string) (model *models.SealabsPay, err error) {
+	queryResult := r.db.Where("account_number = ?", cardNumber).First(&model)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
 	return
 }
 
