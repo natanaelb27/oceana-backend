@@ -8,15 +8,15 @@ import (
 )
 
 type SealabsPay struct {
-	ID            uuid.UUID
-	UserID        uuid.UUID
-	User          User
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	User       User
 	AccountNumber string
-	ActiveDate    time.Time
-	NameOnCard    string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt
+	ActiveDate time.Time
+	NameOnCard string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt
 }
 
 func (m *SealabsPay) BeforeCreate(tx *gorm.DB) (err error) {

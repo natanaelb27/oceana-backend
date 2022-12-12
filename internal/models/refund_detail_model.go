@@ -11,6 +11,9 @@ type RefundDetail struct {
 	ID                 uuid.UUID
 	RefundID           uuid.UUID
 	Refund             Refund
+	OrderDetailID      uuid.UUID
+	OrderDetail        OrderDetail
+	Quantity           uint
 	AmountUserGet      uint
 	AmountMerchantLost uint
 	CreatedAt          time.Time

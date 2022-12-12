@@ -101,7 +101,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 	if result.RowsAffected == 0 {
 		return nil, e.ErrDataNotFound
 	}
-	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
+	queryWalletTopup := w.db.Model(&models.WalletTopup{}).
 		Select(`
 			id, 
 			wallet_id, 
@@ -180,7 +180,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 			Where("orders.merchant_id = ?", merchant.ID)
 
 		queryResult := w.db.Raw("(?) UNION (?) UNION (?) UNION (?)",
-			queryWalletTopUp,
+			queryWalletTopup,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
 			queryWalletTransactionsAsSeller,
@@ -192,7 +192,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 		}
 	} else {
 		queryResult := w.db.Raw("(?) UNION (?) UNION (?)",
-			queryWalletTopUp,
+			queryWalletTopup,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
 		).

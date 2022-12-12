@@ -102,10 +102,12 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 	queryResult := r.db.Model(&models.Product{}).
 		Select(`
 			products.name AS name,
+			products.merchant_id AS merchant_id,
 			products.is_hazardous AS is_hazardous,
 			products.weight AS weight,
 			products.package_size AS package_size,
 			products.condition AS condition,
+			products.category_id AS category_id,
 			categories.name AS category,
 			COALESCE(product_media_agg.images, '{}') AS images,
 			products.description AS description,
@@ -147,6 +149,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Joins("LEFT JOIN categories ON products.category_id = categories.id").
 		Joins("LEFT JOIN (?) product_media_agg ON products.id = product_media_agg.product_id", subQueryProductMedia).
 		Where("products.id = ?", productID).
+		Where("products.status = 'active'").
 		First(&productDetails)
 
 	if queryResult.Error != nil {
@@ -281,6 +284,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 		Joins("JOIN (?) selected_product ON products.id = selected_product.product_id", subQueryProduct).
 		Joins("LEFT JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
 		Where("products.id = ?", productID).
+		Where("products.status = 'active'").
 		First(&selectedProductPurchaseQuantities)
 
 	if queryResult.Error != nil {
@@ -377,7 +381,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
 		Group("product_items.product_id")
 
-	query := r.db.Debug().Model(&models.Product{}).
+	query := r.db.Model(&models.Product{}).
 		Select(`
 			products.id,
             products.merchant_id,
@@ -480,6 +484,10 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 			sqPriceMaximum,
 			sql.Named("query_price_maximum", queryParams.PriceMaximum),
 		)
+	}
+
+	if queryParams.RatingStarMinimum > 0 {
+		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
 	}
 
 	// filter by merchant cities
