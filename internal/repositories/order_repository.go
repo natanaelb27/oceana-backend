@@ -41,7 +41,7 @@ func NewOrderRepository(c *OrderRepositoryConfig) OrderRepository {
 func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {
 	var orderList []*dtos.OrderList
 
-	queryResult := r.db.Debug().Model(&models.Order{}).
+	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
 			orders.invoice_number AS invoice_number,
@@ -78,8 +78,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
 			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
 		} else {
-			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
-				constants.PendingPaymentStatus,
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
 				constants.PendingSellerStatus,
 				constants.OnProcessStatus,
 				constants.OutForDeliveryStatus,
