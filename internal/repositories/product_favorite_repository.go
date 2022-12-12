@@ -54,7 +54,7 @@ func (r *productFavoriteRepository) GetByUserIDAndProductID(userID uuid.UUID, pr
 }
 
 func (r *productFavoriteRepository) Update(id uint, newModel *models.ProductFavorite) (model *models.ProductFavorite, err error) {
-	result := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	result := r.db.Model(&model).Where("id = ?", id).Update("is_favorite", newModel.IsFavorite)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

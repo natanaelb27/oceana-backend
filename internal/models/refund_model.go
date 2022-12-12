@@ -9,9 +9,8 @@ import (
 
 type Refund struct {
 	ID                       uuid.UUID
-	OrderDetailID            uuid.UUID
-	OrderDetail              OrderDetail
-	Quantity                 uint
+	OrderID                  uuid.UUID
+	Order                    Order
 	Reason                   string
 	RefundRequestDatetime    time.Time
 	RefundExpirationDatetime time.Time

@@ -42,6 +42,7 @@ var (
 	ErrInvalidQuantity                = errors.New("invalid quantity")
 	ErrInvalidPrice                   = errors.New("invalid price")
 	ErrInvalidEventID                 = errors.New("invalid event id")
+	ErrInvalidSignature               = errors.New("invalid signature")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
 	ErrEmailNotFound                  = errors.New("email not found")
@@ -50,7 +51,7 @@ var (
 	ErrInvalidToken                   = errors.New("invalid token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
 	ErrInvalidVerificationCode        = errors.New("invalid verification code")
-	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
+	ErrInvalidSealabsPayCardNumber    = errors.New("invalid sealabs pay card number")
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
@@ -66,7 +67,7 @@ var (
 	ErrGoogleIDAlreadyExist                      = errors.New("google id is already registered")
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
-	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
+	ErrSealabsPayCardNumberAlreadyExist          = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
 	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
 	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
@@ -129,14 +130,17 @@ var (
 	ErrPromotionDatetimeUpdatedBeyondRange                 = errors.New("updated promotion start/end period must be between current start/end period")
 	ErrPromotionUpdateProductIDListMismatch                = errors.New("updated promotion product id list and product merchant promotion are mismatched")
 
-	ErrInsertFailed                  = errors.New("insert failed")
-	ErrDatabaseOperationFailed       = errors.New("database operation failed")
-	ErrCacheOperationFailed          = errors.New("cache operation failed")
-	ErrAuthenticationOperationFailed = errors.New("authentication operation failed")
-	ErrHashingFailed                 = errors.New("hashing failed")
-	ErrDatabaseConnectionFailed      = errors.New("database connection failed")
-	ErrSendingEmailFailed            = errors.New("sending email failed")
-	ErrInternalOperationFailed       = errors.New("internal operation failed")
+	ErrInsertFailed                   = errors.New("insert failed")
+	ErrDatabaseOperationFailed        = errors.New("database operation failed")
+	ErrCacheOperationFailed           = errors.New("cache operation failed")
+	ErrAuthenticationOperationFailed  = errors.New("authentication operation failed")
+	ErrHashingFailed                  = errors.New("hashing failed")
+	ErrDatabaseConnectionFailed       = errors.New("database connection failed")
+	ErrSendingEmailFailed             = errors.New("sending email failed")
+	ErrInternalOperationFailed        = errors.New("internal operation failed")
+	ErrSealabsPayOperationFailed      = errors.New("sealabs pay operation failed")
+	ErrInvalidSealabsPayAction        = errors.New("invalid sealabs pay action")
+	ErrDatabaseTransactionSetUpFailed = errors.New("database transactions set up failed")
 
 	ErrUnknown        = errors.New("unknown")
 	ErrRegisterGoogle = errors.New("register with google")
@@ -199,13 +203,14 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidQuantity) ||
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
+		errors.Is(err, ErrInvalidSignature) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrPasswordCannotContainsUsername) ||
 		errors.Is(err, ErrInvalidRequest) ||
 		errors.Is(err, ErrInvalidVerificationCode) ||
 		errors.Is(err, ErrInvalidRequest) ||
-		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
+		errors.Is(err, ErrInvalidSealabsPayCardNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||
 		errors.Is(err, ErrInvalidResetPasswordID) ||
@@ -244,7 +249,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
 		errors.Is(err, ErrGoogleIDAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
-		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
+		errors.Is(err, ErrSealabsPayCardNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
 		errors.Is(err, ErrMerchantPromotionProductConflict) ||
 		errors.Is(err, ErrDeleteDefaultAddressConflict) ||
