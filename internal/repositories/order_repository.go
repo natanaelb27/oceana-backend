@@ -21,6 +21,7 @@ type OrderRepository interface {
 	Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error)
 	GetOrderCount() (*int64, error)
 	Create(newModel []*models.Order) (model []*models.Order, err error)
+	OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
 }
 
 type orderRepository struct {
@@ -47,12 +48,15 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
 			merchants.name AS shop_name,
+			users.id AS user_id,
+			users.full_name AS user_full_name,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON users.id = transactions.user_id").
 		Where("transactions.user_id = ?", id).
 		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
@@ -135,7 +139,8 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
-			transactions.user_id AS user_id,
+			users.id AS user_id,
+			users.full_name AS user_full_name,
 			orders.invoice_number AS invoice_number,
 			orders.id AS order_id,
 			orders.merchant_id AS merchant_id,
@@ -157,6 +162,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			subQueryMarketplaceVoucher).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Where("orders.id = ?", id).
@@ -228,4 +234,70 @@ func (r *orderRepository) Create(newModel []*models.Order) (model []*models.Orde
 	model = newModel
 
 	return
+}
+
+func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {
+	var orderList []*dtos.OrderList
+
+	queryResult := r.db.Model(&models.Order{}).
+		Select(`
+			orders.transaction_id AS transaction_id,
+			orders.invoice_number AS invoice_number,
+			orders.id AS order_id,
+			orders.merchant_id AS merchant_id,
+			merchants.name AS shop_name,
+			users.id AS user_id,
+			users.full_name AS user_full_name,
+			transactions.transaction_datetime AS transaction_datetime,
+			orders.status AS order_status,
+			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price
+		`).
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON users.id = transactions.user_id").
+		Where("orders.merchant_id = ?", merchantID).
+		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
+
+	if query.Search != "" {
+		subQuerySearch := r.db.Model(&models.Order{}).
+			Select("DISTINCT orders.id").
+			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
+			Joins("JOIN order_details ON order_details.order_id = orders.id").
+			Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+			Where("merchants.name ILIKE @search OR product_snapshots.name ILIKE @search", sql.Named("search", "%"+query.Search+"%"))
+
+		queryResult.Where("orders.id IN (?)", subQuerySearch)
+	}
+
+	if strings.EqualFold(query.FilterOrderStatus, constants.OngoingStatus) {
+		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
+			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
+		} else {
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+				constants.PendingSellerStatus,
+				constants.OnProcessStatus,
+				constants.OutForDeliveryStatus,
+				constants.DeliveredStatus,
+				constants.ComplainedStatus)
+		}
+	} else if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
+		queryResult.Where("orders.status ILIKE ?", "%canceled%")
+	} else {
+		if query.FilterOrderStatus != "" && !strings.EqualFold(query.FilterOrderStatus, constants.AllStatus) {
+			queryResult.Where("orders.status ILIKE ?", query.FilterOrderStatus)
+		}
+	}
+
+	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
+		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+	}
+
+	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&orderList)
+
+	if queryResult.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return orderList, pagination, nil
 }

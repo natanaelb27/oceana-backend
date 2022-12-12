@@ -47,12 +47,12 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 	walletService := services.NewWalletService(&services.WalletServiceConfig{
-		WalletRepository: walletRepository,
-		RedisRepository:  redisRepository,
+		WalletRepository:      walletRepository,
+		RedisRepository:       redisRepository,
 		WalletTopupRepository: walletTopupRepository,
-		SealabsPayRepository: sealabsPayRepository,
+		SealabsPayRepository:  sealabsPayRepository,
 	})
-	
+
 	userRepository := repositories.NewUserRepository(&repositories.UserRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -227,6 +227,7 @@ func Init() *Handler {
 		OrderDetailRepository:     orderDetailRepository,
 		AddressSnapshotRepository: addressSnapshotRepository,
 		OrderTrackingRepository:   orderTrackingRepository,
+		MerchantRepository:        merchantRepository,
 	})
 
 	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{
