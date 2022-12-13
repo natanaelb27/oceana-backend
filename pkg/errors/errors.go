@@ -166,6 +166,7 @@ var (
 	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
 	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
 	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
+	ErrProductStatusInactive                                  = errors.New("product is delisted")
 )
 
 func GetStatusCode(err error) int {
@@ -311,7 +312,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
-		errors.Is(err, ErrWalletBalanceNotEnough) {
+		errors.Is(err, ErrWalletBalanceNotEnough) ||
+		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
 	}
 
