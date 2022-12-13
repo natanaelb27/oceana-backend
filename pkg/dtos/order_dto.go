@@ -90,6 +90,8 @@ type OrderListGetAllResponse struct {
 	ShopName            string                  `json:"shop_name"`
 	UserID              uuid.UUID               `json:"user_id"`
 	UserFullName        string                  `json:"user_full_name"`
+	CourierServiceID    uint                    `json:"courier_service_id"`
+	CourierDescription  string                  `json:"courier_description"`
 	OrderDetails        []*dtos.OrderDetailList `json:"order_details"`
 	TransactionDatetime time.Time               `json:"transaction_datetime"`
 	OrderStatus         string                  `json:"order_status"`
@@ -107,6 +109,8 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGe
 			ShopName:            result.ShopName,
 			UserID:              result.UserID,
 			UserFullName:        result.UserFullName,
+			CourierServiceID:    result.CourierServiceID,
+			CourierDescription:  result.CourierDescription,
 			OrderDetails:        result.OrderDetails,
 			TransactionDatetime: result.TransactionDatetime,
 			OrderStatus:         result.OrderStatus,
@@ -129,6 +133,7 @@ type OrderListDetailsGetByIDResponse struct {
 	OrderDetails                    []*dtos.OrderDetailList      `json:"order_details"`
 	TransactionDatetime             time.Time                    `json:"transaction_datetime"`
 	OrderStatus                     string                       `json:"order_status"`
+	CourierServiceID                uint                         `json:"courier_service_id"`
 	CourierDescription              string                       `json:"courier_description"`
 	OrderTrackingHistory            []*dtos.OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
 	Address                         *dtos.AddressSnapshotDetails `json:"address"`
@@ -154,6 +159,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		OrderDetails:                    source.OrderDetails,
 		TransactionDatetime:             source.TransactionDatetime,
 		OrderStatus:                     source.OrderStatus,
+		CourierServiceID:                source.CourierServiceID,
 		CourierDescription:              source.CourierDescription,
 		OrderTrackingHistory:            source.OrderTrackingHistory,
 		Address:                         source.Address,
@@ -170,20 +176,26 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 	return
 }
 
-type OrderProcessOrderRequest struct {
-	CourierServiceID uint `json:"courier_service_id" binding:"required"`
+type OrderProcessDeliveryResponse struct {
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
+}
+
+func NewOrderProcessDeliveryResponse(source *models.Order) *OrderProcessDeliveryResponse {
+	return &OrderProcessDeliveryResponse{
+		ID:     source.ID,
+		Status: source.Status,
+	}
 }
 
 type OrderProcessOrderResponse struct {
-	ID               uuid.UUID `json:"id"`
-	CourierServiceID uint      `json:"courier_service_id"`
-	Status           string    `json:"status"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
 }
 
 func NewOrderProcessOrderResponse(source *models.Order) *OrderProcessOrderResponse {
 	return &OrderProcessOrderResponse{
-		ID:               source.ID,
-		CourierServiceID: source.CourierServiceID,
-		Status:           source.Status,
+		ID:     source.ID,
+		Status: source.Status,
 	}
 }
