@@ -55,7 +55,8 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
-			refunds.id AS refund_id
+			refunds.id AS refund_id,
+			orders.claim_status AS claim_status
 
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
@@ -162,7 +163,8 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			orders.total_price_after_discount::float / transactions.total_price::float * (?) AS total_marketplace_voucher_discount,
 			orders.shipping_fee AS shipping_fee,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment,
-			refunds.id AS refund_id
+			refunds.id AS refund_id,
+			orders.claim_status AS claim_status
 		`,
 			subQueryTotalPriceBeforeDiscount,
 			subQueryMerchantPromotion,
@@ -262,7 +264,8 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			orders.total_price_after_discount::float AS total_price,
-			refunds.id AS refund_id
+			refunds.id AS refund_id,
+			orders.claim_status AS claim_status
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
