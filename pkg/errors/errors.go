@@ -116,6 +116,7 @@ var (
 	ErrVoucherNotUpcoming                                         = errors.New("voucher is not upcoming")
 	ErrStockIsNotAvailable                                        = errors.New("stock is not available")
 	ErrStatusIsNotPendingSeller                                   = errors.New("status is not pending seller")
+	ErrStatusIsNotOnProcess                                       = errors.New("status is not on process")
 	ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime = errors.New("new voucher start period is earlier than the current start period")
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
@@ -166,6 +167,7 @@ var (
 	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
 	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
 	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
+	ErrProductStatusInactive                                  = errors.New("product is delisted")
 )
 
 func GetStatusCode(err error) int {
@@ -297,6 +299,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionUpdateProductIDListMismatch) ||
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
+		errors.Is(err, ErrStatusIsNotOnProcess) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
 		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrBlockedWallet) ||
@@ -311,7 +314,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
-		errors.Is(err, ErrWalletBalanceNotEnough) {
+		errors.Is(err, ErrWalletBalanceNotEnough) ||
+		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
 	}
 

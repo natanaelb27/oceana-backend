@@ -24,5 +24,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.PATCH("/password", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UpdateProfilePassword)
 		privateRoute.GET("/transaction-history", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderListGetAll)
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderListDetailsGetByID)
+		privateRoute.GET("/pending-payment", func(c *gin.Context) { middlewares.Role(c, "001") }, h.PendingPaymentGetAllByUser)
 	}
 }

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -17,7 +19,8 @@ type OrderService interface {
 	OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos.OrderListQuery) ([]*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
 	OrderListDetailsGetByMerchantID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
-	Update(request *internalDtos.OrderProcessOrder) (*models.Order, error)
+	UpdateProcessDelivery(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
+	UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 }
 
 type orderService struct {
@@ -75,10 +78,14 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 			ShopName:            order.ShopName,
 			UserID:              order.UserID,
 			UserFullName:        order.UserFullName,
+			CourierServiceID:    order.CourierServiceID,
+			CourierDescription:  order.CourierDescription,
 			OrderDetails:        orderDetails,
 			TransactionDatetime: order.TransactionDatetime,
 			OrderStatus:         order.OrderStatus,
 			TotalPrice:          order.TotalPrice,
+			RefundID:            order.RefundID,
+			ClaimStatus:         order.ClaimStatus,
 		})
 	}
 
@@ -119,10 +126,14 @@ func (s *orderService) OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos
 			ShopName:            order.ShopName,
 			UserID:              order.UserID,
 			UserFullName:        order.UserFullName,
+			CourierServiceID:    order.CourierServiceID,
+			CourierDescription:  order.CourierDescription,
 			OrderDetails:        orderDetails,
 			TransactionDatetime: order.TransactionDatetime,
 			OrderStatus:         order.OrderStatus,
 			TotalPrice:          order.TotalPrice,
+			RefundID:            order.RefundID,
+			ClaimStatus:         order.ClaimStatus,
 		})
 	}
 
@@ -210,18 +221,92 @@ func (s *orderService) OrderListDetailsGetByMerchantID(userID uuid.UUID, orderID
 	return dtos.NewOrderListDetailsGetByIDResponse(orderData), nil
 }
 
-func (s *orderService) Update(request *internalDtos.OrderProcessOrder) (*models.Order, error) {
-	order, err := s.orderRepository.GetByID(request.OrderID)
+func (s *orderService) UpdateProcessDelivery(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
 	if err != nil {
 		return nil, err
+	}
+
+	order, err := s.orderRepository.GetByID(orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	if merchant.ID != order.MerchantID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	if order.Status != constants.OnProcessStatus {
+		return nil, e.ErrStatusIsNotOnProcess
+	}
+
+	order.Status = constants.OutForDeliveryStatus
+
+	updatedOrder, err := s.orderRepository.Update(orderID, order)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderTracking := []*models.OrderTracking{
+		{
+			OrderID:         orderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.OrderShippedTitle,
+			Description:     constants.OrderShippedDescription,
+		},
+	}
+
+	_, err = s.orderTrackingRepository.Create(orderTracking)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedOrder, nil
+}
+
+func (s *orderService) UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := s.orderRepository.GetByID(orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	if merchant.ID != order.MerchantID {
+		return nil, e.ErrForbiddenMerchant
 	}
 
 	if order.Status != constants.PendingSellerStatus {
 		return nil, e.ErrStatusIsNotPendingSeller
 	}
 
-	order.CourierServiceID = request.CourierServiceID
-	order.Status = constants.OutForDeliveryStatus
+	order.Status = constants.OnProcessStatus
 
-	return s.orderRepository.Update(request.OrderID, order)
+	updatedOrder, err := s.orderRepository.Update(orderID, order)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderTracking := []*models.OrderTracking{
+		{
+			OrderID:         orderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.OrderProcessedTitle,
+			Description:     constants.OrderProcessedDescription,
+		},
+	}
+
+	_, err = s.orderTrackingRepository.Create(orderTracking)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedOrder, nil
 }
