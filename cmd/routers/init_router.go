@@ -41,6 +41,8 @@ func Init(h *handlers.Handler) {
 	marketplaceVoucher(public, private, h)
 	courier(public, private, h)
 	city(public, private, h)
+	wallet(public, private, h)
+	sealabsPay(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

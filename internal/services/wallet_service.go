@@ -15,23 +15,30 @@ import (
 type WalletService interface {
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
-	GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error)
+	CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error
+	GetWalletDetails(id uuid.UUID, query *externalDtos.WalletDetailsQuery) (*externalDtos.WalletDetailsResponse, *utils.Pagination, error)
 }
 
 type walletService struct {
-	walletRepository r.WalletRepository
-	redisRepository  r.RedisRepository
+	walletRepository      r.WalletRepository
+	redisRepository       r.RedisRepository
+	walletTopupRepository r.WalletTopupRepository
+	sealabsPayRepository  r.SealabsPayRepository
 }
 
 type WalletServiceConfig struct {
-	WalletRepository r.WalletRepository
-	RedisRepository  r.RedisRepository
+	WalletRepository      r.WalletRepository
+	RedisRepository       r.RedisRepository
+	WalletTopupRepository r.WalletTopupRepository
+	SealabsPayRepository  r.SealabsPayRepository
 }
 
 func NewWalletService(c *WalletServiceConfig) WalletService {
 	return &walletService{
-		walletRepository: c.WalletRepository,
-		redisRepository:  c.RedisRepository,
+		walletRepository:      c.WalletRepository,
+		redisRepository:       c.RedisRepository,
+		walletTopupRepository: c.WalletTopupRepository,
+		sealabsPayRepository:  c.SealabsPayRepository,
 	}
 }
 
@@ -104,15 +111,72 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *ext
 	return
 }
 
-func (p *walletService) GetWalletDetails(id uuid.UUID) (*externalDtos.WalletDetailsResponse, error) {
+func (p *walletService) GetWalletDetails(id uuid.UUID, query *externalDtos.WalletDetailsQuery) (*externalDtos.WalletDetailsResponse, *utils.Pagination, error) {
 	wallet, err := p.walletRepository.GetByUserId(id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	walletTransactionHistory, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID)
+
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	walletTransactionHistory, pagination, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID, pagination)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	responseData := externalDtos.NewWalletDetailsResponse(wallet, walletTransactionHistory)
-	return responseData, nil
+	return responseData, pagination, nil
+}
+
+func (p *walletService) CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error {
+	// validate card number length
+	if !utils.ValidateSealabsPayCardNumber(request.CardNumber) {
+		return e.ErrInvalidSealabsPayCardNumber
+	}
+
+	// check if signature matches with the one in redis
+	_, err := p.redisRepository.Get(c, request.Signature)
+	if err != nil {
+		return e.ErrInvalidSignature
+	}
+	// clean up signature from redis
+	err = p.redisRepository.Delete(c, request.Signature)
+	if err != nil {
+		return err
+	}
+
+	// get wallet_id by user id
+	wallet, err := p.walletRepository.GetByUserId(userID)
+	if err != nil {
+		return err
+	}
+
+	// get sealabs_pay_id by account number
+	sealabsPayAccount, err := p.sealabsPayRepository.GetByUserIDAndCardNumber(userID, request.CardNumber)
+	if err != nil {
+		return err
+	}
+
+	// create wallet_topup entry
+	walletTopup, err := request.ToModel()
+	if err != nil {
+		return err
+	}
+	walletTopup.WalletID = wallet.ID
+	walletTopup.SealabsPayID = sealabsPayAccount.ID
+	_, err = p.walletTopupRepository.Create(walletTopup)
+	if err != nil {
+		return err
+	}
+
+	// update wallet balance
+	wallet.Balance += walletTopup.Amount
+	_, err = p.walletRepository.Update(wallet.ID, wallet)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

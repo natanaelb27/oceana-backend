@@ -4,10 +4,12 @@ import "github.com/lib/pq"
 
 type ProductDetails struct {
 	Name                  string              `json:"name"`
+	MerchantID            uint                `json:"merchant_id"`
 	IsHazardous           bool                `json:"is_hazardous"`
 	Weight                uint                `json:"weight"`
 	PackageSize           string              `json:"package_size"`
 	Condition             string              `json:"condition"`
+	CategoryID            uint                `json:"category_id"`
 	Category              string              `json:"category"`
 	Images                pq.StringArray      `json:"images" gorm:"type:text[]"`
 	Description           string              `json:"description"`

@@ -7,10 +7,10 @@ import (
 )
 
 type WalletTransactionHistory struct {
-	ID              uuid.UUID
-	WalletID        uuid.UUID
-	Amount          int
-	TransactionDate time.Time
-	TransactionType string
-	Type            string
+	ID              uuid.UUID `json:"id"`
+	WalletID        uuid.UUID `json:"wallet_id"`
+	Amount          int       `json:"amount"`
+	TransactionDate time.Time `json:"transaction_date"`
+	TransactionType string    `json:"transcation_type"`
+	Type            string    `json:"type"`
 }

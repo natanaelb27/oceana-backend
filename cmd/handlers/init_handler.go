@@ -40,6 +40,18 @@ func Init() *Handler {
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
+	walletTopupRepository := repositories.NewWalletTopupRepository(&repositories.WalletTopupRepositoryConfig{
+		DB: db.Get(),
+	})
+	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
+		DB: db.Get(),
+	})
+	walletService := services.NewWalletService(&services.WalletServiceConfig{
+		WalletRepository:      walletRepository,
+		RedisRepository:       redisRepository,
+		WalletTopupRepository: walletTopupRepository,
+		SealabsPayRepository:  sealabsPayRepository,
+	})
 
 	userRepository := repositories.NewUserRepository(&repositories.UserRepositoryConfig{
 		DB: db.Get(),
@@ -85,10 +97,14 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
-	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
-		DB: db.Get(),
+	userService := services.NewUserService(&services.UserServiceConfig{
+		UserRepository:  userRepository,
+		EmailRepository: emailRepository,
 	})
-
+	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
+		SealabsPayRepository: sealabsPayRepository,
+		RedisRepository:      redisRepository,
+	})
 	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -185,11 +201,6 @@ func Init() *Handler {
 		RoleRepository: roleRepository,
 	})
 
-	walletService := services.NewWalletService(&services.WalletServiceConfig{
-		WalletRepository: walletRepository,
-		RedisRepository:  redisRepository,
-	})
-
 	authService := services.NewAuthService(&services.AuthServiceConfig{
 		UserRepository:   userRepository,
 		EmailRepository:  emailRepository,
@@ -216,15 +227,7 @@ func Init() *Handler {
 		OrderDetailRepository:     orderDetailRepository,
 		AddressSnapshotRepository: addressSnapshotRepository,
 		OrderTrackingRepository:   orderTrackingRepository,
-	})
-
-	userService := services.NewUserService(&services.UserServiceConfig{
-		UserRepository:  userRepository,
-		EmailRepository: emailRepository,
-	})
-
-	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
-		SealabsPayRepository: sealabsPayRepository,
+		MerchantRepository:        merchantRepository,
 	})
 
 	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{

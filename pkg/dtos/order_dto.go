@@ -83,13 +83,36 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 }
 
 type OrderListGetAllResponse struct {
-	OrderList []*dtos.OrderList `json:"order_list"`
+	TransactionID       uuid.UUID               `json:"transaction_id"`
+	OrderID             uuid.UUID               `json:"order_id"`
+	InvoiceNumber       string                  `json:"invoice_number"`
+	MerchantID          uint                    `json:"merchant_id"`
+	ShopName            string                  `json:"shop_name"`
+	UserID              uuid.UUID               `json:"user_id"`
+	UserFullName        string                  `json:"user_full_name"`
+	OrderDetails        []*dtos.OrderDetailList `json:"order_details"`
+	TransactionDatetime time.Time               `json:"transaction_datetime"`
+	OrderStatus         string                  `json:"order_status"`
+	TotalPrice          float64                 `json:"total_price"`
+	RefundID            *uuid.UUID              `json:"refund_id"`
 }
 
-func NewOrderListGetAllResponse(source []*dtos.OrderList) (target *OrderListGetAllResponse) {
-
-	target = &OrderListGetAllResponse{
-		OrderList: source,
+func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGetAllResponse) {
+	for _, result := range source {
+		target = append(target, &OrderListGetAllResponse{
+			TransactionID:       result.TransactionID,
+			OrderID:             result.OrderID,
+			InvoiceNumber:       result.InvoiceNumber,
+			MerchantID:          result.MerchantID,
+			ShopName:            result.ShopName,
+			UserID:              result.UserID,
+			UserFullName:        result.UserFullName,
+			OrderDetails:        result.OrderDetails,
+			TransactionDatetime: result.TransactionDatetime,
+			OrderStatus:         result.OrderStatus,
+			TotalPrice:          result.TotalPrice,
+			RefundID:            result.RefundID,
+		})
 	}
 
 	return
@@ -101,6 +124,8 @@ type OrderListDetailsGetByIDResponse struct {
 	InvoiceNumber                   string                       `json:"invoice_number"`
 	MerchantID                      uint                         `json:"merchant_id"`
 	ShopName                        string                       `json:"shop_name"`
+	UserID                          uuid.UUID                    `json:"user_id"`
+	UserFullName                    string                       `json:"user_full_name"`
 	OrderDetails                    []*dtos.OrderDetailList      `json:"order_details"`
 	TransactionDatetime             time.Time                    `json:"transaction_datetime"`
 	OrderStatus                     string                       `json:"order_status"`
@@ -114,6 +139,7 @@ type OrderListDetailsGetByIDResponse struct {
 	TotalMarketplaceVoucherDiscount float64                      `json:"total_marketplace_voucher_discount"`
 	ShippingFee                     uint                         `json:"shipping_fee"`
 	TotalPayment                    float64                      `json:"total_payment"`
+	RefundID                        *uuid.UUID                   `json:"refund_id"`
 }
 
 func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetByIDResponse) {
@@ -123,6 +149,8 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		InvoiceNumber:                   source.InvoiceNumber,
 		MerchantID:                      source.MerchantID,
 		ShopName:                        source.ShopName,
+		UserID:                          source.UserID,
+		UserFullName:                    source.UserFullName,
 		OrderDetails:                    source.OrderDetails,
 		TransactionDatetime:             source.TransactionDatetime,
 		OrderStatus:                     source.OrderStatus,
@@ -136,6 +164,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		TotalMarketplaceVoucherDiscount: source.TotalMarketplaceVoucherDiscount,
 		ShippingFee:                     source.ShippingFee,
 		TotalPayment:                    source.TotalPayment,
+		RefundID:                        source.RefundID,
 	}
 
 	return

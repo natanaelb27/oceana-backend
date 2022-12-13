@@ -228,7 +228,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
-	for _, cartOrderItem := range request.CartOrderItems {
+	for i, cartOrderItem := range request.CartOrderItems {
 		merchantVoucher := &internalDtos.MerchantVoucherDetails{}
 
 		if cartOrderItem.MerchantVoucherID != nil {
@@ -271,7 +271,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 		newOrder := &models.Order{
 			ID:                uuid.New(),
-			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1)),
+			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1+i)),
 			TransactionID:     newTransaction.ID,
 			MerchantID:        cartOrderItem.MerchantID,
 			AddressSnapshotID: addressSnapshot.ID,

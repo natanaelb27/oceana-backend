@@ -22,7 +22,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.POST("/password/check-verification-code", func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProfileCheckPasswordVerificationCode)
 		privateRoute.POST("/password/request-verification-code", func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProfileRequestChangePasswordVerificationCode)
 		privateRoute.PATCH("/password", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UpdateProfilePassword)
-		privateRoute.POST("/sealabs-pay", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayCreate)
 		privateRoute.GET("/sealabs-pay", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayGetAll)
 		privateRoute.GET("/sealabs-pay/:sealabs_pay_id", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayGetById)
 		privateRoute.DELETE("/sealabs-pay/:sealabs_pay_id", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayDelete)
