@@ -353,7 +353,7 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 
 	json.Unmarshal(responseBodyBytes, &errResponse)
 	if response.StatusCode != http.StatusSeeOther {
-		return nil, e.ErrSealabsPayOperationFailed
+		return nil, e.ErrInsufficientBalance
 	}
 
 	headerLocation, ok := response.Header["Location"]
