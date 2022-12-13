@@ -201,6 +201,14 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	refundRepository := repositories.NewRefundRepository(&repositories.RefundRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	refundDetailRepository := repositories.NewRefundDetailRepository(&repositories.RefundDetailRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
@@ -330,6 +338,13 @@ func Init() *Handler {
 		CityRepository: cityRepository,
 	})
 
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		OrderRepository:        orderRepository,
+		OrderDetailRepository:  orderDetailRepository,
+		RefundRepository:       refundRepository,
+		RefundDetailRepository: refundDetailRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
 		WalletService:             walletService,
@@ -353,6 +368,7 @@ func Init() *Handler {
 		LogisticService:           logisticService,
 		TransactionService:        transactionService,
 		CityService:               cityService,
+		RefundService:             refundService,
 	})
 
 	return h
