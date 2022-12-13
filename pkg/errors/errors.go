@@ -306,7 +306,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
-		errors.Is(err, ErrWalletBalanceNotEnough) {
+		errors.Is(err, ErrWalletBalanceNotEnough) ||
+		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
 	}
 
