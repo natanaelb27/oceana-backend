@@ -126,8 +126,7 @@ func (p *sealabsPayService) SetDefault(id uuid.UUID, userID uuid.UUID) error {
 		return err
 	}
 
-	currentDefault.IsDefault = false
-	err = p.sealabsPayRepository.Update(currentDefault.ID, currentDefault)
+	err = p.sealabsPayRepository.SetDefaultFalse(currentDefault.ID, currentDefault)
 	if err != nil {
 		return err
 	}

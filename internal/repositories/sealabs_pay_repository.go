@@ -16,6 +16,7 @@ type SealabsPayRepository interface {
 	GetDefaultByUserID(userID uuid.UUID) (model *models.SealabsPay, err error)
 	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
 	Update(id uuid.UUID, model *models.SealabsPay) (err error)
+	SetDefaultFalse(id uuid.UUID, model *models.SealabsPay) (err error)
 }
 
 type sealabsPayRepository struct {
@@ -110,6 +111,20 @@ func (r *sealabsPayRepository) Delete(id uuid.UUID) (model *models.SealabsPay, e
 
 func (r *sealabsPayRepository) Update(id uuid.UUID, model *models.SealabsPay) (err error) {
 	queryResult := r.db.Where("id = ?", id).Updates(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *sealabsPayRepository) SetDefaultFalse(id uuid.UUID, model *models.SealabsPay) (err error) {
+	queryResult := r.db.Model(&model).Where("id = ?", id).Update("is_default", false)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
