@@ -14,6 +14,8 @@ type OrderList struct {
 	ShopName            string             `json:"shop_name"`
 	UserID              uuid.UUID          `json:"user_id"`
 	UserFullName        string             `json:"user_full_name"`
+	CourierServiceID    uint               `json:"courier_service_id"`
+	CourierDescription  string             `json:"courier_description"`
 	OrderDetails        []*OrderDetailList `json:"order_details" gorm:"-"`
 	TransactionDatetime time.Time          `json:"transaction_datetime"`
 	OrderStatus         string             `json:"order_status"`
@@ -32,6 +34,7 @@ type OrderListDetails struct {
 	OrderDetails                    []*OrderDetailList      `json:"order_details" gorm:"-"`
 	TransactionDatetime             time.Time               `json:"transaction_datetime"`
 	OrderStatus                     string                  `json:"order_status"`
+	CourierServiceID                uint                    `json:"courier_service_id"`
 	CourierDescription              string                  `json:"courier_description"`
 	OrderTrackingHistory            []*OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
 	Address                         *AddressSnapshotDetails `json:"address" gorm:"-"`
@@ -45,7 +48,7 @@ type OrderListDetails struct {
 	RefundID                        *uuid.UUID              `json:"refund_id"`
 }
 
-type OrderProcessOrder struct {
-	CourierServiceID uint
-	OrderID          uuid.UUID
-}
+// type OrderProcessDelivery struct {
+// 	CourierServiceID uint
+// 	OrderID          uuid.UUID
+// }

@@ -4,7 +4,7 @@ const (
 	PaymentVerifiedTitle                    = "Payment has been Verified"
 	PaymentVerifiedDescription              = "Payment has been received by Oceana and your order has been forwarded to the seller"
 	OrderProcessedTitle                     = "Order is being Processed"
-	OrderProcessedDescription               = "The Order is being Processed by the Seller"
+	OrderProcessedDescription               = "The order is being processed by the seller"
 	OrderShippedTitle                       = "Order has been Shipped"
 	OrderShippedDescription                 = "Your order is being shipped by the courier"
 	DeliveredTitle                          = "The Order has Arrived at its Destination"
