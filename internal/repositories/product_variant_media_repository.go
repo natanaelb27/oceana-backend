@@ -104,7 +104,7 @@ func (r *productVariantMediaRepository) Update(id uint, newModel *models.Product
 }
 
 func (r *productVariantMediaRepository) Delete(id uint) (model *models.ProductVariantMedia, err error) {
-	result := r.db.Debug().Delete(&model, id)
+	result := r.db.Delete(&model, id)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

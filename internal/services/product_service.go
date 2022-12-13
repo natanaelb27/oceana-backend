@@ -566,11 +566,11 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
-	fmt.Println("pmCreate", pmCreate)
-	fmt.Println("pmDelete", pmDelete)
+	piLengthValidation := 0
 
-	// todo: create product medias
-	// todo: delete product medias
+	if len(request.ProductItems) > 0 {
+		piLengthValidation = 1
+	}
 
 	var pvtCreates = []*productInternalDtos.PvtUpdateInfo{}
 	var pvtUpdates = []*productInternalDtos.PvtUpdateInfo{}
@@ -631,6 +631,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		if len(rV.Options) <= 0 {
 			return nil, e.ErrEmptyVariants
 		}
+		piLengthValidation *= len(rV.Options)
 
 		// get all product variants from database by productVariantTypeID and Name
 		pv, err := s.productVariantRepository.GetAllByProductVariantTypeID(pvts[iOV].ID)
@@ -734,6 +735,11 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
+	// validation - product items length
+	if len(request.ProductItems) != piLengthValidation {
+		return nil, e.ErrInvalidModel
+	}
+
 	var piCreates = []*productInternalDtos.PiUpdateInfo{}
 	var piUpdates = []*productInternalDtos.PiUpdateInfo{}
 	var piDeletes = []*productInternalDtos.PiUpdateInfo{}
@@ -759,8 +765,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	for iOPI, vOPI := range oPI {
 		// if index not exist then append deletes
 		if len(rPI)-1 < iOPI {
-			pvmDeletes = append(pvmDeletes, &productInternalDtos.PvmUpdateInfo{
-				Before: &models.ProductVariantMedia{
+			piDeletes = append(piDeletes, &productInternalDtos.PiUpdateInfo{
+				Before: &models.ProductItem{
 					ID: vOPI.ID,
 				},
 			})
@@ -784,8 +790,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 				SKU:           rPI[iOPI].SKU,
 			},
 		})
-		// ! to allow updates stock and SKU to 0 quantity then don't forget to use maps for updates later
-
 	}
 
 	var pcsCreates = []*productInternalDtos.PcsUpdateInfo{}
@@ -854,13 +858,11 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// 	}
 	// }
 
-	// delete all product variation
-	for _, oPI := range oriProductModel.ProductItems {
-		err := s.productVariationRepository.DeleteAllByProductItemID(oPI.ID)
-		if err != nil && err != e.ErrDataNotFound {
-			return nil, err
-		}
-	}
+	fmt.Println("pmCreate", pmCreate)
+	fmt.Println("pmDelete", pmDelete)
+
+	// todo: create product medias
+	// todo: delete product medias
 
 	//* product variant types - update operations
 	for _, v := range pvtCreates {
@@ -934,21 +936,36 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
-	// log product items update info
+	//* product items - update operations
 	for _, v := range piCreates {
 		fmt.Println("piCreates")
-		fmt.Printf("\tid: %v\n\tprice: %v\n\tstock quantity: %v\n\tsku: %v\n", v.Before.ID, v.After.Price, v.After.StockQuantity, v.After.SKU)
-	}
-	for _, v := range piDeletes {
-		fmt.Println("> piDeletes")
-		fmt.Println(v.After.Price)
-		fmt.Println(v.After.StockQuantity)
-		fmt.Println(v.After.SKU)
-		// also delete product variations by product item
+		fmt.Printf("\tprice: %v\n\tstock quantity: %v\n\tsku: %v\n", v.After.Price, v.After.StockQuantity, v.After.SKU)
+		_, err := s.productItemRepository.CreateProductItem(v.After)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, v := range piUpdates {
 		fmt.Println("piUpdates")
 		fmt.Printf("\tid: %v\n\tprice: %v\n\tstock quantity: %v\n\tsku: %v\n", v.Before.ID, v.After.Price, v.After.StockQuantity, v.After.SKU)
+		newPiMap := map[string]any{
+			"price":          v.After.Price,
+			"stock_quantity": v.After.Price,
+			"sku":            v.After.SKU,
+		}
+		// to allow updates stock and SKU to 0 use maps for updates
+		err := s.productItemRepository.UpdateUsingMap(v.Before.ID, newPiMap)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, v := range piDeletes {
+		fmt.Println("piDeletes")
+		fmt.Println("\tid:", v.Before.ID)
+		err = s.productItemRepository.Delete(v.Before.ID)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
 	}
 
 	// log product items update info
@@ -963,14 +980,66 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		fmt.Println("\t", v.Before.ProductId)
 	}
 
+	// var pVarCreates = []*productInternalDtos.PvarUpdateInfo{}
+	//* product variations - map creates
+	productItems, err := s.productItemRepository.GetAllByProductID(product.ID)
+	if err != nil {
+		return nil, err
+	}
+	// get all product variants as index
+	productVariantsType, err := s.productVariantRepository.GetAllVariantIndexByProductID(product.ID)
+	if err != nil {
+		return nil, err
+	}
+	variantsMap := make([][]uint, len(productVariantsType))
+	for i, v := range productVariantsType {
+		variantsMap[i] = make([]uint, len(v.Variants))
+		for iV, vV := range v.Variants {
+			variantsMap[i][iV] = uint(vV)
+		}
+	}
+	var pVarCreates = make([]*productInternalDtos.PvarUpdateInfo, 0)
+	for iPI, vPI := range request.ProductItems {
+		choosenVariantIndexes := make([]uint, 0)
+		for iVI, vVI := range vPI.VariantIndex {
+			choosenVariantIndexes = append(choosenVariantIndexes, variantsMap[iVI][vVI])
+		}
+		fmt.Println(choosenVariantIndexes)
+		for _, vCVI := range choosenVariantIndexes {
+			pVarCreates = append(pVarCreates, &productInternalDtos.PvarUpdateInfo{
+				After: &models.ProductVariation{
+					ProductItemID:    productItems[iPI].ID,
+					ProductVariantID: vCVI,
+				},
+			})
+		}
+	}
+
+	//* delete all product variation
+	for _, oPI := range oriProductModel.ProductItems {
+		err := s.productVariationRepository.DeleteAllByProductItemID(oPI.ID)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
+	}
+	for _, v := range pVarCreates {
+		fmt.Println("pVarCreates")
+		fmt.Println("\t", v.After.ProductItemID)
+		fmt.Println("\t", v.After.ProductVariantID)
+		_, err := s.productVariationRepository.Create(v.After)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// get updated product model
 	productModel, err := s.GetUpdateModelByProductID(product.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// return productModel, nil
-	return productModel, e.ErrMarketplaceVoucherNotOngoing
+	return productModel, nil
+	// return productModel, e.ErrMarketplaceVoucherNotOngoing
 }
 
 func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {

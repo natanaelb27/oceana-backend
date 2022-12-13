@@ -1,8 +1,10 @@
 package repositories
 
 import (
+	"database/sql"
 	"log"
 
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -16,6 +18,7 @@ type ProductVariantRepository interface {
 	GetAllByProductVariantTypeID(productVariantTypeID uint) (model []*models.ProductVariant, err error)
 	Update(id uint, newModel *models.ProductVariant) (model *models.ProductVariant, err error)
 	Delete(id uint) (model *models.ProductVariant, err error)
+	GetAllVariantIndexByProductID(productID uint) (productModel []*internalDtos.ProductVariationTypeListOfVariants, err error)
 }
 
 type productVariantRepository struct {
@@ -124,6 +127,32 @@ func (r *productVariantRepository) Delete(id uint) (model *models.ProductVariant
 	}
 
 	model.ID = id
+
+	return
+}
+
+func (r *productVariantRepository) GetAllVariantIndexByProductID(productID uint) (productModel []*internalDtos.ProductVariationTypeListOfVariants, err error) {
+	sqProductVariants := r.db.Model(&models.ProductVariant{}).
+		Select("ARRAY_AGG(product_variants.id)").
+		Joins("JOIN product_variant_types ON product_variants.product_variant_type_id = product_variant_types.id").
+		Where("product_variants.product_variant_type_id = pvt.id")
+	result := r.db.
+		Table("product_variant_types pvt").
+		Select(`
+			(@sqProductVariants) AS variants
+		`,
+			sql.Named("sqProductVariants", sqProductVariants),
+		).
+		Where("pvt.product_id = ?", productID).
+		Find(&productModel)
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }

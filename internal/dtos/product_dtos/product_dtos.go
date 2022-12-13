@@ -181,7 +181,7 @@ type ProductModel struct {
 	Videos      pq.StringArray `json:"videos" gorm:"type:text[]"`
 	// gorm:"-" tells gorm ignore this field when write and read with struct
 	ProductItems []*ProductItem `json:"product_items" gorm:"-"`
-	Variants     []*Variants    `json:"variants" binding:"min=1" gorm:"-"`
+	Variants     []*Variants    `json:"variants" gorm:"-"`
 	Couriers     []*Courier     `json:"couriers" binding:"min=1" gorm:"-"`
 }
 
@@ -213,4 +213,8 @@ type PiUpdateInfo struct {
 type PcsUpdateInfo struct {
 	Before *models.ProductCourierService
 	After  *models.ProductCourierService
+}
+
+type PvarUpdateInfo struct {
+	After *models.ProductVariation
 }

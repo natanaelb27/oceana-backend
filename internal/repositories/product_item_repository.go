@@ -19,6 +19,9 @@ type ProductItemRepository interface {
 	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
 	SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error)
+	UpdateUsingMap(id uint, dataMap map[string]any) (err error)
+	Delete(id uint) (err error)
+	GetAllByProductID(productID uint) (model []*models.ProductItem, err error)
 }
 
 type productItemRepository struct {
@@ -181,7 +184,7 @@ func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*interna
 		Select("ARRAY_AGG(p_variants.index)").
 		Joins("JOIN (?) p_variants ON p_variants.id = product_variations.product_variant_id", sqVariant).
 		Where("product_variations.product_item_id = pi.id")
-	queryResult := r.db.Table("product_items pi").Debug().
+	queryResult := r.db.Table("product_items pi").
 		Select(`
 			pi.id AS id,
 			pi.sku AS sku,
@@ -219,4 +222,45 @@ func (r *productItemRepository) SubtractProductStock(ID uint, amount uint) (*mod
 	}
 
 	return model, nil
+}
+
+func (r *productItemRepository) UpdateUsingMap(id uint, dataMap map[string]any) (err error) {
+	result := r.db.Model(&models.ProductItem{}).Where("id = ?", id).Updates(dataMap)
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productItemRepository) Delete(id uint) (err error) {
+	result := r.db.Delete(&models.ProductItem{}, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *productItemRepository) GetAllByProductID(productID uint) (model []*models.ProductItem, err error) {
+	queryResult := r.db.
+		Where("product_id = ?", productID).
+		Order("id ASC").
+		Find(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
 }
