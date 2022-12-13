@@ -64,6 +64,7 @@ func NewProductReviewCreateResponse(source *models.ProductReview) (target *Produ
 
 type ProductReviewQuery struct {
 	Sort    string `json:"sort"`
+	SortBy  string `json:"sort-by"`
 	Limit   uint   `json:"limit"`
 	Page    uint   `json:"page"`
 	Media   bool   `json:"media"`
@@ -107,6 +108,21 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 		query.Media = false
 	}
 
+	sortBy := strings.ToLower(c.Query("sort-by"))
+
+	switch sortBy {
+	case "latest":
+		query.SortBy = "created_at"
+	case "highest-rating":
+		query.SortBy = "rating"
+		query.Sort = "DESC"
+	case "lowest-rating":
+		query.SortBy = "rating"
+		query.Sort = "ASC"
+	default:
+		query.SortBy = "created_at"
+	}
+
 	if strings.ToLower(comment) == "true" {
 		query.Comment = true
 	} else {
@@ -131,8 +147,6 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 
 	return &query
 }
-
-
 
 type ProductReviewGetByProductID struct {
 	ID                 uint      `json:"id"`
