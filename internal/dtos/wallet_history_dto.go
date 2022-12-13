@@ -11,6 +11,6 @@ type WalletTransactionHistory struct {
 	WalletID        uuid.UUID `json:"wallet_id"`
 	Amount          int       `json:"amount"`
 	TransactionDate time.Time `json:"transaction_date"`
-	TransactionType string    `json:"transcation_type"`
+	TransactionType string    `json:"transaction_type"`
 	Type            string    `json:"type"`
 }
