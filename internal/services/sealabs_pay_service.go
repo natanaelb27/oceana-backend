@@ -28,7 +28,7 @@ type SealabsPayService interface {
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (*internalDtos.SealabsPayDTO, error)
-	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
+	Delete(id uuid.UUID) (*models.SealabsPay, error)
 	SetDefault(id uuid.UUID, userID uuid.UUID) error
 	StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error
 	TopupWalletOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
@@ -115,20 +115,37 @@ func (p *sealabsPayService) GetByUserIDAndCardNumber(userID uuid.UUID, cardNumbe
 	return sealabsPayDTO, nil
 }
 
-func (p *sealabsPayService) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
-	return p.sealabsPayRepository.Delete(id)
+func (p *sealabsPayService) Delete(id uuid.UUID) (*models.SealabsPay, error) {
+	model, err := p.sealabsPayRepository.Delete(id)
+	if err != nil {
+		return nil, err
+	}
+	if !model.IsDefault {
+		return model, nil
+	}
+
+	// if default was deleted, set the first in GetAll() as default
+	models, _ := p.sealabsPayRepository.GetAll(model.UserID)
+	if len(models) == 0 {
+		return model, nil
+	}
+	firstCard := models[0]
+	firstCard.IsDefault = true
+	err = p.sealabsPayRepository.Update(firstCard.ID, firstCard)
+	if err != nil {
+		return nil, err
+	}
+	return model, nil
 }
 
 func (p *sealabsPayService) SetDefault(id uuid.UUID, userID uuid.UUID) error {
 	// unset current default
-	currentDefault, err := p.sealabsPayRepository.GetDefaultByUserID(userID)
-	if err != nil {
-		return err
-	}
-
-	err = p.sealabsPayRepository.SetDefaultFalse(currentDefault.ID, currentDefault)
-	if err != nil {
-		return err
+	currentDefault, _ := p.sealabsPayRepository.GetDefaultByUserID(userID)
+	if currentDefault.ID != uuid.Nil {
+		err := p.sealabsPayRepository.SetDefaultFalse(currentDefault.ID, currentDefault)
+		if err != nil {
+			return err
+		}
 	}
 
 	// set new default

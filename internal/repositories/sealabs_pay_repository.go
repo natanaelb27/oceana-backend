@@ -5,6 +5,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SealabsPayRepository interface {
@@ -95,17 +96,20 @@ func (r *sealabsPayRepository) GetDefaultByUserID(userID uuid.UUID) (model *mode
 		err = e.ErrDataNotFound
 		return
 	}
+	if queryResult.Error != nil {
+		err = queryResult.Error
+		return
+	}
 	return
 }
 
 func (r *sealabsPayRepository) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
-	result := r.db.Delete(&model, id)
+	result := r.db.Clauses(clause.Returning{}).Delete(&model, id)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
 	}
 
-	model.ID = id
 	return
 }
 
