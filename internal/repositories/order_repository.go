@@ -261,7 +261,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			courier_services.description AS courier_description,
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
-			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
+			orders.total_price_after_discount::float AS total_price,
 			refunds.id AS refund_id
 		`).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
