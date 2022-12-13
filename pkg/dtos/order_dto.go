@@ -97,6 +97,7 @@ type OrderListGetAllResponse struct {
 	OrderStatus         string                  `json:"order_status"`
 	TotalPrice          float64                 `json:"total_price"`
 	RefundID            *uuid.UUID              `json:"refund_id"`
+	ClaimStatus         bool                    `json:"claim_status"`
 }
 
 func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGetAllResponse) {
@@ -116,6 +117,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGe
 			OrderStatus:         result.OrderStatus,
 			TotalPrice:          result.TotalPrice,
 			RefundID:            result.RefundID,
+			ClaimStatus:         result.ClaimStatus,
 		})
 	}
 
@@ -145,6 +147,7 @@ type OrderListDetailsGetByIDResponse struct {
 	ShippingFee                     uint                         `json:"shipping_fee"`
 	TotalPayment                    float64                      `json:"total_payment"`
 	RefundID                        *uuid.UUID                   `json:"refund_id"`
+	ClaimStatus                     bool                         `json:"claim_status"`
 }
 
 func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetByIDResponse) {
@@ -171,6 +174,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		ShippingFee:                     source.ShippingFee,
 		TotalPayment:                    source.TotalPayment,
 		RefundID:                        source.RefundID,
+		ClaimStatus:                     source.ClaimStatus,
 	}
 
 	return

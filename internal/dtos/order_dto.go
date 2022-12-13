@@ -21,6 +21,7 @@ type OrderList struct {
 	OrderStatus         string             `json:"order_status"`
 	TotalPrice          float64            `json:"total_price"`
 	RefundID            *uuid.UUID         `json:"refund_id"`
+	ClaimStatus         bool               `json:"claim_status"`
 }
 
 type OrderListDetails struct {
@@ -46,6 +47,7 @@ type OrderListDetails struct {
 	ShippingFee                     uint                    `json:"shipping_fee"`
 	TotalPayment                    float64                 `json:"total_payment"`
 	RefundID                        *uuid.UUID              `json:"refund_id"`
+	ClaimStatus                     bool                    `json:"claim_status"`
 }
 
 // type OrderProcessDelivery struct {

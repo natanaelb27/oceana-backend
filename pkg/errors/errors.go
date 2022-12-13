@@ -51,6 +51,7 @@ var (
 	ErrInvalidToken                   = errors.New("invalid token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
 	ErrInvalidVerificationCode        = errors.New("invalid verification code")
+	ErrInvalidSealabsPayID            = errors.New("invalid sealabs pay id")
 	ErrInvalidSealabsPayCardNumber    = errors.New("invalid sealabs pay card number")
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
@@ -212,6 +213,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidRequest) ||
 		errors.Is(err, ErrInvalidVerificationCode) ||
 		errors.Is(err, ErrInvalidRequest) ||
+		errors.Is(err, ErrInvalidSealabsPayID) ||
 		errors.Is(err, ErrInvalidSealabsPayCardNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||

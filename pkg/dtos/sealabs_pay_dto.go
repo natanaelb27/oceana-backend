@@ -32,6 +32,7 @@ type SealabsPayCreateResponse struct {
 	CardNumber string    `json:"card_number"`
 	ActiveDate time.Time `json:"active_date"`
 	NameOnCard string    `json:"name_on_card"`
+	IsDefault  bool      `json:"is_default"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -42,6 +43,7 @@ func NewSealabsPayCreateResponse(source *models.SealabsPay) (target *SealabsPayC
 		CardNumber: source.AccountNumber,
 		ActiveDate: source.ActiveDate,
 		NameOnCard: source.NameOnCard,
+		IsDefault:  source.IsDefault,
 		CreatedAt:  source.CreatedAt,
 		UpdatedAt:  source.UpdatedAt,
 	}
