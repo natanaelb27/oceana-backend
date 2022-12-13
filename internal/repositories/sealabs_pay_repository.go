@@ -52,7 +52,7 @@ func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *model
 }
 
 func (r *sealabsPayRepository) GetAll(userID uuid.UUID) (models []*models.SealabsPay, err error) {
-	queryResult := r.db.Where("user_id = ?", userID).Find(&models)
+	queryResult := r.db.Where("user_id = ?", userID).Order("is_default DESC").Find(&models)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
