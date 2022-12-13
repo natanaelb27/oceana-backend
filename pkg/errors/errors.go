@@ -24,6 +24,7 @@ var (
 	ErrEmptyEventID        = errors.New("event id should not be empty")
 	ErrEmptyRequstBody     = errors.New("request body should not be empty")
 	ErrRequestBodyTooLarge = errors.New("request body must not be larger than 1MB")
+	ErrEmptyVariants       = errors.New("variants cannot be empty")
 
 	ErrInvalidEmailAddress            = errors.New("invalid email address")
 	ErrInvalidPassword                = errors.New("invalid password")
@@ -55,6 +56,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrInvalidModel                   = errors.New("invalid model")
+	ErrInvalidVariantsMedia           = errors.New("invalid variants media")
 	ErrInvalidDiscountType            = errors.New("invalid discount type")
 	ErrInvalidDiscount                = errors.New("invalid discount")
 
@@ -182,6 +184,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEmptyPrice) ||
 		errors.Is(err, ErrEmptyEventID) ||
 		errors.Is(err, ErrEmptyRequstBody) ||
+		errors.Is(err, ErrEmptyVariants) ||
 		errors.Is(err, ErrRequestBodyTooLarge) ||
 		errors.Is(err, ErrInvalidEmailAddress) ||
 		errors.Is(err, ErrInvalidPassword) ||
@@ -211,6 +214,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidParams) ||
 		errors.Is(err, ErrInvalidResetPasswordID) ||
 		errors.Is(err, ErrInvalidModel) ||
+		errors.Is(err, ErrInvalidVariantsMedia) ||
 		errors.Is(err, ErrInvalidDiscountType) ||
 		errors.Is(err, ErrInvalidDiscount) ||
 		errors.Is(err, ErrRequestedVoucherNotMerchant) ||

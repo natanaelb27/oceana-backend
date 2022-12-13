@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -11,6 +12,7 @@ import (
 )
 
 type ProductItemRepository interface {
+	WithTx(tx *gorm.DB) *productItemRepository
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
 	CreateProductItem(productItem *models.ProductItem) (model *models.ProductItem, err error)
@@ -31,6 +33,15 @@ func NewProductItemRepository(c *ProductItemRepositoryConfig) ProductItemReposit
 	return &productItemRepository{
 		db: c.DB,
 	}
+}
+
+func (u productItemRepository) WithTx(tx *gorm.DB) *productItemRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductModel, error) {
@@ -166,11 +177,11 @@ func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*interna
 			-- get row number (start from 0 because of -1 in the end) of product variants partitioned by product_variants_type_id that which ordered ascending by  product variants id
 			(ROW_NUMBER() OVER (PARTITION BY p_variants.product_variant_type_id ORDER BY p_variants.id ASC))-1 AS index
 			`)
-	sqVariantIndex := r.db.Table("product_variations p_variations").
+	sqVariantIndex := r.db.Model(&models.ProductVariation{}).
 		Select("ARRAY_AGG(p_variants.index)").
-		Joins("JOIN (?) p_variants ON p_variants.id = p_variations.product_variant_id", sqVariant).
-		Where("p_variations.product_item_id = pi.id")
-	queryResult := r.db.Table("product_items pi").
+		Joins("JOIN (?) p_variants ON p_variants.id = product_variations.product_variant_id", sqVariant).
+		Where("product_variations.product_item_id = pi.id")
+	queryResult := r.db.Table("product_items pi").Debug().
 		Select(`
 			pi.id AS id,
 			pi.sku AS sku,

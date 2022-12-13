@@ -208,3 +208,9 @@ type PiUpdateInfo struct {
 	Before *models.ProductItem
 	After  *models.ProductItem
 }
+
+// courier services update info
+type PcsUpdateInfo struct {
+	Before *models.ProductCourierService
+	After  *models.ProductCourierService
+}

@@ -202,6 +202,13 @@ func (h *Handler) ProductUpdate(c *gin.Context) {
 
 	trx := c.MustGet("tx").(*gorm.DB)
 
+	// _, err = h.productService.WithTx(trx).UpdateProductUsingModel(userId, request)
+	// if err != nil {
+	// 	utils.ResponseError(c, err)
+	// 	return
+	// }
+
+	// utils.ResponseError(c, e.ErrBlockedWallet)
 	response, err := h.productService.WithTx(trx).UpdateProductUsingModel(userId, request)
 	if err != nil {
 		utils.ResponseError(c, err)

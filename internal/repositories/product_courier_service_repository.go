@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ProductCourierServiceRepository interface {
+	WithTx(tx *gorm.DB) *productCourierServiceRepository
 	Create(productCourierService *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	GetAll() (model []*models.ProductCourierService, err error)
 	GetById(id uint) (model *models.ProductCourierService, err error)
@@ -27,6 +30,15 @@ func NewProductCourierServiceRepository(c *ProductCourierServiceRepositoryConfig
 	return &productCourierServiceRepository{
 		db: c.DB,
 	}
+}
+
+func (u productCourierServiceRepository) WithTx(tx *gorm.DB) *productCourierServiceRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productCourierServiceRepository) Create(newModel *models.ProductCourierService) (model *models.ProductCourierService, err error) {

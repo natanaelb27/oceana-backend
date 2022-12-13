@@ -80,7 +80,21 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 }
 
 func (u productService) WithTx(tx *gorm.DB) *productService {
+
 	u.productRepository = u.productRepository.WithTx(tx)
+	u.merchantRepository = u.merchantRepository.WithTx(tx)
+	u.productItemRepository = u.productItemRepository.WithTx(tx)
+	u.productVariationRepository = u.productVariationRepository.WithTx(tx)
+	// u.productViewRepository = u.productViewRepository.WithTx(tx)
+	// u.productFavoriteRepository = u.productFavoriteRepository.WithTx(tx)
+	// u.merchantCourierServiceRepository = u.merchantCourierServiceRepository.WithTx(tx)
+	// u.categoryRepository = u.categoryRepository.WithTx(tx)
+	u.productVariantTypeRepository = u.productVariantTypeRepository.WithTx(tx)
+	u.productVariantMediaRepository = u.productVariantMediaRepository.WithTx(tx)
+	u.productVariantRepository = u.productVariantRepository.WithTx(tx)
+	u.productCourierServiceRepository = u.productCourierServiceRepository.WithTx(tx)
+	// u.productMediaRepository = u.productMediaRepository.WithTx(tx)
+
 	return &u
 }
 
@@ -612,6 +626,17 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 
 		//* product variants - check changes
+		// validation
+		// if length of images not equal options then invalid model
+		if len(rV.Options) <= 0 {
+			return nil, e.ErrEmptyVariants
+		}
+
+		// get all product variants from database by productVariantTypeID and Name
+		pv, err := s.productVariantRepository.GetAllByProductVariantTypeID(pvts[iOV].ID)
+		if err != nil {
+			return nil, err
+		}
 		// product variants - req to ori comparison - append creates
 		if len(rV.Options) > len(oV.Options) {
 			for i := len(oV.Options); i < len(rV.Options); i++ {
@@ -630,8 +655,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			if len(rO)-1 < iOO {
 				pvDeletes = append(pvDeletes, &productInternalDtos.PvUpdateInfo{
 					Before: &models.ProductVariant{
-						Name:                 oO,
-						ProductVariantTypeID: pvts[iOV].ID,
+						ID: pv[iOO].ID,
 					},
 				})
 				continue
@@ -639,8 +663,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 				// if there is changes then append updates
 				pvUpdates = append(pvUpdates, &productInternalDtos.PvUpdateInfo{
 					Before: &models.ProductVariant{
-						Name:                 oO,
-						ProductVariantTypeID: pvts[iOV].ID,
+						ID: pv[iOO].ID,
 					},
 					After: &models.ProductVariant{
 						Name:                 rO[iOO],
@@ -651,6 +674,29 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 
 		//* product variant medias - check changes
+		// validation
+		// if iteration 0
+		if iOV == 0 {
+			// if length of images not equal options then invalid model
+			if len(rV.Images) != len(rV.Options) {
+				return nil, e.ErrInvalidVariantsMedia
+			}
+		} else {
+			// if iteration more than 0 then don't allow image to exists
+			if len(rV.Images) > 0 {
+				return nil, e.ErrInvalidVariantsMedia
+			}
+		}
+		// make array of uint of product variant ids
+		pvIDs := make([]uint, 0)
+		for _, v := range pv {
+			pvIDs = append(pvIDs, v.ID)
+		}
+		// get all product variant medias from db by
+		pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
 		// product variant medias - req to ori comparison - append creates
 		if len(rV.Images) > len(oV.Images) {
 			for i := len(oV.Images); i < len(rV.Images); i++ {
@@ -670,7 +716,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			if len(rI)-1 < iOI {
 				pvmDeletes = append(pvmDeletes, &productInternalDtos.PvmUpdateInfo{
 					Before: &models.ProductVariantMedia{
-						MediaURL: oI,
+						ID: pvm[iOI].ID,
 					},
 				})
 				continue
@@ -678,7 +724,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 				// if there is changes then append updates
 				pvmUpdates = append(pvmUpdates, &productInternalDtos.PvmUpdateInfo{
 					Before: &models.ProductVariantMedia{
-						MediaURL: oI,
+						ID: pvm[iOI].ID,
 					},
 					After: &models.ProductVariantMedia{
 						MediaURL: rI[iOI],
@@ -739,48 +785,153 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			},
 		})
 		// ! to allow updates stock and SKU to 0 quantity then don't forget to use maps for updates later
+
 	}
 
-	// todo: check changes on product variation
+	var pcsCreates = []*productInternalDtos.PcsUpdateInfo{}
+	var pcsDeletes = []*productInternalDtos.PcsUpdateInfo{}
 
-	// todo: check changes on product courier service
+	//* product courier services - check changes
+	// original couriers
+	oC := oriProductModel.Couriers
+	rC := request.Couriers
+	// validate couriers length
+	if len(oC) != len(rC) {
+		return nil, e.ErrInvalidModel
+	}
+	for iVOC, vOC := range oC {
+		oCS := vOC.CourierServices
+		rCS := request.Couriers[iVOC].CourierServices
+		// validate courier services length
+		if len(oCS) != len(rCS) {
+			return nil, e.ErrInvalidModel
+		}
+		for iVOCS, vOCS := range oCS {
+			merchantCourierService, err := s.merchantCourierServiceRepository.GetByMerchantIDCourierServiceID(oriProductModel.MerchantID, vOCS.ID)
+			if err != nil {
+				return nil, e.ErrInvalidModel
+			}
+
+			// if nothing changes then continue to next iteration
+			if vOCS.IsActive == rCS[iVOCS].IsActive {
+				continue
+			}
+			// if is active change from true to false then delete product courier services
+			if vOCS.IsActive && !rCS[iVOCS].IsActive {
+				// append to delete
+				pcsDeletes = append(pcsDeletes, &productInternalDtos.PcsUpdateInfo{
+					Before: &models.ProductCourierService{
+						MerchantCourierServiceID: merchantCourierService.ID,
+						ProductId:                product.ID,
+					},
+				})
+			}
+			if !vOCS.IsActive && rCS[iVOCS].IsActive {
+				// append to create
+				pcsCreates = append(pcsCreates, &productInternalDtos.PcsUpdateInfo{
+					After: &models.ProductCourierService{
+						MerchantCourierServiceID: merchantCourierService.ID,
+						ProductId:                product.ID,
+					},
+				})
+			}
+		}
+	}
 
 	// todo: update
 
-	// log product variant types update info
-	for iPvt, pvt := range pvtCreates {
-		fmt.Println("pvtCreates", iPvt, pvt.NewPVT.Name)
-		// delete pvt also whatever that referencing to pvt id
-	}
-	for iPvtU, pvtU := range pvtUpdates {
-		fmt.Println("pvtUpdates", iPvtU, pvtU.ID, pvtU.NewPVT.Name)
-		// update pvt
-	}
-	for iPvtD, pvtD := range pvtDeletes {
-		fmt.Println("pvtDeletes", iPvtD, pvtD.ID)
-		// delete pvt also whatever that referencing to pvt id
+	// todo: check changes on product variation
+	// product_variations need product_item_id and product_variant_id
+	// map inserted variants to 0,1,2... to be selected later for product variation
+	// insert all variants
+	// loop through product items to insert to product variations
+	// if len(piCreates) > 0 ||
+	// 	len(piDeletes) > 0 ||
+	// 	len(piUpdates) > 0 {
+	// 	productVariants := []*models.ProductVariant{}
+	// 	for _, rPI := range request.ProductItems {
+
+	// 	}
+	// }
+
+	// delete all product variation
+	for _, oPI := range oriProductModel.ProductItems {
+		err := s.productVariationRepository.DeleteAllByProductItemID(oPI.ID)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
 	}
 
-	// log product variants update info
-	for _, v := range pvCreates {
-		fmt.Println("pvCreates", v.After.Name)
+	//* product variant types - update operations
+	for _, v := range pvtCreates {
+		_, err := s.productVariantTypeRepository.Create(v.NewPVT)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("pvtCreates", v.NewPVT.Name)
 	}
-	for _, v := range pvDeletes {
-		fmt.Println("pvDeletes", v.Before.Name)
+	for _, v := range pvtUpdates {
+		_, err := s.productVariantTypeRepository.Update(v.ID, v.NewPVT)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("pvtUpdates", v.ID)
+	}
+	for _, v := range pvtDeletes {
+		_, err := s.productVariantTypeRepository.Delete(v.ID)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("pvtDeletes", v.ID)
+	}
+
+	//* product variant - update operations
+	newPvIds := make([]uint, 0)
+	for _, v := range pvCreates {
+		fmt.Println("pvtCreates", v.After.Name)
+		newPv, err := s.productVariantRepository.Create(v.After)
+		if err != nil {
+			return nil, err
+		}
+		newPvIds = append(newPvIds, newPv.ID)
 	}
 	for _, v := range pvUpdates {
 		fmt.Println("pvUpdates", v.Before.Name, v.After.Name)
+		_, err := s.productVariantRepository.Update(v.Before.ID, v.After)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, v := range pvDeletes {
+		fmt.Println("pvDeletes", v.Before.ID)
+		_, err := s.productVariantRepository.Delete(v.Before.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// log product variant medias update info
-	for _, v := range pvmCreates {
+	//* product variant medias - update operations
+	for i, v := range pvmCreates {
 		fmt.Println("pvmCreates", v.After.MediaURL)
-	}
-	for _, v := range pvmDeletes {
-		fmt.Println("pvmDeletes", v.Before.MediaURL)
+		v.After.ProductVariantID = newPvIds[i]
+		_, err := s.productVariantMediaRepository.Create(v.After)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, v := range pvmUpdates {
-		fmt.Println("pvmUpdates", v.Before.MediaURL, v.After.MediaURL)
+		fmt.Println("pvmUpdates", v.Before.ID, v.After.MediaURL)
+		_, err := s.productVariantMediaRepository.Update(v.Before.ID, v.After)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, v := range pvmDeletes {
+		// since pvm dependence on pv id then when pv deletes above then it wil cascade delete too to its pvm, thats why we add condition if err is not not found then its not an error
+		_, err = s.productVariantMediaRepository.Delete(v.Before.ID)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
 	}
 
 	// log product items update info
@@ -793,10 +944,23 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		fmt.Println(v.After.Price)
 		fmt.Println(v.After.StockQuantity)
 		fmt.Println(v.After.SKU)
+		// also delete product variations by product item
 	}
 	for _, v := range piUpdates {
 		fmt.Println("piUpdates")
 		fmt.Printf("\tid: %v\n\tprice: %v\n\tstock quantity: %v\n\tsku: %v\n", v.Before.ID, v.After.Price, v.After.StockQuantity, v.After.SKU)
+	}
+
+	// log product items update info
+	for _, v := range pcsCreates {
+		fmt.Println("pcsCreates")
+		fmt.Println("\t", v.After.MerchantCourierServiceID)
+		fmt.Println("\t", v.After.ProductId)
+	}
+	for _, v := range pcsDeletes {
+		fmt.Println("pcsDeletes")
+		fmt.Println("\t", v.Before.MerchantCourierServiceID)
+		fmt.Println("\t", v.Before.ProductId)
 	}
 
 	// get updated product model
@@ -805,7 +969,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		return nil, err
 	}
 
-	return productModel, nil
+	// return productModel, nil
+	return productModel, e.ErrMarketplaceVoucherNotOngoing
 }
 
 func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {

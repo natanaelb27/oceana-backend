@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -33,12 +34,14 @@ func DBTransactionMiddleware() gin.HandlerFunc {
 		c.Next()
 
 		// run after handler function finishes
+		fmt.Println(StatusInList(c.Writer.Status(), []int{http.StatusOK, http.StatusCreated}))
 		if StatusInList(c.Writer.Status(), []int{http.StatusOK, http.StatusCreated}) {
 			// commit transactions
 			if err := tx.Commit().Error; err != nil {
 				log.Print("tx commit error: ", err)
 			}
 		} else {
+			fmt.Println("ROLLBACK")
 			// rolling back transaction due to status code other than
 			tx.Rollback()
 		}
