@@ -524,9 +524,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 	// add product media to create
 	for _, v := range request.Images {
-		fmt.Println("images")
 		if exists := oriIPMMap[v]; !exists {
-			fmt.Println("test")
 			pmCreates = append(pmCreates, &productInternalDtos.PmUpdateInfo{
 				After: &models.ProductMedia{
 					ProductID: product.ID,
@@ -885,25 +883,25 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	//* product variant types - update operations
 	for _, v := range pvtCreates {
+		fmt.Println("pvtCreates", v.NewPVT.Name)
 		_, err := s.productVariantTypeRepository.Create(v.NewPVT)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("pvtCreates", v.NewPVT.Name)
 	}
 	for _, v := range pvtUpdates {
+		fmt.Println("pvtUpdates", v.ID)
 		_, err := s.productVariantTypeRepository.Update(v.ID, v.NewPVT)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("pvtUpdates", v.ID)
 	}
 	for _, v := range pvtDeletes {
+		fmt.Println("pvtDeletes", v.ID)
 		_, err := s.productVariantTypeRepository.Delete(v.ID)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("pvtDeletes", v.ID)
 	}
 
 	//* product variant - update operations
@@ -987,16 +985,25 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
-	// todos: create and update product courier service
+	//* product courier services - update creates
 	for _, v := range pcsCreates {
 		fmt.Println("pcsCreates")
 		fmt.Println("\t", v.After.MerchantCourierServiceID)
 		fmt.Println("\t", v.After.ProductId)
+		_, err = s.productCourierServiceRepository.Create(v.After)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
+
 	}
 	for _, v := range pcsDeletes {
 		fmt.Println("pcsDeletes")
 		fmt.Println("\t", v.Before.MerchantCourierServiceID)
 		fmt.Println("\t", v.Before.ProductId)
+		err = s.productCourierServiceRepository.DeleteByMerchantCourierServiceIDProductID(v.Before.MerchantCourierServiceID, v.Before.ProductId)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
+		}
 	}
 
 	// var pVarCreates = []*productInternalDtos.PvarUpdateInfo{}
@@ -1023,7 +1030,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		for iVI, vVI := range vPI.VariantIndex {
 			choosenVariantIndexes = append(choosenVariantIndexes, variantsMap[iVI][vVI])
 		}
-		fmt.Println(choosenVariantIndexes)
 		for _, vCVI := range choosenVariantIndexes {
 			pVarCreates = append(pVarCreates, &productInternalDtos.PvarUpdateInfo{
 				After: &models.ProductVariation{
@@ -1057,13 +1063,10 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		return nil, err
 	}
 
-	// return productModel, nil
-	return productModel, e.ErrMarketplaceVoucherNotOngoing
+	return productModel, nil
 }
 
 func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {
-	// TODO: compare product model
-
 	// product
 	productModel, err := s.productRepository.GetUpdateByProductID(productID)
 	if err != nil {

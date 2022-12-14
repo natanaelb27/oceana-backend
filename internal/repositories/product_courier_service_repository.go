@@ -16,6 +16,7 @@ type ProductCourierServiceRepository interface {
 	GetByConditionMap(conditionMap map[string]any) (model *models.ProductCourierService, err error)
 	Update(id uint, newModel *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	Delete(id uint) (model *models.ProductCourierService, err error)
+	DeleteByMerchantCourierServiceIDProductID(merchantCourierServiceID uint, productID uint) (err error)
 }
 
 type productCourierServiceRepository struct {
@@ -108,6 +109,19 @@ func (r *productCourierServiceRepository) Delete(id uint) (model *models.Product
 	}
 
 	model.ID = id
+
+	return
+}
+
+func (r *productCourierServiceRepository) DeleteByMerchantCourierServiceIDProductID(merchantCourierServiceID uint, productID uint) (err error) {
+	result := r.db.
+		Where("merchant_courier_service_id = ?", merchantCourierServiceID).
+		Where("product_id = ?", productID).
+		Delete(&models.ProductCourierService{})
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }
