@@ -185,6 +185,11 @@ type ProductModel struct {
 	Couriers     []*Courier     `json:"couriers" binding:"min=1" gorm:"-"`
 }
 
+type PmUpdateInfo struct {
+	Before *models.ProductMedia
+	After  *models.ProductMedia
+}
+
 // product variant type update info
 type PvtUpdateInfo struct {
 	ID     uint

@@ -80,20 +80,15 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 }
 
 func (u productService) WithTx(tx *gorm.DB) *productService {
-
 	u.productRepository = u.productRepository.WithTx(tx)
 	u.merchantRepository = u.merchantRepository.WithTx(tx)
 	u.productItemRepository = u.productItemRepository.WithTx(tx)
 	u.productVariationRepository = u.productVariationRepository.WithTx(tx)
-	// u.productViewRepository = u.productViewRepository.WithTx(tx)
-	// u.productFavoriteRepository = u.productFavoriteRepository.WithTx(tx)
-	// u.merchantCourierServiceRepository = u.merchantCourierServiceRepository.WithTx(tx)
-	// u.categoryRepository = u.categoryRepository.WithTx(tx)
 	u.productVariantTypeRepository = u.productVariantTypeRepository.WithTx(tx)
 	u.productVariantMediaRepository = u.productVariantMediaRepository.WithTx(tx)
 	u.productVariantRepository = u.productVariantRepository.WithTx(tx)
 	u.productCourierServiceRepository = u.productCourierServiceRepository.WithTx(tx)
-	// u.productMediaRepository = u.productMediaRepository.WithTx(tx)
+	u.productMediaRepository = u.productMediaRepository.WithTx(tx)
 
 	return &u
 }
@@ -510,9 +505,9 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 
 	// product medias to create
-	var pmCreate = []string{}
+	var pmCreates = make([]*productInternalDtos.PmUpdateInfo, 0)
 	// product medias to delete
-	var pmDelete = []string{}
+	var pmDeletes = make([]*productInternalDtos.PmUpdateInfo, 0)
 
 	//* product medias - check changes from images
 	// create product media from images
@@ -529,14 +524,28 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 	// add product media to create
 	for _, v := range request.Images {
+		fmt.Println("images")
 		if exists := oriIPMMap[v]; !exists {
-			pmCreate = append(pmCreate, v)
+			fmt.Println("test")
+			pmCreates = append(pmCreates, &productInternalDtos.PmUpdateInfo{
+				After: &models.ProductMedia{
+					ProductID: product.ID,
+					MediaURL:  v,
+					Type:      product_media_constants.TypeImage,
+				},
+			})
 		}
 	}
 	// add product media to delete
 	for _, v := range oriProductModel.Images {
 		if exists := reqIPMMap[v]; !exists {
-			pmDelete = append(pmDelete, v)
+			pmDeletes = append(pmDeletes, &productInternalDtos.PmUpdateInfo{
+				Before: &models.ProductMedia{
+					ProductID: product.ID,
+					MediaURL:  v,
+					Type:      product_media_constants.TypeImage,
+				},
+			})
 		}
 	}
 
@@ -556,13 +565,25 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// add product media to create
 	for _, v := range request.Videos {
 		if exists := oriVPMMap[v]; !exists {
-			pmCreate = append(pmCreate, v)
+			pmCreates = append(pmCreates, &productInternalDtos.PmUpdateInfo{
+				After: &models.ProductMedia{
+					ProductID: product.ID,
+					MediaURL:  v,
+					Type:      product_media_constants.TypeVideo,
+				},
+			})
 		}
 	}
 	// add product media to delete
 	for _, v := range oriProductModel.Videos {
 		if exists := reqVPMMap[v]; !exists {
-			pmDelete = append(pmDelete, v)
+			pmDeletes = append(pmDeletes, &productInternalDtos.PmUpdateInfo{
+				Before: &models.ProductMedia{
+					ProductID: product.ID,
+					MediaURL:  v,
+					Type:      product_media_constants.TypeVideo,
+				},
+			})
 		}
 	}
 
@@ -704,7 +725,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 				pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
 					After: &models.ProductVariantMedia{
 						MediaURL: rV.Images[i],
-						// todo: fill product variant id later after inserting product variant id
 					},
 				})
 			}
@@ -842,27 +862,26 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
-	// todo: update
-
-	// todo: check changes on product variation
-	// product_variations need product_item_id and product_variant_id
-	// map inserted variants to 0,1,2... to be selected later for product variation
-	// insert all variants
-	// loop through product items to insert to product variations
-	// if len(piCreates) > 0 ||
-	// 	len(piDeletes) > 0 ||
-	// 	len(piUpdates) > 0 {
-	// 	productVariants := []*models.ProductVariant{}
-	// 	for _, rPI := range request.ProductItems {
-
-	// 	}
-	// }
-
-	fmt.Println("pmCreate", pmCreate)
-	fmt.Println("pmDelete", pmDelete)
-
-	// todo: create product medias
-	// todo: delete product medias
+	//* product medias - update operations
+	for _, v := range pmCreates {
+		fmt.Println("pmCreates")
+		fmt.Println("\tproduct_id:", v.After.ProductID)
+		fmt.Println("\tmedia_url:", v.After.MediaURL)
+		_, err := s.productMediaRepository.Create(v.After)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, v := range pmDeletes {
+		fmt.Println("pmDeletes")
+		fmt.Println("\tproduct_id:", v.Before.ProductID)
+		fmt.Println("\tmedia_url:", v.Before.MediaURL)
+		fmt.Println(v)
+		err := s.productMediaRepository.DeleteByProductIDMediaURLType(v.Before.ProductID, v.Before.MediaURL, v.Before.Type)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	//* product variant types - update operations
 	for _, v := range pvtCreates {
@@ -968,7 +987,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 
-	// log product items update info
+	// todos: create and update product courier service
 	for _, v := range pcsCreates {
 		fmt.Println("pcsCreates")
 		fmt.Println("\t", v.After.MerchantCourierServiceID)
@@ -1038,8 +1057,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		return nil, err
 	}
 
-	return productModel, nil
-	// return productModel, e.ErrMarketplaceVoucherNotOngoing
+	// return productModel, nil
+	return productModel, e.ErrMarketplaceVoucherNotOngoing
 }
 
 func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {
