@@ -44,7 +44,6 @@ func NewWalletActivateResponse(source *models.Wallet) (target *WalletActivateRes
 }
 
 type WalletChangePinRequest struct {
-	UpgradeToken    string `json:"upgrade_token" binding:"required"`
 	Pin             string `json:"pin" binding:"required,len=6"`
 	PinConfirmation string `json:"pin_confirmation" binding:"required,eqfield=Pin"`
 }

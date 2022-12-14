@@ -1,8 +1,6 @@
 package services
 
 import (
-	"net/http"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -59,25 +57,19 @@ func (p *walletService) Activate(id uuid.UUID, requestModel *models.Wallet) (*mo
 }
 
 func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (wallet *models.Wallet, err error) {
-	redisKey := "upgrade-token-password:" + userId.String()
-
-	token, err := p.redisRepository.Get(c, redisKey)
+	upgradeTokenPassword, err := c.Cookie("upgrade_token_password")
 	if err != nil {
-		return nil, e.ErrStepUpNotFound
-	}
-
-	if token != request.UpgradeToken {
-		return nil, e.ErrStepUpNotFound
+		err = e.ErrStepUpNotFound
+		return
 	}
 
 	jwtWrapper, err := utils.NewJwtWrapper()
 	if err != nil {
 		return nil, err
 	}
-	claims, err := jwtWrapper.JwtStepUpValidateToken(token)
+	claims, err := jwtWrapper.JwtStepUpValidateToken(upgradeTokenPassword)
 	if err != nil {
-		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
-		c.Abort()
+		err = e.ErrUnauthorized
 		return
 	}
 	if claims.Data.Scope != "level1" {
@@ -99,11 +91,6 @@ func (p *walletService) ChangePin(c *gin.Context, userId uuid.UUID, request *ext
 	}
 
 	wallet, err = p.walletRepository.Update(newModel.ID, newModel)
-	if err != nil {
-		return
-	}
-
-	err = p.redisRepository.Delete(c, redisKey)
 	if err != nil {
 		return
 	}

@@ -305,11 +305,6 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 		return
 	}
 
-	err = u.redisRepository.Set(c, "upgrade-token-password:"+id.String(), token, 10*time.Minute)
-	if err != nil {
-		return
-	}
-
 	return
 }
 
