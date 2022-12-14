@@ -209,6 +209,10 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	refundMediaRepository := repositories.NewRefundMediaRepository(&repositories.RefundMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
@@ -344,6 +348,7 @@ func Init() *Handler {
 		OrderDetailRepository:  orderDetailRepository,
 		RefundRepository:       refundRepository,
 		RefundDetailRepository: refundDetailRepository,
+		RefundMediaRepository:  refundMediaRepository,
 	})
 
 	h := New(&HandlerConfig{

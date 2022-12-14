@@ -229,7 +229,19 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 
 	}
 
-	_, err = s.refundMediaRepository.Create(refundMediaList)
+	if len(refundMediaList) > 0 {
+		_, err = s.refundMediaRepository.Create(refundMediaList)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	updatedOrder := &models.Order{
+		Status: constants.ComplainedStatus,
+	}
+
+	_, err = s.orderRepository.Update(orderID, updatedOrder)
 
 	if err != nil {
 		return nil, err
