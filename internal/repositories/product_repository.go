@@ -70,17 +70,17 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Where("product_items.product_id = ?", productID).
 		Group("product_items.product_id")
 
-	subQueryProductReview := r.db.Model(&models.ProductItem{}).
-		Select(`
-			product_items.product_id AS product_id,
-			COUNT(product_reviews.id) AS rating_count,
-			AVG(product_reviews.rating) AS rating_star
-		`).
-		Joins("JOIN product_snapshots ON product_items.product_id = product_snapshots.product_id").
-		Joins("JOIN order_details ON product_snapshots.id = order_details.product_snapshot_id").
-		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
-		Where("product_items.product_id = ?", productID).
-		Group("product_items.product_id")
+	// subQueryProductReview := r.db.Model(&models.ProductItem{}).
+	// 	Select(`
+	// 		product_items.product_id AS product_id,
+	// 		COUNT(product_reviews.id) AS rating_count,
+	// 		AVG(product_reviews.rating) AS rating_star
+	// 	`).
+	// 	Joins("JOIN product_snapshots ON product_items.product_id = product_snapshots.product_id").
+	// 	Joins("JOIN order_details ON product_snapshots.id = order_details.product_snapshot_id").
+	// 	Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
+	// 	Where("product_items.product_id = ?", productID).
+	// 	Group("product_items.product_id")
 
 	subQueryProductFavorite := r.db.Model(&models.ProductFavorite{}).
 		Select(`
@@ -91,12 +91,22 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Where("is_favorite = TRUE").
 		Group("product_favorites.product_id")
 
-	subQueryProductMedia := r.db.Model(&models.ProductMedia{}).
+	subQueryProductImage := r.db.Model(&models.ProductMedia{}).
 		Select(`
 			product_id,
 			ARRAY_AGG(media_url) AS images
 		`).
 		Where("product_id = ?", productID).
+		Where("type = ?", product_media_constants.TypeImage).
+		Group("product_id")
+
+	subQueryProductVideo := r.db.Model(&models.ProductMedia{}).
+		Select(`
+			product_id,
+			ARRAY_AGG(media_url) AS videos
+		`).
+		Where("product_id = ?", productID).
+		Where("type = ?", product_media_constants.TypeVideo).
 		Group("product_id")
 
 	queryResult := r.db.Model(&models.Product{}).
@@ -109,12 +119,11 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			products.condition AS condition,
 			products.category_id AS category_id,
 			categories.name AS category,
-			COALESCE(product_media_agg.images, '{}') AS images,
+			COALESCE(product_image_agg.images, '{}') AS images,
+			COALESCE(product_video_agg.videos, '{}') AS videos,
 			products.description AS description,
 			product_item_agg.total_stock AS total_stock,
 			product_favorite_agg.like_count AS like_count,
-			product_review_agg.rating_count AS rating_count,
-			product_review_agg.rating_star AS rating_star,
 			product_discount_agg.discount_type AS discount_type,
 			product_discount_agg.discount AS discount,
 			(
@@ -144,10 +153,10 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		`).
 		Joins("LEFT JOIN (?) product_item_agg ON products.id = product_item_agg.product_id", subQueryProductItem).
 		Joins("LEFT JOIN (?) product_discount_agg ON products.id = product_discount_agg.product_id", subQueryProductDiscount).
-		Joins("LEFT JOIN (?) product_review_agg ON products.id = product_review_agg.product_id", subQueryProductReview).
 		Joins("LEFT JOIN (?) product_favorite_agg ON products.id = product_favorite_agg.product_id", subQueryProductFavorite).
 		Joins("LEFT JOIN categories ON products.category_id = categories.id").
-		Joins("LEFT JOIN (?) product_media_agg ON products.id = product_media_agg.product_id", subQueryProductMedia).
+		Joins("LEFT JOIN (?) product_image_agg ON products.id = product_image_agg.product_id", subQueryProductImage).
+		Joins("LEFT JOIN (?) product_video_agg ON products.id = product_video_agg.product_id", subQueryProductVideo).
 		Where("products.id = ?", productID).
 		Where("products.status = 'active'").
 		First(&productDetails)
