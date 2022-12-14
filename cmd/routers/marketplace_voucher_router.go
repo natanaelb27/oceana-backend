@@ -7,7 +7,7 @@ import (
 )
 
 func marketplaceVoucher(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
-	path := "/marketplace-vouchers"
+	path := "/marketplace/vouchers"
 	publicRoute := public.Group(path)
 	{
 		publicRoute.GET("/active", h.MarketplaceVoucherGetAllByActive)
