@@ -7,21 +7,24 @@ import (
 )
 
 type OrderList struct {
-	TransactionID       uuid.UUID          `json:"transaction_id"`
-	OrderID             uuid.UUID          `json:"order_id"`
-	InvoiceNumber       string             `json:"invoice_number"`
-	MerchantID          uint               `json:"merchant_id"`
-	ShopName            string             `json:"shop_name"`
-	UserID              uuid.UUID          `json:"user_id"`
-	UserFullName        string             `json:"user_full_name"`
-	CourierServiceID    uint               `json:"courier_service_id"`
-	CourierDescription  string             `json:"courier_description"`
-	OrderDetails        []*OrderDetailList `json:"order_details" gorm:"-"`
-	TransactionDatetime time.Time          `json:"transaction_datetime"`
-	OrderStatus         string             `json:"order_status"`
-	TotalPrice          float64            `json:"total_price"`
-	RefundID            *uuid.UUID         `json:"refund_id"`
-	ClaimStatus         bool               `json:"claim_status"`
+	TransactionID                        uuid.UUID          `json:"transaction_id"`
+	OrderID                              uuid.UUID          `json:"order_id"`
+	InvoiceNumber                        string             `json:"invoice_number"`
+	MerchantID                           uint               `json:"merchant_id"`
+	ShopName                             string             `json:"shop_name"`
+	UserID                               uuid.UUID          `json:"user_id"`
+	UserFullName                         string             `json:"user_full_name"`
+	CourierServiceID                     uint               `json:"courier_service_id"`
+	CourierDescription                   string             `json:"courier_description"`
+	OrderDetails                         []*OrderDetailList `json:"order_details" gorm:"-"`
+	TransactionDatetime                  time.Time          `json:"transaction_datetime"`
+	OrderStatus                          string             `json:"order_status"`
+	TotalPrice                           float64            `json:"total_price"`
+	RefundID                             *uuid.UUID         `json:"refund_id"`
+	ClaimStatus                          bool               `json:"claim_status"`
+	SellerConfirmationExpirationDatetime time.Time          `json:"seller_confirmation_expiration_datetime"`
+	OnProcessExpirationDatetime          time.Time          `json:"on_process_expiration_datetime"`
+	DeliveredExpirationDatetime          time.Time          `json:"delivered_expiration_datetime"`
 }
 
 type OrderListDetails struct {

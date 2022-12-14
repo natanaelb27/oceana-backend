@@ -28,7 +28,7 @@ func NewRefundRepository(c *RefundRepositoryConfig) RefundRepository {
 func (r *refundRepository) Create(newModel *models.Refund) (model *models.Refund, err error) {
 	result := r.db.Debug().
 		Where("order_id = ?", newModel.OrderID).
-		Where("status IN (?, ?, ?)", constants.RefundStatusOngoing, constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem).
+		Where("status IN (?, ?, ?, ?)", constants.RefundStatusOngoing, constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted).
 		FirstOrCreate(&newModel)
 
 	if result.Error != nil {
