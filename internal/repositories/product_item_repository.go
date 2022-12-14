@@ -126,7 +126,10 @@ func (r *productItemRepository) GetDetailsById(ID uint) (*dtos.ProductItemDetail
 			products.is_hazardous AS is_hazardous,
 			products.weight AS weight,
 			products.package_size AS package_size,
-			products.condition AS condition
+			products.condition AS condition,
+			products.status AS status,
+			products.process_day AS process_day,
+			products.is_preorder AS is_preorder
 		`).
 		Joins("JOIN products ON products.id = product_items.product_id").
 		Where("product_items.id = ?", ID).

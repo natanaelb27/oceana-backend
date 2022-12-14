@@ -2,9 +2,12 @@ package repositories
 
 import (
 	"errors"
+	"math"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -15,7 +18,7 @@ type WalletRepository interface {
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 	Create(newModel *models.Wallet) (model *models.Wallet, err error)
 	Update(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
-	GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.WalletTransactionHistory, error)
+	GetWalletTransactionHistory(id uuid.UUID, pagination *utils.Pagination) ([]*dtos.WalletTransactionHistory, *utils.Pagination, error)
 }
 
 type walletRepository struct {
@@ -90,25 +93,25 @@ func (w *walletRepository) Create(newModel *models.Wallet) (model *models.Wallet
 	return
 }
 
-func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.WalletTransactionHistory, error) {
+func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination *utils.Pagination) ([]*dtos.WalletTransactionHistory, *utils.Pagination, error) {
 	var walletTransactionHistory []*dtos.WalletTransactionHistory
 	var wallet *models.Wallet
 	var merchant *models.Merchant
 	result := w.db.Model(&models.Wallet{}).First(&wallet, id)
 	if result.Error != nil {
-		return nil, e.ErrDatabaseOperationFailed
+		return nil, nil, e.ErrDatabaseOperationFailed
 	}
 	if result.RowsAffected == 0 {
-		return nil, e.ErrDataNotFound
+		return nil, nil, e.ErrDataNotFound
 	}
-	queryWalletTopUp := w.db.Model(&models.WalletTopup{}).
+	queryWalletTopup := w.db.Model(&models.WalletTopup{}).
 		Select(`
 			id, 
 			wallet_id, 
 			amount, 
 			transaction_date, 
 			'Top Up Transaction' AS transaction_type,
-			'Debit' AS type
+			'Credit' AS type
 		`).
 		Where("wallet_id = ?", id)
 
@@ -119,40 +122,35 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 			transactions.total_price_with_shipping_fee AS amount, 
 			transactions.transaction_datetime, 
 			'Payment Transaction' AS transaction_type,
-			'Credit' AS type
+			'Debit' AS type
 		`).
 		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
 		Where("wallet_transaction_payments.wallet_id = ? AND transactions.user_id = ?", id, wallet.UserID)
 
-	// queryRefundTransactions := w.db.Model(&models.Refund{}).
-	// 	Select(`
-	// 			transactions.id, wallet_transaction_payments.wallet_id, SUM(refund_details.amount_user_get) AS amount, transactions.transaction_datetime, 'Refund Transaction' AS transaction_type
-	// 		`).
-	// 	Joins("JOIN refund_details ON refunds.id = refund_details.refund_id").
-	// 	Joins("JOIN order_details ON refunds.order_detail_id = order_details.id").
-	// 	Joins("JOIN orders ON order_details.order_id = orders.id").
-	// 	Joins("JOIN transactions ON orders.transaction_id = transactions.id").
-	// 	Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
-	// 	Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
-	// 	Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id).
-	// 	Group("transactions.id, wallet_transaction_payments.wallet_id")
+	subQueryRefund := w.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			SUM(refund_details.amount_user_get) AS amount
+		`).
+		Joins("JOIN refund_details ON refunds.id = refund_details.refund_id").
+		Where("refunds.status = ?", constants.RefundStatusCompleted).
+		Group("refunds.id")
 
 	queryRefundTransactions := w.db.Model(&models.Refund{}).
 		Select(`
-				refunds.order_detail_id AS id,
+				refunds.id AS id,
 				wallet_transaction_payments.wallet_id,
-				refund_details.amount_user_get AS amount, 
+				subQueryRefund.amount AS amount, 
 				transactions.transaction_datetime, 
 				'Refund Transaction' AS transaction_type,
-				'Debit' AS type
+				'Credit' AS type
 			`).
-		Joins("JOIN refund_details ON refunds.id = refund_details.refund_id").
-		Joins("JOIN order_details ON refunds.order_detail_id = order_details.id").
-		Joins("JOIN orders ON order_details.order_id = orders.id").
+		Joins("JOIN (?) subQueryRefund ON refunds.id = subQueryRefund.refund_id", subQueryRefund).
+		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN wallet_transaction_payments ON transactions.id = wallet_transaction_payments.transaction_id").
-		Where("payment_methods.name = ? AND wallet_transaction_payments.wallet_id = ?", "wallet", id)
+		Where("payment_methods.id = ? AND wallet_transaction_payments.wallet_id = ?", constants.WalletID, id)
 
 	result = w.db.Model(&models.Merchant{}).Where("user_id = ?", wallet.UserID).First(&merchant)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -160,48 +158,72 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID) ([]*dtos.Wa
 			SUM(refund_details.amount_merchant_lost)
 		`).
 			Joins("JOIN refunds ON refund_details.refund_id = refunds.id").
-			Joins("JOIN order_details ON order_details.id = refunds.order_detail_id").
-			Joins("JOIN orders o ON order_details.order_id = o.id").
-			Where("o.id = orders.id").
-			Group("o.id")
+			Where("refunds.status = ?", constants.RefundStatusCompleted).
+			Where("refunds.order_id = orders.id").
+			Group("refunds.order_id")
 
 		queryWalletTransactionsAsSeller := w.db.Model(&models.Order{}).
 			Select(`
-				transactions.id AS id, 
+				orders.id AS id, 
 				wallets.id AS wallet_id, 
 				(orders.total_price_after_discount - (?)) AS amount,
 				transactions.transaction_datetime, 
 				'Received Payment Transaction' AS transaction_type,
-				'Debit' AS type
+				'Credit' AS type
 			`, subQuery).
 			Joins("JOIN transactions ON transactions.id = orders.transaction_id").
 			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
 			Joins("JOIN wallets ON wallets.user_id = merchants.user_id").
-			Where("orders.merchant_id = ?", merchant.ID)
+			Where("orders.merchant_id = ?", merchant.ID).
+			Where("orders.status = ?", constants.CompletedStatus).
+			Where("orders.claim_status = true")
 
 		queryResult := w.db.Raw("(?) UNION (?) UNION (?) UNION (?)",
-			queryWalletTopUp,
+			queryWalletTopup,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
 			queryWalletTransactionsAsSeller,
 		).
-			Order("transaction_date DESC").
-			Find(&walletTransactionHistory)
+			Order("transaction_date DESC")
+
+		var totalRows int64
+		queryResult = w.db.Table("(?) AS tbl", queryResult).Count(&totalRows)
+
 		if queryResult.Error != nil {
-			return nil, e.ErrDatabaseOperationFailed
+			return nil, nil, e.ErrDatabaseOperationFailed
 		}
+
+		pagination.TotalRows = uint(totalRows)
+		pagination.TotalPages = uint(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
+		queryResult = w.db.Table("(?) AS tbl", queryResult).Offset(int(pagination.GetOffset())).Limit(int(pagination.GetLimit())).Find(&walletTransactionHistory)
+
+		if queryResult.Error != nil {
+			return nil, nil, e.ErrDatabaseOperationFailed
+		}
+
 	} else {
 		queryResult := w.db.Raw("(?) UNION (?) UNION (?)",
-			queryWalletTopUp,
+			queryWalletTopup,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
 		).
-			Order("transaction_date DESC").
-			Find(&walletTransactionHistory)
+			Order("transaction_date DESC")
+
+		var totalRows int64
+		queryResult = w.db.Table("(?) AS tbl", queryResult).Count(&totalRows)
+
 		if queryResult.Error != nil {
-			return nil, e.ErrDatabaseOperationFailed
+			return nil, nil, e.ErrDatabaseOperationFailed
+		}
+
+		pagination.TotalRows = uint(totalRows)
+		pagination.TotalPages = uint(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
+		queryResult = w.db.Table("(?) AS tbl", queryResult).Offset(int(pagination.GetOffset())).Limit(int(pagination.GetLimit())).Find(&walletTransactionHistory)
+
+		if queryResult.Error != nil {
+			return nil, nil, e.ErrDatabaseOperationFailed
 		}
 	}
 
-	return walletTransactionHistory, nil
+	return walletTransactionHistory, pagination, nil
 }

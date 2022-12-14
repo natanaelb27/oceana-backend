@@ -12,15 +12,22 @@ type OrderList struct {
 	InvoiceNumber       string             `json:"invoice_number"`
 	MerchantID          uint               `json:"merchant_id"`
 	ShopName            string             `json:"shop_name"`
+	UserID              uuid.UUID          `json:"user_id"`
+	UserFullName        string             `json:"user_full_name"`
+	CourierServiceID    uint               `json:"courier_service_id"`
+	CourierDescription  string             `json:"courier_description"`
 	OrderDetails        []*OrderDetailList `json:"order_details" gorm:"-"`
 	TransactionDatetime time.Time          `json:"transaction_datetime"`
 	OrderStatus         string             `json:"order_status"`
 	TotalPrice          float64            `json:"total_price"`
+	RefundID            *uuid.UUID         `json:"refund_id"`
+	ClaimStatus         bool               `json:"claim_status"`
 }
 
 type OrderListDetails struct {
 	TransactionID                   uuid.UUID               `json:"transaction_id"`
 	UserID                          uuid.UUID               `json:"user_id"`
+	UserFullName                    string                  `json:"user_full_name"`
 	OrderID                         uuid.UUID               `json:"oder_id"`
 	InvoiceNumber                   string                  `json:"invoice_number"`
 	MerchantID                      uint                    `json:"merchant_id"`
@@ -28,6 +35,7 @@ type OrderListDetails struct {
 	OrderDetails                    []*OrderDetailList      `json:"order_details" gorm:"-"`
 	TransactionDatetime             time.Time               `json:"transaction_datetime"`
 	OrderStatus                     string                  `json:"order_status"`
+	CourierServiceID                uint                    `json:"courier_service_id"`
 	CourierDescription              string                  `json:"courier_description"`
 	OrderTrackingHistory            []*OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
 	Address                         *AddressSnapshotDetails `json:"address" gorm:"-"`
@@ -38,9 +46,11 @@ type OrderListDetails struct {
 	TotalMarketplaceVoucherDiscount float64                 `json:"total_marketplace_voucher_discount"`
 	ShippingFee                     uint                    `json:"shipping_fee"`
 	TotalPayment                    float64                 `json:"total_payment"`
+	RefundID                        *uuid.UUID              `json:"refund_id"`
+	ClaimStatus                     bool                    `json:"claim_status"`
 }
 
-type OrderProcessOrder struct {
-	CourierServiceID uint
-	OrderID          uuid.UUID
-}
+// type OrderProcessDelivery struct {
+// 	CourierServiceID uint
+// 	OrderID          uuid.UUID
+// }

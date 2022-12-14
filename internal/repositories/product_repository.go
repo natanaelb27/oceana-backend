@@ -102,10 +102,12 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 	queryResult := r.db.Model(&models.Product{}).
 		Select(`
 			products.name AS name,
+			products.merchant_id AS merchant_id,
 			products.is_hazardous AS is_hazardous,
 			products.weight AS weight,
 			products.package_size AS package_size,
 			products.condition AS condition,
+			products.category_id AS category_id,
 			categories.name AS category,
 			COALESCE(product_media_agg.images, '{}') AS images,
 			products.description AS description,
