@@ -1092,7 +1092,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		return nil, err
 	}
 
-	return productModel, e.ErrDeleteDefaultAddressConflict
+	return productModel, nil
 }
 
 func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {
