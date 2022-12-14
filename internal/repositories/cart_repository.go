@@ -88,7 +88,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			sqTotalViewCount,
 		),
 	)
-	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
+	queryResult := r.db.Model(&models.Cart{}).Select(`
 			carts.id AS carts_id,
 			carts.user_id AS user_id,
 			products.id AS product_id,
@@ -191,7 +191,7 @@ func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_
 		Joins("JOIN districts ON sub_districts.district_id = districts.id").
 		Joins("JOIN cities ON districts.city_id = cities.id").
 		Joins("JOIN provinces ON cities.province_id = provinces.id").
-		Group("products.id, merchants.id, provinces.name").
+		Group("merchants.id, provinces.name").
 		Find(&result)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
