@@ -193,18 +193,16 @@ func (r *marketplaceVoucherRepository) AddCurrentQuota(ID uint, amount uint) (*m
 func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMarketplaceVoucherQuery, pagination *utils.Pagination) ([]*dtos.MarketplaceVoucherDetails, *utils.Pagination, error) {
 	var marketplaceVoucherDetails []*dtos.MarketplaceVoucherDetails
 
-	subQueryUnavailableVoucher := r.db.Model(&models.Order{}).
+	subQueryUnavailableVoucher := r.db.Model(&models.Transaction{}).
 		Select(`
-			order_merchant_vouchers.merchant_voucher_id
+			transaction_marketplace_vouchers.marketplace_voucher_id
 		`).
-		Joins("JOIN transactions ON transactions.id = orders.transaction_id").
-		Joins("JOIN order_merchant_vouchers ON order_merchant_vouchers.order_id = orders.id").
+		Joins("JOIN transaction_marketplace_vouchers ON transaction_marketplace_vouchers.transaction_id = transactions.id").
 		Where("transactions.user_id = ?", id)
 
 	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
 		Select(`
-			id, 
-			code, 
+			id,  
 			start_datetime, 
 			end_datetime, 
 			discount_type, 
@@ -221,10 +219,6 @@ func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query 
 			) AS voucher_status
 		`)
 
-	if query.SearchVoucherCode != "" {
-		queryResult.Where("code = ?", query.SearchVoucherCode)
-	}
-
 	if query.FilterVoucherStatus == "ongoing" {
 		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
 	}
@@ -238,11 +232,11 @@ func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query 
 	}
 
 	if query.FilterVoucherAvailability == "available" {
-		queryResult.Where("merchant_vouchers.id NOT IN (?)", subQueryUnavailableVoucher)
+		queryResult.Where("marketplace_vouchers.id NOT IN (?)", subQueryUnavailableVoucher)
 	}
 
 	if query.FilterVoucherAvailability == "unavailable" {
-		queryResult.Where("merchant_vouchers.id IN (?)", subQueryUnavailableVoucher)
+		queryResult.Where("marketplace_vouchers.id IN (?)", subQueryUnavailableVoucher)
 	}
 
 	queryResult.

@@ -129,7 +129,6 @@ func NewMarketplaceVoucherGetAllResponse(source []*dtos.MarketplaceVoucherDetail
 }
 
 type BuyerMarketplaceVoucherQuery struct {
-	SearchVoucherCode         string `json:"search-voucher-code"`
 	FilterVoucherStatus       string `json:"filter-voucher-status"`
 	FilterVoucherAvailability string `json:"filter-voucher-availability"`
 	SortBy                    string `json:"sort-by"`
@@ -141,7 +140,6 @@ type BuyerMarketplaceVoucherQuery struct {
 func NewBuyerMarketplaceVoucherQuery(c *gin.Context) *BuyerMarketplaceVoucherQuery {
 	var query BuyerMarketplaceVoucherQuery
 
-	searchVoucherCode := c.Query("search-voucher-code")
 	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
 	filterVoucherAvailability := strings.ToLower(c.Query("filter-voucher-availability"))
 	sortBy := strings.ToLower(c.Query("sort-by"))
@@ -149,7 +147,6 @@ func NewBuyerMarketplaceVoucherQuery(c *gin.Context) *BuyerMarketplaceVoucherQue
 	limit := c.Query("limit")
 	page := c.Query("page")
 
-	query.SearchVoucherCode = searchVoucherCode
 	query.FilterVoucherStatus = filterVoucherStatus
 	query.FilterVoucherAvailability = filterVoucherAvailability
 
