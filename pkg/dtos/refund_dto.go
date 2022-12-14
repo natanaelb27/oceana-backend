@@ -14,9 +14,14 @@ type OrderDetailRefund struct {
 }
 
 type CreateRefundRequest struct {
-	OrderDetail []*OrderDetailRefund    `json:"order_detail" binding:"required"`
-	Reason      string                  `json:"reason" binding:"required"`
-	RefundMedia []*multipart.FileHeader `form:"refund_media"`
+	OrderDetail []*OrderDetailRefund  `json:"order_detail" binding:"required"`
+	Reason      string                `json:"reason" binding:"required"`
+	Photo1      *multipart.FileHeader `form:"photo_1"`
+	Photo2      *multipart.FileHeader `form:"photo_2"`
+	Photo3      *multipart.FileHeader `form:"photo_3"`
+	Photo4      *multipart.FileHeader `form:"photo_4"`
+	Photo5      *multipart.FileHeader `form:"photo_5"`
+	Video       *multipart.FileHeader `form:"video"`
 }
 
 type CreateRefundResponse struct {

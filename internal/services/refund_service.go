@@ -7,6 +7,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -21,6 +22,7 @@ type refundService struct {
 	orderDetailRepository  r.OrderDetailRepository
 	refundRepository       r.RefundRepository
 	refundDetailRepository r.RefundDetailRepository
+	refundMediaRepository  r.RefundMediaRepository
 }
 
 type RefundServiceConfig struct {
@@ -28,6 +30,7 @@ type RefundServiceConfig struct {
 	OrderDetailRepository  r.OrderDetailRepository
 	RefundRepository       r.RefundRepository
 	RefundDetailRepository r.RefundDetailRepository
+	RefundMediaRepository  r.RefundMediaRepository
 }
 
 func NewRefundService(c *RefundServiceConfig) RefundService {
@@ -36,6 +39,7 @@ func NewRefundService(c *RefundServiceConfig) RefundService {
 		orderDetailRepository:  c.OrderDetailRepository,
 		refundRepository:       c.RefundRepository,
 		refundDetailRepository: c.RefundDetailRepository,
+		refundMediaRepository:  c.RefundMediaRepository,
 	}
 }
 
@@ -64,8 +68,6 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 	if err != nil {
 		return nil, err
 	}
-
-	// refundMedia, err := s.refundMediaRepository.Create()
 
 	var refundDetailList []*models.RefundDetail
 
@@ -101,7 +103,137 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		return nil, err
 	}
 
-	return nil, nil
+	var refundMediaList []*models.RefundMedia
 
-	// return dtos.NewCreateRefundResponse(refund), nil
+	if request.Photo1 != nil {
+		photoFile, err := request.Photo1.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		imageUrl, err := utils.UploadImage(photoFile)
+		if err != nil {
+			return nil, err
+		}
+
+		refundMedia := &models.RefundMedia{
+			RefundID: refund.ID,
+			MediaURL: imageUrl,
+			Type:     "photo",
+		}
+
+		refundMediaList = append(refundMediaList, refundMedia)
+	}
+
+	if request.Photo2 != nil {
+		photoFile, err := request.Photo2.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		imageUrl, err := utils.UploadImage(photoFile)
+		if err != nil {
+			return nil, err
+		}
+
+		refundMedia := &models.RefundMedia{
+			RefundID: refund.ID,
+			MediaURL: imageUrl,
+			Type:     "photo",
+		}
+
+		refundMediaList = append(refundMediaList, refundMedia)
+
+	}
+
+	if request.Photo3 != nil {
+		photoFile, err := request.Photo3.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		imageUrl, err := utils.UploadImage(photoFile)
+		if err != nil {
+			return nil, err
+		}
+
+		refundMedia := &models.RefundMedia{
+			RefundID: refund.ID,
+			MediaURL: imageUrl,
+			Type:     "photo",
+		}
+
+		refundMediaList = append(refundMediaList, refundMedia)
+
+	}
+
+	if request.Photo4 != nil {
+		photoFile, err := request.Photo4.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		imageUrl, err := utils.UploadImage(photoFile)
+		if err != nil {
+			return nil, err
+		}
+
+		refundMedia := &models.RefundMedia{
+			RefundID: refund.ID,
+			MediaURL: imageUrl,
+			Type:     "photo",
+		}
+
+		refundMediaList = append(refundMediaList, refundMedia)
+
+	}
+
+	if request.Photo5 != nil {
+		photoFile, err := request.Photo5.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		imageUrl, err := utils.UploadImage(photoFile)
+		if err != nil {
+			return nil, err
+		}
+
+		refundMedia := &models.RefundMedia{
+			RefundID: refund.ID,
+			MediaURL: imageUrl,
+			Type:     "photo",
+		}
+
+		refundMediaList = append(refundMediaList, refundMedia)
+
+	}
+
+	if request.Video != nil {
+		videoFile, err := request.Video.Open()
+		if err != nil {
+			return nil, err
+		}
+		videoUrl, err := utils.UploadImage(videoFile)
+		if err != nil {
+			return nil, err
+		}
+
+		refundMedia := &models.RefundMedia{
+			RefundID: refund.ID,
+			MediaURL: videoUrl,
+			Type:     "video",
+		}
+
+		refundMediaList = append(refundMediaList, refundMedia)
+
+	}
+
+	_, err = s.refundMediaRepository.Create(refundMediaList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewCreateRefundResponse(refund), nil
 }
