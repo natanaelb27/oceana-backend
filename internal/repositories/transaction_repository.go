@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"database/sql"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -50,9 +53,9 @@ func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pend
 			transactions.payment_method_id AS payment_method_id,
 			payment_methods.name AS payment_method_name,
 			payment_methods.image AS payment_method_image,
-			transactions.transaction_datetime + INTERVAL '1 day' AS payment_expiration_datetime,
+			transactions.transaction_datetime + INTERVAL '1 day' * @interval_payment_expiration AS payment_expiration_datetime,
 			transactions.total_price_with_shipping_fee AS total_payment
-		`).
+		`, sql.Named("interval_payment_expiration", constants.PaymentExpirationInterval)).
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN users ON transactions.user_id = users.id").
 		Where("transactions.is_paid = false").
