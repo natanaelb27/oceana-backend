@@ -24,11 +24,12 @@ import (
 )
 
 type SealabsPayService interface {
-	Create(c *gin.Context, id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
+	Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
 	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (*internalDtos.SealabsPayDTO, error)
-	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
+	Delete(id uuid.UUID) (*models.SealabsPay, error)
+	SetDefault(id uuid.UUID, userID uuid.UUID) error
 	StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error
 	TopupWalletOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
 	RegisterOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
@@ -52,7 +53,8 @@ func NewSealabsPayService(c *SealabsPayServiceConfig) SealabsPayService {
 	}
 }
 
-func (p *sealabsPayService) Create(c *gin.Context, id uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+	// refund user
 	refundRequest, err := externalDtos.NewSealabsPayRefundRequest(request.TxnID)
 	if err != nil {
 		return nil, err
@@ -63,10 +65,16 @@ func (p *sealabsPayService) Create(c *gin.Context, id uuid.UUID, request *extern
 		return nil, err
 	}
 
-	model := request.ToModel(id)
+	model := request.ToModel(userID)
 
 	if !utils.ValidateSealabsPayCardNumber(model.AccountNumber) {
 		return nil, e.ErrInvalidSealabsPayCardNumber
+	}
+
+	// set current card as default if none currently exists
+	_, err = p.sealabsPayRepository.GetAll(userID)
+	if err == e.ErrDataNotFound {
+		model.IsDefault = true
 	}
 
 	_, err = p.redisRepository.Get(c, request.Signature)
@@ -107,8 +115,52 @@ func (p *sealabsPayService) GetByUserIDAndCardNumber(userID uuid.UUID, cardNumbe
 	return sealabsPayDTO, nil
 }
 
-func (p *sealabsPayService) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
-	return p.sealabsPayRepository.Delete(id)
+func (p *sealabsPayService) Delete(id uuid.UUID) (*models.SealabsPay, error) {
+	model, err := p.sealabsPayRepository.Delete(id)
+	if err != nil {
+		return nil, err
+	}
+	if !model.IsDefault {
+		return model, nil
+	}
+
+	// if default was deleted, set the first in GetAll() as default
+	models, _ := p.sealabsPayRepository.GetAll(model.UserID)
+	if len(models) == 0 {
+		return model, nil
+	}
+	firstCard := models[0]
+	firstCard.IsDefault = true
+	err = p.sealabsPayRepository.Update(firstCard.ID, firstCard)
+	if err != nil {
+		return nil, err
+	}
+	return model, nil
+}
+
+func (p *sealabsPayService) SetDefault(id uuid.UUID, userID uuid.UUID) error {
+	// unset current default
+	currentDefault, _ := p.sealabsPayRepository.GetDefaultByUserID(userID)
+	if currentDefault.ID != uuid.Nil {
+		err := p.sealabsPayRepository.SetDefaultFalse(currentDefault.ID, currentDefault)
+		if err != nil {
+			return err
+		}
+	}
+
+	// set new default
+	newDefault, err := p.sealabsPayRepository.GetById(id)
+	if err != nil {
+		return e.ErrInvalidSealabsPayID
+	}
+
+	newDefault.IsDefault = true
+	err = p.sealabsPayRepository.Update(id, newDefault)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *sealabsPayService) StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error {
@@ -301,7 +353,7 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 
 	json.Unmarshal(responseBodyBytes, &errResponse)
 	if response.StatusCode != http.StatusSeeOther {
-		return nil, e.ErrSealabsPayOperationFailed
+		return nil, e.ErrInsufficientBalance
 	}
 
 	headerLocation, ok := response.Header["Location"]

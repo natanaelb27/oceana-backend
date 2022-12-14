@@ -9,8 +9,8 @@ import (
 )
 
 func (h *Handler) SealabsPayCreate(c *gin.Context) {
-	id := utils.GinGetUUID(c, "id")
-	if id == uuid.Nil {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
@@ -21,7 +21,7 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 		return
 	}
 
-	_, err := h.sealabsPayService.Create(c, id, request)
+	_, err := h.sealabsPayService.Create(c, userID, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -31,15 +31,16 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayGetAll(c *gin.Context) {
-	id := utils.GinGetUUID(c, "id")
-	if id == uuid.Nil {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 
-	results, err := h.sealabsPayService.GetAll(id)
-	if err != nil {
+	results, err := h.sealabsPayService.GetAll(userID)
+	if err != nil && err != e.ErrDataNotFound {
 		utils.ResponseError(c, err)
+		return
 	}
 
 	var responseData []*dtos.SealabsPayCreateResponse = make([]*dtos.SealabsPayCreateResponse, 0)
@@ -53,7 +54,7 @@ func (h *Handler) SealabsPayGetAll(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayGetById(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("sealabs_pay_id"))
+	id, err := uuid.Parse(c.Param("sealabs-pay-id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -71,7 +72,7 @@ func (h *Handler) SealabsPayGetById(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayDelete(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("sealabs_pay_id"))
+	id, err := uuid.Parse(c.Param("sealabs-pay-id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -86,6 +87,28 @@ func (h *Handler) SealabsPayDelete(c *gin.Context) {
 	responseData := dtos.NewSealabsPayDeleteResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) SealabsPaySetDefault(c *gin.Context) {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	id, err := uuid.Parse(c.Param("sealabs-pay-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	err = h.sealabsPayService.SetDefault(id, userID)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, nil, nil)
 }
 
 func (h *Handler) SealabsPayTopupOTP(c *gin.Context) {

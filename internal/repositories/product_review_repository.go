@@ -62,7 +62,7 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 		Joins("JOIN users ON product_reviews.user_id = users.id").
 		Joins("JOIN order_details ON product_reviews.order_detail_id = order_details.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
-		Order(fmt.Sprintf("id %s", query.Sort)).
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
 		Where("product_reviews.product_id = ?", id)
 	if query.Comment {
 		queryResult = queryResult.Where("product_reviews.review <> ''")
