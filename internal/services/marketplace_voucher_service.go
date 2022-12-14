@@ -6,7 +6,10 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 )
 
 type MarketplaceVoucherService interface {
@@ -16,6 +19,7 @@ type MarketplaceVoucherService interface {
 	GetById(id uint) (*models.MarketplaceVoucher, error)
 	Update(id uint, newModel *models.MarketplaceVoucher) (*models.MarketplaceVoucher, error)
 	Delete(id uint) (*models.MarketplaceVoucher, error)
+	GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMarketplaceVoucherQuery) (*dtos.MarketplaceVoucherGetAllResponse, *utils.Pagination, error)
 }
 
 type marketplaceVoucherService struct {
@@ -169,4 +173,19 @@ func (p *marketplaceVoucherService) Delete(id uint) (*models.MarketplaceVoucher,
 	}
 
 	return p.marketplaceVoucherRepository.Delete(id)
+}
+
+func (p *marketplaceVoucherService) GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMarketplaceVoucherQuery) (*dtos.MarketplaceVoucherGetAllResponse, *utils.Pagination, error) {
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	marketplaceVoucherDetails, pagination, err := p.marketplaceVoucherRepository.GetAllDetailsByBuyer(id, query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dtos.NewMarketplaceVoucherGetAllResponse(marketplaceVoucherDetails), pagination, nil
 }
