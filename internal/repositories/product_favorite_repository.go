@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -8,6 +10,7 @@ import (
 )
 
 type ProductFavoriteRepository interface {
+	WithTx(tx *gorm.DB) *productFavoriteRepository
 	Create(productFavorite *models.ProductFavorite) (model *models.ProductFavorite, err error)
 	GetByUserIDAndProductID(userID uuid.UUID, productID uint) (model *models.ProductFavorite, err error)
 	Update(id uint, newModel *models.ProductFavorite) (model *models.ProductFavorite, err error)
@@ -25,6 +28,15 @@ func NewProductFavoriteRepository(c *ProductFavoriteRepositoryConfig) ProductFav
 	return &productFavoriteRepository{
 		db: c.DB,
 	}
+}
+
+func (u productFavoriteRepository) WithTx(tx *gorm.DB) *productFavoriteRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productFavoriteRepository) Create(newModel *models.ProductFavorite) (model *models.ProductFavorite, err error) {

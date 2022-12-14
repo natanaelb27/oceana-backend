@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -84,6 +85,10 @@ func (u productService) WithTx(tx *gorm.DB) *productService {
 	u.merchantRepository = u.merchantRepository.WithTx(tx)
 	u.productItemRepository = u.productItemRepository.WithTx(tx)
 	u.productVariationRepository = u.productVariationRepository.WithTx(tx)
+	u.productViewRepository = u.productViewRepository.WithTx(tx)
+	u.productFavoriteRepository = u.productFavoriteRepository.WithTx(tx)
+	u.merchantCourierServiceRepository = u.merchantCourierServiceRepository.WithTx(tx)
+	u.categoryRepository = u.categoryRepository.WithTx(tx)
 	u.productVariantTypeRepository = u.productVariantTypeRepository.WithTx(tx)
 	u.productVariantMediaRepository = u.productVariantMediaRepository.WithTx(tx)
 	u.productVariantRepository = u.productVariantRepository.WithTx(tx)
@@ -1025,11 +1030,35 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 	var pVarCreates = make([]*productInternalDtos.PvarUpdateInfo, 0)
+	// variant indexes combination map for validate and making sure combination not duplicate
+	var viCombinationMap = map[string]bool{}
 	for iPI, vPI := range request.ProductItems {
-		choosenVariantIndexes := make([]uint, 0)
-		for iVI, vVI := range vPI.VariantIndex {
-			choosenVariantIndexes = append(choosenVariantIndexes, variantsMap[iVI][vVI])
+		// validate variant index length to request variant length (variant type length)
+		if len(vPI.VariantIndex) != len(request.Variants) {
+			return nil, e.ErrInvalidModel
 		}
+		choosenVariantIndexes := make([]uint, 0)
+		// variant index combination map to append later
+		var viCombination string
+		for iVI, vVI := range vPI.VariantIndex {
+			// validate if value is less than request variant length (variant type length)
+			// if request variant index is more than variant type length then err
+			if int(vVI) >= len(variantsMap) {
+				return nil, e.ErrInvalidModel
+			}
+			// append choosen variant indexes
+			choosenVariantIndexes = append(choosenVariantIndexes, variantsMap[iVI][vVI])
+			// append combination
+			viCombination += strconv.Itoa(int(vVI))
+		}
+		// validate if combination already added before
+		if exists := viCombinationMap[viCombination]; exists {
+			return nil, e.ErrInvalidModel
+		}
+		// add combination to map
+		viCombinationMap[viCombination] = true
+
+		// append create
 		for _, vCVI := range choosenVariantIndexes {
 			pVarCreates = append(pVarCreates, &productInternalDtos.PvarUpdateInfo{
 				After: &models.ProductVariation{
@@ -1063,7 +1092,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		return nil, err
 	}
 
-	return productModel, nil
+	return productModel, e.ErrDeleteDefaultAddressConflict
 }
 
 func (s *productService) GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error) {
