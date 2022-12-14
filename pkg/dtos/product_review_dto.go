@@ -18,7 +18,7 @@ type ProductReviewCreateRequest struct {
 	OrderDetailID uuid.UUID
 	ProductID     uint                  `form:"product_id" json:"product_id" binding:"required"`
 	Rating        uint                  `form:"rating" json:"rating" binding:"required"`
-	Review        string                `form:"review" json:"review" binding:"required"`
+	Review        string                `form:"review" json:"review"`
 	Photo1        *multipart.FileHeader `form:"photo_1"`
 	Photo2        *multipart.FileHeader `form:"photo_2"`
 	Photo3        *multipart.FileHeader `form:"photo_3"`
