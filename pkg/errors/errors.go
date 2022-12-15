@@ -42,6 +42,7 @@ var (
 	ErrInvalidQuantity                = errors.New("invalid quantity")
 	ErrInvalidPrice                   = errors.New("invalid price")
 	ErrInvalidEventID                 = errors.New("invalid event id")
+	ErrInvalidSignature               = errors.New("invalid signature")
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
 	ErrEmailNotFound                  = errors.New("email not found")
@@ -50,7 +51,8 @@ var (
 	ErrInvalidToken                   = errors.New("invalid token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
 	ErrInvalidVerificationCode        = errors.New("invalid verification code")
-	ErrInvalidSealabsPayAccountNumber = errors.New("invalid sealabs pay account number")
+	ErrInvalidSealabsPayID            = errors.New("invalid sealabs pay id")
+	ErrInvalidSealabsPayCardNumber    = errors.New("invalid sealabs pay card number")
 	ErrInvalidMerchantVoucherCode     = errors.New("invalid voucher code")
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
@@ -66,13 +68,14 @@ var (
 	ErrGoogleIDAlreadyExist                      = errors.New("google id is already registered")
 	ErrWalletAlreadyActive                       = errors.New("wallet is already active")
 	ErrPasswordCannotBeTheSameAsPreviousPassword = errors.New("password cannot be the same as previous password")
-	ErrSealabsPayAccountNumberAlreadyExist       = errors.New("account number is already registered")
+	ErrSealabsPayCardNumberAlreadyExist          = errors.New("account number is already registered")
 	ErrMerchantVoucherCodeAlreadyExist           = errors.New("voucher code already exist")
 	ErrMerchantNameAlreadyExist                  = errors.New("merchant name is already registered")
 	ErrMerchantPromotionProductConflict          = errors.New("one or more products have conflicting promotion periods")
 	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
 	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 	ErrWrongWalletPin                            = errors.New("wrong wallet pin")
+	ErrRefundAlreadyExist                        = errors.New("refund already exist")
 
 	ErrUnauthorized                     = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound                     = errors.New("user not found")
@@ -114,6 +117,8 @@ var (
 	ErrVoucherNotUpcoming                                         = errors.New("voucher is not upcoming")
 	ErrStockIsNotAvailable                                        = errors.New("stock is not available")
 	ErrStatusIsNotPendingSeller                                   = errors.New("status is not pending seller")
+	ErrStatusIsNotOnProcess                                       = errors.New("status is not on process")
+	ErrStatusIsNotDelivered                                       = errors.New("status is not delivered")
 	ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime = errors.New("new voucher start period is earlier than the current start period")
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
@@ -137,6 +142,8 @@ var (
 	ErrDatabaseConnectionFailed       = errors.New("database connection failed")
 	ErrSendingEmailFailed             = errors.New("sending email failed")
 	ErrInternalOperationFailed        = errors.New("internal operation failed")
+	ErrSealabsPayOperationFailed      = errors.New("sealabs pay operation failed")
+	ErrInvalidSealabsPayAction        = errors.New("invalid sealabs pay action")
 	ErrDatabaseTransactionSetUpFailed = errors.New("database transactions set up failed")
 
 	ErrUnknown        = errors.New("unknown")
@@ -147,6 +154,7 @@ var (
 	ErrRequestedPromotionNotProduct                            = errors.New("product does not have that promotion")
 	ErrMerchantDoesNotHaveThatProductItem                      = errors.New("merchant does not have that product item")
 	ErrProductDoesNotHaveThatProductItem                       = errors.New("product does not have that product item")
+	ErrOrderDoesNotHaveThatOrderDetail                         = errors.New("order does not have that order detail")
 	ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount    = errors.New("purchased amount does not exceed the merchant voucher's minimum purchased amount")
 	ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount = errors.New("purchased amount does not exceed the marketplace voucher's minimum purchased amount")
 
@@ -162,6 +170,7 @@ var (
 	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
 	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
 	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
+	ErrProductStatusInactive                                  = errors.New("product is delisted")
 )
 
 func GetStatusCode(err error) int {
@@ -200,13 +209,15 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidQuantity) ||
 		errors.Is(err, ErrInvalidPrice) ||
 		errors.Is(err, ErrInvalidEventID) ||
+		errors.Is(err, ErrInvalidSignature) ||
 		errors.Is(err, ErrInvalidIdentifier) ||
 		errors.Is(err, ErrInvalidToken) ||
 		errors.Is(err, ErrPasswordCannotContainsUsername) ||
 		errors.Is(err, ErrInvalidRequest) ||
 		errors.Is(err, ErrInvalidVerificationCode) ||
 		errors.Is(err, ErrInvalidRequest) ||
-		errors.Is(err, ErrInvalidSealabsPayAccountNumber) ||
+		errors.Is(err, ErrInvalidSealabsPayID) ||
+		errors.Is(err, ErrInvalidSealabsPayCardNumber) ||
 		errors.Is(err, ErrInvalidMerchantVoucherCode) ||
 		errors.Is(err, ErrInvalidParams) ||
 		errors.Is(err, ErrInvalidResetPasswordID) ||
@@ -218,7 +229,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantDoesNotHaveThatProductItem) ||
 		errors.Is(err, ErrProductDoesNotHaveThatProductItem) ||
 		errors.Is(err, ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount) ||
-		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) {
+		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) ||
+		errors.Is(err, ErrOrderDoesNotHaveThatOrderDetail) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -245,11 +257,12 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPhoneNumberAlreadyExist) ||
 		errors.Is(err, ErrGoogleIDAlreadyExist) ||
 		errors.Is(err, ErrMerchantNameAlreadyExist) ||
-		errors.Is(err, ErrSealabsPayAccountNumberAlreadyExist) ||
+		errors.Is(err, ErrSealabsPayCardNumberAlreadyExist) ||
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
 		errors.Is(err, ErrMerchantPromotionProductConflict) ||
 		errors.Is(err, ErrDeleteDefaultAddressConflict) ||
-		errors.Is(err, ErrDeleteShopAddressConflict) {
+		errors.Is(err, ErrDeleteShopAddressConflict) ||
+		errors.Is(err, ErrRefundAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
 		errors.Is(err, ErrForbiddenMerchant) ||
@@ -291,6 +304,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionUpdateProductIDListMismatch) ||
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
+		errors.Is(err, ErrStatusIsNotOnProcess) ||
+		errors.Is(err, ErrStatusIsNotDelivered) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
 		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrBlockedWallet) ||
@@ -305,7 +320,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
-		errors.Is(err, ErrWalletBalanceNotEnough) {
+		errors.Is(err, ErrWalletBalanceNotEnough) ||
+		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
 	}
 

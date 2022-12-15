@@ -40,6 +40,18 @@ func Init() *Handler {
 	walletRepository := repositories.NewWalletRepository(&repositories.WalletRepositoryConfig{
 		DB: db.Get(),
 	})
+	walletTopupRepository := repositories.NewWalletTopupRepository(&repositories.WalletTopupRepositoryConfig{
+		DB: db.Get(),
+	})
+	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
+		DB: db.Get(),
+	})
+	walletService := services.NewWalletService(&services.WalletServiceConfig{
+		WalletRepository:      walletRepository,
+		RedisRepository:       redisRepository,
+		WalletTopupRepository: walletTopupRepository,
+		SealabsPayRepository:  sealabsPayRepository,
+	})
 
 	userRepository := repositories.NewUserRepository(&repositories.UserRepositoryConfig{
 		DB: db.Get(),
@@ -85,10 +97,14 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
-	sealabsPayRepository := repositories.NewSealabsPayRepository(&repositories.SealabsPayRepositoryConfig{
-		DB: db.Get(),
+	userService := services.NewUserService(&services.UserServiceConfig{
+		UserRepository:  userRepository,
+		EmailRepository: emailRepository,
 	})
-
+	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
+		SealabsPayRepository: sealabsPayRepository,
+		RedisRepository:      redisRepository,
+	})
 	merchantVoucherRepository := repositories.NewMerchantVoucherRepository(&repositories.MerchantVoucherRepositoryConfig{
 		DB: db.Get(),
 	})
@@ -125,7 +141,7 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
-	citiesRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
+	cityRepository := repositories.NewCityRepository(&repositories.CityRepositoryConfig{
 		DB: db.Get(),
 	})
 
@@ -181,13 +197,24 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
-	roleService := services.NewRoleService(&services.RoleServiceConfig{
-		RoleRepository: roleRepository,
+	sealabsPayTransactionPaymentRepository := repositories.NewSealabsPayTransactionPaymentRepository(&repositories.SealabsPayTransactionPaymentRepositoryConfig{
+		DB: db.Get(),
 	})
 
-	walletService := services.NewWalletService(&services.WalletServiceConfig{
-		WalletRepository: walletRepository,
-		RedisRepository:  redisRepository,
+	refundRepository := repositories.NewRefundRepository(&repositories.RefundRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	refundDetailRepository := repositories.NewRefundDetailRepository(&repositories.RefundDetailRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	refundMediaRepository := repositories.NewRefundMediaRepository(&repositories.RefundMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	roleService := services.NewRoleService(&services.RoleServiceConfig{
+		RoleRepository: roleRepository,
 	})
 
 	authService := services.NewAuthService(&services.AuthServiceConfig{
@@ -216,15 +243,7 @@ func Init() *Handler {
 		OrderDetailRepository:     orderDetailRepository,
 		AddressSnapshotRepository: addressSnapshotRepository,
 		OrderTrackingRepository:   orderTrackingRepository,
-	})
-
-	userService := services.NewUserService(&services.UserServiceConfig{
-		UserRepository:  userRepository,
-		EmailRepository: emailRepository,
-	})
-
-	sealabsPayService := services.NewSealabsPayService(&services.SealabsPayServiceConfig{
-		SealabsPayRepository: sealabsPayRepository,
+		MerchantRepository:        merchantRepository,
 	})
 
 	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{
@@ -257,15 +276,37 @@ func Init() *Handler {
 		ProductRepository:                productRepository,
 	})
 
+	productMediaRepository := repositories.NewProductMediaRepository(&repositories.ProductMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+	productVariantTypeRepository := repositories.NewProductVariantTypeRepository(&repositories.ProductVariantTypeRepositoryConfig{
+		DB: db.Get(),
+	})
+	productVariantMediaRepository := repositories.NewProductVariantMediaRepository(&repositories.ProductVariantMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+	productVariantRepository := repositories.NewProductVariantRepository(&repositories.ProductVariantRepositoryConfig{
+		DB: db.Get(),
+	})
+	productCourierServiceRepository := repositories.NewProductCourierServiceRepository(&repositories.ProductCourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	productService := services.NewProductService(&services.ProductServiceConfig{
 		ProductRepository:                productRepository,
 		MerchantRepository:               merchantRepository,
 		ProductItemRepository:            productItemRepository,
+		ProductReviewRepository:          productReviewRepository,
 		ProductVariationRepository:       productVariationRepository,
 		ProductViewRepository:            productViewRepository,
 		ProductFavoriteRepository:        productFavoriteRepository,
 		CategoryRepository:               categoryRepository,
 		MerchantCourierServiceRepository: merchantCourierServiceRepository,
+		ProductVariantTypeRepository:     productVariantTypeRepository,
+		ProductVariantMediaRepository:    productVariantMediaRepository,
+		ProductVariantRepository:         productVariantRepository,
+		ProductCourierServiceRepository:  productCourierServiceRepository,
+		ProductMediaRepository:           productMediaRepository,
 	})
 
 	merchantPromotionService := services.NewMerchantPromotionService(&services.MerchantPromotionServiceConfig{
@@ -276,7 +317,7 @@ func Init() *Handler {
 
 	subDistrictService := services.NewSubDistrictService(&services.SubDistrictServiceConfig{
 		ProvinceRepository:    provinceRepository,
-		CityRepository:        citiesRepository,
+		CityRepository:        cityRepository,
 		DistrictRepository:    districtRepository,
 		SubDistrictRepository: subDistrictRepository,
 	})
@@ -314,6 +355,23 @@ func Init() *Handler {
 		WalletTransactionPaymentRepository:      walletTransactionPaymentRepository,
 	})
 
+	transactionService := services.NewTransactionService(&services.TransactionServiceConfig{
+		TransactionRepository:                  transactionRepository,
+		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
+	})
+
+	cityService := services.NewCityService(&services.CityServiceConfig{
+		CityRepository: cityRepository,
+	})
+
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		OrderRepository:        orderRepository,
+		OrderDetailRepository:  orderDetailRepository,
+		RefundRepository:       refundRepository,
+		RefundDetailRepository: refundDetailRepository,
+		RefundMediaRepository:  refundMediaRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
 		WalletService:             walletService,
@@ -335,6 +393,9 @@ func Init() *Handler {
 		MarketplaceVoucherService: marketplaceVoucherService,
 		CourierService:            courierService,
 		LogisticService:           logisticService,
+		TransactionService:        transactionService,
+		CityService:               cityService,
+		RefundService:             refundService,
 	})
 
 	return h

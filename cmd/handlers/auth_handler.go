@@ -56,12 +56,22 @@ func (h *Handler) UserRegisterWithGoogle(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	responseData, err := h.authService.RegisterWithGoogle(request)
+	userLoginData, err := h.authService.RegisterWithGoogle(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	utils.ResponseSuccess(c, responseData, nil)
+	userLoginResponse := &externalDtos.UserLoginResponse{
+		Role: userLoginData.Role,
+	}
+
+	err = h.setLoginCookies(c, userLoginData)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, userLoginResponse, nil)
 }
 
 func (h *Handler) UserLoginWithGoogle(c *gin.Context) {

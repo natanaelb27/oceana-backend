@@ -83,78 +83,135 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 }
 
 type OrderListGetAllResponse struct {
-	OrderList []*dtos.OrderList `json:"order_list"`
+	TransactionID                        uuid.UUID               `json:"transaction_id"`
+	OrderID                              uuid.UUID               `json:"order_id"`
+	InvoiceNumber                        string                  `json:"invoice_number"`
+	MerchantID                           uint                    `json:"merchant_id"`
+	ShopName                             string                  `json:"shop_name"`
+	UserID                               uuid.UUID               `json:"user_id"`
+	UserFullName                         string                  `json:"user_full_name"`
+	CourierServiceID                     uint                    `json:"courier_service_id"`
+	CourierDescription                   string                  `json:"courier_description"`
+	OrderDetails                         []*dtos.OrderDetailList `json:"order_details"`
+	TransactionDatetime                  time.Time               `json:"transaction_datetime"`
+	OrderStatus                          string                  `json:"order_status"`
+	TotalPrice                           float64                 `json:"total_price"`
+	RefundID                             *uuid.UUID              `json:"refund_id"`
+	ClaimStatus                          bool                    `json:"claim_status"`
+	SellerConfirmationExpirationDatetime *time.Time              `json:"seller_confirmation_expiration_datetime"`
+	OnProcessExpirationDatetime          *time.Time              `json:"on_process_expiration_datetime"`
+	DeliveredExpirationDatetime          *time.Time              `json:"delivered_expiration_datetime"`
 }
 
-func NewOrderListGetAllResponse(source []*dtos.OrderList) (target *OrderListGetAllResponse) {
-
-	target = &OrderListGetAllResponse{
-		OrderList: source,
+func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGetAllResponse) {
+	for _, result := range source {
+		target = append(target, &OrderListGetAllResponse{
+			TransactionID:                        result.TransactionID,
+			OrderID:                              result.OrderID,
+			InvoiceNumber:                        result.InvoiceNumber,
+			MerchantID:                           result.MerchantID,
+			ShopName:                             result.ShopName,
+			UserID:                               result.UserID,
+			UserFullName:                         result.UserFullName,
+			CourierServiceID:                     result.CourierServiceID,
+			CourierDescription:                   result.CourierDescription,
+			OrderDetails:                         result.OrderDetails,
+			TransactionDatetime:                  result.TransactionDatetime,
+			OrderStatus:                          result.OrderStatus,
+			TotalPrice:                           result.TotalPrice,
+			RefundID:                             result.RefundID,
+			ClaimStatus:                          result.ClaimStatus,
+			SellerConfirmationExpirationDatetime: result.SellerConfirmationExpirationDatetime,
+			OnProcessExpirationDatetime:          result.OnProcessExpirationDatetime,
+			DeliveredExpirationDatetime:          result.DeliveredExpirationDatetime,
+		})
 	}
 
 	return
 }
 
 type OrderListDetailsGetByIDResponse struct {
-	TransactionID                   uuid.UUID                    `json:"transaction_id"`
-	OrderID                         uuid.UUID                    `json:"oder_id"`
-	InvoiceNumber                   string                       `json:"invoice_number"`
-	MerchantID                      uint                         `json:"merchant_id"`
-	ShopName                        string                       `json:"shop_name"`
-	OrderDetails                    []*dtos.OrderDetailList      `json:"order_details"`
-	TransactionDatetime             time.Time                    `json:"transaction_datetime"`
-	OrderStatus                     string                       `json:"order_status"`
-	CourierDescription              string                       `json:"courier_description"`
-	OrderTrackingHistory            []*dtos.OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
-	Address                         *dtos.AddressSnapshotDetails `json:"address"`
-	PaymentMethod                   string                       `json:"payment_method"`
-	TotalPriceBeforeDiscount        uint                         `json:"total_price_before_discount"`
-	TotalMerchantPromotionDiscount  float64                      `json:"total_merchant_promotion_discount"`
-	TotalMerchantVoucherDiscount    float64                      `json:"total_merchant_voucher_discount"`
-	TotalMarketplaceVoucherDiscount float64                      `json:"total_marketplace_voucher_discount"`
-	ShippingFee                     uint                         `json:"shipping_fee"`
-	TotalPayment                    float64                      `json:"total_payment"`
+	TransactionID                        uuid.UUID                    `json:"transaction_id"`
+	OrderID                              uuid.UUID                    `json:"oder_id"`
+	InvoiceNumber                        string                       `json:"invoice_number"`
+	MerchantID                           uint                         `json:"merchant_id"`
+	ShopName                             string                       `json:"shop_name"`
+	UserID                               uuid.UUID                    `json:"user_id"`
+	UserFullName                         string                       `json:"user_full_name"`
+	OrderDetails                         []*dtos.OrderDetailList      `json:"order_details"`
+	TransactionDatetime                  time.Time                    `json:"transaction_datetime"`
+	OrderStatus                          string                       `json:"order_status"`
+	CourierServiceID                     uint                         `json:"courier_service_id"`
+	CourierDescription                   string                       `json:"courier_description"`
+	OrderTrackingHistory                 []*dtos.OrderTrackingHistory `json:"order_tracking_history" gorm:"-"`
+	Address                              *dtos.AddressSnapshotDetails `json:"address"`
+	PaymentMethod                        string                       `json:"payment_method"`
+	TotalPriceBeforeDiscount             uint                         `json:"total_price_before_discount"`
+	TotalMerchantPromotionDiscount       float64                      `json:"total_merchant_promotion_discount"`
+	TotalMerchantVoucherDiscount         float64                      `json:"total_merchant_voucher_discount"`
+	TotalMarketplaceVoucherDiscount      float64                      `json:"total_marketplace_voucher_discount"`
+	ShippingFee                          uint                         `json:"shipping_fee"`
+	TotalPayment                         float64                      `json:"total_payment"`
+	RefundID                             *uuid.UUID                   `json:"refund_id"`
+	ClaimStatus                          bool                         `json:"claim_status"`
+	SellerConfirmationExpirationDatetime *time.Time                   `json:"seller_confirmation_expiration_datetime"`
+	OnProcessExpirationDatetime          *time.Time                   `json:"on_process_expiration_datetime"`
+	DeliveredExpirationDatetime          *time.Time                   `json:"delivered_expiration_datetime"`
 }
 
 func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *OrderListDetailsGetByIDResponse) {
 	target = &OrderListDetailsGetByIDResponse{
-		TransactionID:                   source.TransactionID,
-		OrderID:                         source.OrderID,
-		InvoiceNumber:                   source.InvoiceNumber,
-		MerchantID:                      source.MerchantID,
-		ShopName:                        source.ShopName,
-		OrderDetails:                    source.OrderDetails,
-		TransactionDatetime:             source.TransactionDatetime,
-		OrderStatus:                     source.OrderStatus,
-		CourierDescription:              source.CourierDescription,
-		OrderTrackingHistory:            source.OrderTrackingHistory,
-		Address:                         source.Address,
-		PaymentMethod:                   source.PaymentMethod,
-		TotalPriceBeforeDiscount:        source.TotalPriceBeforeDiscount,
-		TotalMerchantPromotionDiscount:  source.TotalMerchantPromotionDiscount,
-		TotalMerchantVoucherDiscount:    source.TotalMerchantVoucherDiscount,
-		TotalMarketplaceVoucherDiscount: source.TotalMarketplaceVoucherDiscount,
-		ShippingFee:                     source.ShippingFee,
-		TotalPayment:                    source.TotalPayment,
+		TransactionID:                        source.TransactionID,
+		OrderID:                              source.OrderID,
+		InvoiceNumber:                        source.InvoiceNumber,
+		MerchantID:                           source.MerchantID,
+		ShopName:                             source.ShopName,
+		UserID:                               source.UserID,
+		UserFullName:                         source.UserFullName,
+		OrderDetails:                         source.OrderDetails,
+		TransactionDatetime:                  source.TransactionDatetime,
+		OrderStatus:                          source.OrderStatus,
+		CourierServiceID:                     source.CourierServiceID,
+		CourierDescription:                   source.CourierDescription,
+		OrderTrackingHistory:                 source.OrderTrackingHistory,
+		Address:                              source.Address,
+		PaymentMethod:                        source.PaymentMethod,
+		TotalPriceBeforeDiscount:             source.TotalPriceBeforeDiscount,
+		TotalMerchantPromotionDiscount:       source.TotalMerchantPromotionDiscount,
+		TotalMerchantVoucherDiscount:         source.TotalMerchantVoucherDiscount,
+		TotalMarketplaceVoucherDiscount:      source.TotalMarketplaceVoucherDiscount,
+		ShippingFee:                          source.ShippingFee,
+		TotalPayment:                         source.TotalPayment,
+		RefundID:                             source.RefundID,
+		ClaimStatus:                          source.ClaimStatus,
+		SellerConfirmationExpirationDatetime: source.SellerConfirmationExpirationDatetime,
+		OnProcessExpirationDatetime:          source.OnProcessExpirationDatetime,
+		DeliveredExpirationDatetime:          source.DeliveredExpirationDatetime,
 	}
 
 	return
 }
 
-type OrderProcessOrderRequest struct {
-	CourierServiceID uint `json:"courier_service_id" binding:"required"`
+type OrderProcessDeliveryResponse struct {
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
+}
+
+func NewOrderProcessDeliveryResponse(source *models.Order) *OrderProcessDeliveryResponse {
+	return &OrderProcessDeliveryResponse{
+		ID:     source.ID,
+		Status: source.Status,
+	}
 }
 
 type OrderProcessOrderResponse struct {
-	ID               uuid.UUID `json:"id"`
-	CourierServiceID uint      `json:"courier_service_id"`
-	Status           string    `json:"status"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
 }
 
 func NewOrderProcessOrderResponse(source *models.Order) *OrderProcessOrderResponse {
 	return &OrderProcessOrderResponse{
-		ID:               source.ID,
-		CourierServiceID: source.CourierServiceID,
-		Status:           source.Status,
+		ID:     source.ID,
+		Status: source.Status,
 	}
 }

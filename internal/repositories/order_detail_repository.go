@@ -11,6 +11,7 @@ import (
 type OrderDetailRepository interface {
 	OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error)
 	Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error)
+	GetByID(id uuid.UUID) (model *models.OrderDetail, err error)
 }
 
 type orderDetailRepository struct {
@@ -49,6 +50,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 	queryResult := r.db.Model(&models.OrderDetail{}).
 		Select(`
 			order_details.id AS order_detail_id,
+			order_details.message AS message,
 			(?) AS product_image,
 			product_snapshots.name AS product_name,
 			(?) AS product_variations,
@@ -80,6 +82,22 @@ func (r *orderDetailRepository) Create(newModel []*models.OrderDetail) (model []
 	}
 
 	model = newModel
+
+	return
+}
+
+func (r *orderDetailRepository) GetByID(id uuid.UUID) (model *models.OrderDetail, err error) {
+	queryResult := r.db.First(&model, id)
+
+	if queryResult.Error != nil {
+		if queryResult.RowsAffected == 0 {
+			err = e.ErrDataNotFound
+			return
+		}
+
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 
 	return
 }
