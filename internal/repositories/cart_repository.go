@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	in_cart_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/cart_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -11,6 +12,7 @@ import (
 )
 
 type CartRepository interface {
+	WithTx(tx *gorm.DB) *cartRepository
 	Create(cart *models.Cart) (model *models.Cart, err error)
 	GetByUserIdProductItemId(userId uuid.UUID, productItemId uint) (model *models.Cart, err error)
 	GetCartsMerchants(userId uuid.UUID) (result []*in_cart_dtos.Merchant, err error)
@@ -31,6 +33,15 @@ func NewCartRepository(c *CartRepositoryConfig) CartRepository {
 	return &cartRepository{
 		db: c.DB,
 	}
+}
+
+func (u cartRepository) WithTx(tx *gorm.DB) *cartRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *cartRepository) Create(newModel *models.Cart) (model *models.Cart, err error) {

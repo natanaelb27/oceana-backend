@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -10,6 +11,7 @@ import (
 )
 
 type ProductMediaSnapshotRepository interface {
+	WithTx(tx *gorm.DB) *productMediaSnapshotRepository
 	CreateProductMediaSnapshot(productSnapshotID uint, productItemID uint, productID uint) (model []*models.ProductMediaSnapshot, err error)
 }
 
@@ -25,6 +27,15 @@ func NewProductMediaSnapshotRepository(c *ProductMediaSnapshotRepositoryConfig) 
 	return &productMediaSnapshotRepository{
 		db: c.DB,
 	}
+}
+
+func (u productMediaSnapshotRepository) WithTx(tx *gorm.DB) *productMediaSnapshotRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productMediaSnapshotRepository) CreateProductSnapshot(newModel *models.ProductSnapshot) (model *models.ProductSnapshot, err error) {

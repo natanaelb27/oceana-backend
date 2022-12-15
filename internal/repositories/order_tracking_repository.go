@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,6 +11,7 @@ import (
 )
 
 type OrderTrackingRepository interface {
+	WithTx(tx *gorm.DB) *orderTrackingRepository
 	GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error)
 	Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error)
 }
@@ -25,6 +28,15 @@ func NewOrderTrackingRepository(c *OrderTrackingRepositoryConfig) OrderTrackingR
 	return &orderTrackingRepository{
 		db: c.DB,
 	}
+}
+
+func (u orderTrackingRepository) WithTx(tx *gorm.DB) *orderTrackingRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error) {

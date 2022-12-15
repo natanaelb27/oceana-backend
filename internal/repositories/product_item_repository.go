@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -11,6 +12,7 @@ import (
 )
 
 type ProductItemRepository interface {
+	WithTx(tx *gorm.DB) *productItemRepository
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
 	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
@@ -30,6 +32,15 @@ func NewProductItemRepository(c *ProductItemRepositoryConfig) ProductItemReposit
 	return &productItemRepository{
 		db: c.DB,
 	}
+}
+
+func (u productItemRepository) WithTx(tx *gorm.DB) *productItemRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productItemRepository) GetByProductID(productID uint) ([]*dtos.ProductModel, error) {

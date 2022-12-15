@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"log"
 	"math"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -14,6 +15,7 @@ import (
 )
 
 type WalletRepository interface {
+	WithTx(tx *gorm.DB) *walletRepository
 	GetByUserId(id uuid.UUID) (model *models.Wallet, err error)
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 	Create(newModel *models.Wallet) (model *models.Wallet, err error)
@@ -33,6 +35,15 @@ func NewWalletRepository(c *WalletRepositoryConfig) WalletRepository {
 	return &walletRepository{
 		db: c.DB,
 	}
+}
+
+func (u walletRepository) WithTx(tx *gorm.DB) *walletRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *walletRepository) GetByUserId(id uuid.UUID) (model *models.Wallet, err error) {

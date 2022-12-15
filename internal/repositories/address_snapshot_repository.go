@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,6 +11,7 @@ import (
 )
 
 type AddressSnapshotRepository interface {
+	WithTx(tx *gorm.DB) *addressSnapshotRepository
 	GetByOrderID(id uuid.UUID) (*dtos.AddressSnapshotDetails, error)
 	Create(id uuid.UUID) (*models.AddressSnapshot, error)
 }
@@ -25,6 +28,15 @@ func NewAddressSnapshotRepository(c *AddressSnapshotRepositoryConfig) AddressSna
 	return &addressSnapshotRepository{
 		db: c.DB,
 	}
+}
+
+func (u addressSnapshotRepository) WithTx(tx *gorm.DB) *addressSnapshotRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *addressSnapshotRepository) GetByOrderID(id uuid.UUID) (*dtos.AddressSnapshotDetails, error) {

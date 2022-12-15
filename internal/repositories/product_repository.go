@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"fmt"
 
@@ -17,6 +18,7 @@ import (
 )
 
 type ProductRepository interface {
+	WithTx(tx *gorm.DB) *productRepository
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
@@ -37,6 +39,15 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 	return &productRepository{
 		db: c.DB,
 	}
+}
+
+func (u productRepository) WithTx(tx *gorm.DB) *productRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error) {

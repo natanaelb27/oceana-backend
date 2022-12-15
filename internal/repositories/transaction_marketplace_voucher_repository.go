@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type TransactionMarketplaceVoucherRepository interface {
+	WithTx(tx *gorm.DB) *transactionMarketplaceVoucherRepository
 	Create(newModel *models.TransactionMarketplaceVoucher) (model *models.TransactionMarketplaceVoucher, err error)
 }
 
@@ -22,6 +25,15 @@ func NewTransactionMarketplaceVoucherRepository(c *TransactionMarketplaceVoucher
 	return &transactionMarketplaceVoucherRepository{
 		db: c.DB,
 	}
+}
+
+func (u transactionMarketplaceVoucherRepository) WithTx(tx *gorm.DB) *transactionMarketplaceVoucherRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *transactionMarketplaceVoucherRepository) Create(newModel *models.TransactionMarketplaceVoucher) (model *models.TransactionMarketplaceVoucher, err error) {

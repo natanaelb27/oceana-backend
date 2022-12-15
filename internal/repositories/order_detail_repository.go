@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -10,6 +12,7 @@ import (
 )
 
 type OrderDetailRepository interface {
+	WithTx(tx *gorm.DB) *orderDetailRepository
 	OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error)
 	Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error)
 	GetByID(id uuid.UUID) (model *models.OrderDetail, err error)
@@ -27,6 +30,15 @@ func NewOrderDetailRepository(c *OrderDetailRepositoryConfig) OrderDetailReposit
 	return &orderDetailRepository{
 		db: c.DB,
 	}
+}
+
+func (u orderDetailRepository) WithTx(tx *gorm.DB) *orderDetailRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error) {
