@@ -75,12 +75,13 @@ func (s *logisticService) GetByMerchantId(userID uuid.UUID) (*internalLogisticDt
 			ID:             courier.ID,
 			Code:           courier.Code,
 			Name:           courier.Name,
+			LogoURL:        courier.LogoURL,
 			IsSelected:     courierIsSelected,
 			CourierService: courierServices,
 		})
 	}
 	merchantConfiguration, err := s.merchantConfigurationRepository.GetByMerchantID(merchant.ID)
-	if err != nil {
+	if err != nil && err != e.ErrDataNotFound {
 		return nil, err
 	}
 
@@ -90,7 +91,7 @@ func (s *logisticService) GetByMerchantId(userID uuid.UUID) (*internalLogisticDt
 		Courier:      newCouriers,
 	}
 
-	return logistics, err
+	return logistics, nil
 }
 
 func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error) {
