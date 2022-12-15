@@ -23,7 +23,7 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		// orders
 		privateRoute.PATCH("/orders/:order-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
 		// product
-		privateRoute.POST("/:merchant_id/products", func(c *gin.Context) { middlewares.Role(c, "011") }, h.ProductCreate)
+		privateRoute.POST("/:merchant_id/products", func(c *gin.Context) { middlewares.Role(c, "010") }, h.ProductCreate)
 		// logistic
 		privateRoute.GET("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGet)
 		privateRoute.PATCH("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticUpdate)
