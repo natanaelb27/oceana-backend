@@ -74,6 +74,7 @@ func Connect() {
 		&models.WalletTopup{},
 		&models.Refund{},
 		&models.RefundDetail{},
+		&models.RefundMedia{},
 		&models.Cart{},
 		&models.MerchantConfiguration{},
 	)

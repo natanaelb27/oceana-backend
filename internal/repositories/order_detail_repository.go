@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -45,6 +46,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		`).
 		Joins("JOIN product_media_snapshots ON ps.id = product_media_snapshots.product_snapshot_id").
 		Where("ps.id = product_snapshots.id").
+		Where("product_media_snapshots.type = ?", product_media_constants.TypeImage).
 		Limit(1)
 
 	queryResult := r.db.Model(&models.OrderDetail{}).

@@ -344,11 +344,13 @@ func Init() *Handler {
 	})
 
 	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		MerchantRepository:     merchantRepository,
 		OrderRepository:        orderRepository,
 		OrderDetailRepository:  orderDetailRepository,
 		RefundRepository:       refundRepository,
 		RefundDetailRepository: refundDetailRepository,
 		RefundMediaRepository:  refundMediaRepository,
+		UserRepository:         userRepository,
 	})
 
 	h := New(&HandlerConfig{

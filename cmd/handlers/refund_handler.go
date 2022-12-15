@@ -35,3 +35,83 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 
 	utils.ResponseSuccess(c, results, nil)
 }
+
+func (h *Handler) GetAllRefundDetailsByBuyer(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewGetAllRefundQuery(c)
+
+	results, pagination, err := h.refundService.GetAllDetailsByBuyer(id, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}
+
+func (h *Handler) GetDetailsByID(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	refundID, err := uuid.Parse(c.Param("refund-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	results, err := h.refundService.GetDetailsByID(id, refundID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, nil)
+}
+
+func (h *Handler) GetAllRefundDetailsByMerchant(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewGetAllRefundQuery(c)
+
+	results, pagination, err := h.refundService.GetAllDetailsByMerchant(id, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}
+
+func (h *Handler) GetAllRefundDetailsByAdmin(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewGetAllRefundQuery(c)
+
+	results, pagination, err := h.refundService.GetAllDetailsByAdmin(id, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}

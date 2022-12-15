@@ -529,6 +529,8 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
+	fmt.Println(newTransaction.TotalPriceWithShippingFee)
+
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, e.ErrDifferentTotalPayment
 	}
