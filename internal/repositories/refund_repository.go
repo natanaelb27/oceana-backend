@@ -2,13 +2,16 @@ package repositories
 
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type RefundRepository interface {
 	Create(newModel *models.Refund) (model *models.Refund, err error)
+	GetAllDetails(query *externalDtos.GetAllRefundQuery) ([]*dtos.RefundDetails, error)
 }
 
 type refundRepository struct {
@@ -44,4 +47,7 @@ func (r *refundRepository) Create(newModel *models.Refund) (model *models.Refund
 	model = newModel
 
 	return
+}
+func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery) ([]*dtos.RefundDetails, error) {
+	return nil, nil
 }

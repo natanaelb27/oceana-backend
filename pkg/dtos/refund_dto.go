@@ -2,9 +2,12 @@ package dtos
 
 import (
 	"mime/multipart"
+	"strconv"
+	"strings"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -41,4 +44,87 @@ func NewCreateRefundResponse(source *models.Refund) (target *CreateRefundRespons
 		Status:                source.Status,
 	}
 	return
+}
+
+type GetAllRefundQuery struct {
+	SearchInvoice   string     `json:"search-invoice"`
+	FilterStatus    string     `json:"filter-status"`
+	FilterStartDate *time.Time `json:"filter-start-date"`
+	FilterEndDate   *time.Time `json:"filter-end-date"`
+	Sort            string     `json:"sort"`
+	SortBy          string     `json:"sort-by"`
+	Limit           uint       `json:"limit"`
+	Page            uint       `json:"page"`
+}
+
+func NewGetAllRefundQuery(c *gin.Context) *GetAllRefundQuery {
+	var query GetAllRefundQuery
+
+	searchInvoice := c.Query("search-invoice")
+	filterStatus := strings.ToLower(c.Query("filter-status"))
+	filterStartDate := c.Query("filter-start-date")
+	filterEndDate := c.Query("filter-end-date")
+	sortBy := strings.ToLower(c.Query("sort-by"))
+	sort := strings.ToLower(c.Query("sort"))
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	if sortBy == "refund_request_datetime" {
+		query.SortBy = "refund_request_datetime"
+	} else {
+		query.SortBy = "refund_request_datetime"
+	}
+
+	if sort == "asc" {
+		query.Sort = "ASC"
+	} else {
+		query.Sort = "DESC"
+	}
+
+	query.SearchInvoice = searchInvoice
+	query.FilterStatus = filterStatus
+
+	if filterStartDate != "" && filterEndDate != "" {
+		startDate, err := time.Parse("2006-01-02", filterStartDate)
+
+		if err != nil {
+			query.FilterStartDate = nil
+		} else {
+			query.FilterStartDate = &startDate
+		}
+
+		endDate, err := time.Parse("2006-01-02", filterEndDate)
+
+		if err != nil {
+			query.FilterEndDate = nil
+		} else {
+			query.FilterEndDate = &endDate
+		}
+
+	} else {
+		query.FilterStartDate = nil
+		query.FilterEndDate = nil
+	}
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
 }
