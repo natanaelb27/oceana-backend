@@ -1,7 +1,8 @@
 package constants
 
 const (
-	PaymentExpirationInterval               = 1
-	SellerConfirmationExpirationInterval    = 2
-	AutoCompleteDeliveredExpirationInterval = 3
+	// in minutes
+	PaymentExpirationInterval               = 10
+	SellerConfirmationExpirationInterval    = 60 * 2
+	AutoCompleteDeliveredExpirationInterval = 60 * 3
 )

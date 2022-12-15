@@ -54,17 +54,17 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			orders.id AS order_id,
 			CASE
 				WHEN orders.status = @pending_seller_status 
-				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 day' * (@interval_seller_confirmation_expiration)::INTEGER
+				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 minute' * (@interval_seller_confirmation_expiration)::INTEGER
 				ELSE null
 			END AS seller_confirmation_expiration_datetime,
 			CASE
 				WHEN orders.status = @on_process_status 
-				THEN tbl_on_process.history_datetime + INTERVAL '1 day' * (tbl_processed_days.max_processed_days)::INTEGER
+				THEN tbl_on_process.history_datetime + INTERVAL '1 minute' * (tbl_processed_days.max_processed_days)::INTEGER
 				ELSE null
 			END AS on_process_expiration_datetime,
 			CASE
 				WHEN orders.status = @delivered_status 
-				THEN tbl_delivered.history_datetime + INTERVAL '1 day' * (@interval_auto_complete_delivered_expiration)::INTEGER
+				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
 				ELSE null
 			END AS delivered_expiration_datetime
 		`,
@@ -170,17 +170,17 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			orders.id AS order_id,
 			CASE
 				WHEN orders.status = @pending_seller_status 
-				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 day' * (@interval_seller_confirmation_expiration)::INTEGER
+				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 minute' * (@interval_seller_confirmation_expiration)::INTEGER
 				ELSE null
 			END AS seller_confirmation_expiration_datetime,
 			CASE
 				WHEN orders.status = @on_process_status 
-				THEN tbl_on_process.history_datetime + INTERVAL '1 day' * (tbl_processed_days.max_processed_days)::INTEGER
+				THEN tbl_on_process.history_datetime + INTERVAL '1 minute' * (tbl_processed_days.max_processed_days)::INTEGER
 				ELSE null
 			END AS on_process_expiration_datetime,
 			CASE
 				WHEN orders.status = @delivered_status 
-				THEN tbl_delivered.history_datetime + INTERVAL '1 day' * (@interval_auto_complete_delivered_expiration)::INTEGER
+				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
 				ELSE null
 			END AS delivered_expiration_datetime
 		`,
@@ -350,17 +350,17 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			orders.id AS order_id,
 			CASE
 				WHEN orders.status = @pending_seller_status 
-				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 day' * (@interval_seller_confirmation_expiration)::INTEGER
+				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 minute' * (@interval_seller_confirmation_expiration)::INTEGER
 				ELSE null
 			END AS seller_confirmation_expiration_datetime,
 			CASE
 				WHEN orders.status = @on_process_status 
-				THEN tbl_on_process.history_datetime + INTERVAL '1 day' * (tbl_processed_days.max_processed_days)::INTEGER
+				THEN tbl_on_process.history_datetime + INTERVAL '1 minute' * (tbl_processed_days.max_processed_days)::INTEGER
 				ELSE null
 			END AS on_process_expiration_datetime,
 			CASE
 				WHEN orders.status = @delivered_status 
-				THEN tbl_delivered.history_datetime + INTERVAL '1 day' * (@interval_auto_complete_delivered_expiration)::INTEGER
+				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
 				ELSE null
 			END AS delivered_expiration_datetime
 		`,
