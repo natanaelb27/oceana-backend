@@ -14,8 +14,8 @@ type RefundDetail struct {
 	OrderDetailID      uuid.UUID
 	OrderDetail        OrderDetail
 	Quantity           uint
-	AmountUserGet      uint
-	AmountMerchantLost uint
+	AmountUserGet      float64
+	AmountMerchantLost float64
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 	DeletedAt          gorm.DeletedAt
