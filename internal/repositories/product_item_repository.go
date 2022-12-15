@@ -14,7 +14,9 @@ type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
 	CreateProductItem(productItem *models.ProductItem) (model *models.ProductItem, err error)
+	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
+	SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error)
 }
 
 type productItemRepository struct {
@@ -126,6 +128,38 @@ func (pi *productItemRepository) CreateProductItem(newModel *models.ProductItem)
 	return
 }
 
+func (r *productItemRepository) GetDetailsById(ID uint) (*dtos.ProductItemDetails, error) {
+	var productItemDetails *dtos.ProductItemDetails
+	result := r.db.Model(&models.ProductItem{}).
+		Select(`
+			product_items.id AS product_item_id,
+			product_items.sku AS sku,
+			product_items.stock_quantity AS stock_quantity,
+			product_items.price AS price,
+			products.category_id AS category_id,
+			products.id AS product_id,
+			products.merchant_id AS merchant_id,
+			products.name AS name,
+			products.description AS description,
+			products.is_hazardous AS is_hazardous,
+			products.weight AS weight,
+			products.package_size AS package_size,
+			products.condition AS condition,
+			products.status AS status,
+			products.process_day AS process_day,
+			products.is_preorder AS is_preorder
+		`).
+		Joins("JOIN products ON products.id = product_items.product_id").
+		Where("product_items.id = ?", ID).
+		First(&productItemDetails)
+
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return productItemDetails, nil
+}
+
 func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error) {
 	var productModels []*internalProductDtos.ProductItem
 
@@ -158,4 +192,23 @@ func (r *productItemRepository) GetUpdateByProductID(productID uint) ([]*interna
 	}
 
 	return productModels, nil
+}
+
+func (r *productItemRepository) SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error) {
+	var model *models.ProductItem
+
+	result := r.db.
+		Model(&models.ProductItem{}).
+		Where("id = ?", ID).
+		Update("stock_quantity", gorm.Expr("stock_quantity - ?", amount))
+
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, e.ErrDataNotFound
+	}
+
+	return model, nil
 }

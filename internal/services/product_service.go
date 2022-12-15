@@ -28,6 +28,7 @@ type productService struct {
 	productRepository                r.ProductRepository
 	merchantRepository               r.MerchantRepository
 	productItemRepository            r.ProductItemRepository
+	productReviewService             r.ProductReviewRepository
 	productVariationRepository       r.ProductVariationRepository
 	productViewRepository            r.ProductViewRepository
 	productFavoriteRepository        r.ProductFavoriteRepository
@@ -44,6 +45,7 @@ type ProductServiceConfig struct {
 	ProductRepository                r.ProductRepository
 	MerchantRepository               r.MerchantRepository
 	ProductItemRepository            r.ProductItemRepository
+	ProductReviewRepository          r.ProductReviewRepository
 	ProductVariationRepository       r.ProductVariationRepository
 	ProductViewRepository            r.ProductViewRepository
 	ProductFavoriteRepository        r.ProductFavoriteRepository
@@ -61,6 +63,7 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productRepository:                c.ProductRepository,
 		merchantRepository:               c.MerchantRepository,
 		productItemRepository:            c.ProductItemRepository,
+		productReviewService:             c.ProductReviewRepository,
 		productVariationRepository:       c.ProductVariationRepository,
 		productViewRepository:            c.ProductViewRepository,
 		productFavoriteRepository:        c.ProductFavoriteRepository,
@@ -96,6 +99,14 @@ func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDet
 	}
 
 	productDetails.ProductVariation = productVariation
+
+	productReviewDetails, err := s.productReviewService.GetDetailsByProductID(productID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	productDetails.ProductReviewDetails = productReviewDetails
 
 	return dtos.NewProductDetailsGetByIDResponse(productDetails), nil
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func marketplaceVoucher(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
-	path := "/marketplace-vouchers"
+	path := "/marketplace/vouchers"
 	publicRoute := public.Group(path)
 	{
 		publicRoute.GET("/active", h.MarketplaceVoucherGetAllByActive)
@@ -19,5 +19,6 @@ func marketplaceVoucher(public *gin.RouterGroup, private *gin.RouterGroup, h *ha
 		privateRoute.POST("", func(c *gin.Context) { middlewares.Role(c, "100") }, h.MarketplaceVoucherCreate)
 		privateRoute.DELETE("/:id", func(c *gin.Context) { middlewares.Role(c, "100") }, h.MarketplaceVoucherDelete)
 		privateRoute.PUT("/:id", func(c *gin.Context) { middlewares.Role(c, "100") }, h.MarketplaceVoucherUpdate)
+		privateRoute.GET("/buyer", h.MarketplaceVoucherGetAllByBuyer)
 	}
 }

@@ -14,6 +14,7 @@ type SealabsPay struct {
 	AccountNumber string
 	ActiveDate    time.Time
 	NameOnCard    string
+	IsDefault     bool
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt

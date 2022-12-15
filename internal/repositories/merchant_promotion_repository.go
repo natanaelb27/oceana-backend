@@ -74,7 +74,7 @@ func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.Merch
 	`)
 
 	if query.SearchPromotionName != "" {
-		queryResult.Where("name = ?", query.SearchPromotionName)
+		queryResult.Where("name ILIKE ", "%"+query.SearchPromotionName+"%")
 	}
 
 	if query.FilterPromotionStatus == constants.OngoingPromotionOrVoucher {

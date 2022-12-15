@@ -9,8 +9,8 @@ import (
 )
 
 func (h *Handler) SealabsPayCreate(c *gin.Context) {
-	id := utils.GinGetUUID(c, "id")
-	if id == uuid.Nil {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
@@ -21,25 +21,26 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 		return
 	}
 
-	sealabsPayCreateResponse, err := h.sealabsPayService.Create(id, request)
+	_, err := h.sealabsPayService.Create(c, userID, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	utils.ResponseSuccess(c, sealabsPayCreateResponse, nil)
+	utils.ResponseSuccess(c, nil, nil)
 }
 
 func (h *Handler) SealabsPayGetAll(c *gin.Context) {
-	id := utils.GinGetUUID(c, "id")
-	if id == uuid.Nil {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 
-	results, err := h.sealabsPayService.GetAll(id)
-	if err != nil {
+	results, err := h.sealabsPayService.GetAll(userID)
+	if err != nil && err != e.ErrDataNotFound {
 		utils.ResponseError(c, err)
+		return
 	}
 
 	var responseData []*dtos.SealabsPayCreateResponse = make([]*dtos.SealabsPayCreateResponse, 0)
@@ -53,7 +54,7 @@ func (h *Handler) SealabsPayGetAll(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayGetById(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("sealabs_pay_id"))
+	id, err := uuid.Parse(c.Param("sealabs-pay-id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -71,7 +72,7 @@ func (h *Handler) SealabsPayGetById(c *gin.Context) {
 }
 
 func (h *Handler) SealabsPayDelete(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("sealabs_pay_id"))
+	id, err := uuid.Parse(c.Param("sealabs-pay-id"))
 	if err != nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
@@ -86,4 +87,76 @@ func (h *Handler) SealabsPayDelete(c *gin.Context) {
 	responseData := dtos.NewSealabsPayDeleteResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) SealabsPaySetDefault(c *gin.Context) {
+	userID := utils.GinGetUUID(c, "id")
+	if userID == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	id, err := uuid.Parse(c.Param("sealabs-pay-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	err = h.sealabsPayService.SetDefault(id, userID)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, nil, nil)
+}
+
+func (h *Handler) SealabsPayTopupOTP(c *gin.Context) {
+	var inboundRequest *dtos.SealabsPayPaymentInboundRequest
+	err := c.ShouldBindJSON(&inboundRequest)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	otpURL, err := h.sealabsPayService.TopupWalletOTP(inboundRequest)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, *otpURL, nil)
+}
+
+func (h *Handler) SealabsPayRegisterOTP(c *gin.Context) {
+	var inboundRequest *dtos.SealabsPayPaymentInboundRequest
+	err := c.ShouldBindJSON(&inboundRequest)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	otpURL, err := h.sealabsPayService.RegisterOTP(inboundRequest)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, *otpURL, nil)
+}
+
+func (h *Handler) SealabsPayCallback(c *gin.Context) {
+	var request *dtos.SealabsPayCallbackRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	err = h.sealabsPayService.StoreSignature(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, request, nil)
 }

@@ -1,100 +1,104 @@
 package dtos
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"github.com/gin-gonic/gin"
 )
 
 type MarketplaceVoucherCreateRequest struct {
-	Name                   string    `json:"name" binding:"required"`
-	StartDatetime          time.Time `json:"start_datetime" binding:"required"`
-	EndDatetime            time.Time `json:"end_datetime" binding:"required"`
-	DiscountType           string    `json:"discount_type" binding:"required"`
-	Discount               uint      `json:"discount" binding:"required"`
-	MinimumSpendAmount     uint      `json:"minimum_spend_amount"`
-	MaxmimumDiscountAmount uint      `json:"maximum_spend_amount"`
-	MaximumQuota           uint      `json:"maximum_quota" binding:"required"`
+	Name                  string    `json:"name" binding:"required"`
+	StartDatetime         time.Time `json:"start_datetime" binding:"required"`
+	EndDatetime           time.Time `json:"end_datetime" binding:"required"`
+	DiscountType          string    `json:"discount_type" binding:"required"`
+	Discount              uint      `json:"discount" binding:"required"`
+	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_spend_amount"`
+	MaximumQuota          uint      `json:"maximum_quota" binding:"required"`
 }
 
 func (source *MarketplaceVoucherCreateRequest) ToModel() (target *models.MarketplaceVoucher) {
 	target = &models.MarketplaceVoucher{
-		Name:                   source.Name,
-		StartDatetime:          source.StartDatetime,
-		EndDatetime:            source.EndDatetime,
-		DiscountType:           source.DiscountType,
-		Discount:               source.Discount,
-		MinimumSpendAmount:     source.MinimumSpendAmount,
-		MaxmimumDiscountAmount: source.MaxmimumDiscountAmount,
-		MaximumQuota:           source.MaximumQuota,
+		Name:                  source.Name,
+		StartDatetime:         source.StartDatetime,
+		EndDatetime:           source.EndDatetime,
+		DiscountType:          source.DiscountType,
+		Discount:              source.Discount,
+		MinimumSpendAmount:    source.MinimumSpendAmount,
+		MaximumDiscountAmount: source.MaximumDiscountAmount,
+		MaximumQuota:          source.MaximumQuota,
 	}
 
 	return
 }
 
 type MarketplaceVoucherCreateResponse struct {
-	ID                     uint      `json:"id"`
-	Name                   string    `json:"name"`
-	StartDatetime          time.Time `json:"start_datetime"`
-	EndDatetime            time.Time `json:"end_datetime"`
-	DiscountType           string    `json:"discount_type"`
-	Discount               uint      `json:"discount"`
-	MinimumSpendAmount     uint      `json:"minimum_spend_amount"`
-	MaxmimumDiscountAmount uint      `json:"maximum_spend_amount"`
-	MaximumQuota           uint      `json:"maximum_quota"`
-	CurrentQuota           uint      `json:"current_quota"`
-	CreatedAt              time.Time `json:"created_at"`
-	UpdatedAt              time.Time `json:"updated_at"`
+	ID                    uint      `json:"id"`
+	Name                  string    `json:"name"`
+	StartDatetime         time.Time `json:"start_datetime"`
+	EndDatetime           time.Time `json:"end_datetime"`
+	DiscountType          string    `json:"discount_type"`
+	Discount              uint      `json:"discount"`
+	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_spend_amount"`
+	MaximumQuota          uint      `json:"maximum_quota"`
+	CurrentQuota          uint      `json:"current_quota"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 func NewMarketplaceVoucherCreateResponse(source *models.MarketplaceVoucher) (target *MarketplaceVoucherCreateResponse) {
 	target = &MarketplaceVoucherCreateResponse{
-		ID:                     source.ID,
-		Name:                   source.Name,
-		StartDatetime:          source.StartDatetime,
-		EndDatetime:            source.EndDatetime,
-		DiscountType:           source.DiscountType,
-		Discount:               source.Discount,
-		MinimumSpendAmount:     source.MinimumSpendAmount,
-		MaxmimumDiscountAmount: source.MaxmimumDiscountAmount,
-		MaximumQuota:           source.MaximumQuota,
-		CurrentQuota:           source.CurrentQuota,
-		CreatedAt:              source.CreatedAt,
-		UpdatedAt:              source.UpdatedAt,
+		ID:                    source.ID,
+		Name:                  source.Name,
+		StartDatetime:         source.StartDatetime,
+		EndDatetime:           source.EndDatetime,
+		DiscountType:          source.DiscountType,
+		Discount:              source.Discount,
+		MinimumSpendAmount:    source.MinimumSpendAmount,
+		MaximumDiscountAmount: source.MaximumDiscountAmount,
+		MaximumQuota:          source.MaximumQuota,
+		CurrentQuota:          source.CurrentQuota,
+		CreatedAt:             source.CreatedAt,
+		UpdatedAt:             source.UpdatedAt,
 	}
 
 	return
 }
 
 type MarketplaceVoucherGetResponse struct {
-	ID                     uint      `json:"id"`
-	Name                   string    `json:"name"`
-	StartDatetime          time.Time `json:"start_datetime"`
-	EndDatetime            time.Time `json:"end_datetime"`
-	DiscountType           string    `json:"discount_type"`
-	Discount               uint      `json:"discount"`
-	MinimumSpendAmount     uint      `json:"minimum_spend_amount"`
-	MaxmimumDiscountAmount uint      `json:"maximum_spend_amount"`
-	MaximumQuota           uint      `json:"maximum_quota"`
-	CurrentQuota           uint      `json:"current_quota"`
-	CreatedAt              time.Time `json:"created_at"`
-	UpdatedAt              time.Time `json:"updated_at"`
+	ID                    uint      `json:"id"`
+	Name                  string    `json:"name"`
+	StartDatetime         time.Time `json:"start_datetime"`
+	EndDatetime           time.Time `json:"end_datetime"`
+	DiscountType          string    `json:"discount_type"`
+	Discount              uint      `json:"discount"`
+	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_spend_amount"`
+	MaximumQuota          uint      `json:"maximum_quota"`
+	CurrentQuota          uint      `json:"current_quota"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 func NewMarketplaceVoucherGetResponse(source *models.MarketplaceVoucher) (target *MarketplaceVoucherGetResponse) {
 	target = &MarketplaceVoucherGetResponse{
-		ID:                     source.ID,
-		Name:                   source.Name,
-		StartDatetime:          source.StartDatetime,
-		EndDatetime:            source.EndDatetime,
-		DiscountType:           source.DiscountType,
-		Discount:               source.Discount,
-		MinimumSpendAmount:     source.MinimumSpendAmount,
-		MaxmimumDiscountAmount: source.MaxmimumDiscountAmount,
-		MaximumQuota:           source.MaximumQuota,
-		CurrentQuota:           source.CurrentQuota,
-		CreatedAt:              source.CreatedAt,
-		UpdatedAt:              source.UpdatedAt,
+		ID:                    source.ID,
+		Name:                  source.Name,
+		StartDatetime:         source.StartDatetime,
+		EndDatetime:           source.EndDatetime,
+		DiscountType:          source.DiscountType,
+		Discount:              source.Discount,
+		MinimumSpendAmount:    source.MinimumSpendAmount,
+		MaximumDiscountAmount: source.MaximumDiscountAmount,
+		MaximumQuota:          source.MaximumQuota,
+		CurrentQuota:          source.CurrentQuota,
+		CreatedAt:             source.CreatedAt,
+		UpdatedAt:             source.UpdatedAt,
 	}
 
 	return
@@ -110,4 +114,73 @@ func NewMarketplaceVoucherDeleteResponse(source *models.MarketplaceVoucher) (tar
 	}
 
 	return
+}
+
+type MarketplaceVoucherGetAllResponse struct {
+	MarketplaceVoucher []*dtos.MarketplaceVoucherDetails `json:"merchant_voucher"`
+}
+
+func NewMarketplaceVoucherGetAllResponse(source []*dtos.MarketplaceVoucherDetails) (target *MarketplaceVoucherGetAllResponse) {
+	target = &MarketplaceVoucherGetAllResponse{
+		MarketplaceVoucher: source,
+	}
+
+	return
+}
+
+type BuyerMarketplaceVoucherQuery struct {
+	FilterVoucherStatus       string `json:"filter-voucher-status"`
+	FilterVoucherAvailability string `json:"filter-voucher-availability"`
+	SortBy                    string `json:"sort-by"`
+	Sort                      string `json:"sort"`
+	Limit                     uint   `json:"limit"`
+	Page                      uint   `json:"page"`
+}
+
+func NewBuyerMarketplaceVoucherQuery(c *gin.Context) *BuyerMarketplaceVoucherQuery {
+	var query BuyerMarketplaceVoucherQuery
+
+	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
+	filterVoucherAvailability := strings.ToLower(c.Query("filter-voucher-availability"))
+	sortBy := strings.ToLower(c.Query("sort-by"))
+	sort := strings.ToLower(c.Query("sort"))
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	query.FilterVoucherStatus = filterVoucherStatus
+	query.FilterVoucherAvailability = filterVoucherAvailability
+
+	if sortBy == "end_datetime" {
+		query.SortBy = "end_datetime"
+	} else {
+		query.SortBy = "start_datetime"
+	}
+
+	if sort == "asc" {
+		query.Sort = "ASC"
+	} else {
+		query.Sort = "DESC"
+	}
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
 }

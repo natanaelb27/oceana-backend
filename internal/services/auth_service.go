@@ -19,7 +19,7 @@ import (
 type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
-	RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error)
+	RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*internalDtos.UserLoginData, error)
 	LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
@@ -182,7 +182,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 	}
 	return nil, e.ErrUserNotFound
 }
-func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error) {
+func (u *authService) RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*internalDtos.UserLoginData, error) {
 	_, err := u.userRepository.GetByUsername(userRegisterWithGoogleRequest.Username)
 	if err != e.ErrDataNotFound {
 		return nil, e.ErrUsernameAlreadyExist
@@ -195,7 +195,7 @@ func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *external
 	email := &models.Email{
 		Address: userRegisterWithGoogleRequest.Email,
 	}
-	createdEmail, err := u.emailRepository.Create(email)
+	_, err = u.emailRepository.Create(email)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *external
 		return nil, err
 	}
 	user.Password = hashedPassword
-	
+
 	createdUser, err := u.userRepository.Create(user)
 	if err != nil {
 		return nil, err
@@ -229,10 +229,24 @@ func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *external
 	if err != nil {
 		return nil, err
 	}
-	responseData := externalDtos.NewUserCreateResponse(createdUser)
-	responseData.Email = createdEmail.Address
-	responseData.GoogleID = nil
-	return responseData, nil
+
+	token, err := utils.GenerateUserTokenString(createdUser)
+	if err != nil {
+		return nil, err
+	}
+	userLoginData := &internalDtos.UserLoginData{
+		AccessToken:  token,
+		RefreshToken: token,
+		Role:         createdUser.Role,
+	}
+	refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
+	refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+	err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), token, refreshTokenDuration)
+	if err != nil {
+		return nil, err
+	}
+	userLoginData.ExpireDuration = refreshTokenDuration
+	return userLoginData, nil
 }
 
 func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {
