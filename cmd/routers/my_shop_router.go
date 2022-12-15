@@ -11,6 +11,7 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 	privateRoute := private.Group(path)
 	{
 		privateRoute.GET("/profile", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantGetProfile)
+		privateRoute.PATCH("/profile/photo", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantUpdatePhoto)
 		// vouchers
 		privateRoute.POST("/vouchers", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantVoucherCreate)
 		privateRoute.PUT("/vouchers/:merchant-voucher-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantVoucherUpdate)
