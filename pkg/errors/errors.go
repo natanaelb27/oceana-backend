@@ -75,6 +75,7 @@ var (
 	ErrDeleteShopAddressConflict                 = errors.New("cannot delete shop address")
 	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 	ErrWrongWalletPin                            = errors.New("wrong wallet pin")
+	ErrRefundAlreadyExist                        = errors.New("refund already exist")
 
 	ErrUnauthorized                     = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound                     = errors.New("user not found")
@@ -117,6 +118,7 @@ var (
 	ErrStockIsNotAvailable                                        = errors.New("stock is not available")
 	ErrStatusIsNotPendingSeller                                   = errors.New("status is not pending seller")
 	ErrStatusIsNotOnProcess                                       = errors.New("status is not on process")
+	ErrStatusIsNotDelivered                                       = errors.New("status is not delivered")
 	ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime = errors.New("new voucher start period is earlier than the current start period")
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
@@ -152,6 +154,7 @@ var (
 	ErrRequestedPromotionNotProduct                            = errors.New("product does not have that promotion")
 	ErrMerchantDoesNotHaveThatProductItem                      = errors.New("merchant does not have that product item")
 	ErrProductDoesNotHaveThatProductItem                       = errors.New("product does not have that product item")
+	ErrOrderDoesNotHaveThatOrderDetail                         = errors.New("order does not have that order detail")
 	ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount    = errors.New("purchased amount does not exceed the merchant voucher's minimum purchased amount")
 	ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount = errors.New("purchased amount does not exceed the marketplace voucher's minimum purchased amount")
 
@@ -226,7 +229,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantDoesNotHaveThatProductItem) ||
 		errors.Is(err, ErrProductDoesNotHaveThatProductItem) ||
 		errors.Is(err, ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount) ||
-		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) {
+		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) ||
+		errors.Is(err, ErrOrderDoesNotHaveThatOrderDetail) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
 		errors.Is(err, ErrWrongPassword) ||
@@ -257,7 +261,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantVoucherCodeAlreadyExist) ||
 		errors.Is(err, ErrMerchantPromotionProductConflict) ||
 		errors.Is(err, ErrDeleteDefaultAddressConflict) ||
-		errors.Is(err, ErrDeleteShopAddressConflict) {
+		errors.Is(err, ErrDeleteShopAddressConflict) ||
+		errors.Is(err, ErrRefundAlreadyExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
 		errors.Is(err, ErrForbiddenMerchant) ||
@@ -300,6 +305,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStockIsNotAvailable) ||
 		errors.Is(err, ErrStatusIsNotPendingSeller) ||
 		errors.Is(err, ErrStatusIsNotOnProcess) ||
+		errors.Is(err, ErrStatusIsNotDelivered) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
 		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrBlockedWallet) ||

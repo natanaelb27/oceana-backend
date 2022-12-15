@@ -1,9 +1,14 @@
 package repositories
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +21,7 @@ type MarketplaceVoucherRepository interface {
 	Delete(id uint) (model *models.MarketplaceVoucher, err error)
 	GetDetailsByID(id uint) (*dtos.MarketplaceVoucherDetails, error)
 	AddCurrentQuota(ID uint, amount uint) (*models.MarketplaceVoucher, error)
+	GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMarketplaceVoucherQuery, pagination *utils.Pagination) ([]*dtos.MarketplaceVoucherDetails, *utils.Pagination, error)
 }
 
 type marketplaceVoucherRepository struct {
@@ -182,4 +188,65 @@ func (r *marketplaceVoucherRepository) AddCurrentQuota(ID uint, amount uint) (*m
 	}
 
 	return model, nil
+}
+
+func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMarketplaceVoucherQuery, pagination *utils.Pagination) ([]*dtos.MarketplaceVoucherDetails, *utils.Pagination, error) {
+	var marketplaceVoucherDetails []*dtos.MarketplaceVoucherDetails
+
+	subQueryUnavailableVoucher := r.db.Model(&models.Transaction{}).
+		Select(`
+			transaction_marketplace_vouchers.marketplace_voucher_id
+		`).
+		Joins("JOIN transaction_marketplace_vouchers ON transaction_marketplace_vouchers.transaction_id = transactions.id").
+		Where("transactions.user_id = ?", id)
+
+	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
+		Select(`
+			id,  
+			start_datetime, 
+			end_datetime, 
+			discount_type, 
+			discount, 
+			minimum_spend_amount, 
+			maximum_discount_amount, 
+			maximum_quota, 
+			current_quota, 
+			(
+				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
+				AND end_datetime::timestamp THEN 'ongoing'
+				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
+				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
+			) AS voucher_status
+		`)
+
+	if query.FilterVoucherStatus == "ongoing" {
+		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
+	}
+
+	if query.FilterVoucherStatus == "upcoming" {
+		queryResult.Where("start_datetime::timestamp > NOW()::timestamp")
+	}
+
+	if query.FilterVoucherStatus == "ended" {
+		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
+	}
+
+	if query.FilterVoucherAvailability == "available" {
+		queryResult.Where("marketplace_vouchers.id NOT IN (?)", subQueryUnavailableVoucher)
+	}
+
+	if query.FilterVoucherAvailability == "unavailable" {
+		queryResult.Where("marketplace_vouchers.id IN (?)", subQueryUnavailableVoucher)
+	}
+
+	queryResult.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&marketplaceVoucherDetails)
+
+	if queryResult.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return marketplaceVoucherDetails, pagination, nil
 }
