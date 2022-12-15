@@ -323,7 +323,6 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 
 	// map product variant for later use to identify product variations
 	productVariantMap := make([][]uint, len(request.Variants))
-	// productVariants := []*models.ProductVariantType{}
 	for iVariant, variant := range request.Variants {
 		// declare product variant map with options length
 		productVariantMap[iVariant] = make([]uint, len(variant.Options))
