@@ -17,6 +17,7 @@ type OrderListQuery struct {
 	FilterOngoingOrderStatus   string     `json:"filter-ongoing-order-status"`
 	FilterStartTransactionDate *time.Time `json:"filter-start-transaction-date"`
 	FilterEndTransactionDate   *time.Time `json:"filter-end-transaction-date"`
+	FilterIsReviewed           string     `json:"filter-is-reviewed"`
 	Limit                      uint       `json:"limit"`
 	Page                       uint       `json:"page"`
 }
@@ -29,6 +30,7 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	filterOngoingOrderStatus := strings.ToLower(c.Query("filter-ongoing-order-status"))
 	filterStartTransactionDate := c.Query("filter-start-transaction-date")
 	filterEndTransactionDate := c.Query("filter-end-transaction-date")
+	filterIsReviewed := c.Query("filter-is-reviewed")
 
 	limit := c.Query("limit")
 	page := c.Query("page")
@@ -36,6 +38,14 @@ func NewOrderListQuery(c *gin.Context) *OrderListQuery {
 	query.Search = search
 	query.FilterOrderStatus = filterOrderStatus
 	query.FilterOngoingOrderStatus = filterOngoingOrderStatus
+
+	if filterIsReviewed != "" {
+		if filterIsReviewed != "true" && filterIsReviewed != "false" {
+			query.FilterIsReviewed = "all"
+		} else {
+			query.FilterIsReviewed = filterIsReviewed
+		}
+	}
 
 	if filterStartTransactionDate != "" && filterEndTransactionDate != "" {
 		startDate, err := time.Parse("2006-01-02", filterStartTransactionDate)
@@ -98,6 +108,7 @@ type OrderListGetAllResponse struct {
 	TotalPrice                           float64                 `json:"total_price"`
 	RefundID                             *uuid.UUID              `json:"refund_id"`
 	ClaimStatus                          bool                    `json:"claim_status"`
+	IsAllReviewed                        bool                    `json:"is_all_reviewed"`
 	SellerConfirmationExpirationDatetime *time.Time              `json:"seller_confirmation_expiration_datetime"`
 	OnProcessExpirationDatetime          *time.Time              `json:"on_process_expiration_datetime"`
 	DeliveredExpirationDatetime          *time.Time              `json:"delivered_expiration_datetime"`
@@ -121,6 +132,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGe
 			TotalPrice:                           result.TotalPrice,
 			RefundID:                             result.RefundID,
 			ClaimStatus:                          result.ClaimStatus,
+			IsAllReviewed:                        result.IsAllReviewed,
 			SellerConfirmationExpirationDatetime: result.SellerConfirmationExpirationDatetime,
 			OnProcessExpirationDatetime:          result.OnProcessExpirationDatetime,
 			DeliveredExpirationDatetime:          result.DeliveredExpirationDatetime,
@@ -154,6 +166,7 @@ type OrderListDetailsGetByIDResponse struct {
 	TotalPayment                         float64                      `json:"total_payment"`
 	RefundID                             *uuid.UUID                   `json:"refund_id"`
 	ClaimStatus                          bool                         `json:"claim_status"`
+	IsAllReviewed                        bool                         `json:"is_all_reviewed"`
 	SellerConfirmationExpirationDatetime *time.Time                   `json:"seller_confirmation_expiration_datetime"`
 	OnProcessExpirationDatetime          *time.Time                   `json:"on_process_expiration_datetime"`
 	DeliveredExpirationDatetime          *time.Time                   `json:"delivered_expiration_datetime"`
@@ -184,6 +197,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		TotalPayment:                         source.TotalPayment,
 		RefundID:                             source.RefundID,
 		ClaimStatus:                          source.ClaimStatus,
+		IsAllReviewed:                        source.IsAllReviewed,
 		SellerConfirmationExpirationDatetime: source.SellerConfirmationExpirationDatetime,
 		OnProcessExpirationDatetime:          source.OnProcessExpirationDatetime,
 		DeliveredExpirationDatetime:          source.DeliveredExpirationDatetime,

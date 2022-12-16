@@ -81,6 +81,15 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			sql.Named("delivered_title", constants.DeliveredTitle)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
 
+	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
+		Select(`
+			orders.id AS order_id, 
+			ARRAY_AGG(product_reviews.id) AS product_review_id_array 
+		`).
+		Joins("JOIN order_details ON order_details.order_id = orders.id").
+		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
+		Group("orders.id")
+
 	queryResult := r.db.Debug().Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
@@ -97,6 +106,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
 			refunds.id AS refund_id,
 			orders.claim_status AS claim_status,
+			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
@@ -107,6 +117,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
 		Where("transactions.user_id = ?", id).
 		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
@@ -197,6 +208,15 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			sql.Named("delivered_title", constants.DeliveredTitle)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
 
+	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
+		Select(`
+		orders.id AS order_id, 
+		ARRAY_AGG(product_reviews.id) AS product_review_id_array 
+	`).
+		Joins("JOIN order_details ON order_details.order_id = orders.id").
+		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
+		Group("orders.id")
+
 	subQueryTotalPriceBeforeDiscount := r.db.Model(&models.OrderDetail{}).
 		Select(`
 				SUM(order_details.total_price)
@@ -248,6 +268,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment,
 			refunds.id AS refund_id,
 			orders.claim_status AS claim_status,
+			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
@@ -263,6 +284,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
 		Where("orders.id = ?", id).
 		First(&orderListDetails)
 
@@ -377,6 +399,15 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			sql.Named("delivered_title", constants.DeliveredTitle)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
 
+	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
+		Select(`
+			orders.id AS order_id, 
+			ARRAY_AGG(product_reviews.id) AS product_review_id_array 
+		`).
+		Joins("JOIN order_details ON order_details.order_id = orders.id").
+		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
+		Group("orders.id")
+
 	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
@@ -393,6 +424,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			orders.total_price_after_discount::float AS total_price,
 			refunds.id AS refund_id,
 			orders.claim_status AS claim_status,
+			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
@@ -403,6 +435,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
 		Where("orders.merchant_id = ?", merchantID)
 		// Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
