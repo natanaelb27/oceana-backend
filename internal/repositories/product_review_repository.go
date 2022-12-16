@@ -35,10 +35,12 @@ func (pr *productReviewRepository) Create(newModel *models.ProductReview) (model
 	queryResult := pr.db.
 		Where("order_detail_id = ?", newModel.OrderDetailID).
 		FirstOrCreate(&newModel)
+
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrInsertFailed
 		return
 	}
+
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return

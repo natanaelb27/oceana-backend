@@ -12,6 +12,7 @@ type OrderDetailRepository interface {
 	OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error)
 	Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error)
 	GetByID(id uuid.UUID) (model *models.OrderDetail, err error)
+	GetDetailsByID(id uuid.UUID) (model *models.OrderDetail, err error)
 }
 
 type orderDetailRepository struct {
@@ -57,7 +58,9 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 			order_details.quantity AS quantity,
 			product_snapshots.price AS price,
 			order_details.total_price AS total_price,
-			product_reviews.id AS product_review_id
+			product_reviews.id AS product_review_id,
+			product_reviews.rating AS rating,
+			product_reviews.review AS review
 		`, subQueryProductImage,
 			subQueryVariants).
 		Joins("JOIN orders ON order_details.order_id = orders.id").
@@ -90,6 +93,26 @@ func (r *orderDetailRepository) Create(newModel []*models.OrderDetail) (model []
 
 func (r *orderDetailRepository) GetByID(id uuid.UUID) (model *models.OrderDetail, err error) {
 	queryResult := r.db.First(&model, id)
+
+	if queryResult.Error != nil {
+		if queryResult.RowsAffected == 0 {
+			err = e.ErrDataNotFound
+			return
+		}
+
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *orderDetailRepository) GetDetailsByID(id uuid.UUID) (model *models.OrderDetail, err error) {
+	queryResult := r.db.Model(&models.OrderDetail{}).
+		Preload("ProductSnapshot").
+		Preload("Order").
+		Preload("Order.Transaction").
+		First(&model, id)
 
 	if queryResult.Error != nil {
 		if queryResult.RowsAffected == 0 {

@@ -234,6 +234,7 @@ func Init() *Handler {
 	})
 
 	productReviewService := services.NewProductReviewService(&services.ProductReviewServiceConfig{
+		OrderDetailRepository:        orderDetailRepository,
 		ProductReviewRepository:      productReviewRepository,
 		ProductReviewMediaRepository: productReviewMediaRepository,
 	})
