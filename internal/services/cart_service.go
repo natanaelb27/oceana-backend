@@ -33,6 +33,7 @@ type cartService struct {
 	orderDetailRepository                   r.OrderDetailRepository
 	orderDetailMerchantPromotionRepository  r.OrderDetailMerchantPromotionRepository
 	orderMerchantVoucherRepository          r.OrderMerchantVoucherRepository
+	orderTrackingRepository                 r.OrderTrackingRepository
 	productRepository                       r.ProductRepository
 	productItemRepository                   r.ProductItemRepository
 	productMerchantPromotionRepository      r.ProductMerchantPromotionRepository
@@ -57,6 +58,7 @@ type CartServiceConfig struct {
 	OrderDetailRepository                   r.OrderDetailRepository
 	OrderDetailMerchantPromotionRepository  r.OrderDetailMerchantPromotionRepository
 	OrderMerchantVoucherRepository          r.OrderMerchantVoucherRepository
+	OrderTrackingRepository                 r.OrderTrackingRepository
 	ProductRepository                       r.ProductRepository
 	ProductItemRepository                   r.ProductItemRepository
 	ProductMerchantPromotionRepository      r.ProductMerchantPromotionRepository
@@ -82,6 +84,7 @@ func NewCartService(c *CartServiceConfig) CartService {
 		orderDetailRepository:                   c.OrderDetailRepository,
 		orderDetailMerchantPromotionRepository:  c.OrderDetailMerchantPromotionRepository,
 		orderMerchantVoucherRepository:          c.OrderMerchantVoucherRepository,
+		orderTrackingRepository:                 c.OrderTrackingRepository,
 		productRepository:                       c.ProductRepository,
 		productItemRepository:                   c.ProductItemRepository,
 		productMerchantPromotionRepository:      c.ProductMerchantPromotionRepository,
@@ -209,6 +212,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		IsPaid:              true,
 	}
 
+	newOrderTrackingList := []*models.OrderTracking{}
 	newOrderList := []*models.Order{}
 	newOrderDetailList := []*models.OrderDetail{}
 	newOrderDetailMerchantPromotionList := []*models.OrderDetailMerchantPromotion{}
@@ -224,7 +228,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
-	for _, cartOrderItem := range request.CartOrderItems {
+	for i, cartOrderItem := range request.CartOrderItems {
 		merchantVoucher := &internalDtos.MerchantVoucherDetails{}
 
 		if cartOrderItem.MerchantVoucherID != nil {
@@ -267,7 +271,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 		newOrder := &models.Order{
 			ID:                uuid.New(),
-			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1)),
+			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1+i)),
 			TransactionID:     newTransaction.ID,
 			MerchantID:        cartOrderItem.MerchantID,
 			AddressSnapshotID: addressSnapshot.ID,
@@ -276,6 +280,15 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			Status:            constants.PendingSellerStatus,
 			ClaimStatus:       false,
 		}
+
+		newOrderTracking := &models.OrderTracking{
+			OrderID:         newOrder.ID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.PaymentVerifiedTitle,
+			Description:     constants.PaymentVerifiedDescription,
+		}
+
+		newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
 
 		var sumProduct float64 = 0
 
@@ -316,6 +329,10 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					return nil, e.ErrProductDoesNotHaveThatProductItem
 				}
 
+				if pi.Status != constants.ProductActiveStatus {
+					return nil, e.ErrProductStatusInactive
+				}
+
 				if pi.StockQuantity < productItems.Quantity {
 					return nil, e.ErrProductStockNotEnough
 				}
@@ -329,6 +346,8 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					Weight:      pi.Weight,
 					PackageSize: pi.PackageSize,
 					Condition:   pi.Condition,
+					ProcessDay:  pi.ProcessDay,
+					IsPreorder:  pi.IsPreorder,
 					SKU:         pi.SKU,
 					Price:       pi.Price,
 				}
@@ -550,6 +569,12 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	}
 
 	_, err = p.orderRepository.Create(newOrderList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.orderTrackingRepository.Create(newOrderTrackingList)
 
 	if err != nil {
 		return nil, err

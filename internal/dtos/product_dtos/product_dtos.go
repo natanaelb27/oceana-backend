@@ -35,11 +35,14 @@ type Product struct {
 	PriceMaximum                  uint      `json:"price_maximum"`
 	PriceMinimumAfterDiscount     float64   `json:"price_minimum_after_discount"`
 	PriceMaximumAfterDiscount     float64   `json:"price_maximum_after_discount"`
+	ProductMerchantPromotionID    uint      `json:"product_merchant_promotion_id"`
+	MerchantPromotionName         string    `json:"merchant_promotion_name"`
 	Discount                      uint      `json:"discount"`
 	DiscountType                  string    `json:"discount_type"`
 	DiscountMaximumDiscountAmount uint      `json:"discount_maximum_discount_amount"`
 	TotalViewCount                uint      `json:"total_view_count"`
 	TotalPurchaseCount            uint      `json:"total_purchase_count"`
+	RatingStar                    float64   `json:"rating_star"`
 	Merchant                      Merchant  `json:"merchant"`
 	CreatedAt                     time.Time `json:"created_at"`
 	UpdatedAt                     time.Time `json:"updated_at"`
@@ -52,12 +55,13 @@ type ProductQuery struct {
 	Limit  uint
 	Page   uint
 	// Filter
-	MerchantID      uint
-	CategoryID      uint
-	PriceMinimum    uint
-	PriceMaximum    uint
-	MerchantCities  []string
-	CourierServices []string
+	MerchantID        uint
+	CategoryID        uint
+	PriceMinimum      uint
+	PriceMaximum      uint
+	RatingStarMinimum uint
+	MerchantCities    []string
+	CourierServices   []string
 	// Categories
 	Categories []uint
 }
@@ -70,6 +74,7 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.CategoryID = utils.StringToUint(c.Query("category-id"))
 	query.PriceMinimum = utils.StringToUint(c.Query("price-minimum"))
 	query.PriceMaximum = utils.StringToUint(c.Query("price-maximum"))
+	query.RatingStarMinimum = utils.StringToUint(c.Query("rating-star-minimum"))
 
 	query.Page = utils.StringToUint(c.Query("page"))
 	if query.Page == 0 {
@@ -131,11 +136,11 @@ type CourierService struct {
 }
 
 type Courier struct {
-	ID             uint              `json:"id"`
-	Code           string            `json:"code"`
-	Name           string            `json:"name"`
-	IsActive       bool              `json:"is_active" gorm:"-"`
-	CourierService []*CourierService `json:"courier_service" gorm:"-"`
+	ID              uint              `json:"id"`
+	Code            string            `json:"code"`
+	Name            string            `json:"name"`
+	IsActive        bool              `json:"is_active" gorm:"-"`
+	CourierServices []*CourierService `json:"courier_services" gorm:"-"`
 }
 
 type Logistics struct {
@@ -163,6 +168,7 @@ type ProductModel struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	CategoryID  uint           `json:"category_id"`
+	MerchantID  uint           `json:"merchant_id"`
 	Weight      uint           `json:"weight"`
 	IsHazardous bool           `json:"is_hazardous"`
 	PackageSize string         `json:"package_size"`

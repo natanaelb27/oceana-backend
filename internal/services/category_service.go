@@ -10,6 +10,7 @@ import (
 
 type CategoryService interface {
 	GetAll(query *externalDtos.CategoryQuery) ([]*dtos.Category, error)
+	GetAncestorsByID(ID uint) ([]*externalDtos.CategoryGetAncestorsResponse, error)
 }
 
 type categoryService struct {
@@ -118,4 +119,14 @@ func (p *categoryService) GetAll(query *externalDtos.CategoryQuery) ([]*dtos.Cat
 	}
 
 	return category, nil
+}
+
+func (p *categoryService) GetAncestorsByID(ID uint) ([]*externalDtos.CategoryGetAncestorsResponse, error) {
+	category, err := p.categoryRepository.GetAncestorsByID(ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return externalDtos.NewCategoryGetAncestorsResponse(category), nil
 }

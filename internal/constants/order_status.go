@@ -12,5 +12,6 @@ const (
 	CanceledStatus       = "canceled"
 	BuyerCanceledStatus  = "canceled by buyer"
 	SellerCanceledStatus = "canceled by seller"
+	SystemCanceledStatus = "canceled by system"
 	CompletedStatus      = "completed"
 )

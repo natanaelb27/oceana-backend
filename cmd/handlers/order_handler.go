@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -17,7 +16,6 @@ func (h *Handler) OrderListGetAll(c *gin.Context) {
 	}
 
 	query := dtos.NewOrderListQuery(c)
-	query.FilterMerchantID = 0
 
 	orderListGetAllResponse, pagination, err := h.orderService.OrderListGetAll(id, query)
 
@@ -70,7 +68,7 @@ func (h *Handler) OrderListDetailsGetByID(c *gin.Context) {
 	utils.ResponseSuccess(c, orderListDetailsGetAllResponse, nil)
 }
 
-func (h *Handler) OrderListDetailsGetByIDByMerchantID(c *gin.Context) {
+func (h *Handler) MerchantOrderListDetailsGetByID(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
@@ -83,7 +81,8 @@ func (h *Handler) OrderListDetailsGetByIDByMerchantID(c *gin.Context) {
 		return
 	}
 
-	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetByIDByMerchantID(id, orderID)
+	orderListDetailsGetAllResponse, err := h.orderService.OrderListDetailsGetByMerchantID(id, orderID)
+
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -92,10 +91,10 @@ func (h *Handler) OrderListDetailsGetByIDByMerchantID(c *gin.Context) {
 	utils.ResponseSuccess(c, orderListDetailsGetAllResponse, nil)
 }
 
-func (h *Handler) OrderProcessOrder(c *gin.Context) {
-	var request *dtos.OrderProcessOrderRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.ResponseError(c, err)
+func (h *Handler) OrderProcessDelivery(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 
@@ -105,10 +104,33 @@ func (h *Handler) OrderProcessOrder(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.Update(&internalDtos.OrderProcessOrder{
-		CourierServiceID: request.CourierServiceID,
-		OrderID:          orderID,
-	})
+	result, err := h.orderService.UpdateProcessDelivery(orderID, id)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewOrderProcessDeliveryResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) OrderProcessOrder(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	orderID, err := uuid.Parse(c.Param("order-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.orderService.UpdateProcessOrder(orderID, id)
+
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

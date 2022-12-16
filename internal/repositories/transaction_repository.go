@@ -1,13 +1,19 @@
 package repositories
 
 import (
+	"database/sql"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type TransactionRepository interface {
 	Create(newModel *models.Transaction) (model *models.Transaction, err error)
+	PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error)
 }
 
 type transactionRepository struct {
@@ -33,6 +39,33 @@ func (r *transactionRepository) Create(newModel *models.Transaction) (model *mod
 	}
 
 	model = newModel
+
+	return
+}
+
+func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error) {
+	queryResult := r.db.Model(&models.Transaction{}).
+		Select(`
+			transactions.id AS transaction_id,
+			transactions.user_id AS user_id,
+			users.full_name AS user_full_name,
+			transactions.transaction_datetime AS transaction_datetime,
+			transactions.payment_method_id AS payment_method_id,
+			payment_methods.name AS payment_method_name,
+			payment_methods.image AS payment_method_image,
+			transactions.transaction_datetime + INTERVAL '1 minute' * @interval_payment_expiration AS payment_expiration_datetime,
+			transactions.total_price_with_shipping_fee AS total_payment
+		`, sql.Named("interval_payment_expiration", constants.PaymentExpirationInterval)).
+		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
+		Joins("JOIN users ON transactions.user_id = users.id").
+		Where("transactions.is_paid = false").
+		Where("transactions.user_id = ?", id).
+		Find(&pendingPaymentTransaction)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 
 	return
 }

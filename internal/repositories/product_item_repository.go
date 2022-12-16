@@ -13,6 +13,7 @@ import (
 type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
+	CreateProductItem(productItem *models.ProductItem) (model *models.ProductItem, err error)
 	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
 	SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error)
@@ -110,6 +111,23 @@ func (r *productItemRepository) GetById(id uint) (model *models.ProductItem, err
 	return
 }
 
+func (pi *productItemRepository) CreateProductItem(newModel *models.ProductItem) (model *models.ProductItem, err error) {
+	queryResult := pi.db.Create(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrInsertFailed
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
+}
+
 func (r *productItemRepository) GetDetailsById(ID uint) (*dtos.ProductItemDetails, error) {
 	var productItemDetails *dtos.ProductItemDetails
 	result := r.db.Model(&models.ProductItem{}).
@@ -126,7 +144,10 @@ func (r *productItemRepository) GetDetailsById(ID uint) (*dtos.ProductItemDetail
 			products.is_hazardous AS is_hazardous,
 			products.weight AS weight,
 			products.package_size AS package_size,
-			products.condition AS condition
+			products.condition AS condition,
+			products.status AS status,
+			products.process_day AS process_day,
+			products.is_preorder AS is_preorder
 		`).
 		Joins("JOIN products ON products.id = product_items.product_id").
 		Where("product_items.id = ?", ID).

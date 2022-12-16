@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -8,11 +10,13 @@ import (
 )
 
 type RoleRepository interface {
+	WithTx(tx *gorm.DB) *roleRepository
 	Create(role *models.Role) (model *models.Role, err error)
 	GetAll() (model []*models.Role, err error)
 	GetById(id uuid.UUID) (model *models.Role, err error)
 	Update(id uuid.UUID, newModel *models.Role) (model *models.Role, err error)
 	Delete(id uuid.UUID) (model *models.Role, err error)
+	CreateFailing(newModel *models.Role) (model *models.Role, err error)
 }
 
 type roleRepository struct {
@@ -27,6 +31,15 @@ func NewRoleRepository(c *RoleRepositoryConfig) RoleRepository {
 	return &roleRepository{
 		db: c.DB,
 	}
+}
+
+func (u roleRepository) WithTx(tx *gorm.DB) *roleRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *roleRepository) Create(newModel *models.Role) (model *models.Role, err error) {
@@ -87,5 +100,10 @@ func (r *roleRepository) Delete(id uuid.UUID) (model *models.Role, err error) {
 
 	model.ID = id
 
+	return
+}
+
+func (r *roleRepository) CreateFailing(newModel *models.Role) (model *models.Role, err error) {
+	err = e.ErrDatabaseOperationFailed
 	return
 }

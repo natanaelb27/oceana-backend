@@ -154,6 +154,30 @@ func (h *Handler) FavoriteProduct(c *gin.Context) {
 	utils.ResponseSuccess(c, getFavoriteProductResponse, nil)
 }
 
+func (h *Handler) ProductCreate(c *gin.Context) {
+	merchantIDInt, err := strconv.Atoi(c.Param("merchant_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
+
+	var request *product_dtos.ProductModel
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	request.MerchantID = uint(merchantIDInt)
+
+	response, err := h.productService.CreateProduct(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, response, nil)
+}
+
 func (h *Handler) ProductModelById(c *gin.Context) {
 	productID, err := strconv.Atoi(c.Param("product-id"))
 	if err != nil {
@@ -161,12 +185,11 @@ func (h *Handler) ProductModelById(c *gin.Context) {
 		return
 	}
 
-	productModel, err := h.productService.GetUpdateByMerchantID(uint(productID))
+	productModel, err := h.productService.GetUpdateModelByProductID(uint(productID))
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
 	utils.ResponseSuccess(c, productModel, nil)
-
 }
