@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ type CategoryRepository interface {
 	GetAllByID(ID uint) (model []*models.Category, err error)
 	GetByID(ID uint) (model *models.Category, err error)
 	GetAncestorsByID(ID uint) (model []*models.Category, err error)
+	GetMerchantCategoriesByMerchantID(id uint) ([]*models.Category, error)
 }
 
 type categoryRepository struct {
@@ -123,4 +125,27 @@ func (r *categoryRepository) GetAncestorsByID(ID uint) (model []*models.Category
 	}
 
 	return
+}
+
+func (r *categoryRepository) GetMerchantCategoriesByMerchantID(id uint) ([]*models.Category, error) {
+	var categories []*models.Category
+
+	result := r.db.Model(&models.Product{}).
+		Select(`
+			DISTINCT
+			categories.id AS id,
+			categories.media_url AS media_url,
+			categories.name AS name,
+			categories.parent_id AS parent_id
+		`).
+		Joins("JOIN categories ON products.category_id = categories.id").
+		Where("products.merchant_id = ?", id).
+		Where("products.status = ?", constants.ProductActiveStatus).
+		Find(&categories)
+
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return categories, nil
 }

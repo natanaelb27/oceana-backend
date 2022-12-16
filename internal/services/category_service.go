@@ -10,7 +10,8 @@ import (
 
 type CategoryService interface {
 	GetAll(query *externalDtos.CategoryQuery) ([]*dtos.Category, error)
-	GetAncestorsByID(ID uint) ([]*externalDtos.CategoryGetAncestorsResponse, error)
+	GetAncestorsByID(id uint) ([]*externalDtos.GetCategoriesResponse, error)
+	GetMerchantCategories(id uint) ([]*externalDtos.GetCategoriesResponse, error)
 }
 
 type categoryService struct {
@@ -121,12 +122,22 @@ func (p *categoryService) GetAll(query *externalDtos.CategoryQuery) ([]*dtos.Cat
 	return category, nil
 }
 
-func (p *categoryService) GetAncestorsByID(ID uint) ([]*externalDtos.CategoryGetAncestorsResponse, error) {
-	category, err := p.categoryRepository.GetAncestorsByID(ID)
+func (p *categoryService) GetAncestorsByID(id uint) ([]*externalDtos.GetCategoriesResponse, error) {
+	category, err := p.categoryRepository.GetAncestorsByID(id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return externalDtos.NewCategoryGetAncestorsResponse(category), nil
+	return externalDtos.NewGetCategoriesResponse(category), nil
+}
+
+func (p *categoryService) GetMerchantCategories(id uint) ([]*externalDtos.GetCategoriesResponse, error) {
+	category, err := p.categoryRepository.GetMerchantCategoriesByMerchantID(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return externalDtos.NewGetCategoriesResponse(category), nil
 }
