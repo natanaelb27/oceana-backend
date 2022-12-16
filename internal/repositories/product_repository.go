@@ -22,9 +22,10 @@ type ProductRepository interface {
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
+	CreateProduct(product *models.Product) (model *models.Product, err error)
 	GetByProductItemID(productItemID uint) (*models.Product, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
-	GetUpdateByMerchantID(id uint) (model *product_dtos.ProductModel, err error)
+	GetUpdateByProductID(id uint) (model *product_dtos.ProductModel, err error)
 }
 
 type productRepository struct {
@@ -537,6 +538,22 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	return ProductDetails, pagination, nil
 }
 
+func (p *productRepository) CreateProduct(newModel *models.Product) (model *models.Product, err error) {
+	queryResult := p.db.Create(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrInsertFailed
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
+}
+
 func (r *productRepository) GetByProductItemID(productItemID uint) (*models.Product, error) {
 	var model *models.Product
 
@@ -560,7 +577,7 @@ func (r *productRepository) UpdateUsingMapByMapCondition(conditionMap map[string
 	return
 }
 
-func (r *productRepository) GetUpdateByMerchantID(id uint) (productModel *product_dtos.ProductModel, err error) {
+func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product_dtos.ProductModel, err error) {
 	sqProductMediaImage := r.db.Model(&models.ProductMedia{}).
 		Select("ARRAY_AGG(media_url)").
 		Where("product_media.type = ?", product_media_constants.TypeImage).
@@ -576,6 +593,7 @@ func (r *productRepository) GetUpdateByMerchantID(id uint) (productModel *produc
 			products.name AS name,
 			products.description AS description,
 			products.category_id AS category_id,
+			products.merchant_id AS merchant_id,
 			products.weight AS weight,
 			products.is_hazardous AS is_hazardous,
 			products.package_size AS package_size,

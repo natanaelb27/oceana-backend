@@ -10,6 +10,7 @@ type Courier struct {
 	ID        uint
 	Code      string
 	Name      string
+	LogoURL   string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt

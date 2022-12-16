@@ -49,8 +49,8 @@ type HandlerConfig struct {
 	ProductReviewService      services.ProductReviewService
 	MerchantPromotionService  services.MerchantPromotionService
 	CartService               services.CartService
-	MarketplaceVoucherService services.MarketplaceVoucherService
 	SubDistrictService        services.SubDistrictService
+	MarketplaceVoucherService services.MarketplaceVoucherService
 	RajaOngkirService         services.RajaOngkirService
 	CourierService            services.CourierService
 	LogisticService           services.LogisticService

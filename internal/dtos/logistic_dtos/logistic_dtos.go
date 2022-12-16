@@ -10,6 +10,7 @@ type Courier struct {
 	ID             uint              `json:"id"`
 	Code           string            `json:"code"`
 	Name           string            `json:"name"`
+	LogoURL        string            `json:"logo_url"`
 	IsSelected     bool              `json:"is_selected"`
 	CourierService []*CourierService `json:"courier_services"`
 }
@@ -17,7 +18,7 @@ type Courier struct {
 type Logistic struct {
 	PreorderDay  uint       `json:"preorder_day"`
 	IsPrintLabel bool       `json:"is_print_label"`
-	Courier      []*Courier `json:"courier"`
+	Courier      []*Courier `json:"couriers"`
 }
 
 type CourierServiceCheck struct {
@@ -31,7 +32,7 @@ type CourierCheck struct {
 type LogisticCheck struct {
 	PreorderDay  uint            `json:"preorder_day"`
 	IsPrintLabel bool            `json:"is_print_label"`
-	Courier      []*CourierCheck `json:"courier"`
+	Courier      []*CourierCheck `json:"couriers"`
 }
 
 func (source *Logistic) ToLogisticCheck() *LogisticCheck {
