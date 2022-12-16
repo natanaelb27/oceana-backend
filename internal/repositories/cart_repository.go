@@ -9,6 +9,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type CartRepository interface {
@@ -240,7 +241,11 @@ func (r *cartRepository) Update(id uint, newModel *models.Cart) (model *models.C
 }
 
 func (r *cartRepository) Delete(id uint) (model *models.Cart, err error) {
-	result := r.db.Delete(&model, id)
+	result := r.db.
+		Clauses(clause.Returning{}).
+		Where("id = ?", id).
+		Delete(&model)
+
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

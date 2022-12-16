@@ -647,10 +647,16 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	}
 
 	for _, cartID := range request.CartIDs {
-		_, err = p.cartRepository.Delete(*cartID)
+		deletedCart, err := p.cartRepository.Delete(*cartID)
 
-		if err != nil {
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
 			return nil, err
+		} else {
+			if deletedCart.UserID != request.UserID {
+				return nil, e.ErrForbiddenOrder
+			}
 		}
 	}
 
