@@ -115,11 +115,10 @@ func (s *profileService) RequestChangePasswordVerificationCode(c *gin.Context, i
 	}
 
 	to := []string{user.Email.Address}
-	cc := []string{}
 	subject := "Change Password Verification Code "
-	message := "Verification code: " + verificationCode
+	message := utils.WriteChangePasswordEmailMessage(verificationCode)
 
-	err = utils.SendMail(to, cc, subject, message)
+	err = utils.SendMail(to, subject, message)
 	if err != nil {
 		err = e.ErrSendingEmailFailed
 		return
