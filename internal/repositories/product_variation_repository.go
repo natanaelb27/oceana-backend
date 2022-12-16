@@ -11,6 +11,7 @@ import (
 type ProductVariationRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductVariation, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.Variants, error)
+	Create(newModel *models.ProductVariation) (model *models.ProductVariation, err error)
 }
 
 type productVariationRepository struct {
@@ -118,4 +119,20 @@ func (r *productVariationRepository) GetUpdateByProductID(productID uint) ([]*in
 	}
 
 	return result, nil
+}
+
+func (r *productVariationRepository) Create(newModel *models.ProductVariation) (model *models.ProductVariation, err error) {
+	queryResult := r.db.Create(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrInsertFailed
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
 }

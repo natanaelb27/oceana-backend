@@ -13,6 +13,7 @@ import (
 type ProductItemRepository interface {
 	GetByProductID(productID uint) ([]*dtos.ProductModel, error)
 	GetById(id uint) (model *models.ProductItem, err error)
+	CreateProductItem(productItem *models.ProductItem) (model *models.ProductItem, err error)
 	GetDetailsById(ID uint) (*dtos.ProductItemDetails, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.ProductItem, error)
 	SubtractProductStock(ID uint, amount uint) (*models.ProductItem, error)
@@ -106,6 +107,23 @@ func (r *productItemRepository) GetById(id uint) (model *models.ProductItem, err
 		err = e.ErrDataNotFound
 		return
 	}
+
+	return
+}
+
+func (pi *productItemRepository) CreateProductItem(newModel *models.ProductItem) (model *models.ProductItem, err error) {
+	queryResult := pi.db.Create(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrInsertFailed
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
 
 	return
 }
