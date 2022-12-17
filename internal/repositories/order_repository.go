@@ -22,6 +22,8 @@ type OrderRepository interface {
 	GetOrderCount() (*int64, error)
 	Create(newModel []*models.Order) (model []*models.Order, err error)
 	OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
+	PendingPaymentGetAll() (pendingOrders []*models.Order, err error)
+	// Updates(newModel []*models.Order) (model []*models.Order, err error)
 }
 
 type orderRepository struct {
@@ -450,3 +452,36 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 
 	return orderList, pagination, nil
 }
+
+func (r *orderRepository) PendingPaymentGetAll() (pendingOrders []*models.Order, err error) {
+	queryResult := r.db.Model(&models.Order{}).
+		Preload("Transaction").
+		Where("orders.status = ?", constants.PendingPaymentStatus).
+		Find(&pendingOrders)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+// func (r *orderRepository) Updates(newModel []*models.Order) (model []*models.Order, err error) {
+// 	queryResult := r.db.Model(&model).Update(&newModel)
+// 	if queryResult.Error == gorm.ErrRecordNotFound {
+// 		err = e.ErrDataNotFound
+// 		return
+// 	}
+// 	if queryResult.Error != nil {
+// 		return nil, e.ErrDatabaseOperationFailed
+// 	}
+// 	if queryResult.RowsAffected == 0 {
+// 		err = e.ErrDataNotFound
+// 		return
+// 	}
+
+// 	model = newModel
+
+// 	return
+// }

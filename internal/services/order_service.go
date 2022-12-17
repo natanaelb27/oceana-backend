@@ -21,6 +21,7 @@ type OrderService interface {
 	OrderListDetailsGetByMerchantID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
 	UpdateProcessDelivery(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 	UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
+	CronPaymentExpiration() error
 }
 
 type orderService struct {
@@ -315,4 +316,44 @@ func (s *orderService) UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (
 	}
 
 	return updatedOrder, nil
+}
+
+func (s *orderService) CronPaymentExpiration() error {
+	pendingPayment, err := s.orderRepository.PendingPaymentGetAll()
+
+	if err != nil {
+		return err
+	}
+
+	newOrderTrackings := []*models.OrderTracking{}
+
+	for _, v := range pendingPayment {
+		if !time.Now().After(v.Transaction.TransactionDatetime.Add(time.Minute * time.Duration(constants.PaymentExpirationInterval))) {
+			continue
+		}
+
+		_, err = s.orderRepository.Update(v.ID, &models.Order{
+			Status: constants.SystemCanceledStatus,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         v.ID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.CanceledBySystemPaymentTitle,
+			Description:     constants.CanceledBySystemPaymentDescription,
+		})
+	}
+
+	if len(newOrderTrackings) != 0 {
+		_, err = s.orderTrackingRepository.Create(newOrderTrackings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

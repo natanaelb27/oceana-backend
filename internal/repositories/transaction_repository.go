@@ -44,8 +44,16 @@ func (r *transactionRepository) Create(newModel *models.Transaction) (model *mod
 }
 
 func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error) {
+	subQueryPendingPaymentTransactions := r.db.Model(&models.Order{}).
+		Select(`
+			DISTINCT
+			orders.transaction_id AS transaction_id
+		`).
+		Where("orders.status = ?", constants.PendingPaymentStatus)
+
 	queryResult := r.db.Model(&models.Transaction{}).
 		Select(`
+			DISTINCT
 			transactions.id AS transaction_id,
 			transactions.user_id AS user_id,
 			users.full_name AS user_full_name,
@@ -58,6 +66,8 @@ func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pend
 		`, sql.Named("interval_payment_expiration", constants.PaymentExpirationInterval)).
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN users ON transactions.user_id = users.id").
+		Joins("JOIN (?) tbl_pending_payment ON transactions.id = tbl_pending_payment.transaction_id", subQueryPendingPaymentTransactions).
+		// Where("orders.status = ?", constants.PendingPaymentStatus).
 		Where("transactions.is_paid = false").
 		Where("transactions.user_id = ?", id).
 		Find(&pendingPaymentTransaction)
