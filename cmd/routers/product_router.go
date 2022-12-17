@@ -20,5 +20,6 @@ func product(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.GET("/:product-id/favorite", func(c *gin.Context) { middlewares.Role(c, "011") }, h.GetFavoriteProduct)
 		privateRoute.POST("/:product-id/favorite", func(c *gin.Context) { middlewares.Role(c, "011") }, h.FavoriteProduct)
 		publicRoute.GET("/:product-id/model", h.ProductModelById)
+		privateRoute.GET("/available-products", h.GetAvailableProductsByPromotionPeriod)
 	}
 }

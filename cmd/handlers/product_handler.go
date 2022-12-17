@@ -193,3 +193,21 @@ func (h *Handler) ProductModelById(c *gin.Context) {
 
 	utils.ResponseSuccess(c, productModel, nil)
 }
+
+func (h *Handler) GetAvailableProductsByPromotionPeriod(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewAvailableProductsByPromotionPeriodQuery(c)
+
+	result, err := h.productService.GetAvailableProductsByPromotionPeriod(id, query)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, result, nil)
+}

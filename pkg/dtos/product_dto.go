@@ -186,3 +186,77 @@ func NewProductCreateResponse(source *models.Product) (target *ProductCreateResp
 
 	return
 }
+
+type AvailableProductsByPromotionPeriodQuery struct {
+	Search              string     `json:"search"`
+	FilterCategory      uint       `json:"filter-category"`
+	FilterStartDatetime *time.Time `json:"filter-start-datetime"`
+	FilterEndDatetime   *time.Time `json:"filter-end-datetime"`
+}
+
+func NewAvailableProductsByPromotionPeriodQuery(c *gin.Context) *AvailableProductsByPromotionPeriodQuery {
+	var query AvailableProductsByPromotionPeriodQuery
+
+	search := c.Query("search")
+	filterCategory := c.Query("filter-category")
+	filterStartDatetime := c.Query("filter-start-datetime")
+	filterEndDatetime := c.Query("filter-end-datetime")
+
+	query.Search = search
+
+	CategoryIdInt, err := strconv.Atoi(filterCategory)
+	if err != nil || CategoryIdInt <= 0 {
+		CategoryIdInt = 0
+	}
+
+	query.FilterCategory = uint(CategoryIdInt)
+
+	if filterStartDatetime != "" && filterEndDatetime != "" {
+		startDatetime, err := time.Parse("2006-01-02T15:04:05.000Z", filterStartDatetime)
+
+		if err != nil {
+			query.FilterStartDatetime = nil
+		} else {
+			query.FilterStartDatetime = &startDatetime
+		}
+
+		endDatetime, err := time.Parse("2006-01-02T15:04:05.000Z", filterEndDatetime)
+
+		if err != nil {
+			query.FilterEndDatetime = nil
+		} else {
+			query.FilterEndDatetime = &endDatetime
+		}
+
+	} else {
+		query.FilterStartDatetime = nil
+		query.FilterEndDatetime = nil
+	}
+
+	return &query
+
+}
+
+type AvailableProductsResponse struct {
+	ProductID    uint   `json:"product_id"`
+	ProductName  string `json:"product_name"`
+	ProductImage string `json:"product_image"`
+	PriceMax     uint   `json:"price_max"`
+	PriceMin     uint   `json:"price_min"`
+	TotalStock   uint   `json:"total_stock"`
+}
+
+func NewAvailableProductsResponse(source []*dtos.AvailableProducts) (target []*AvailableProductsResponse) {
+	for _, result := range source {
+		target = append(target, &AvailableProductsResponse{
+			ProductID:    result.ProductID,
+			ProductName:  result.ProductName,
+			ProductImage: result.ProductImage,
+			PriceMax:     result.PriceMax,
+			PriceMin:     result.PriceMin,
+			TotalStock:   result.TotalStock,
+		})
+	}
+
+	return
+}

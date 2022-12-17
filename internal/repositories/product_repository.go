@@ -5,8 +5,10 @@ import (
 
 	"fmt"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -24,6 +26,7 @@ type ProductRepository interface {
 	GetByProductItemID(productItemID uint) (*models.Product, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
 	GetUpdateByProductID(id uint) (model *product_dtos.ProductModel, err error)
+	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error)
 }
 
 type productRepository struct {
@@ -348,6 +351,7 @@ func (r *productRepository) subQueryProductMediaByProductID() *gorm.DB {
 	query := r.db.Model(&models.ProductMedia{}).
 		Select("product_media.media_url").
 		Where("product_media.product_id = products.id").
+		Where("product_media.type = ?", product_media_constants.TypeImage).
 		Order("product_media.id ASC").
 		Limit(1)
 	return query
@@ -609,4 +613,92 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 	}
 
 	return
+}
+
+func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error) {
+	var availableProducts []*dtos.AvailableProducts
+
+	subQueryProductImage := r.db.Model(&models.ProductMedia{}).
+		Select(`
+			product_media.product_id AS product_id,
+			product_media.media_url AS media_url
+		`).
+		Where("product_media.type = ?", product_media_constants.TypeImage).
+		Order("product_media.id ASC").
+		Limit(1)
+
+	subQueryProductItem := r.db.Model(&models.ProductItem{}).
+		Select(`
+			product_id AS product_id,
+			SUM(stock_quantity) AS total_stock,
+			MIN(price) AS price_min,
+			MAX(price) AS price_max
+		`).
+		Group("product_items.product_id")
+
+	// subQueryProductList := r.db.Model(&models.ProductMerchantPromotion{}).
+	// 	Select("product_merchant_promotions.product_id").
+	// 	Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+	// 	Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", query.FilterEndDatetime).
+	// 	Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", query.FilterStartDatetime).
+	// 	Where("merchant_promotions.merchant_id = ?", merchantID)
+
+	result := r.db.Model(&models.Product{}).
+		Select(`
+			DISTINCT
+			products.id AS product_id,
+			products.name AS product_name,
+			tbl_product_image.media_url AS product_image,
+			product_item_agg.price_max AS price_max,
+			product_item_agg.price_min AS price_min,
+			product_item_agg.total_stock AS total_stock
+		`).
+		Joins("LEFT JOIN (?) product_item_agg ON products.id = product_item_agg.product_id", subQueryProductItem).
+		Joins("LEFT JOIN (?) tbl_product_image ON products.id = tbl_product_image.product_id", subQueryProductImage)
+
+	if query.FilterStartDatetime != nil && query.FilterEndDatetime != nil {
+		subQueryProductList := r.db.Model(&models.ProductMerchantPromotion{}).
+			Select("product_merchant_promotions.product_id").
+			Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+			Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", query.FilterEndDatetime).
+			Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", query.FilterStartDatetime).
+			Where("merchant_promotions.merchant_id = ?", merchantID)
+
+		result.Joins("LEFT JOIN product_merchant_promotions ON products.id = product_merchant_promotions.product_id").
+			Where("products.id NOT IN (?)", subQueryProductList)
+	}
+
+	result.
+		Where("products.merchant_id = ?", merchantID).
+		Where("products.status = ?", constants.ProductActiveStatus)
+
+	if query.FilterCategory != 0 {
+		subQueryCategory := r.db.Raw(`
+			WITH RECURSIVE cat AS (
+				SELECT 
+					id, parent_id
+				FROM categories WHERE id = @category_id
+				UNION ALL
+				SELECT 
+					categories.id, categories.parent_id
+				FROM categories
+				JOIN cat ON categories.id = cat.parent_id
+			)
+			SELECT id FROM cat
+		`, sql.Named("category_id", query.FilterCategory))
+
+		result.Where("products.category_id IN (?)", subQueryCategory)
+	}
+
+	if query.Search != "" {
+		result.Where("products.name ILIKE (?)", "%"+query.Search+"%")
+	}
+
+	result.Find(&availableProducts)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, e.ErrDataNotFound
+	}
+
+	return availableProducts, nil
 }

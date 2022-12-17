@@ -22,6 +22,7 @@ type ProductService interface {
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	CreateProduct(request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
 	GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error)
+	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
 }
 
 type productService struct {
@@ -488,4 +489,19 @@ func (s *productService) GetUpdateModelByProductID(productID uint) (*productInte
 	}
 
 	return productModel, nil
+}
+func (s *productService) GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error) {
+	merchant, err := s.merchantRepository.GetByUserID(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	availableProduct, err := s.productRepository.GetAvailableProductsByPromotionPeriod(merchant.ID, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewAvailableProductsResponse(availableProduct), nil
 }
