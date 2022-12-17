@@ -636,13 +636,6 @@ func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uin
 		`).
 		Group("product_items.product_id")
 
-	// subQueryProductList := r.db.Model(&models.ProductMerchantPromotion{}).
-	// 	Select("product_merchant_promotions.product_id").
-	// 	Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-	// 	Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", query.FilterEndDatetime).
-	// 	Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", query.FilterStartDatetime).
-	// 	Where("merchant_promotions.merchant_id = ?", merchantID)
-
 	result := r.db.Model(&models.Product{}).
 		Select(`
 			DISTINCT
