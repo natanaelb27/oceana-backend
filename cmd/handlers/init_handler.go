@@ -259,11 +259,17 @@ func Init() *Handler {
 	})
 
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
-		OrderRepository:           orderRepository,
-		OrderDetailRepository:     orderDetailRepository,
-		AddressSnapshotRepository: addressSnapshotRepository,
-		OrderTrackingRepository:   orderTrackingRepository,
-		MerchantRepository:        merchantRepository,
+		OrderRepository:                        orderRepository,
+		OrderDetailRepository:                  orderDetailRepository,
+		AddressSnapshotRepository:              addressSnapshotRepository,
+		OrderTrackingRepository:                orderTrackingRepository,
+		MerchantRepository:                     merchantRepository,
+		RefundRepository:                       refundRepository,
+		RefundDetailRepository:                 refundDetailRepository,
+		TransactionRepository:                  transactionRepository,
+		WalletTransactionPaymentRepository:     walletTransactionPaymentRepository,
+		WalletRepository:                       walletRepository,
+		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
 	})
 
 	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{

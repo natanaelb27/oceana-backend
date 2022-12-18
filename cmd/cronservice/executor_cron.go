@@ -22,5 +22,11 @@ func (c *Cron) Per15Seconds() {
 		if err != nil {
 			log.Print("CRON: ERROR: orderService.CronPaymentExpiration:", err)
 		}
+
+		err = nil
+		err = c.orderService.CronAutoCompleteDelivered()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronAutoCompleteDelivered:", err)
+		}
 	})
 }

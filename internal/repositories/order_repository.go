@@ -23,7 +23,7 @@ type OrderRepository interface {
 	Create(newModel []*models.Order) (model []*models.Order, err error)
 	OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
 	PendingPaymentGetAll() (pendingOrders []*models.Order, err error)
-	// Updates(newModel []*models.Order) (model []*models.Order, err error)
+	GetMaxProcessedDaysByOrderID(orderID uuid.UUID) (maxProcessedDays uint, err error)
 }
 
 type orderRepository struct {
@@ -467,21 +467,20 @@ func (r *orderRepository) PendingPaymentGetAll() (pendingOrders []*models.Order,
 	return
 }
 
-// func (r *orderRepository) Updates(newModel []*models.Order) (model []*models.Order, err error) {
-// 	queryResult := r.db.Model(&model).Update(&newModel)
-// 	if queryResult.Error == gorm.ErrRecordNotFound {
-// 		err = e.ErrDataNotFound
-// 		return
-// 	}
-// 	if queryResult.Error != nil {
-// 		return nil, e.ErrDatabaseOperationFailed
-// 	}
-// 	if queryResult.RowsAffected == 0 {
-// 		err = e.ErrDataNotFound
-// 		return
-// 	}
+func (r *orderRepository) GetMaxProcessedDaysByOrderID(orderID uuid.UUID) (maxProcessedDays uint, err error) {
+	queryResult := r.db.Model(&models.OrderDetail{}).
+		Select(`
+			MAX(product_snapshots.process_day) AS max_processed_days
+		`).
+		Where("order_details.order_id = ?", orderID).
+		Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+		Group("order_details.order_id").
+		Scan(&maxProcessedDays)
 
-// 	model = newModel
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 
-// 	return
-// }
+	return
+}

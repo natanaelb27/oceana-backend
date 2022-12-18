@@ -14,6 +14,7 @@ import (
 type TransactionRepository interface {
 	Create(newModel *models.Transaction) (model *models.Transaction, err error)
 	PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error)
+	GetByOrderID(id uuid.UUID) (model *models.Transaction, err error)
 }
 
 type transactionRepository struct {
@@ -73,6 +74,24 @@ func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pend
 		Find(&pendingPaymentTransaction)
 
 	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *transactionRepository) GetByOrderID(id uuid.UUID) (model *models.Transaction, err error) {
+	queryResult := r.db.Model(&models.Transaction{}).
+		Joins("JOIN orders ON transactions.id = orders.transaction_id").
+		Where("orders.id = ?", id).
+		First(&model)
+
+	if queryResult.Error != nil {
+		if queryResult.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrOrderNotFound
+		}
+
 		err = e.ErrDatabaseOperationFailed
 		return
 	}

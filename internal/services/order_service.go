@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+	"math"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -22,31 +24,52 @@ type OrderService interface {
 	UpdateProcessDelivery(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 	UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 	CronPaymentExpiration() error
+	CronPendingSellerExpiration() error
+	CronOrderProcessExpiration() error
+	CronAutoCompleteDelivered() error
 }
 
 type orderService struct {
-	orderRepository           r.OrderRepository
-	orderDetailRepository     r.OrderDetailRepository
-	addressSnapshotRepository r.AddressSnapshotRepository
-	orderTrackingRepository   r.OrderTrackingRepository
-	merchantRepository        r.MerchantRepository
+	orderRepository                        r.OrderRepository
+	orderDetailRepository                  r.OrderDetailRepository
+	addressSnapshotRepository              r.AddressSnapshotRepository
+	orderTrackingRepository                r.OrderTrackingRepository
+	merchantRepository                     r.MerchantRepository
+	refundRepository                       r.RefundRepository
+	refundDetailRepository                 r.RefundDetailRepository
+	transactionRepository                  r.TransactionRepository
+	walletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
+	walletRepository                       r.WalletRepository
+	sealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
 }
 
 type OrderServiceConfig struct {
-	OrderRepository           r.OrderRepository
-	OrderDetailRepository     r.OrderDetailRepository
-	AddressSnapshotRepository r.AddressSnapshotRepository
-	OrderTrackingRepository   r.OrderTrackingRepository
-	MerchantRepository        r.MerchantRepository
+	OrderRepository                        r.OrderRepository
+	OrderDetailRepository                  r.OrderDetailRepository
+	AddressSnapshotRepository              r.AddressSnapshotRepository
+	OrderTrackingRepository                r.OrderTrackingRepository
+	MerchantRepository                     r.MerchantRepository
+	RefundRepository                       r.RefundRepository
+	RefundDetailRepository                 r.RefundDetailRepository
+	TransactionRepository                  r.TransactionRepository
+	WalletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
+	WalletRepository                       r.WalletRepository
+	SealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
 }
 
 func NewOrderService(c *OrderServiceConfig) OrderService {
 	return &orderService{
-		orderRepository:           c.OrderRepository,
-		orderDetailRepository:     c.OrderDetailRepository,
-		addressSnapshotRepository: c.AddressSnapshotRepository,
-		orderTrackingRepository:   c.OrderTrackingRepository,
-		merchantRepository:        c.MerchantRepository,
+		orderRepository:                        c.OrderRepository,
+		orderDetailRepository:                  c.OrderDetailRepository,
+		addressSnapshotRepository:              c.AddressSnapshotRepository,
+		orderTrackingRepository:                c.OrderTrackingRepository,
+		merchantRepository:                     c.MerchantRepository,
+		refundRepository:                       c.RefundRepository,
+		refundDetailRepository:                 c.RefundDetailRepository,
+		transactionRepository:                  c.TransactionRepository,
+		walletTransactionPaymentRepository:     c.WalletTransactionPaymentRepository,
+		walletRepository:                       c.WalletRepository,
+		sealabsPayTransactionPaymentRepository: c.SealabsPayTransactionPaymentRepository,
 	}
 }
 
@@ -318,6 +341,88 @@ func (s *orderService) UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (
 	return updatedOrder, nil
 }
 
+func (s *orderService) CanceledOrderRefund(orderID uuid.UUID) error {
+	orderDetails, err := s.orderDetailRepository.OrderDetailListGetByOrderID(orderID)
+
+	if err != nil {
+		return err
+	}
+
+	refund, err := s.refundRepository.Create(&models.Refund{
+		OrderID:               orderID,
+		RefundRequestDatetime: time.Now(),
+		Status:                constants.RefundStatusCompleted,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	var refundDetailList []*models.RefundDetail
+
+	var sumUserRefundAmount float64
+
+	for _, od := range orderDetails {
+		refundDetail, err := s.refundDetailRepository.CalculateRefundDetails(od.OrderDetailID, od.Quantity)
+
+		if err != nil {
+			return err
+		}
+
+		refundDetailList = append(refundDetailList, &models.RefundDetail{
+			RefundID:           refund.ID,
+			OrderDetailID:      od.OrderDetailID,
+			Quantity:           od.Quantity,
+			AmountUserGet:      math.Round(refundDetail.AmountUserGet),
+			AmountMerchantLost: math.Round(refundDetail.AmountMerchantLost),
+		})
+
+		sumUserRefundAmount += math.Round(refundDetail.AmountUserGet)
+	}
+
+	_, err = s.refundDetailRepository.Create(refundDetailList)
+
+	if err != nil {
+		return err
+	}
+
+	transaction, err := s.transactionRepository.GetByOrderID(orderID)
+
+	if err != nil {
+		return err
+	}
+
+	if transaction.PaymentMethodID == constants.WalletID {
+		walletTransactionPayment, err := s.walletTransactionPaymentRepository.GetByTransactionID(transaction.ID)
+
+		if err != nil {
+			return err
+		}
+
+		newWallet := &models.Wallet{
+			Balance: walletTransactionPayment.Wallet.Balance + uint(sumUserRefundAmount),
+		}
+
+		_, err = s.walletRepository.Update(walletTransactionPayment.WalletID, newWallet)
+
+		if err != nil {
+			return err
+		}
+
+	} else if transaction.PaymentMethodID == constants.SealabsPayID {
+		// nembak endpoint sealabs pay
+		sealabsPayTransactionPayment, err := s.sealabsPayTransactionPaymentRepository.GetByTransactionID(transaction.ID)
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(sealabsPayTransactionPayment.TxID, sealabsPayTransactionPayment.SealabsPayCardNumber, uint(sumUserRefundAmount))
+	}
+
+	return nil
+}
+
 func (s *orderService) CronPaymentExpiration() error {
 	pendingPayment, err := s.orderRepository.PendingPaymentGetAll()
 
@@ -345,6 +450,157 @@ func (s *orderService) CronPaymentExpiration() error {
 			HistoryDatetime: time.Now(),
 			Title:           constants.CanceledBySystemPaymentTitle,
 			Description:     constants.CanceledBySystemPaymentDescription,
+		})
+	}
+
+	if len(newOrderTrackings) != 0 {
+		_, err = s.orderTrackingRepository.Create(newOrderTrackings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *orderService) CronPendingSellerExpiration() error {
+	orderTrackings, err := s.orderTrackingRepository.GetByOrderStatus(constants.PendingSellerStatus)
+
+	if err != nil {
+		return err
+	}
+
+	var newOrderTrackings []*models.OrderTracking
+
+	for _, v := range orderTrackings {
+		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(constants.SellerConfirmationExpirationInterval))) {
+			continue
+		}
+
+		_, err = s.orderRepository.Update(v.OrderID, &models.Order{
+			Status: constants.SystemCanceledStatus,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         v.OrderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.CanceledBySystemPendingSellerTitle,
+			Description:     constants.CanceledBySystemPendingSellerDescription,
+		})
+
+		// TAMBAHIN REFUND (DIFFERS WALLET & SEALABSPAY)
+
+		err = s.CanceledOrderRefund(v.OrderID)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(newOrderTrackings) != 0 {
+		_, err = s.orderTrackingRepository.Create(newOrderTrackings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *orderService) CronOrderProcessExpiration() error {
+	orderTrackings, err := s.orderTrackingRepository.GetByOrderStatus(constants.PendingSellerStatus)
+
+	if err != nil {
+		return err
+	}
+
+	var newOrderTrackings []*models.OrderTracking
+
+	for _, v := range orderTrackings {
+		maxProcessedDays, err := s.orderRepository.GetMaxProcessedDaysByOrderID(v.OrderID)
+
+		if err != nil {
+			return err
+		}
+
+		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(60*24*maxProcessedDays))) {
+			continue
+		}
+
+		_, err = s.orderRepository.Update(v.OrderID, &models.Order{
+			Status: constants.SystemCanceledStatus,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         v.OrderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.CanceledBySystemOrderProcessTitle,
+			Description:     constants.CanceledBySystemOrderProcessDescription,
+		})
+
+		// TAMBAHIN REFUND (DIFFERS WALLET & SEALABSPAY)
+
+		err = s.CanceledOrderRefund(v.OrderID)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(newOrderTrackings) != 0 {
+		_, err = s.orderTrackingRepository.Create(newOrderTrackings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *orderService) CronAutoCompleteDelivered() error {
+	orderTrackings, err := s.orderTrackingRepository.GetByOrderStatus(constants.DeliveredStatus)
+
+	if err != nil {
+		return err
+	}
+
+	var newOrderTrackings []*models.OrderTracking
+
+	for _, v := range orderTrackings {
+		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(constants.AutoCompleteDeliveredExpirationInterval))) {
+			continue
+		}
+
+		_, err = s.orderRepository.Update(v.OrderID, &models.Order{
+			Status: constants.CompletedStatus,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		now := time.Now()
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         v.OrderID,
+			HistoryDatetime: now,
+			Title:           constants.ConfirmedTitle,
+			Description:     constants.ConfirmedDescription,
+		})
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         v.OrderID,
+			HistoryDatetime: now,
+			Title:           constants.CompletedTitle,
+			Description:     constants.CompletedDescription,
 		})
 	}
 
