@@ -4,6 +4,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
@@ -11,7 +12,8 @@ import (
 type CategoryService interface {
 	GetAll(query *externalDtos.CategoryQuery) ([]*dtos.Category, error)
 	GetAncestorsByID(id uint) ([]*externalDtos.GetCategoriesResponse, error)
-	GetMerchantCategories(id uint) ([]*externalDtos.GetCategoriesResponse, error)
+	// GetMerchantCategories(id uint) ([]*externalDtos.GetCategoriesResponse, error)
+	GetMerchantCategories(id uint) ([]*dtos.Category, error)
 }
 
 type categoryService struct {
@@ -132,12 +134,103 @@ func (p *categoryService) GetAncestorsByID(id uint) ([]*externalDtos.GetCategori
 	return externalDtos.NewGetCategoriesResponse(category), nil
 }
 
-func (p *categoryService) GetMerchantCategories(id uint) ([]*externalDtos.GetCategoriesResponse, error) {
+// func (p *categoryService) GetMerchantCategories(id uint) ([]*externalDtos.GetCategoriesResponse, error) {
+// 	category, err := p.categoryRepository.GetMerchantCategoriesByMerchantID(id)
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return externalDtos.NewGetCategoriesResponse(category), nil
+// }
+
+// func contains(list []*uint, value uint) bool {
+// 	for _, v := range list {
+// 		if v == value {
+// 			return true
+// 		}
+// 	}
+
+// 	return false
+// }
+
+func (p *categoryService) GetAllMerchantSubCategoriesRecursive(level int, merchantCategoryList []int64, categoryData []*models.Category) ([]*dtos.Category, error) {
+	category := []*dtos.Category{}
+
+	// if levelLimit != -1 && level >= levelLimit {
+	// 	return category, nil
+	// }
+
+	for i, cat := range categoryData {
+		category = append(category, &dtos.Category{
+			ID:    cat.ID,
+			Image: cat.MediaURL,
+			Name:  cat.Name,
+			Level: level,
+		})
+
+		subCategoryData, err := p.categoryRepository.GetAllMerchantSubCategoriesByParentID(cat.ID, merchantCategoryList)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(subCategoryData) > 0 {
+			subCategory, err := p.GetAllMerchantSubCategoriesRecursive(level+1, merchantCategoryList, subCategoryData)
+			if err != nil {
+				return nil, err
+			}
+
+			category[i].Category = subCategory
+		}
+	}
+
+	return category, nil
+}
+
+func (p *categoryService) GetMerchantCategories(id uint) ([]*dtos.Category, error) {
 	category, err := p.categoryRepository.GetMerchantCategoriesByMerchantID(id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return externalDtos.NewGetCategoriesResponse(category), nil
+	var ancestorList [][]int64
+	var mainCategoryList []*models.Category
+	var mainCategoryIDList []int
+
+	for _, v := range category {
+		ancestorIDs, err := p.categoryRepository.GetAncestorIDsByID(v.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		ancestorModels, err := p.categoryRepository.GetByID(uint(ancestorIDs[0]))
+
+		if err != nil {
+			return nil, err
+		}
+
+		ancestorList = append(ancestorList, ancestorIDs)
+
+		if !utils.ContainsInt(mainCategoryIDList, int(ancestorModels.ID)) {
+			mainCategoryList = append(mainCategoryList, ancestorModels)
+		}
+
+		mainCategoryIDList = append(mainCategoryIDList, int(ancestorModels.ID))
+
+	}
+
+	merchantIDs := make([]int64, 0)
+	for _, v := range ancestorList {
+		merchantIDs = append(merchantIDs, v...)
+	}
+
+	merchantCategories, err := p.GetAllMerchantSubCategoriesRecursive(1, merchantIDs, mainCategoryList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return merchantCategories, nil
 }
