@@ -612,7 +612,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// current product variant types
 	var pvts = []*models.ProductVariantType{}
 	pvts, err = s.productVariantTypeRepository.GetAllByProductID(oriProductModel.ID)
-	if err != nil {
+	if err != nil && err != e.ErrDataNotFound {
 		return nil, err
 	}
 
@@ -649,6 +649,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			})
 		}
 
+		fmt.Println("MASUK")
 		//* product variants - check changes
 		// validation
 		// if length of images not equal options then invalid model
