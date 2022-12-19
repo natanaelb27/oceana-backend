@@ -129,13 +129,18 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
-			refunds.id AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @completed_status THEN refunds.id
+					ELSE null
+				END
+			) AS refund_id,
 			orders.claim_status AS claim_status,
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
-		`).
+		`, sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
@@ -261,12 +266,17 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			orders.total_price_after_discount::float AS total_price,
-			refunds.id AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @completed_status THEN refunds.id
+					ELSE null
+				END
+			) AS refund_id,
 			orders.claim_status AS claim_status,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
-		`).
+		`, sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
@@ -432,7 +442,12 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			orders.total_price_after_discount::float / transactions.total_price::float * (?) AS total_marketplace_voucher_discount,
 			orders.shipping_fee AS shipping_fee,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment,
-			refunds.id AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @completed_status THEN refunds.id
+					ELSE null
+				END
+			) AS refund_id,
 			orders.claim_status AS claim_status,
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
@@ -442,7 +457,8 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			subQueryTotalPriceBeforeDiscount,
 			subQueryMerchantPromotion,
 			subQueryMerchantVoucher,
-			subQueryMarketplaceVoucher).
+			subQueryMarketplaceVoucher,
+			sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
