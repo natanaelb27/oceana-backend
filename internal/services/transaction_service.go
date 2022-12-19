@@ -53,5 +53,5 @@ func (s *transactionService) PendingPaymentGetAllByUser(id uuid.UUID) ([]*extern
 
 	}
 
-	return externalDtos.NewPendingPaymentGetAllByUserResponse(transaction), nil
+	return externalDtos.NewPendingPaymentGetAllByUserResponse(pendingTransaction), nil
 }

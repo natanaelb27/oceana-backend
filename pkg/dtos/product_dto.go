@@ -24,6 +24,7 @@ type ProductDetailsGetByIDResponse struct {
 	Description           string                     `json:"description"`
 	TotalStock            uint                       `json:"total_stock"`
 	LikeCount             uint                       `json:"like_count"`
+	TotalPurchased        uint                       `json:"total_purchased"`
 	ProductReviewDetails  *dtos.ProductReviewDetails `json:"product_review_details"`
 	DiscountType          *string                    `json:"discount_type"`
 	Discount              *uint                      `json:"discount"`
@@ -52,6 +53,7 @@ func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *Prod
 		Description:           source.Description,
 		TotalStock:            source.TotalStock,
 		LikeCount:             source.LikeCount,
+		TotalPurchased:        source.TotalPurchased,
 		ProductReviewDetails:  source.ProductReviewDetails,
 		DiscountType:          source.DiscountType,
 		Discount:              source.Discount,

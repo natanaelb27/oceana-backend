@@ -213,6 +213,26 @@ func Init() *Handler {
 		DB: db.Get(),
 	})
 
+	productMediaRepository := repositories.NewProductMediaRepository(&repositories.ProductMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productVariantTypeRepository := repositories.NewProductVariantTypeRepository(&repositories.ProductVariantTypeRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productVariantMediaRepository := repositories.NewProductVariantMediaRepository(&repositories.ProductVariantMediaRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productVariantRepository := repositories.NewProductVariantRepository(&repositories.ProductVariantRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	productCourierServiceRepository := repositories.NewProductCourierServiceRepository(&repositories.ProductCourierServiceRepositoryConfig{
+		DB: db.Get(),
+	})
+
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
@@ -239,11 +259,17 @@ func Init() *Handler {
 	})
 
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
-		OrderRepository:           orderRepository,
-		OrderDetailRepository:     orderDetailRepository,
-		AddressSnapshotRepository: addressSnapshotRepository,
-		OrderTrackingRepository:   orderTrackingRepository,
-		MerchantRepository:        merchantRepository,
+		OrderRepository:                        orderRepository,
+		OrderDetailRepository:                  orderDetailRepository,
+		AddressSnapshotRepository:              addressSnapshotRepository,
+		OrderTrackingRepository:                orderTrackingRepository,
+		MerchantRepository:                     merchantRepository,
+		RefundRepository:                       refundRepository,
+		RefundDetailRepository:                 refundDetailRepository,
+		TransactionRepository:                  transactionRepository,
+		WalletTransactionPaymentRepository:     walletTransactionPaymentRepository,
+		WalletRepository:                       walletRepository,
+		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
 	})
 
 	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{
@@ -274,22 +300,6 @@ func Init() *Handler {
 		MerchantRepository:               merchantRepository,
 		MerchantConfigurationRepository:  merchantConfigurationRepository,
 		ProductRepository:                productRepository,
-	})
-
-	productMediaRepository := repositories.NewProductMediaRepository(&repositories.ProductMediaRepositoryConfig{
-		DB: db.Get(),
-	})
-	productVariantTypeRepository := repositories.NewProductVariantTypeRepository(&repositories.ProductVariantTypeRepositoryConfig{
-		DB: db.Get(),
-	})
-	productVariantMediaRepository := repositories.NewProductVariantMediaRepository(&repositories.ProductVariantMediaRepositoryConfig{
-		DB: db.Get(),
-	})
-	productVariantRepository := repositories.NewProductVariantRepository(&repositories.ProductVariantRepositoryConfig{
-		DB: db.Get(),
-	})
-	productCourierServiceRepository := repositories.NewProductCourierServiceRepository(&repositories.ProductCourierServiceRepositoryConfig{
-		DB: db.Get(),
 	})
 
 	productService := services.NewProductService(&services.ProductServiceConfig{
