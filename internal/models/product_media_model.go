@@ -2,17 +2,14 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type ProductMedia struct {
 	ID        uint
 	ProductID uint
-	Product   Product
+	Product   Product `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	MediaURL  string
 	Type      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt
 }

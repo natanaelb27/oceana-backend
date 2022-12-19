@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
@@ -181,5 +182,44 @@ type ProductModel struct {
 	// gorm:"-" tells gorm ignore this field when write and read with struct
 	ProductItems []*ProductItem `json:"product_items" gorm:"-"`
 	Variants     []*Variants    `json:"variants" gorm:"-"`
-	Couriers     []*Courier     `json:"couriers" gorm:"-"`
+	Couriers     []*Courier     `json:"couriers" binding:"min=1" gorm:"-"`
+}
+
+type PmUpdateInfo struct {
+	Before *models.ProductMedia
+	After  *models.ProductMedia
+}
+
+// product variant type update info
+type PvtUpdateInfo struct {
+	ID     uint
+	NewPVT *models.ProductVariantType
+}
+
+// product variant update info
+type PvUpdateInfo struct {
+	Before *models.ProductVariant
+	After  *models.ProductVariant
+}
+
+// product variant media update info
+type PvmUpdateInfo struct {
+	Before *models.ProductVariantMedia
+	After  *models.ProductVariantMedia
+}
+
+// product items update info
+type PiUpdateInfo struct {
+	Before *models.ProductItem
+	After  *models.ProductItem
+}
+
+// courier services update info
+type PcsUpdateInfo struct {
+	Before *models.ProductCourierService
+	After  *models.ProductCourierService
+}
+
+type PvarUpdateInfo struct {
+	After *models.ProductVariation
 }

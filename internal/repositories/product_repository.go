@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"fmt"
 
@@ -19,6 +20,7 @@ import (
 )
 
 type ProductRepository interface {
+	WithTx(tx *gorm.DB) *productRepository
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
@@ -26,6 +28,8 @@ type ProductRepository interface {
 	GetByProductItemID(productItemID uint) (*models.Product, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
 	GetUpdateByProductID(id uint) (model *product_dtos.ProductModel, err error)
+	UpdateUsingMap(id uint, dataMap map[string]any) (err error)
+	GetById(id uint) (model *models.Product, err error)
 	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error)
 }
 
@@ -41,6 +45,15 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 	return &productRepository{
 		db: c.DB,
 	}
+}
+
+func (u productRepository) WithTx(tx *gorm.DB) *productRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error) {
@@ -615,6 +628,33 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 	return
 }
 
+func (r *productRepository) UpdateUsingMap(id uint, dataMap map[string]any) (err error) {
+	result := r.db.Model(&models.Product{}).Where("id = ?", id).Updates(dataMap)
+	if result.Error != nil {
+		err = e.ErrDataNotFound
+		return
+	}
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productRepository) GetById(id uint) (model *models.Product, err error) {
+	result := r.db.First(&model, id)
+	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
 func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error) {
 	var availableProducts []*dtos.AvailableProducts
 

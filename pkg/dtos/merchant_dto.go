@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"mime/multipart"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -94,4 +95,9 @@ func NewMerchantGetProfileResponse(source *models.Merchant) (target *MerchantGet
 		Photo:     source.Photo,
 	}
 	return
+}
+
+type MerchantUpdatePhotoRequest struct {
+	ID    uuid.UUID
+	Photo *multipart.FileHeader `form:"photo" json:"photo"`
 }
