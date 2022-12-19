@@ -4,19 +4,22 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type ProductReviewList struct {
-	ID                uint
-	UserID            uuid.UUID
-	FullName          string
-	Username          string
-	Photo             *string
-	ProductID         uint
-	Rating            uint
-	Review            string
-	ProductVariations string
-	CreatedAt         time.Time
+	ID                 uint           `json:"id"`
+	UserID             uuid.UUID      `json:"user_id"`
+	FullName           string         `json:"full_name"`
+	Username           string         `json:"username"`
+	Media              pq.StringArray `json:"media" gorm:"type:text[]"`
+	Photo              *string        `json:"photo"`
+	ProductID          uint           `json:"product_id"`
+	Rating             uint           `json:"rating"`
+	Review             string         `json:"review"`
+	ProductReviewMedia []*string      `json:"product_review_media"`
+	ProductVariations  string         `json:"product_variations"`
+	CreatedAt          time.Time      `json:"created_at"`
 }
 
 type ProductReviewDetails struct {

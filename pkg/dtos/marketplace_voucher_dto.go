@@ -7,6 +7,7 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -81,6 +82,7 @@ type MarketplaceVoucherGetResponse struct {
 	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota"`
 	CurrentQuota          uint      `json:"current_quota"`
+	VoucherStatus         string    `json:"voucher_status"`
 	CreatedAt             time.Time `json:"created_at"`
 	UpdatedAt             time.Time `json:"updated_at"`
 }
@@ -97,6 +99,7 @@ func NewMarketplaceVoucherGetResponse(source *models.MarketplaceVoucher) (target
 		MaximumDiscountAmount: source.MaximumDiscountAmount,
 		MaximumQuota:          source.MaximumQuota,
 		CurrentQuota:          source.CurrentQuota,
+		VoucherStatus:         utils.PromotionOrVoucherStatus(source.StartDatetime, source.EndDatetime),
 		CreatedAt:             source.CreatedAt,
 		UpdatedAt:             source.UpdatedAt,
 	}

@@ -143,6 +143,17 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 	if err != nil {
 		return
 	}
+
+	if request.Action == nil {
+		cart.Quantity = *request.Quantity
+	} else if *request.Action == "increment" {
+		cart.Quantity += *request.Quantity
+	}
+	if productItem.StockQuantity < cart.Quantity {
+		err = e.ErrStockIsNotAvailable
+		return
+	}
+
 	if cartErr == e.ErrDataNotFound {
 		if *request.Quantity == 0 {
 			err = e.ErrEmptyQuantity
@@ -153,20 +164,6 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 
 	if *request.Quantity == 0 && err != e.ErrDataNotFound {
 		return p.cartRepository.Delete(cart.ID)
-	}
-
-	if *request.Action == "increment" {
-		cart.Quantity += *request.Quantity
-		if productItem.StockQuantity < cart.Quantity {
-			err = e.ErrStockIsNotAvailable
-			return
-		}
-	} else {
-		cart.Quantity = *request.Quantity
-		if productItem.StockQuantity < *request.Quantity {
-			err = e.ErrStockIsNotAvailable
-			return
-		}
 	}
 
 	return p.cartRepository.Update(cart.ID, cart)
