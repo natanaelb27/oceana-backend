@@ -1,8 +1,10 @@
 package services
 
 import (
+	"errors"
 	"strings"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -42,6 +44,16 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 
 	productReview := request.ToModel()
 
+	_, err := pr.productReviewRepository.GetByOrderDetailID(request.OrderDetailID)
+
+	if errors.Is(err, e.ErrDataNotFound) {
+
+	} else if err != nil {
+		return nil, err
+	} else {
+		return nil, e.ErrProductReviewExist
+	}
+
 	orderDetail, err := pr.orderDetailRepository.GetDetailsByID(request.OrderDetailID)
 
 	if err != nil {
@@ -50,6 +62,10 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 
 	if orderDetail.Order.Transaction.UserID != request.UserID {
 		return nil, e.ErrForbiddenOrder
+	}
+
+	if orderDetail.Order.Status != constants.CompletedStatus {
+		return nil, e.ErrStatusIsNotCompleted
 	}
 
 	productReview.ProductID = orderDetail.ProductSnapshot.ProductID
