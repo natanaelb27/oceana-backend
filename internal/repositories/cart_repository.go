@@ -98,7 +98,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 				CASE 
 					WHEN (@subQueryPromoValidation) = false
 						THEN null
-				ELSE pmp.merchant_promotion_id
+				ELSE pmp.id
 				END
 			) AS promo_id,
 			carts.product_item_id AS product_item_id,
