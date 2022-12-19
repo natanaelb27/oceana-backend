@@ -3,7 +3,7 @@ package cronservice
 import "log"
 
 func (c *Cron) Per15Seconds() {
-	c.scheduler.Every(15).Seconds().Do(func() {
+	c.scheduler.Every(1).Seconds().Do(func() {
 		// cron example, service method that will get roles from db and print its count to console
 		err := c.roleService.CronRolesCount()
 		if err != nil {
@@ -21,6 +21,18 @@ func (c *Cron) Per15Seconds() {
 		err = c.orderService.CronPaymentExpiration()
 		if err != nil {
 			log.Print("CRON: ERROR: orderService.CronPaymentExpiration:", err)
+		}
+
+		err = nil
+		err = c.orderService.CronPendingSellerExpiration()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronPendingSellerExpiration:", err)
+		}
+
+		err = nil
+		err = c.orderService.CronOrderProcessExpiration()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronOrderProcessExpiration:", err)
 		}
 
 		err = nil

@@ -1,8 +1,8 @@
 package services
 
 import (
-	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -41,6 +41,7 @@ type orderService struct {
 	walletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
 	walletRepository                       r.WalletRepository
 	sealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
+	sealabsPayService                      SealabsPayService
 }
 
 type OrderServiceConfig struct {
@@ -55,6 +56,7 @@ type OrderServiceConfig struct {
 	WalletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
 	WalletRepository                       r.WalletRepository
 	SealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
+	SealabsPayService                      SealabsPayService
 }
 
 func NewOrderService(c *OrderServiceConfig) OrderService {
@@ -70,6 +72,7 @@ func NewOrderService(c *OrderServiceConfig) OrderService {
 		walletTransactionPaymentRepository:     c.WalletTransactionPaymentRepository,
 		walletRepository:                       c.WalletRepository,
 		sealabsPayTransactionPaymentRepository: c.SealabsPayTransactionPaymentRepository,
+		sealabsPayService:                      c.SealabsPayService,
 	}
 }
 
@@ -341,7 +344,7 @@ func (s *orderService) UpdateProcessOrder(orderID uuid.UUID, userID uuid.UUID) (
 	return updatedOrder, nil
 }
 
-func (s *orderService) CanceledOrderRefund(orderID uuid.UUID) error {
+func (s *orderService) RefundCanceledOrder(orderID uuid.UUID) error {
 	orderDetails, err := s.orderDetailRepository.OrderDetailListGetByOrderID(orderID)
 
 	if err != nil {
@@ -410,14 +413,27 @@ func (s *orderService) CanceledOrderRefund(orderID uuid.UUID) error {
 		}
 
 	} else if transaction.PaymentMethodID == constants.SealabsPayID {
-		// nembak endpoint sealabs pay
 		sealabsPayTransactionPayment, err := s.sealabsPayTransactionPaymentRepository.GetByTransactionID(transaction.ID)
 
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(sealabsPayTransactionPayment.TxID, sealabsPayTransactionPayment.SealabsPayCardNumber, uint(sumUserRefundAmount))
+		txIDInt, err := strconv.Atoi(sealabsPayTransactionPayment.TxID)
+
+		if err != nil {
+			return err
+		}
+
+		err = s.sealabsPayService.Refund(&dtos.SealabsPayRefundRequest{
+			TxnID:  txIDInt,
+			Amount: int(sumUserRefundAmount),
+			Reason: "",
+		})
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -492,9 +508,7 @@ func (s *orderService) CronPendingSellerExpiration() error {
 			Description:     constants.CanceledBySystemPendingSellerDescription,
 		})
 
-		// TAMBAHIN REFUND (DIFFERS WALLET & SEALABSPAY)
-
-		err = s.CanceledOrderRefund(v.OrderID)
+		err = s.RefundCanceledOrder(v.OrderID)
 
 		if err != nil {
 			return err
@@ -512,7 +526,7 @@ func (s *orderService) CronPendingSellerExpiration() error {
 }
 
 func (s *orderService) CronOrderProcessExpiration() error {
-	orderTrackings, err := s.orderTrackingRepository.GetByOrderStatus(constants.PendingSellerStatus)
+	orderTrackings, err := s.orderTrackingRepository.GetByOrderStatus(constants.OnProcessStatus)
 
 	if err != nil {
 		return err
@@ -546,9 +560,7 @@ func (s *orderService) CronOrderProcessExpiration() error {
 			Description:     constants.CanceledBySystemOrderProcessDescription,
 		})
 
-		// TAMBAHIN REFUND (DIFFERS WALLET & SEALABSPAY)
-
-		err = s.CanceledOrderRefund(v.OrderID)
+		err = s.RefundCanceledOrder(v.OrderID)
 
 		if err != nil {
 			return err
@@ -613,3 +625,5 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 
 	return nil
 }
+
+// cron auto refund when seller not responding
