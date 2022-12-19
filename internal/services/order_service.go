@@ -2,6 +2,7 @@ package services
 
 import (
 	"math"
+	"os"
 	"strconv"
 	"time"
 
@@ -449,7 +450,12 @@ func (s *orderService) CronPaymentExpiration() error {
 	newOrderTrackings := []*models.OrderTracking{}
 
 	for _, v := range pendingPayment {
-		if !time.Now().After(v.Transaction.TransactionDatetime.Add(time.Minute * time.Duration(constants.PaymentExpirationInterval))) {
+		interval, err := strconv.Atoi(os.Getenv("CRON_PAYMENT_EXPIRATION_INTERVAL"))
+		if err != nil {
+			interval = 10
+		}
+
+		if !time.Now().After(v.Transaction.TransactionDatetime.Add(time.Minute * time.Duration(interval))) {
 			continue
 		}
 
@@ -489,7 +495,12 @@ func (s *orderService) CronPendingSellerExpiration() error {
 	var newOrderTrackings []*models.OrderTracking
 
 	for _, v := range orderTrackings {
-		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(constants.SellerConfirmationExpirationInterval))) {
+		interval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+		if err != nil {
+			interval = 2880
+		}
+
+		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
 			continue
 		}
 
@@ -587,7 +598,12 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 	var newOrderTrackings []*models.OrderTracking
 
 	for _, v := range orderTrackings {
-		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(constants.AutoCompleteDeliveredExpirationInterval))) {
+		interval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+		if err != nil {
+			interval = 4320
+		}
+
+		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
 			continue
 		}
 
