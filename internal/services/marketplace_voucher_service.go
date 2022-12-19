@@ -19,7 +19,7 @@ type MarketplaceVoucherService interface {
 	GetById(id uint) (*models.MarketplaceVoucher, error)
 	Update(id uint, newModel *models.MarketplaceVoucher) (*models.MarketplaceVoucher, error)
 	Delete(id uint) (*models.MarketplaceVoucher, error)
-	GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMarketplaceVoucherQuery) (*dtos.MarketplaceVoucherGetAllResponse, *utils.Pagination, error)
+	GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMarketplaceVoucherQuery) ([]*dtos.MarketplaceVoucherGetAllResponse, *utils.Pagination, error)
 }
 
 type marketplaceVoucherService struct {
@@ -186,7 +186,7 @@ func (p *marketplaceVoucherService) Delete(id uint) (*models.MarketplaceVoucher,
 	return p.marketplaceVoucherRepository.Delete(id)
 }
 
-func (p *marketplaceVoucherService) GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMarketplaceVoucherQuery) (*dtos.MarketplaceVoucherGetAllResponse, *utils.Pagination, error) {
+func (p *marketplaceVoucherService) GetAllByBuyer(id uuid.UUID, query *dtos.BuyerMarketplaceVoucherQuery) ([]*dtos.MarketplaceVoucherGetAllResponse, *utils.Pagination, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,

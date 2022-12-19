@@ -83,8 +83,6 @@ type MarketplaceVoucherGetResponse struct {
 	MaximumQuota          uint      `json:"maximum_quota"`
 	CurrentQuota          uint      `json:"current_quota"`
 	VoucherStatus         string    `json:"voucher_status"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 func NewMarketplaceVoucherGetResponse(source *models.MarketplaceVoucher) (target *MarketplaceVoucherGetResponse) {
@@ -100,8 +98,6 @@ func NewMarketplaceVoucherGetResponse(source *models.MarketplaceVoucher) (target
 		MaximumQuota:          source.MaximumQuota,
 		CurrentQuota:          source.CurrentQuota,
 		VoucherStatus:         utils.PromotionOrVoucherStatus(source.StartDatetime, source.EndDatetime),
-		CreatedAt:             source.CreatedAt,
-		UpdatedAt:             source.UpdatedAt,
 	}
 
 	return
@@ -120,12 +116,34 @@ func NewMarketplaceVoucherDeleteResponse(source *models.MarketplaceVoucher) (tar
 }
 
 type MarketplaceVoucherGetAllResponse struct {
-	MarketplaceVoucher []*dtos.MarketplaceVoucherDetails `json:"merchant_voucher"`
+	ID                    uint      `json:"id"`
+	Name                  string    `json:"name"`
+	StartDatetime         time.Time `json:"start_datetime"`
+	EndDatetime           time.Time `json:"end_datetime"`
+	DiscountType          string    `json:"discount_type"`
+	Discount              uint      `json:"discount"`
+	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
+	MaximumQuota          uint      `json:"maximum_quota"`
+	CurrentQuota          uint      `json:"current_quota"`
+	VoucherStatus         string    `json:"voucher_status"`
 }
 
-func NewMarketplaceVoucherGetAllResponse(source []*dtos.MarketplaceVoucherDetails) (target *MarketplaceVoucherGetAllResponse) {
-	target = &MarketplaceVoucherGetAllResponse{
-		MarketplaceVoucher: source,
+func NewMarketplaceVoucherGetAllResponse(source []*dtos.MarketplaceVoucherDetails) (target []*MarketplaceVoucherGetAllResponse) {
+	for _, result := range source {
+		target = append(target, &MarketplaceVoucherGetAllResponse{
+			ID:                    result.ID,
+			Name:                  result.Name,
+			StartDatetime:         result.StartDatetime,
+			EndDatetime:           result.EndDatetime,
+			DiscountType:          result.DiscountType,
+			Discount:              result.Discount,
+			MinimumSpendAmount:    result.MinimumSpendAmount,
+			MaximumDiscountAmount: result.MaximumDiscountAmount,
+			MaximumQuota:          result.MaximumQuota,
+			CurrentQuota:          result.CurrentQuota,
+			VoucherStatus:         result.VoucherStatus,
+		})
 	}
 
 	return

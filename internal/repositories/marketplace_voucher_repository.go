@@ -267,6 +267,7 @@ func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query 
 	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
 		Select(`
 			id,  
+			name,
 			start_datetime, 
 			end_datetime, 
 			discount_type, 
