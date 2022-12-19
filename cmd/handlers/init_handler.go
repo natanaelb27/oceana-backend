@@ -271,6 +271,7 @@ func Init() *Handler {
 		WalletTransactionPaymentRepository:     walletTransactionPaymentRepository,
 		WalletRepository:                       walletRepository,
 		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
+		SealabsPayService:                      sealabsPayService,
 	})
 
 	merchantVoucherService := services.NewMerchantVoucherService(&services.MerchantVoucherServiceConfig{
