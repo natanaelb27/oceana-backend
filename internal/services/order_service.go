@@ -28,6 +28,7 @@ type OrderService interface {
 	CronPendingSellerExpiration() error
 	CronOrderProcessExpiration() error
 	CronAutoCompleteDelivered() error
+	SellerCancelOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 }
 
 type orderService struct {
@@ -644,4 +645,55 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 	return nil
 }
 
-// cron auto refund when seller not responding
+func (s *orderService) SellerCancelOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := s.orderRepository.GetByID(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if order.MerchantID != merchant.ID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	if order.Status != constants.PendingSellerStatus {
+		return nil, e.ErrStatusIsNotPendingSeller
+	}
+
+	order.Status = constants.SellerCanceledStatus
+
+	updatedOrder, err := s.orderRepository.Update(orderID, order)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderTracking := []*models.OrderTracking{
+		{
+			OrderID:         orderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.CanceledBySellerTitle,
+			Description:     constants.CanceledBySellerDescription,
+		},
+	}
+
+	_, err = s.orderTrackingRepository.Create(orderTracking)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.RefundCanceledOrder(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedOrder, nil
+}

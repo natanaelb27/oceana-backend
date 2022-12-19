@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -17,6 +18,7 @@ type MarketplaceVoucherRepository interface {
 	WithTx(tx *gorm.DB) *marketplaceVoucherRepository
 	Create(marketplaceVoucher *models.MarketplaceVoucher) (model *models.MarketplaceVoucher, err error)
 	GetAll() (model []*models.MarketplaceVoucher, err error)
+	GetAllDetails(query *externalDtos.MarketplaceVoucherQuery, pagination *utils.Pagination) ([]*models.MarketplaceVoucher, *utils.Pagination, error)
 	GetAllByActive() (model []*models.MarketplaceVoucher, err error)
 	GetById(id uint) (model *models.MarketplaceVoucher, err error)
 	Update(id uint, newModel *models.MarketplaceVoucher) (err error)
@@ -93,6 +95,57 @@ func (r *marketplaceVoucherRepository) GetAll() (model []*models.MarketplaceVouc
 	}
 
 	return
+}
+
+func (r *marketplaceVoucherRepository) GetAllDetails(query *externalDtos.MarketplaceVoucherQuery, pagination *utils.Pagination) ([]*models.MarketplaceVoucher, *utils.Pagination, error) {
+	var marketplaceVoucherDetails []*models.MarketplaceVoucher
+
+	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
+		Select(`
+			id, 
+			name, 
+			start_datetime, 
+			end_datetime, 
+			discount_type, 
+			discount, 
+			minimum_spend_amount, 
+			maximum_discount_amount, 
+			maximum_quota, 
+			current_quota, 
+			(
+				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
+				AND end_datetime::timestamp THEN 'ongoing'
+				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
+				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
+			) AS voucher_status
+		`)
+
+	if query.SearchVoucherName != "" {
+		queryResult.Where("name ILIKE ?", "%"+query.SearchVoucherName+"%")
+	}
+
+	if query.FilterVoucherStatus == constants.OngoingPromotionOrVoucher {
+		queryResult.Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp")
+	}
+
+	if query.FilterVoucherStatus == constants.UpcomingPromotionOrVoucher {
+		queryResult.Where("start_datetime::timestamp > NOW()::timestamp")
+	}
+
+	if query.FilterVoucherStatus == constants.EndedPromotionOrVoucher {
+		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
+	}
+
+	queryResult.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&marketplaceVoucherDetails)
+
+	if queryResult.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return marketplaceVoucherDetails, pagination, nil
 }
 
 func (r *marketplaceVoucherRepository) GetById(id uint) (model *models.MarketplaceVoucher, err error) {
@@ -214,6 +267,7 @@ func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query 
 	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
 		Select(`
 			id,  
+			name,
 			start_datetime, 
 			end_datetime, 
 			discount_type, 
