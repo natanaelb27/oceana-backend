@@ -1,26 +1,41 @@
 package utils
 
 import (
-	"fmt"
-	"net/smtp"
 	"os"
+	"strconv"
 	"strings"
+
+	"gopkg.in/gomail.v2"
 )
 
-func SendMail(to []string, cc []string, subject, message string) error {
-	body := "From: " + os.Getenv(os.Getenv("MAIL_AUTH_EMAIL")) + "\n" +
-		"To: " + strings.Join(to, ",") + "\n" +
-		"Cc: " + strings.Join(cc, ",") + "\n" +
-		"Subject: " + subject + "\n\n" +
-		message
+func SendMail(to []string, subject, message string) error {
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", os.Getenv("MAIL_AUTH_EMAIL"))
+	mailer.SetHeader("To", strings.Join(to, ","))
+	mailer.SetHeader("Subject", subject)
+	mailer.SetBody("text/html", message)
 
-	auth := smtp.PlainAuth("", os.Getenv("MAIL_AUTH_EMAIL"), os.Getenv("MAIL_AUTH_PASSWORD"), os.Getenv("MAIL_SMTP_HOST"))
-	smtpAddr := fmt.Sprintf("%s:%s", os.Getenv("MAIL_SMTP_HOST"), os.Getenv("MAIL_SMTP_PORT"))
+	portStr := os.Getenv("MAIL_SMTP_PORT")
+	port, err := strconv.Atoi(portStr)
 
-	err := smtp.SendMail(smtpAddr, auth, os.Getenv("MAIL_AUTH_EMAIL"), append(to, cc...), []byte(body))
 	if err != nil {
 		return err
 	}
 
+	dialer := gomail.NewDialer(
+		os.Getenv("MAIL_SMTP_HOST"),
+		port,
+		os.Getenv("MAIL_AUTH_EMAIL"),
+		os.Getenv("MAIL_AUTH_PASSWORD"),
+	)
+
+	err = dialer.DialAndSend(mailer)
+
+	if err != nil {
+
+		return err
+	}
+
 	return nil
+
 }
