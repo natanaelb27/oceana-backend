@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,10 +11,12 @@ import (
 )
 
 type MerchantRepository interface {
+	WithTx(tx *gorm.DB) *merchantRepository
 	Create(merchant *models.Merchant) (*models.Merchant, error)
 	GetByName(name string) (*models.Merchant, error)
 	GetByUserID(id uuid.UUID) (model *models.Merchant, err error)
 	UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error)
+	UpdateProfilePhoto(userID uuid.UUID, photo string) (model *models.Merchant, err error)
 	GetInformationByID(id uint) (merchantInformation *dtos.MerchantInformation, err error)
 }
 
@@ -28,6 +32,15 @@ func NewMerchantRepository(c *MerchantRepositoryConfig) MerchantRepository {
 	return &merchantRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantRepository) WithTx(tx *gorm.DB) *merchantRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (m *merchantRepository) Create(newModel *models.Merchant) (model *models.Merchant, err error) {
@@ -114,7 +127,8 @@ func (r *merchantRepository) GetInformationByID(id uint) (merchantInformation *d
 			sub_districts.name AS shop_sub_district,
 			districts.name AS shop_district,
 			cities.name AS shop_city,
-			provinces.name AS shop_province
+			provinces.name AS shop_province,
+			merchants.created_at AS joined_date
 		`).
 		Joins("LEFT JOIN (?) product_agg ON merchants.id = product_agg.merchant_id", subQueryProduct).
 		Joins("LEFT JOIN (?) merchant_review_agg ON merchants.id = merchant_review_agg.merchant_id", subQueryMerchantReview).
@@ -148,6 +162,24 @@ func (m *merchantRepository) UpdateProfileAddressShopDefault(userID uuid.UUID, a
 	}
 
 	getUpdated := m.db.Where("address_id = ?", addressID).Find(&model)
+
+	if getUpdated.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (m *merchantRepository) UpdateProfilePhoto(userID uuid.UUID, photo string) (model *models.Merchant, err error) {
+	result := m.db.Model(&model).Where("user_id = ?", userID).Update("photo", photo)
+
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	getUpdated := m.db.Where("photo = ?", photo).Find(&model)
 
 	if getUpdated.RowsAffected == 0 {
 		err = e.ErrDataNotFound

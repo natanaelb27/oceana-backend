@@ -2,11 +2,14 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"fmt"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -17,6 +20,7 @@ import (
 )
 
 type ProductRepository interface {
+	WithTx(tx *gorm.DB) *productRepository
 	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
@@ -24,6 +28,9 @@ type ProductRepository interface {
 	GetByProductItemID(productItemID uint) (*models.Product, error)
 	UpdateUsingMapByMapCondition(conditionMap map[string]any, modelMap map[string]any) (err error)
 	GetUpdateByProductID(id uint) (model *product_dtos.ProductModel, err error)
+	UpdateUsingMap(id uint, dataMap map[string]any) (err error)
+	GetById(id uint) (model *models.Product, err error)
+	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error)
 }
 
 type productRepository struct {
@@ -38,6 +45,15 @@ func NewProductRepository(c *ProductRepositoryConfig) ProductRepository {
 	return &productRepository{
 		db: c.DB,
 	}
+}
+
+func (u productRepository) WithTx(tx *gorm.DB) *productRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error) {
@@ -70,6 +86,15 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		`).
 		Where("product_items.product_id = ?", productID).
 		Group("product_items.product_id")
+
+	subQueryTotalPurchased := r.db.Model(&models.ProductSnapshot{}).
+		Select(`
+				product_snapshots.product_id AS product_id,
+				SUM(order_details.quantity) AS total_purchased 
+			`).
+		Joins("JOIN order_details ON order_details.product_snapshot_id = product_snapshots.id").
+		Where("product_snapshots.product_id = ?", productID).
+		Group("product_snapshots.product_id")
 
 	// subQueryProductReview := r.db.Model(&models.ProductItem{}).
 	// 	Select(`
@@ -125,6 +150,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			products.description AS description,
 			product_item_agg.total_stock AS total_stock,
 			product_favorite_agg.like_count AS like_count,
+			product_purchase_agg.total_purchased AS total_purchased,
 			product_discount_agg.discount_type AS discount_type,
 			product_discount_agg.discount AS discount,
 			(
@@ -158,6 +184,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Joins("LEFT JOIN categories ON products.category_id = categories.id").
 		Joins("LEFT JOIN (?) product_image_agg ON products.id = product_image_agg.product_id", subQueryProductImage).
 		Joins("LEFT JOIN (?) product_video_agg ON products.id = product_video_agg.product_id", subQueryProductVideo).
+		Joins("LEFT JOIN (?) product_purchase_agg ON products.id = product_purchase_agg.product_id", subQueryTotalPurchased).
 		Where("products.id = ?", productID).
 		Where("products.status = 'active'").
 		First(&productDetails)
@@ -348,6 +375,7 @@ func (r *productRepository) subQueryProductMediaByProductID() *gorm.DB {
 	query := r.db.Model(&models.ProductMedia{}).
 		Select("product_media.media_url").
 		Where("product_media.product_id = products.id").
+		Where("product_media.type = ?", product_media_constants.TypeImage).
 		Order("product_media.id ASC").
 		Limit(1)
 	return query
@@ -609,4 +637,112 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 	}
 
 	return
+}
+
+func (r *productRepository) UpdateUsingMap(id uint, dataMap map[string]any) (err error) {
+	result := r.db.Model(&models.Product{}).Where("id = ?", id).Updates(dataMap)
+	if result.Error != nil {
+		err = e.ErrDataNotFound
+		return
+	}
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productRepository) GetById(id uint) (model *models.Product, err error) {
+	result := r.db.First(&model, id)
+	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error) {
+	var availableProducts []*dtos.AvailableProducts
+
+	subQueryProductImage := r.db.Model(&models.ProductMedia{}).
+		Select(`
+			product_media.product_id AS product_id,
+			product_media.media_url AS media_url
+		`).
+		Where("product_media.type = ?", product_media_constants.TypeImage).
+		Order("product_media.id ASC").
+		Limit(1)
+
+	subQueryProductItem := r.db.Model(&models.ProductItem{}).
+		Select(`
+			product_id AS product_id,
+			SUM(stock_quantity) AS total_stock,
+			MIN(price) AS price_min,
+			MAX(price) AS price_max
+		`).
+		Group("product_items.product_id")
+
+	result := r.db.Model(&models.Product{}).
+		Select(`
+			DISTINCT
+			products.id AS product_id,
+			products.name AS product_name,
+			tbl_product_image.media_url AS product_image,
+			product_item_agg.price_max AS price_max,
+			product_item_agg.price_min AS price_min,
+			product_item_agg.total_stock AS total_stock
+		`).
+		Joins("LEFT JOIN (?) product_item_agg ON products.id = product_item_agg.product_id", subQueryProductItem).
+		Joins("LEFT JOIN (?) tbl_product_image ON products.id = tbl_product_image.product_id", subQueryProductImage)
+
+	if query.FilterStartDatetime != nil && query.FilterEndDatetime != nil {
+		subQueryProductList := r.db.Model(&models.ProductMerchantPromotion{}).
+			Select("product_merchant_promotions.product_id").
+			Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+			Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", query.FilterEndDatetime).
+			Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", query.FilterStartDatetime).
+			Where("merchant_promotions.merchant_id = ?", merchantID)
+
+		result.Joins("LEFT JOIN product_merchant_promotions ON products.id = product_merchant_promotions.product_id").
+			Where("products.id NOT IN (?)", subQueryProductList)
+	}
+
+	result.
+		Where("products.merchant_id = ?", merchantID).
+		Where("products.status = ?", constants.ProductActiveStatus)
+
+	if query.FilterCategory != 0 {
+		subQueryCategory := r.db.Raw(`
+			WITH RECURSIVE cat AS (
+				SELECT 
+					id, parent_id
+				FROM categories WHERE id = @category_id
+				UNION ALL
+				SELECT 
+					categories.id, categories.parent_id
+				FROM categories
+				JOIN cat ON categories.id = cat.parent_id
+			)
+			SELECT id FROM cat
+		`, sql.Named("category_id", query.FilterCategory))
+
+		result.Where("products.category_id IN (?)", subQueryCategory)
+	}
+
+	if query.Search != "" {
+		result.Where("products.name ILIKE (?)", "%"+query.Search+"%")
+	}
+
+	result.Find(&availableProducts)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		return nil, e.ErrDataNotFound
+	}
+
+	return availableProducts, nil
 }

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -19,6 +20,7 @@ type CategoryRepository interface {
 	GetAncestorsByID(ID uint) (model []*models.Category, err error)
 	GetMerchantCategoriesByMerchantID(id uint) ([]*models.Category, error)
 	GetAllMerchantSubCategoriesByParentID(ID uint, merchantCategoryIDs []int64) (model []*models.Category, err error)
+	WithTx(tx *gorm.DB) *categoryRepository
 }
 
 type categoryRepository struct {
@@ -33,6 +35,15 @@ func NewCategoryRepository(c *CategoryRepositoryConfig) CategoryRepository {
 	return &categoryRepository{
 		db: c.DB,
 	}
+}
+
+func (u categoryRepository) WithTx(tx *gorm.DB) *categoryRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *categoryRepository) GetAllCategories() (model []*models.Category, err error) {

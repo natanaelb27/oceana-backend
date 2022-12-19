@@ -12,6 +12,7 @@ type MerchantService interface {
 	Register(merchantCreateRequest *dtos.MerchantCreateRequest) (merchantCreateResponse *dtos.MerchantCreateResponse, err error)
 	GetInformationByID(id uint) (merchantGetInformationByIDResponse *dtos.MerchantGetInformationByIDResponse, err error)
 	MerchantGetProfile(id uuid.UUID) (merchantGetProfileResponse *dtos.MerchantGetProfileResponse, err error)
+	MerchantUpdatePhoto(request *dtos.MerchantUpdatePhotoRequest) (merchantGetProfileResponse *dtos.MerchantGetProfileResponse, err error)
 }
 
 type merchantService struct {
@@ -69,6 +70,35 @@ func (s *merchantService) MerchantGetProfile(id uuid.UUID) (merchantGetProfileRe
 	if err != nil {
 		return
 	}
+
+	merchantGetProfileResponse = dtos.NewMerchantGetProfileResponse(merchant)
+	return
+}
+
+func (s *merchantService) MerchantUpdatePhoto(request *dtos.MerchantUpdatePhotoRequest) (merchantGetProfileResponse *dtos.MerchantGetProfileResponse, err error) {
+	if request.Photo == nil {
+		return nil, e.ErrEmptyImage
+	}
+
+	_, err = s.merchantRepository.GetByUserID(request.ID)
+
+	if err != nil {
+		return
+	}
+
+	photoFile, err := request.Photo.Open()
+
+	if err != nil {
+		return nil, err
+	}
+
+	imageUrl, err := utils.UploadImage(photoFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	merchant, err := s.merchantRepository.UpdateProfilePhoto(request.ID, imageUrl)
 
 	merchantGetProfileResponse = dtos.NewMerchantGetProfileResponse(merchant)
 	return
