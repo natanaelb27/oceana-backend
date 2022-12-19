@@ -14,7 +14,7 @@ import (
 
 type MarketplaceVoucherService interface {
 	Create(marketplaceVoucher *models.MarketplaceVoucher) (*models.MarketplaceVoucher, error)
-	GetAll() ([]*models.MarketplaceVoucher, error)
+	GetAll(query *dtos.MarketplaceVoucherQuery) ([]*models.MarketplaceVoucher, *utils.Pagination, error)
 	GetAllByActive() ([]*models.MarketplaceVoucher, error)
 	GetById(id uint) (*models.MarketplaceVoucher, error)
 	Update(id uint, newModel *models.MarketplaceVoucher) (*models.MarketplaceVoucher, error)
@@ -76,8 +76,19 @@ func (p *marketplaceVoucherService) Create(model *models.MarketplaceVoucher) (*m
 	return p.marketplaceVoucherRepository.Create(model)
 }
 
-func (p *marketplaceVoucherService) GetAll() ([]*models.MarketplaceVoucher, error) {
-	return p.marketplaceVoucherRepository.GetAll()
+func (p *marketplaceVoucherService) GetAll(query *dtos.MarketplaceVoucherQuery) ([]*models.MarketplaceVoucher, *utils.Pagination, error) {
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	marketplaceVouchers, pagination, err := p.marketplaceVoucherRepository.GetAllDetails(query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return marketplaceVouchers, pagination, nil
 }
 
 func (p *marketplaceVoucherService) GetAllByActive() ([]*models.MarketplaceVoucher, error) {

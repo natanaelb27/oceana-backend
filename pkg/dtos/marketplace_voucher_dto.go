@@ -17,7 +17,7 @@ type MarketplaceVoucherCreateRequest struct {
 	DiscountType          string    `json:"discount_type" binding:"required"`
 	Discount              uint      `json:"discount" binding:"required"`
 	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
-	MaximumDiscountAmount uint      `json:"maximum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota" binding:"required"`
 }
 
@@ -44,7 +44,7 @@ type MarketplaceVoucherCreateResponse struct {
 	DiscountType          string    `json:"discount_type"`
 	Discount              uint      `json:"discount"`
 	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
-	MaximumDiscountAmount uint      `json:"maximum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota"`
 	CurrentQuota          uint      `json:"current_quota"`
 	CreatedAt             time.Time `json:"created_at"`
@@ -78,7 +78,7 @@ type MarketplaceVoucherGetResponse struct {
 	DiscountType          string    `json:"discount_type"`
 	Discount              uint      `json:"discount"`
 	MinimumSpendAmount    uint      `json:"minimum_spend_amount"`
-	MaximumDiscountAmount uint      `json:"maximum_spend_amount"`
+	MaximumDiscountAmount uint      `json:"maximum_discount_amount"`
 	MaximumQuota          uint      `json:"maximum_quota"`
 	CurrentQuota          uint      `json:"current_quota"`
 	CreatedAt             time.Time `json:"created_at"`
@@ -149,6 +149,63 @@ func NewBuyerMarketplaceVoucherQuery(c *gin.Context) *BuyerMarketplaceVoucherQue
 
 	query.FilterVoucherStatus = filterVoucherStatus
 	query.FilterVoucherAvailability = filterVoucherAvailability
+
+	if sortBy == "end_datetime" {
+		query.SortBy = "end_datetime"
+	} else {
+		query.SortBy = "start_datetime"
+	}
+
+	if sort == "asc" {
+		query.Sort = "ASC"
+	} else {
+		query.Sort = "DESC"
+	}
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
+}
+
+type MarketplaceVoucherQuery struct {
+	SearchVoucherName   string `json:"search-voucher-name"`
+	FilterVoucherStatus string `json:"filter-voucher-status"`
+	SortBy              string `json:"sort-by"`
+	Sort                string `json:"sort"`
+	Limit               uint   `json:"limit"`
+	Page                uint   `json:"page"`
+}
+
+func NewMarketplaceVoucherQuery(c *gin.Context) *MarketplaceVoucherQuery {
+	var query MarketplaceVoucherQuery
+
+	searchVoucherName := c.Query("search-voucher-name")
+	filterVoucherStatus := strings.ToLower(c.Query("filter-voucher-status"))
+	sortBy := strings.ToLower(c.Query("sort-by"))
+	sort := strings.ToLower(c.Query("sort"))
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	query.SearchVoucherName = searchVoucherName
+	query.FilterVoucherStatus = filterVoucherStatus
 
 	if sortBy == "end_datetime" {
 		query.SortBy = "end_datetime"

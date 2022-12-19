@@ -11,7 +11,8 @@ import (
 )
 
 func (h *Handler) MarketplaceVoucherGetAll(c *gin.Context) {
-	results, err := h.marketplaceVoucherService.GetAll()
+	query := dtos.NewMarketplaceVoucherQuery(c)
+	results, pagination, err := h.marketplaceVoucherService.GetAll(query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -23,7 +24,7 @@ func (h *Handler) MarketplaceVoucherGetAll(c *gin.Context) {
 		responseData = append(responseData, dtos.NewMarketplaceVoucherGetResponse(result))
 	}
 
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, responseData, pagination)
 }
 
 func (h *Handler) MarketplaceVoucherGetAllByActive(c *gin.Context) {
