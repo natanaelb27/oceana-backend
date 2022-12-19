@@ -12,6 +12,7 @@ type OrderList struct {
 	InvoiceNumber                        string             `json:"invoice_number"`
 	MerchantID                           uint               `json:"merchant_id"`
 	ShopName                             string             `json:"shop_name"`
+	ShopPhoto                            string             `json:"shop_photo"`
 	UserID                               uuid.UUID          `json:"user_id"`
 	UserFullName                         string             `json:"user_full_name"`
 	CourierServiceID                     uint               `json:"courier_service_id"`
@@ -36,6 +37,7 @@ type OrderListDetails struct {
 	InvoiceNumber                        string                  `json:"invoice_number"`
 	MerchantID                           uint                    `json:"merchant_id"`
 	ShopName                             string                  `json:"shop_name"`
+	ShopPhoto                            string                  `json:"shop_photo"`
 	OrderDetails                         []*OrderDetailList      `json:"order_details" gorm:"-"`
 	TransactionDatetime                  time.Time               `json:"transaction_datetime"`
 	OrderStatus                          string                  `json:"order_status"`

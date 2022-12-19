@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -14,8 +15,9 @@ import (
 
 type MerchantPromotionService interface {
 	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error)
-	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
+	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, error)
 	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
+	GetDetailsByID(merchantPromotionID uint) (*internalDtos.MerchantPromotionDetails, error)
 	Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error)
 }
 
@@ -89,18 +91,44 @@ func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpReques
 	return responses, nil
 }
 
-func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error) {
+func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, error) {
 	merchant, err := mp.merchantRepository.GetByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := mp.merchantPromotionRepository.GetAll(merchant.ID, query)
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	merchantPromotions, pagination, err := mp.merchantPromotionRepository.GetAllDetails(merchant.ID, query, pagination)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	merchantPromotionList := []*internalDtos.MerchantPromotionDetails{}
+
+	for _, v := range merchantPromotions {
+		pmp, err := mp.productMerchantPromotionRepository.GetProductDetailsByMerchantPromotionID(v.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		merchantPromotionList = append(merchantPromotionList, &internalDtos.MerchantPromotionDetails{
+			ID:                       v.ID,
+			MerchantID:               v.MerchantID,
+			Name:                     v.Name,
+			StartDatetime:            v.StartDatetime,
+			EndDatetime:              v.EndDatetime,
+			PromotionStatus:          v.PromotionStatus,
+			ProductMerchantPromotion: pmp,
+		})
+
+	}
+
+	return merchantPromotionList, nil
 }
 
 func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error) {
@@ -122,6 +150,24 @@ func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.Mer
 	}
 
 	return response, nil
+}
+
+func (mp *merchantPromotionService) GetDetailsByID(merchantPromotionID uint) (*internalDtos.MerchantPromotionDetails, error) {
+	merchantPromotionDetails, err := mp.merchantPromotionRepository.GetDetailsByID(merchantPromotionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	pmp, err := mp.productMerchantPromotionRepository.GetProductDetailsByMerchantPromotionID(merchantPromotionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	merchantPromotionDetails.ProductMerchantPromotion = pmp
+
+	return merchantPromotionDetails, nil
 }
 
 func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error) {

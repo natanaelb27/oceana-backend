@@ -48,13 +48,13 @@ func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
 		return
 	}
 
-	var responseData []*dtos.MerchantPromotionResponse = make([]*dtos.MerchantPromotionResponse, 0)
+	// var responseData []*dtos.MerchantPromotionResponse = make([]*dtos.MerchantPromotionResponse, 0)
 
-	for _, result := range results {
-		responseData = append(responseData, dtos.NewMerchantPromotionResponse(result, nil))
-	}
+	// for _, result := range results {
+	// 	responseData = append(responseData, dtos.NewMerchantPromotionResponse(result, nil))
+	// }
 
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, results, nil)
 }
 
 func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
@@ -72,7 +72,7 @@ func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
 
 	merchantPromotionsID := uint(merchantPromotionsIDUint64)
 
-	responseData, err := h.merchantPromotionService.GetByID(merchantPromotionsID)
+	responseData, err := h.merchantPromotionService.GetDetailsByID(merchantPromotionsID)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
