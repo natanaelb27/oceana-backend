@@ -251,7 +251,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 		Where(`
 			product_merchant_promotions.maximum_quota > 
 			CASE
-				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota + COALESCE(user_usage.user_cart_quantity, 0)
 				ELSE -2
 			END
 		`).
