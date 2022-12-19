@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"github.com/google/uuid"
@@ -80,10 +78,10 @@ func (p *roleService) MultipleOperationFailingWithTransaction(model *models.Role
 }
 
 func (p *roleService) CronRolesCount() error {
-	roles, err := p.roleRepository.GetAll()
+	_, err := p.roleRepository.GetAll()
 	if err != nil {
 		return err
 	}
-	fmt.Println("CRON: roles count is", len(roles))
+	// fmt.Println("CRON: roles count is", len(roles))
 	return nil
 }

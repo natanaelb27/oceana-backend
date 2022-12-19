@@ -11,5 +11,6 @@ func category(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Han
 	{
 		publicRoute.GET("", h.CategoryGetAll)
 		publicRoute.GET("/ancestors/:category-id", h.CategoryAncestorsGetByID)
+		publicRoute.GET("/merchants/:merchant-id", h.GetMerchantCategories)
 	}
 }
