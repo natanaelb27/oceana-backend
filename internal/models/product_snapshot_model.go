@@ -18,6 +18,8 @@ type ProductSnapshot struct {
 	Weight      uint
 	PackageSize string
 	Condition   string
+	ProcessDay  uint
+	IsPreorder  bool
 	SKU         string
 	Price       uint
 	CreatedAt   time.Time

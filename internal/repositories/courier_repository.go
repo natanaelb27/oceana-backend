@@ -25,7 +25,9 @@ func NewCourierRepository(c *CourierRepositoryConfig) CourierRepository {
 }
 
 func (r *courierRepository) GetAll() (model []*models.Courier, err error) {
-	queryResult := r.db.Find(&model)
+	queryResult := r.db.
+		Order("id ASC").
+		Find(&model)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return

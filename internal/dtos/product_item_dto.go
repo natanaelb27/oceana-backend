@@ -28,4 +28,7 @@ type ProductItemDetails struct {
 	Weight        uint   `json:"weight"`
 	PackageSize   string `json:"package_size"`
 	Condition     string `json:"condition"`
+	Status        string `json:"status"`
+	ProcessDay    uint   `json:"process_day"`
+	IsPreorder    bool   `json:"is_preorder"`
 }

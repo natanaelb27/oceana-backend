@@ -68,7 +68,6 @@ func NewCategoryGetAncestorsResponse(source []*models.Category) (target []*Categ
 			Name:     result.Name,
 			ParentID: result.ParentID,
 		})
-		// responseData = append(responseData, externalDtos.NewCategoryGetAncestorsResponse(result))
 	}
 
 	return

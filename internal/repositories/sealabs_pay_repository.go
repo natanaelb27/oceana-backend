@@ -5,13 +5,19 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SealabsPayRepository interface {
 	Create(sealabsPay *models.SealabsPay) (model *models.SealabsPay, err error)
-	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
+	GetAll(userID uuid.UUID) (models []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
+	GetByCardNumber(cardNumber string) (model *models.SealabsPay, err error)
+	GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error)
+	GetDefaultByUserID(userID uuid.UUID) (model *models.SealabsPay, err error)
 	Delete(id uuid.UUID) (model *models.SealabsPay, err error)
+	Update(id uuid.UUID, model *models.SealabsPay) (err error)
+	SetDefaultFalse(id uuid.UUID, model *models.SealabsPay) (err error)
 }
 
 type sealabsPayRepository struct {
@@ -37,7 +43,7 @@ func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *model
 	}
 
 	if queryResult.RowsAffected == 0 {
-		err = e.ErrSealabsPayAccountNumberAlreadyExist
+		err = e.ErrSealabsPayCardNumberAlreadyExist
 		return
 	}
 
@@ -46,8 +52,8 @@ func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *model
 	return
 }
 
-func (r *sealabsPayRepository) GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error) {
-	queryResult := r.db.Where("user_id = ?", userID).Find(&model)
+func (r *sealabsPayRepository) GetAll(userID uuid.UUID) (models []*models.SealabsPay, err error) {
+	queryResult := r.db.Where("user_id = ?", userID).Order("is_default DESC").Find(&models)
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
@@ -66,13 +72,71 @@ func (r *sealabsPayRepository) GetById(id uuid.UUID) (model *models.SealabsPay, 
 	return
 }
 
+func (r *sealabsPayRepository) GetByCardNumber(cardNumber string) (model *models.SealabsPay, err error) {
+	queryResult := r.db.Where("account_number = ?", cardNumber).First(&model)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	return
+}
+
+func (r *sealabsPayRepository) GetByUserIDAndCardNumber(userID uuid.UUID, cardNumber string) (model *models.SealabsPay, err error) {
+	queryResult := r.db.Where("user_id = ? AND account_number = ?", userID, cardNumber).First(&model)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	return
+}
+
+func (r *sealabsPayRepository) GetDefaultByUserID(userID uuid.UUID) (model *models.SealabsPay, err error) {
+	queryResult := r.db.Where("user_id = ? AND is_default = true", userID).First(&model)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = queryResult.Error
+		return
+	}
+	return
+}
+
 func (r *sealabsPayRepository) Delete(id uuid.UUID) (model *models.SealabsPay, err error) {
-	result := r.db.Delete(&model, id)
+	result := r.db.Clauses(clause.Returning{}).Delete(&model, id)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
 	}
 
-	model.ID = id
+	return
+}
+
+func (r *sealabsPayRepository) Update(id uuid.UUID, model *models.SealabsPay) (err error) {
+	queryResult := r.db.Where("id = ?", id).Updates(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *sealabsPayRepository) SetDefaultFalse(id uuid.UUID, model *models.SealabsPay) (err error) {
+	queryResult := r.db.Model(&model).Where("id = ?", id).Update("is_default", false)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
 	return
 }

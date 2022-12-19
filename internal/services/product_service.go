@@ -28,12 +28,14 @@ type ProductService interface {
 	CreateProduct(request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
 	UpdateProductUsingModel(userID uuid.UUID, request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
 	GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error)
+	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
 }
 
 type productService struct {
 	productRepository                r.ProductRepository
 	merchantRepository               r.MerchantRepository
 	productItemRepository            r.ProductItemRepository
+	productReviewService             r.ProductReviewRepository
 	productVariationRepository       r.ProductVariationRepository
 	productViewRepository            r.ProductViewRepository
 	productFavoriteRepository        r.ProductFavoriteRepository
@@ -50,6 +52,7 @@ type ProductServiceConfig struct {
 	ProductRepository                r.ProductRepository
 	MerchantRepository               r.MerchantRepository
 	ProductItemRepository            r.ProductItemRepository
+	ProductReviewRepository          r.ProductReviewRepository
 	ProductVariationRepository       r.ProductVariationRepository
 	ProductViewRepository            r.ProductViewRepository
 	ProductFavoriteRepository        r.ProductFavoriteRepository
@@ -67,6 +70,7 @@ func NewProductService(c *ProductServiceConfig) ProductService {
 		productRepository:                c.ProductRepository,
 		merchantRepository:               c.MerchantRepository,
 		productItemRepository:            c.ProductItemRepository,
+		productReviewService:             c.ProductReviewRepository,
 		productVariationRepository:       c.ProductVariationRepository,
 		productViewRepository:            c.ProductViewRepository,
 		productFavoriteRepository:        c.ProductFavoriteRepository,
@@ -120,6 +124,14 @@ func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDet
 	}
 
 	productDetails.ProductVariation = productVariation
+
+	productReviewDetails, err := s.productReviewService.GetDetailsByProductID(productID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	productDetails.ProductReviewDetails = productReviewDetails
 
 	return dtos.NewProductDetailsGetByIDResponse(productDetails), nil
 }
@@ -347,7 +359,6 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 
 	// map product variant for later use to identify product variations
 	productVariantMap := make([][]uint, len(request.Variants))
-	// productVariants := []*models.ProductVariantType{}
 	for iVariant, variant := range request.Variants {
 		// declare product variant map with options length
 		productVariantMap[iVariant] = make([]uint, len(variant.Options))
@@ -1146,4 +1157,19 @@ func (s *productService) GetUpdateModelByProductID(productID uint) (*productInte
 	}
 
 	return productModel, nil
+}
+func (s *productService) GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error) {
+	merchant, err := s.merchantRepository.GetByUserID(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	availableProduct, err := s.productRepository.GetAvailableProductsByPromotionPeriod(merchant.ID, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewAvailableProductsResponse(availableProduct), nil
 }
