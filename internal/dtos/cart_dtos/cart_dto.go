@@ -9,6 +9,7 @@ type CartRequest struct {
 	UserID        uuid.UUID
 	ProductItemID uint
 	Quantity      *uint
+	Action        *string
 }
 
 func (source *CartRequest) ToModel() (target *models.Cart) {
