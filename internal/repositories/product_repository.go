@@ -226,6 +226,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 	subQueryUserUsage := r.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
 			product_merchant_promotions.id AS product_merchant_promotion_id, 
+			COALESCE(user_cart.total_quantity, 0) AS user_cart_quantity,
 			COALESCE(user_cart.total_quantity, 0) + COALESCE(user_merchant_promo.user_merchant_promotion_usage, 0) AS total_usage
 		`).
 		Joins("LEFT JOIN (?) user_cart ON product_merchant_promotions.product_id = user_cart.product_id", subQueryUserCart).
@@ -242,17 +243,19 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 			product_merchant_promotions.maximum_quota,
 			product_merchant_promotions.maximum_user_limit,
 			product_merchant_promotions.current_quota,
-			COALESCE(user_usage.total_usage, 0) AS total_usage
+			COALESCE(user_usage.total_usage, 0) AS total_usage,
+			COALESCE(user_usage.user_cart_quantity, 0) AS user_cart_quantity
 		`).
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
 		Joins("LEFT JOIN (?) user_usage ON user_usage.product_merchant_promotion_id = product_merchant_promotions.id", subQueryUserUsage).
 		Where(`
-			product_merchant_promotions.maximum_quota > 
+			product_merchant_promotions.maximum_quota >= 
 			CASE
-				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota + COALESCE(user_usage.user_cart_quantity, 0) + @quantity
 				ELSE -2
 			END
-		`).
+		`,
+			sql.Named("quantity", quantity)).
 		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where(`
 			CASE
@@ -301,7 +304,12 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 					ELSE 
 						(CASE
 							WHEN product_discount_agg.maximum_quota <= -1 THEN selected_product.stock
-							ELSE product_discount_agg.maximum_quota - product_discount_agg.current_quota
+							ELSE (
+								CASE
+									WHEN product_discount_agg.maximum_quota - product_discount_agg.current_quota - product_discount_agg.user_cart_quantity < 0 THEN 0
+									ELSE product_discount_agg.maximum_quota - product_discount_agg.current_quota - product_discount_agg.user_cart_quantity
+								END
+							)
 						END)
 				END
 			) AS max_purchase_quantity,
