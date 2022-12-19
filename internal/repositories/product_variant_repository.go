@@ -1,17 +1,24 @@
 package repositories
 
 import (
+	"database/sql"
+	"log"
+
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ProductVariantRepository interface {
+	WithTx(tx *gorm.DB) *productVariantRepository
 	Create(productVariant *models.ProductVariant) (model *models.ProductVariant, err error)
 	GetAll() (model []*models.ProductVariant, err error)
 	GetById(id uint) (model *models.ProductVariant, err error)
+	GetAllByProductVariantTypeID(productVariantTypeID uint) (model []*models.ProductVariant, err error)
 	Update(id uint, newModel *models.ProductVariant) (model *models.ProductVariant, err error)
 	Delete(id uint) (model *models.ProductVariant, err error)
+	GetAllVariantIndexByProductID(productID uint) (productModel []*internalDtos.ProductVariationTypeListOfVariants, err error)
 }
 
 type productVariantRepository struct {
@@ -26,6 +33,15 @@ func NewProductVariantRepository(c *ProductVariantRepositoryConfig) ProductVaria
 	return &productVariantRepository{
 		db: c.DB,
 	}
+}
+
+func (u productVariantRepository) WithTx(tx *gorm.DB) *productVariantRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productVariantRepository) Create(newModel *models.ProductVariant) (model *models.ProductVariant, err error) {
@@ -64,7 +80,33 @@ func (r *productVariantRepository) GetById(id uint) (model *models.ProductVarian
 	return
 }
 
+func (r *productVariantRepository) GetAllByProductVariantTypeID(productVariantTypeID uint) (model []*models.ProductVariant, err error) {
+	result := r.db.
+		Where("product_variant_type_id = ?", productVariantTypeID).
+		Order("id ASC").
+		Find(&model)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
 func (r *productVariantRepository) Update(id uint, newModel *models.ProductVariant) (model *models.ProductVariant, err error) {
+	result := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model = newModel
+	model.ID = id
+
+	return
+}
+
+func (r *productVariantRepository) UpdateBy(id uint, newModel *models.ProductVariant) (model *models.ProductVariant, err error) {
 	result := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
@@ -85,6 +127,32 @@ func (r *productVariantRepository) Delete(id uint) (model *models.ProductVariant
 	}
 
 	model.ID = id
+
+	return
+}
+
+func (r *productVariantRepository) GetAllVariantIndexByProductID(productID uint) (productModel []*internalDtos.ProductVariationTypeListOfVariants, err error) {
+	sqProductVariants := r.db.Model(&models.ProductVariant{}).
+		Select("ARRAY_AGG(product_variants.id)").
+		Joins("JOIN product_variant_types ON product_variants.product_variant_type_id = product_variant_types.id").
+		Where("product_variants.product_variant_type_id = pvt.id")
+	result := r.db.
+		Table("product_variant_types pvt").
+		Select(`
+			(@sqProductVariants) AS variants
+		`,
+			sql.Named("sqProductVariants", sqProductVariants),
+		).
+		Where("pvt.product_id = ?", productID).
+		Find(&productModel)
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }

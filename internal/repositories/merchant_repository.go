@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,6 +11,7 @@ import (
 )
 
 type MerchantRepository interface {
+	WithTx(tx *gorm.DB) *merchantRepository
 	Create(merchant *models.Merchant) (*models.Merchant, error)
 	GetByName(name string) (*models.Merchant, error)
 	GetByUserID(id uuid.UUID) (model *models.Merchant, err error)
@@ -28,6 +31,15 @@ func NewMerchantRepository(c *MerchantRepositoryConfig) MerchantRepository {
 	return &merchantRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantRepository) WithTx(tx *gorm.DB) *merchantRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (m *merchantRepository) Create(newModel *models.Merchant) (model *models.Merchant, err error) {
