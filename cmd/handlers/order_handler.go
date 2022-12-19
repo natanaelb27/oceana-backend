@@ -154,7 +154,7 @@ func (h *Handler) SellerCancelOrder(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.UpdateProcessOrder(orderID, id)
+	result, err := h.orderService.SellerCancelOrder(orderID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)
