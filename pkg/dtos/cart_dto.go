@@ -16,7 +16,7 @@ func (source *CartUpsertRequest) CartUpsertRequestToInternalCartRequest() (targe
 	target = &in_cart_dtos.CartRequest{
 		ProductItemID: source.ProductItemID,
 		Quantity:      source.Quantity,
-		Action: source.Action,
+		Action:        source.Action,
 	}
 	return
 }
