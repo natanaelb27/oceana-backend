@@ -43,6 +43,8 @@ func Init(h *handlers.Handler) {
 	city(public, private, h)
 	wallet(public, private, h)
 	sealabsPay(public, private, h)
+	refund(public, private, h)
+	admin(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

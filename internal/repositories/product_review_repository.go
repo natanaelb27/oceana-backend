@@ -35,10 +35,12 @@ func (pr *productReviewRepository) Create(newModel *models.ProductReview) (model
 	queryResult := pr.db.
 		Where("order_detail_id = ?", newModel.OrderDetailID).
 		FirstOrCreate(&newModel)
+
 	if queryResult.RowsAffected == 0 {
 		err = e.ErrInsertFailed
 		return
 	}
+
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
@@ -49,22 +51,36 @@ func (pr *productReviewRepository) Create(newModel *models.ProductReview) (model
 
 func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pagination, query *externalDtos.ProductReviewQuery) ([]*dtos.ProductReviewList, *utils.Pagination, error) {
 	var productReviews []*dtos.ProductReviewList
-	subQuery := pr.db.Table("product_snapshots AS ps").
+	productVariantSubQuery := pr.db.Table("product_snapshots AS ps").
 		Select(`
 			STRING_AGG(product_variation_snapshots.variant, ', ')
 		`).
 		Joins("JOIN product_variation_snapshots ON product_snapshots.id = product_variation_snapshots.product_snapshot_id").
 		Where("ps.id = product_snapshots.id").
 		Group("ps.id")
+	mediaSubQuery := pr.db.Model(&models.ProductReview{}).
+		Select(`
+			product_reviews.id AS product_review_id,
+			ARRAY_REMOVE(ARRAY_AGG(product_review_media.media_url), NULL) AS medias
+		`).
+		Joins("LEFT JOIN product_review_media ON product_review_media.product_review_id = product_reviews.id").
+		Group("product_reviews.id")
+
 	queryResult := pr.db.Model(&models.ProductReview{}).
 		Select(`
-			product_reviews.id, users.id AS user_id, users.full_name, users.username, users.photo, product_reviews.product_id, product_reviews.rating, product_reviews.review, (?) AS product_variations, product_reviews.created_at
-		`, subQuery).
+			product_reviews.id, users.id AS user_id, users.full_name, users.username, users.photo, product_reviews.product_id, product_reviews.rating, product_reviews.review, (?) AS product_variations, COALESCE(medias_agg.medias, '{}') AS media,  product_reviews.created_at
+		`, productVariantSubQuery).
 		Joins("JOIN users ON product_reviews.user_id = users.id").
 		Joins("JOIN order_details ON product_reviews.order_detail_id = order_details.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
+		Joins("LEFT JOIN (?) medias_agg ON product_reviews.id = medias_agg.product_review_id", mediaSubQuery).
 		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
 		Where("product_reviews.product_id = ?", id)
+
+	if query.Media {
+		queryResult = queryResult.Where("ARRAY_LENGTH(COALESCE(medias_agg.medias, '{}'), 1) > 0")
+	}
+
 	if query.Comment {
 		queryResult = queryResult.Where("product_reviews.review <> ''")
 	}

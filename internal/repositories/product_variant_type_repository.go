@@ -1,17 +1,21 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ProductVariantTypeRepository interface {
+	WithTx(tx *gorm.DB) *productVariantTypeRepository
 	Create(productVariantType *models.ProductVariantType) (model *models.ProductVariantType, err error)
 	GetAll() (model []*models.ProductVariantType, err error)
 	GetById(id uint) (model *models.ProductVariantType, err error)
 	Update(id uint, newModel *models.ProductVariantType) (model *models.ProductVariantType, err error)
 	Delete(id uint) (model *models.ProductVariantType, err error)
+	GetAllByProductID(productID uint) (model []*models.ProductVariantType, err error)
 }
 
 type productVariantTypeRepository struct {
@@ -26,6 +30,15 @@ func NewProductVariantTypeRepository(c *ProductVariantTypeRepositoryConfig) Prod
 	return &productVariantTypeRepository{
 		db: c.DB,
 	}
+}
+
+func (u productVariantTypeRepository) WithTx(tx *gorm.DB) *productVariantTypeRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productVariantTypeRepository) Create(newModel *models.ProductVariantType) (model *models.ProductVariantType, err error) {
@@ -64,10 +77,24 @@ func (r *productVariantTypeRepository) GetById(id uint) (model *models.ProductVa
 	return
 }
 
-func (r *productVariantTypeRepository) Update(id uint, newModel *models.ProductVariantType) (model *models.ProductVariantType, err error) {
-	result := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+func (r *productVariantTypeRepository) GetAllByProductID(productID uint) (model []*models.ProductVariantType, err error) {
+	result := r.db.Where("product_id = ?", productID).Order("id ASC").Find(&model)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productVariantTypeRepository) Update(id uint, newModel *models.ProductVariantType) (model *models.ProductVariantType, err error) {
+	queryResult := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
 		return
 	}
 

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,6 @@ import (
 type ProductReviewCreateRequest struct {
 	UserID        uuid.UUID
 	OrderDetailID uuid.UUID
-	ProductID     uint                  `form:"product_id" json:"product_id" binding:"required"`
 	Rating        uint                  `form:"rating" json:"rating" binding:"required"`
 	Review        string                `form:"review" json:"review"`
 	Photo1        *multipart.FileHeader `form:"photo_1"`
@@ -31,7 +29,6 @@ func (p *ProductReviewCreateRequest) ToModel() *models.ProductReview {
 	return &models.ProductReview{
 		UserID:        p.UserID,
 		OrderDetailID: p.OrderDetailID,
-		ProductID:     p.ProductID,
 		Rating:        p.Rating,
 		Review:        p.Review,
 	}
@@ -112,7 +109,7 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 
 	switch sortBy {
 	case "latest":
-		query.SortBy = "created_at"
+		query.SortBy = `"product_reviews"."created_at"`
 	case "highest-rating":
 		query.SortBy = "rating"
 		query.Sort = "DESC"
@@ -120,7 +117,7 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 		query.SortBy = "rating"
 		query.Sort = "ASC"
 	default:
-		query.SortBy = "created_at"
+		query.SortBy = `"product_reviews"."created_at"`
 	}
 
 	if strings.ToLower(comment) == "true" {
@@ -146,33 +143,4 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 	}
 
 	return &query
-}
-
-type ProductReviewGetByProductID struct {
-	ID                 uint      `json:"id"`
-	UserID             uuid.UUID `json:"user_id"`
-	FullName           string    `json:"full_name"`
-	Username           string    `json:"username"`
-	Photo              *string   `json:"photo"`
-	ProductID          uint      `json:"product_id"`
-	Rating             uint      `json:"rating"`
-	Review             string    `json:"review"`
-	ProductReviewMedia []*string `json:"product_review_media"`
-	ProductVariations  string    `json:"product_variations"`
-	CreatedAt          time.Time `json:"created_at"`
-}
-
-func NewProductReviewGetByProductID(source *internalDtos.ProductReviewList, productReviewMediaLinks []*string) *ProductReviewGetByProductID {
-	return &ProductReviewGetByProductID{
-		ID:                 source.ID,
-		UserID:             source.UserID,
-		FullName:           source.FullName,
-		Username:           source.Username,
-		Photo:              source.Photo,
-		ProductID:          source.ProductID,
-		Rating:             source.Rating,
-		Review:             source.Review,
-		ProductVariations:  source.ProductVariations,
-		ProductReviewMedia: productReviewMediaLinks,
-	}
 }

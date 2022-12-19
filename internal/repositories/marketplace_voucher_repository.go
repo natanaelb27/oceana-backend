@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -13,6 +14,7 @@ import (
 )
 
 type MarketplaceVoucherRepository interface {
+	WithTx(tx *gorm.DB) *marketplaceVoucherRepository
 	Create(marketplaceVoucher *models.MarketplaceVoucher) (model *models.MarketplaceVoucher, err error)
 	GetAll() (model []*models.MarketplaceVoucher, err error)
 	GetAllByActive() (model []*models.MarketplaceVoucher, err error)
@@ -36,6 +38,15 @@ func NewMarketplaceVoucherRepository(c *MarketplaceVoucherRepositoryConfig) Mark
 	return &marketplaceVoucherRepository{
 		db: c.DB,
 	}
+}
+
+func (u marketplaceVoucherRepository) WithTx(tx *gorm.DB) *marketplaceVoucherRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *marketplaceVoucherRepository) Create(newModel *models.MarketplaceVoucher) (model *models.MarketplaceVoucher, err error) {

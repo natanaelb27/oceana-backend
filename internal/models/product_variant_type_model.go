@@ -2,16 +2,13 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type ProductVariantType struct {
 	ID        uint
 	ProductID uint
-	Product   Product
+	Product   Product `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt
 }

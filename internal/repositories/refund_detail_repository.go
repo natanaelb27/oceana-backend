@@ -3,6 +3,8 @@ package repositories
 import (
 	"database/sql"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -12,6 +14,7 @@ import (
 type RefundDetailRepository interface {
 	CalculateRefundDetails(orderDetailID uuid.UUID, quantity uint) (model *models.RefundDetail, err error)
 	Create(newModel []*models.RefundDetail) (model []*models.RefundDetail, err error)
+	GetDetailsByRefundID(refundID uuid.UUID) ([]*dtos.RefundItems, error)
 }
 
 type refundDetailRepository struct {
@@ -81,4 +84,47 @@ func (r *refundDetailRepository) Create(newModel []*models.RefundDetail) (model 
 	model = newModel
 
 	return
+}
+
+func (r *refundDetailRepository) GetDetailsByRefundID(refundID uuid.UUID) ([]*dtos.RefundItems, error) {
+	var refundItems []*dtos.RefundItems
+
+	subQueryVariants := r.db.Model(&models.ProductVariationSnapshot{}).
+		Select(`
+			product_variation_snapshots.product_snapshot_id AS product_snapshot_id,
+			STRING_AGG(product_variation_snapshots.variant, ', ') AS product_variations
+		`).
+		Group("product_variation_snapshots.product_snapshot_id")
+
+	subQueryProductImage := r.db.Table("product_snapshots AS ps").
+		Select(`
+			product_media_snapshots.media_url
+		`).
+		Joins("JOIN product_media_snapshots ON ps.id = product_media_snapshots.product_snapshot_id").
+		Where("ps.id = product_snapshots.id").
+		Where("product_media_snapshots.type = ?", product_media_constants.TypeImage).
+		Limit(1)
+
+	result := r.db.Debug().Model(&models.RefundDetail{}).
+		Select(`
+			refund_details.id AS refund_detail_id,
+			refund_details.order_detail_id AS order_detail_id,
+			(?) AS product_image,
+			product_snapshots.name AS product_name,
+			tbl_variation.product_variations AS product_variations,
+			refund_details.quantity AS refund_quantity,
+			refund_details.amount_user_get AS user_refund_amount,
+			refund_details.amount_merchant_lost AS merchant_lost_amount
+		`, subQueryProductImage).
+		Joins("JOIN order_details ON refund_details.order_detail_id = order_details.id").
+		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
+		Joins("LEFT JOIN (?) tbl_variation ON product_snapshots.id = tbl_variation.product_snapshot_id", subQueryVariants).
+		Where("refund_details.refund_id = ?", refundID).
+		Find(&refundItems)
+
+	if result.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return refundItems, nil
 }

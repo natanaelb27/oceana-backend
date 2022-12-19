@@ -1,36 +1,59 @@
 package services
 
 import (
+	"strings"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
 type ProductReviewService interface {
 	Create(*externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error)
-	GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*externalDtos.ProductReviewGetByProductID, *utils.Pagination, error)
+	GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*dtos.ProductReviewList, *utils.Pagination, error)
 }
 
 type productReviewService struct {
+	orderDetailRepository        r.OrderDetailRepository
 	productReviewRepository      r.ProductReviewRepository
 	productReviewMediaRepository r.ProductReviewMediaRepository
 }
 
 type ProductReviewServiceConfig struct {
+	OrderDetailRepository        r.OrderDetailRepository
 	ProductReviewRepository      r.ProductReviewRepository
 	ProductReviewMediaRepository r.ProductReviewMediaRepository
 }
 
 func NewProductReviewService(c *ProductReviewServiceConfig) ProductReviewService {
 	return &productReviewService{
+		orderDetailRepository:        c.OrderDetailRepository,
 		productReviewRepository:      c.ProductReviewRepository,
 		productReviewMediaRepository: c.ProductReviewMediaRepository,
 	}
 }
 
 func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error) {
+	request.Review = strings.TrimSpace(request.Review)
+
 	productReview := request.ToModel()
+
+	orderDetail, err := pr.orderDetailRepository.GetDetailsByID(request.OrderDetailID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if orderDetail.Order.Transaction.UserID != request.UserID {
+		return nil, e.ErrForbiddenOrder
+	}
+
+	productReview.ProductID = orderDetail.ProductSnapshot.ProductID
+
 	newProductReview, err := pr.productReviewRepository.Create(productReview)
 	if err != nil {
 		return nil, err
@@ -144,7 +167,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 	return response, nil
 }
 
-func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*externalDtos.ProductReviewGetByProductID, *utils.Pagination, error) {
+func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*dtos.ProductReviewList, *utils.Pagination, error) {
 	pagination := &utils.Pagination{
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -153,21 +176,5 @@ func (pr *productReviewService) GetByProductID(id uint, query *externalDtos.Prod
 	if err != nil {
 		return nil, nil, err
 	}
-	var productReviewDataList []*externalDtos.ProductReviewGetByProductID
-	for _, productReview := range productReviews {
-		var productReviewMediaLinks []*string
-		productReviewMedia, err := pr.productReviewMediaRepository.GetByProductReviewID(productReview.ID)
-		if err != nil {
-			return nil, nil, err
-		}
-		if query.Media && len(productReviewMedia) <= 0 {
-			continue
-		}
-		for _, singleProductReviewMedia := range productReviewMedia {
-			productReviewMediaLinks = append(productReviewMediaLinks, &singleProductReviewMedia.MediaURL)
-		}
-		productReviewData := externalDtos.NewProductReviewGetByProductID(productReview, productReviewMediaLinks)
-		productReviewDataList = append(productReviewDataList, productReviewData)
-	}
-	return productReviewDataList, pagination, nil
+	return productReviews, pagination, nil
 }
