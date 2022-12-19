@@ -114,7 +114,8 @@ func (r *merchantRepository) GetInformationByID(id uint) (merchantInformation *d
 			sub_districts.name AS shop_sub_district,
 			districts.name AS shop_district,
 			cities.name AS shop_city,
-			provinces.name AS shop_province
+			provinces.name AS shop_province,
+			merchants.created_at AS joined_date
 		`).
 		Joins("LEFT JOIN (?) product_agg ON merchants.id = product_agg.merchant_id", subQueryProduct).
 		Joins("LEFT JOIN (?) merchant_review_agg ON merchants.id = merchant_review_agg.merchant_id", subQueryMerchantReview).

@@ -598,7 +598,7 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 	var newOrderTrackings []*models.OrderTracking
 
 	for _, v := range orderTrackings {
-		interval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+		interval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 		if err != nil {
 			interval = 4320
 		}
