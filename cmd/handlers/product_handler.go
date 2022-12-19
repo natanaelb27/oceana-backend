@@ -9,6 +9,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) ProductDetailsGetByID(c *gin.Context) {
@@ -170,6 +171,45 @@ func (h *Handler) ProductCreate(c *gin.Context) {
 	request.MerchantID = uint(merchantIDInt)
 
 	response, err := h.productService.CreateProduct(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, response, nil)
+}
+
+func (h *Handler) ProductUpdate(c *gin.Context) {
+	productIDInt, err := strconv.Atoi(c.Param("product_id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
+
+	userId := utils.GinGetUUID(c, "id")
+	if userId == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	var request *product_dtos.ProductModel
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	request.ID = uint(productIDInt)
+
+	trx := c.MustGet("tx").(*gorm.DB)
+
+	// _, err = h.productService.WithTx(trx).UpdateProductUsingModel(userId, request)
+	// if err != nil {
+	// 	utils.ResponseError(c, err)
+	// 	return
+	// }
+
+	// utils.ResponseError(c, e.ErrBlockedWallet)
+	response, err := h.productService.WithTx(trx).UpdateProductUsingModel(userId, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

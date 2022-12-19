@@ -1,15 +1,19 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ProductVariantMediaRepository interface {
+	WithTx(tx *gorm.DB) *productVariantMediaRepository
 	Create(productVariantMedia *models.ProductVariantMedia) (model *models.ProductVariantMedia, err error)
 	GetAll() (model []*models.ProductVariantMedia, err error)
 	GetById(id uint) (model *models.ProductVariantMedia, err error)
+	GetAllByProductVariantID(IDs []uint) (model []*models.ProductVariantMedia, err error)
 	Update(id uint, newModel *models.ProductVariantMedia) (model *models.ProductVariantMedia, err error)
 	Delete(id uint) (model *models.ProductVariantMedia, err error)
 }
@@ -26,6 +30,15 @@ func NewProductVariantMediaRepository(c *ProductVariantMediaRepositoryConfig) Pr
 	return &productVariantMediaRepository{
 		db: c.DB,
 	}
+}
+
+func (u productVariantMediaRepository) WithTx(tx *gorm.DB) *productVariantMediaRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productVariantMediaRepository) Create(newModel *models.ProductVariantMedia) (model *models.ProductVariantMedia, err error) {
@@ -56,6 +69,19 @@ func (r *productVariantMediaRepository) GetAll() (model []*models.ProductVariant
 
 func (r *productVariantMediaRepository) GetById(id uint) (model *models.ProductVariantMedia, err error) {
 	result := r.db.First(&model, id)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productVariantMediaRepository) GetAllByProductVariantID(IDs []uint) (model []*models.ProductVariantMedia, err error) {
+	result := r.db.
+		Where("product_variant_id IN ?", IDs).
+		Order("id ASC").
+		Find(&model)
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

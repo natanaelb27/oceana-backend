@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	internalLogisticDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
 	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
@@ -12,6 +13,7 @@ import (
 )
 
 type MerchantCourierServiceRepository interface {
+	WithTx(tx *gorm.DB) *merchantCourierServiceRepository
 	GetAllByCourierID(courierID uint, merchantID uint) (model []*internalLogisticDtos.CourierService, err error)
 	GetByMerchantIDCourierServiceID(merchantID uint, courierServiceID uint) (model *models.MerchantCourierService, err error)
 	UpsertUsingMap(modelMap map[string]any) (err error)
@@ -33,6 +35,15 @@ func NewMerchantCourierServiceRepository(c *MerchantCourierServiceRepositoryConf
 	return &merchantCourierServiceRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantCourierServiceRepository) WithTx(tx *gorm.DB) *merchantCourierServiceRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *merchantCourierServiceRepository) subQueryMerchantCourierService(merchantID uint) *gorm.DB {
