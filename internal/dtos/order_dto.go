@@ -22,6 +22,7 @@ type OrderList struct {
 	TotalPrice                           float64            `json:"total_price"`
 	RefundID                             *uuid.UUID         `json:"refund_id"`
 	ClaimStatus                          bool               `json:"claim_status"`
+	IsAllReviewed                        bool               `json:"is_all_reviewed"`
 	SellerConfirmationExpirationDatetime *time.Time         `json:"seller_confirmation_expiration_datetime"`
 	OnProcessExpirationDatetime          *time.Time         `json:"on_process_expiration_datetime"`
 	DeliveredExpirationDatetime          *time.Time         `json:"delivered_expiration_datetime"`
@@ -51,6 +52,7 @@ type OrderListDetails struct {
 	TotalPayment                         float64                 `json:"total_payment"`
 	RefundID                             *uuid.UUID              `json:"refund_id"`
 	ClaimStatus                          bool                    `json:"claim_status"`
+	IsAllReviewed                        bool                    `json:"is_all_reviewed"`
 	SellerConfirmationExpirationDatetime *time.Time              `json:"seller_confirmation_expiration_datetime"`
 	OnProcessExpirationDatetime          *time.Time              `json:"on_process_expiration_datetime"`
 	DeliveredExpirationDatetime          *time.Time              `json:"delivered_expiration_datetime"`
