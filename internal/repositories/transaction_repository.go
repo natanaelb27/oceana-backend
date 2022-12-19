@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -12,6 +13,7 @@ import (
 )
 
 type TransactionRepository interface {
+	WithTx(tx *gorm.DB) *transactionRepository
 	Create(newModel *models.Transaction) (model *models.Transaction, err error)
 	PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error)
 	GetByOrderID(id uuid.UUID) (model *models.Transaction, err error)
@@ -29,6 +31,15 @@ func NewTransactionRepository(c *TransactionRepositoryConfig) TransactionReposit
 	return &transactionRepository{
 		db: c.DB,
 	}
+}
+
+func (u transactionRepository) WithTx(tx *gorm.DB) *transactionRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *transactionRepository) Create(newModel *models.Transaction) (model *models.Transaction, err error) {

@@ -1,14 +1,25 @@
 package repositories
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/refund_media_constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type RefundRepository interface {
 	Create(newModel *models.Refund) (model *models.Refund, err error)
+	GetAllDetailsByBuyer(userID uuid.UUID, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
+	GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetails, error)
+	GetAllDetailsByMerchant(merchantID uint, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
+	GetAllDetails(query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
 }
 
 type refundRepository struct {
@@ -44,4 +55,279 @@ func (r *refundRepository) Create(newModel *models.Refund) (model *models.Refund
 	model = newModel
 
 	return
+}
+
+func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error) {
+	var refundDetails []*dtos.RefundDetails
+
+	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
+		Select(`
+			refund_id AS refund_id,
+			type AS type,
+			ARRAY_AGG(media_url) AS media_url
+		`).
+		Group("refund_id, type")
+
+	subQueryRefundDetails := r.db.Model(&models.RefundDetail{}).
+		Select(`
+				refund_id AS refund_id,
+				SUM(amount_user_get) AS total_user_refund_amount,
+				SUM(amount_merchant_lost) AS total_merchant_lost_amount
+			`).
+		Group("refund_id")
+
+	result := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			refunds.order_id AS order_id,
+			orders.invoice_number AS invoice_number,
+			orders.merchant_id AS merchant_id,
+			merchants.name AS shop_name,
+			transactions.user_id AS user_id,
+			users.full_name AS user_full_name,
+			refunds.refund_request_datetime AS refund_request_datetime,
+			refunds.rejected_datetime AS rejected_datetime,
+			refunds.status AS refund_status,
+			tbl_refund_images.media_url AS images,
+			tbl_refund_videos.media_url AS videos,
+			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+		`).
+		Joins("JOIN orders ON refunds.order_id = orders.id").
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON transactions.user_id = users.id").
+		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
+		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
+		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Where("transactions.user_id = ?", userID)
+
+	if query.SearchInvoice != "" {
+		result.Where("orders.invoice_number = ?", query.SearchInvoice)
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		if query.FilterStatus == constants.RefundStatusApproved {
+			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
+		} else {
+			result.Where("refunds.status = ?", query.FilterStatus)
+		}
+	}
+
+	if query.FilterStartDate != nil && query.FilterEndDate != nil {
+		result.Where("refunds.refund_request_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartDate, query.FilterEndDate)
+	}
+
+	result.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, result)).
+		Find(&refundDetails)
+
+	if result.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return refundDetails, pagination, nil
+}
+
+func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetails, error) {
+	var refundDetails *dtos.RefundDetails
+
+	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
+		Select(`
+			refund_id AS refund_id,
+			type AS type,
+			ARRAY_AGG(media_url) AS media_url
+		`).
+		Group("refund_id, type")
+
+	subQueryRefundDetails := r.db.Model(&models.RefundDetail{}).
+		Select(`
+				refund_id AS refund_id,
+				SUM(amount_user_get) AS total_user_refund_amount,
+				SUM(amount_merchant_lost) AS total_merchant_lost_amount
+			`).
+		Group("refund_id")
+
+	result := r.db.Debug().Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			refunds.order_id AS order_id,
+			orders.invoice_number AS invoice_number,
+			orders.merchant_id AS merchant_id,
+			merchants.name AS shop_name,
+			transactions.user_id AS user_id,
+			users.full_name AS user_full_name,
+			refunds.refund_request_datetime AS refund_request_datetime,
+			refunds.rejected_datetime AS rejected_datetime,
+			refunds.status AS refund_status,
+			tbl_refund_images.media_url AS images,
+			tbl_refund_videos.media_url AS videos,
+			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+		`).
+		Joins("JOIN orders ON refunds.order_id = orders.id").
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON transactions.user_id = users.id").
+		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
+		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
+		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Where("refunds.id = ?", refundID).
+		First(&refundDetails)
+
+	if result.Error != nil {
+		if result.RowsAffected == 0 {
+			return nil, e.ErrDataNotFound
+		}
+
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return refundDetails, nil
+}
+
+func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error) {
+	var refundDetails []*dtos.RefundDetails
+
+	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
+		Select(`
+			refund_id AS refund_id,
+			type AS type,
+			ARRAY_AGG(media_url) AS media_url
+		`).
+		Group("refund_id, type")
+
+	subQueryRefundDetails := r.db.Model(&models.RefundDetail{}).
+		Select(`
+				refund_id AS refund_id,
+				SUM(amount_user_get) AS total_user_refund_amount,
+				SUM(amount_merchant_lost) AS total_merchant_lost_amount
+			`).
+		Group("refund_id")
+
+	result := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			refunds.order_id AS order_id,
+			orders.invoice_number AS invoice_number,
+			orders.merchant_id AS merchant_id,
+			merchants.name AS shop_name,
+			transactions.user_id AS user_id,
+			users.full_name AS user_full_name,
+			refunds.refund_request_datetime AS refund_request_datetime,
+			refunds.rejected_datetime AS rejected_datetime,
+			refunds.status AS refund_status,
+			tbl_refund_images.media_url AS images,
+			tbl_refund_videos.media_url AS videos,
+			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+		`).
+		Joins("JOIN orders ON refunds.order_id = orders.id").
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON transactions.user_id = users.id").
+		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
+		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
+		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Where("orders.merchant_id = ?", merchantID)
+
+	if query.SearchInvoice != "" {
+		result.Where("orders.invoice_number = ?", query.SearchInvoice)
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		if query.FilterStatus == constants.RefundStatusApproved {
+			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
+		} else {
+			result.Where("refunds.status = ?", query.FilterStatus)
+		}
+	}
+
+	if query.FilterStartDate != nil && query.FilterEndDate != nil {
+		result.Where("refunds.refund_request_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartDate, query.FilterEndDate)
+	}
+
+	result.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, result)).
+		Find(&refundDetails)
+
+	if result.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return refundDetails, pagination, nil
+}
+
+func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error) {
+	var refundDetails []*dtos.RefundDetails
+
+	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
+		Select(`
+			refund_id AS refund_id,
+			type AS type,
+			ARRAY_AGG(media_url) AS media_url
+		`).
+		Group("refund_id, type")
+
+	subQueryRefundDetails := r.db.Model(&models.RefundDetail{}).
+		Select(`
+				refund_id AS refund_id,
+				SUM(amount_user_get) AS total_user_refund_amount,
+				SUM(amount_merchant_lost) AS total_merchant_lost_amount
+			`).
+		Group("refund_id")
+
+	result := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			refunds.order_id AS order_id,
+			orders.invoice_number AS invoice_number,
+			orders.merchant_id AS merchant_id,
+			merchants.name AS shop_name,
+			transactions.user_id AS user_id,
+			users.full_name AS user_full_name,
+			refunds.refund_request_datetime AS refund_request_datetime,
+			refunds.rejected_datetime AS rejected_datetime,
+			refunds.status AS refund_status,
+			tbl_refund_images.media_url AS images,
+			tbl_refund_videos.media_url AS videos,
+			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+		`).
+		Joins("JOIN orders ON refunds.order_id = orders.id").
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON transactions.user_id = users.id").
+		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
+		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
+		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails)
+
+	if query.SearchInvoice != "" {
+		result.Where("orders.invoice_number = ?", query.SearchInvoice)
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		if query.FilterStatus == constants.RefundStatusApproved {
+			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
+		} else {
+			result.Where("refunds.status = ?", query.FilterStatus)
+		}
+	}
+
+	if query.FilterStartDate != nil && query.FilterEndDate != nil {
+		result.Where("refunds.refund_request_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartDate, query.FilterEndDate)
+	}
+
+	result.
+		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
+		Scopes(utils.Paginate(pagination, result)).
+		Find(&refundDetails)
+
+	if result.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return refundDetails, pagination, nil
 }

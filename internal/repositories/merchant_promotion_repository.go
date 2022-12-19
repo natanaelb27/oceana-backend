@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -11,6 +13,7 @@ import (
 )
 
 type MerchantPromotionRepository interface {
+	WithTx(tx *gorm.DB) *merchantPromotionRepository
 	CreateMyShopPromotion(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error)
 	GetAll(merchantID uint, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
 	GetByID(id uint) (*models.MerchantPromotion, error)
@@ -29,6 +32,15 @@ func NewMerchantPromotionRepository(c *MerchantPromotionRepositoryConfig) Mercha
 	return &merchantPromotionRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantPromotionRepository) WithTx(tx *gorm.DB) *merchantPromotionRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (mp *merchantPromotionRepository) CreateMyShopPromotion(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error) {

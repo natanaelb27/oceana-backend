@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,6 +10,7 @@ import (
 )
 
 type ProductVariationSnapshotRepository interface {
+	WithTx(tx *gorm.DB) *productVariationSnapshotRepository
 	CreateProductVariationSnapshot(productSnapshotID uint, productItemID uint) (model []*models.ProductVariationSnapshot, err error)
 }
 
@@ -24,6 +26,15 @@ func NewProductVariationSnapshotRepository(c *ProductVariationSnapshotRepository
 	return &productVariationSnapshotRepository{
 		db: c.DB,
 	}
+}
+
+func (u productVariationSnapshotRepository) WithTx(tx *gorm.DB) *productVariationSnapshotRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productVariationSnapshotRepository) CreateProductVariationSnapshot(productSnapshotID uint, productItemID uint) (model []*models.ProductVariationSnapshot, err error) {

@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"log"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,6 +12,7 @@ import (
 )
 
 type OrderDetailRepository interface {
+	WithTx(tx *gorm.DB) *orderDetailRepository
 	OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error)
 	Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error)
 	GetByID(id uuid.UUID) (model *models.OrderDetail, err error)
@@ -29,6 +33,15 @@ func NewOrderDetailRepository(c *OrderDetailRepositoryConfig) OrderDetailReposit
 	}
 }
 
+func (u orderDetailRepository) WithTx(tx *gorm.DB) *orderDetailRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
+}
+
 func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error) {
 	var orderDetailList []*dtos.OrderDetailList
 
@@ -46,6 +59,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		`).
 		Joins("JOIN product_media_snapshots ON ps.id = product_media_snapshots.product_snapshot_id").
 		Where("ps.id = product_snapshots.id").
+		Where("product_media_snapshots.type = ?", product_media_constants.TypeImage).
 		Limit(1)
 
 	queryResult := r.db.Model(&models.OrderDetail{}).

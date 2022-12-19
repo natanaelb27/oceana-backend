@@ -18,9 +18,11 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type CartService interface {
+	WithTx(tx *gorm.DB) *cartService
 	Update(request *in_cart_dtos.CartRequest) (*models.Cart, error)
 	GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error)
 	PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.WalletPaymentResponse, error)
@@ -101,6 +103,32 @@ func NewCartService(c *CartServiceConfig) CartService {
 		walletRepository:                        c.WalletRepository,
 		walletTransactionPaymentRepository:      c.WalletTransactionPaymentRepository,
 	}
+}
+
+func (u cartService) WithTx(tx *gorm.DB) *cartService {
+	u.addressSnapshotRepository = u.addressSnapshotRepository.WithTx(tx)
+	u.cartRepository = u.cartRepository.WithTx(tx)
+	u.orderRepository = u.orderRepository.WithTx(tx)
+	u.orderDetailRepository = u.orderDetailRepository.WithTx(tx)
+	u.orderDetailMerchantPromotionRepository = u.orderDetailMerchantPromotionRepository.WithTx(tx)
+	u.orderMerchantVoucherRepository = u.orderMerchantVoucherRepository.WithTx(tx)
+	u.orderTrackingRepository = u.orderTrackingRepository.WithTx(tx)
+	u.productRepository = u.productRepository.WithTx(tx)
+	u.productItemRepository = u.productItemRepository.WithTx(tx)
+	u.productMerchantPromotionRepository = u.productMerchantPromotionRepository.WithTx(tx)
+	u.productSnapshotRepository = u.productSnapshotRepository.WithTx(tx)
+	u.productMediaSnapshotRepository = u.productMediaSnapshotRepository.WithTx(tx)
+	u.productVariationSnapshotRepository = u.productVariationSnapshotRepository.WithTx(tx)
+	u.merchantVoucherRepository = u.merchantVoucherRepository.WithTx(tx)
+	u.merchantPromotionRepository = u.merchantPromotionRepository.WithTx(tx)
+	u.marketplaceVoucherRepository = u.marketplaceVoucherRepository.WithTx(tx)
+	u.transactionRepository = u.transactionRepository.WithTx(tx)
+	u.transactionMarketplaceVoucherRepository = u.transactionMarketplaceVoucherRepository.WithTx(tx)
+	u.userMerchantPromotionRepository = u.userMerchantPromotionRepository.WithTx(tx)
+	u.walletRepository = u.walletRepository.WithTx(tx)
+	u.walletTransactionPaymentRepository = u.walletTransactionPaymentRepository.WithTx(tx)
+
+	return &u
 }
 
 func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.Cart, err error) {
@@ -536,6 +564,8 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
+	fmt.Println(newTransaction.TotalPriceWithShippingFee)
+
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, e.ErrDifferentTotalPayment
 	}
@@ -621,6 +651,20 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 	if err != nil {
 		return nil, err
+	}
+
+	for _, cartID := range request.CartIDs {
+		deletedCart, err := p.cartRepository.Delete(*cartID)
+
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
+			return nil, err
+		} else {
+			if deletedCart.UserID != request.UserID {
+				return nil, e.ErrForbiddenOrder
+			}
+		}
 	}
 
 	return dtos.NewWalletPaymentResponse(newTransactionCreated), nil

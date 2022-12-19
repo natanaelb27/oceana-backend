@@ -1,10 +1,12 @@
 package services
 
 import (
+	"errors"
 	"math"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -15,31 +17,41 @@ import (
 
 type RefundService interface {
 	Create(userID uuid.UUID, orderID uuid.UUID, request *dtos.CreateRefundRequest) (*dtos.CreateRefundResponse, error)
+	GetAllDetailsByBuyer(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
+	GetDetailsByID(userID uuid.UUID, refundID uuid.UUID) (*dtos.GetRefundDetailsResponse, error)
+	GetAllDetailsByMerchant(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
+	GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
 }
 
 type refundService struct {
+	merchantRepository     r.MerchantRepository
 	orderRepository        r.OrderRepository
 	orderDetailRepository  r.OrderDetailRepository
 	refundRepository       r.RefundRepository
 	refundDetailRepository r.RefundDetailRepository
 	refundMediaRepository  r.RefundMediaRepository
+	userRepository         r.UserRepository
 }
 
 type RefundServiceConfig struct {
+	MerchantRepository     r.MerchantRepository
 	OrderRepository        r.OrderRepository
 	OrderDetailRepository  r.OrderDetailRepository
 	RefundRepository       r.RefundRepository
 	RefundDetailRepository r.RefundDetailRepository
 	RefundMediaRepository  r.RefundMediaRepository
+	UserRepository         r.UserRepository
 }
 
 func NewRefundService(c *RefundServiceConfig) RefundService {
 	return &refundService{
+		merchantRepository:     c.MerchantRepository,
 		orderRepository:        c.OrderRepository,
 		orderDetailRepository:  c.OrderDetailRepository,
 		refundRepository:       c.RefundRepository,
 		refundDetailRepository: c.RefundDetailRepository,
 		refundMediaRepository:  c.RefundMediaRepository,
+		userRepository:         c.UserRepository,
 	}
 }
 
@@ -248,4 +260,196 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 	}
 
 	return dtos.NewCreateRefundResponse(refund), nil
+}
+
+func (s *refundService) GetAllDetailsByBuyer(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error) {
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	refundDetails, pagination, err := s.refundRepository.GetAllDetailsByBuyer(userID, query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	refundDetailList := []*internalDtos.RefundDetails{}
+
+	for _, rd := range refundDetails {
+		refundItems, err := s.refundDetailRepository.GetDetailsByRefundID(rd.RefundID)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		refundDetailList = append(refundDetailList, &internalDtos.RefundDetails{
+			RefundID:                rd.RefundID,
+			OrderID:                 rd.OrderID,
+			InvoiceNumber:           rd.InvoiceNumber,
+			MerchantID:              rd.MerchantID,
+			ShopName:                rd.ShopName,
+			UserID:                  rd.UserID,
+			UserFullName:            rd.UserFullName,
+			RefundRequestDatetime:   rd.RefundRequestDatetime,
+			RejectedDatetime:        rd.RejectedDatetime,
+			RefundStatus:            rd.RefundStatus,
+			Images:                  rd.Images,
+			Videos:                  rd.Videos,
+			RefundItems:             refundItems,
+			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
+			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+		})
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dtos.NewGetAllRefundDetailsResponse(refundDetailList), pagination, nil
+}
+
+func (s *refundService) GetDetailsByID(userID uuid.UUID, refundID uuid.UUID) (*dtos.GetRefundDetailsResponse, error) {
+	user, err := s.userRepository.GetByID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refundDetails, err := s.refundRepository.GetDetailsByID(refundID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if errors.Is(err, e.ErrMerchantNotFound) {
+	} else if err != nil {
+		return nil, err
+	}
+
+	if refundDetails.UserID != userID && merchant.UserID != userID && user.Role != "100" {
+		return nil, e.ErrForbidden
+	}
+
+	refundItems, err := s.refundDetailRepository.GetDetailsByRefundID(refundID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refundDetails.RefundItems = refundItems
+
+	return dtos.NewGetRefundDetailsResponse(refundDetails), nil
+}
+
+func (s *refundService) GetAllDetailsByMerchant(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	refundDetails, pagination, err := s.refundRepository.GetAllDetailsByMerchant(merchant.ID, query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	refundDetailList := []*internalDtos.RefundDetails{}
+
+	for _, rd := range refundDetails {
+		refundItems, err := s.refundDetailRepository.GetDetailsByRefundID(rd.RefundID)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		refundDetailList = append(refundDetailList, &internalDtos.RefundDetails{
+			RefundID:                rd.RefundID,
+			OrderID:                 rd.OrderID,
+			InvoiceNumber:           rd.InvoiceNumber,
+			MerchantID:              rd.MerchantID,
+			ShopName:                rd.ShopName,
+			UserID:                  rd.UserID,
+			UserFullName:            rd.UserFullName,
+			RefundRequestDatetime:   rd.RefundRequestDatetime,
+			RejectedDatetime:        rd.RejectedDatetime,
+			RefundStatus:            rd.RefundStatus,
+			Images:                  rd.Images,
+			Videos:                  rd.Videos,
+			RefundItems:             refundItems,
+			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
+			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+		})
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dtos.NewGetAllRefundDetailsResponse(refundDetailList), pagination, nil
+}
+
+func (s *refundService) GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error) {
+	user, err := s.userRepository.GetByID(userID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if user.Role != "100" {
+		return nil, nil, e.ErrForbidden
+	}
+
+	pagination := &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	refundDetails, pagination, err := s.refundRepository.GetAllDetails(query, pagination)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	refundDetailList := []*internalDtos.RefundDetails{}
+
+	for _, rd := range refundDetails {
+		refundItems, err := s.refundDetailRepository.GetDetailsByRefundID(rd.RefundID)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		refundDetailList = append(refundDetailList, &internalDtos.RefundDetails{
+			RefundID:                rd.RefundID,
+			OrderID:                 rd.OrderID,
+			InvoiceNumber:           rd.InvoiceNumber,
+			MerchantID:              rd.MerchantID,
+			ShopName:                rd.ShopName,
+			UserID:                  rd.UserID,
+			UserFullName:            rd.UserFullName,
+			RefundRequestDatetime:   rd.RefundRequestDatetime,
+			RejectedDatetime:        rd.RejectedDatetime,
+			RefundStatus:            rd.RefundStatus,
+			Images:                  rd.Images,
+			Videos:                  rd.Videos,
+			RefundItems:             refundItems,
+			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
+			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+		})
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dtos.NewGetAllRefundDetailsResponse(refundDetailList), pagination, nil
 }

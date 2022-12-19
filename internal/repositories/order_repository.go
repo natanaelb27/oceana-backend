@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ import (
 )
 
 type OrderRepository interface {
+	WithTx(tx *gorm.DB) *orderRepository
 	OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 	GetByID(id uuid.UUID) (model *models.Order, err error)
@@ -40,6 +42,15 @@ func NewOrderRepository(c *OrderRepositoryConfig) OrderRepository {
 	return &orderRepository{
 		db: c.DB,
 	}
+}
+
+func (u orderRepository) WithTx(tx *gorm.DB) *orderRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {

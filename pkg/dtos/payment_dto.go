@@ -30,6 +30,7 @@ type CartOrderItem struct {
 type PayCartWithWalletRequest struct {
 	UserID               uuid.UUID        `json:"user_id"`
 	CartOrderItems       []*CartOrderItem `json:"cart_order_items" binding:"required"`
+	CartIDs              []*uint          `json:"cart_ids" binding:"required"`
 	MarketplaceVoucherID *uint            `json:"marketplace_voucher_id"`
 	AddressID            uuid.UUID        `json:"address_id" binding:"required"`
 	Pin                  string           `json:"pin" binding:"required,len=6"`
