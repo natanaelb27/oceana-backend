@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -16,6 +17,7 @@ import (
 )
 
 type MerchantVoucherRepository interface {
+	WithTx(tx *gorm.DB) *merchantVoucherRepository
 	Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error)
 	GetAllDetails(query *externalDtos.MerchantVoucherQuery, pagination *utils.Pagination) ([]*dtos.MerchantVoucherDetails, *utils.Pagination, error)
 	GetDetailsByID(id uint) (*dtos.MerchantVoucherDetails, error)
@@ -38,6 +40,15 @@ func NewMerchantVoucherRepository(c *MerchantVoucherRepositoryConfig) MerchantVo
 	return &merchantVoucherRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantVoucherRepository) WithTx(tx *gorm.DB) *merchantVoucherRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error) {

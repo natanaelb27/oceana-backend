@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"database/sql"
 	"errors"
+	"log"
 	"math"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -14,6 +16,7 @@ import (
 )
 
 type WalletRepository interface {
+	WithTx(tx *gorm.DB) *walletRepository
 	GetByUserId(id uuid.UUID) (model *models.Wallet, err error)
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 	Create(newModel *models.Wallet) (model *models.Wallet, err error)
@@ -33,6 +36,15 @@ func NewWalletRepository(c *WalletRepositoryConfig) WalletRepository {
 	return &walletRepository{
 		db: c.DB,
 	}
+}
+
+func (u walletRepository) WithTx(tx *gorm.DB) *walletRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *walletRepository) GetByUserId(id uuid.UUID) (model *models.Wallet, err error) {
@@ -142,9 +154,17 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 				wallet_transaction_payments.wallet_id,
 				subQueryRefund.amount AS amount, 
 				transactions.transaction_datetime, 
-				'Refund Transaction' AS transaction_type,
+				(
+					CASE
+						WHEN orders.status = @canceled_by_system THEN 'Canceled Transaction'
+						WHEN orders.status = @canceled_by_seller THEN 'Canceled Transaction'
+						ELSE 'Refund Transaction'
+					END
+				) AS transaction_type,
 				'Credit' AS type
-			`).
+			`,
+			sql.Named("canceled_by_system", constants.SystemCanceledStatus),
+			sql.Named("canceled_by_seller", constants.SellerCanceledStatus)).
 		Joins("JOIN (?) subQueryRefund ON refunds.id = subQueryRefund.refund_id", subQueryRefund).
 		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").

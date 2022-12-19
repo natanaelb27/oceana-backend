@@ -8,12 +8,14 @@ import (
 type Cron struct {
 	scheduler            gocron.Scheduler
 	roleService          services.RoleService
+	orderService         services.OrderService
 	orderTrackingService services.OrderTrackingService
 }
 
 type CronConfig struct {
 	Scheduler            gocron.Scheduler
 	RoleService          services.RoleService
+	OrderService         services.OrderService
 	OrderTrackingService services.OrderTrackingService
 }
 
@@ -21,6 +23,7 @@ func New(c *CronConfig) *Cron {
 	return &Cron{
 		scheduler:            c.Scheduler,
 		roleService:          c.RoleService,
+		orderService:         c.OrderService,
 		orderTrackingService: c.OrderTrackingService,
 	}
 }

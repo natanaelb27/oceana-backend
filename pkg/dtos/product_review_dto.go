@@ -15,7 +15,6 @@ import (
 type ProductReviewCreateRequest struct {
 	UserID        uuid.UUID
 	OrderDetailID uuid.UUID
-	ProductID     uint                  `form:"product_id" json:"product_id" binding:"required"`
 	Rating        uint                  `form:"rating" json:"rating" binding:"required"`
 	Review        string                `form:"review" json:"review"`
 	Photo1        *multipart.FileHeader `form:"photo_1"`
@@ -30,7 +29,6 @@ func (p *ProductReviewCreateRequest) ToModel() *models.ProductReview {
 	return &models.ProductReview{
 		UserID:        p.UserID,
 		OrderDetailID: p.OrderDetailID,
-		ProductID:     p.ProductID,
 		Rating:        p.Rating,
 		Review:        p.Review,
 	}

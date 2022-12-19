@@ -11,4 +11,7 @@ type OrderDetailList struct {
 	Quantity          uint      `json:"quantity"`
 	Price             uint      `json:"price"`
 	TotalPrice        uint      `json:"total_price"`
+	ProductReviewID   *uint     `json:"product_review_id"`
+	Rating            *uint     `json:"rating"`
+	Review            *string   `json:"review"`
 }

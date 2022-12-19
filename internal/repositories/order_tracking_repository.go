@@ -1,7 +1,9 @@
 package repositories
 
 import (
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"log"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -9,8 +11,9 @@ import (
 )
 
 type OrderTrackingRepository interface {
-	GetByOrderID(id uuid.UUID) ([]*internalDtos.OrderTrackingHistory, error)
-	GetByOrderStatus(orderStatus string) (result []*internalDtos.COTUOrderTracking, err error)
+	WithTx(tx *gorm.DB) *orderTrackingRepository
+	GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error)
+	GetByOrderStatus(orderStatus string) (result []*dtos.COTUOrderTracking, err error)
 	Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error)
 }
 
@@ -28,8 +31,17 @@ func NewOrderTrackingRepository(c *OrderTrackingRepositoryConfig) OrderTrackingR
 	}
 }
 
-func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*internalDtos.OrderTrackingHistory, error) {
-	var orderTrackingHistory []*internalDtos.OrderTrackingHistory
+func (u orderTrackingRepository) WithTx(tx *gorm.DB) *orderTrackingRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
+}
+
+func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error) {
+	var orderTrackingHistory []*dtos.OrderTrackingHistory
 
 	queryResult := r.db.Model(&models.OrderTracking{}).
 		Select(`
@@ -49,7 +61,7 @@ func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*internalDtos.Or
 	return orderTrackingHistory, nil
 }
 
-func (r *orderTrackingRepository) GetByOrderStatus(orderStatus string) (result []*internalDtos.COTUOrderTracking, err error) {
+func (r *orderTrackingRepository) GetByOrderStatus(orderStatus string) (result []*dtos.COTUOrderTracking, err error) {
 	sqOrderTrackings := r.db.
 		Table("order_trackings ot").
 		Select(`

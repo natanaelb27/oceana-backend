@@ -2,15 +2,18 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	in_cart_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/cart_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type CartRepository interface {
+	WithTx(tx *gorm.DB) *cartRepository
 	Create(cart *models.Cart) (model *models.Cart, err error)
 	GetByUserIdProductItemId(userId uuid.UUID, productItemId uint) (model *models.Cart, err error)
 	GetCartsMerchants(userId uuid.UUID) (result []*in_cart_dtos.Merchant, err error)
@@ -31,6 +34,15 @@ func NewCartRepository(c *CartRepositoryConfig) CartRepository {
 	return &cartRepository{
 		db: c.DB,
 	}
+}
+
+func (u cartRepository) WithTx(tx *gorm.DB) *cartRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *cartRepository) Create(newModel *models.Cart) (model *models.Cart, err error) {
@@ -229,7 +241,11 @@ func (r *cartRepository) Update(id uint, newModel *models.Cart) (model *models.C
 }
 
 func (r *cartRepository) Delete(id uint) (model *models.Cart, err error) {
-	result := r.db.Delete(&model, id)
+	result := r.db.
+		Clauses(clause.Returning{}).
+		Where("id = ?", id).
+		Delete(&model)
+
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

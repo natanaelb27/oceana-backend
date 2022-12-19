@@ -87,6 +87,15 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Where("product_items.product_id = ?", productID).
 		Group("product_items.product_id")
 
+	subQueryTotalPurchased := r.db.Model(&models.ProductSnapshot{}).
+		Select(`
+				product_snapshots.product_id AS product_id,
+				SUM(order_details.quantity) AS total_purchased 
+			`).
+		Joins("JOIN order_details ON order_details.product_snapshot_id = product_snapshots.id").
+		Where("product_snapshots.product_id = ?", productID).
+		Group("product_snapshots.product_id")
+
 	// subQueryProductReview := r.db.Model(&models.ProductItem{}).
 	// 	Select(`
 	// 		product_items.product_id AS product_id,
@@ -141,6 +150,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			products.description AS description,
 			product_item_agg.total_stock AS total_stock,
 			product_favorite_agg.like_count AS like_count,
+			product_purchase_agg.total_purchased AS total_purchased,
 			product_discount_agg.discount_type AS discount_type,
 			product_discount_agg.discount AS discount,
 			(
@@ -174,6 +184,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Joins("LEFT JOIN categories ON products.category_id = categories.id").
 		Joins("LEFT JOIN (?) product_image_agg ON products.id = product_image_agg.product_id", subQueryProductImage).
 		Joins("LEFT JOIN (?) product_video_agg ON products.id = product_video_agg.product_id", subQueryProductVideo).
+		Joins("LEFT JOIN (?) product_purchase_agg ON products.id = product_purchase_agg.product_id", subQueryTotalPurchased).
 		Where("products.id = ?", productID).
 		Where("products.status = 'active'").
 		First(&productDetails)

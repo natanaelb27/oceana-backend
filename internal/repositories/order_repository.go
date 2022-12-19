@@ -2,6 +2,9 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
+	"os"
+	"strconv"
 	"strings"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -15,6 +18,7 @@ import (
 )
 
 type OrderRepository interface {
+	WithTx(tx *gorm.DB) *orderRepository
 	OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 	GetByID(id uuid.UUID) (model *models.Order, err error)
@@ -22,6 +26,8 @@ type OrderRepository interface {
 	GetOrderCount() (*int64, error)
 	Create(newModel []*models.Order) (model []*models.Order, err error)
 	OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
+	PendingPaymentGetAll() (pendingOrders []*models.Order, err error)
+	GetMaxProcessedDaysByOrderID(orderID uuid.UUID) (maxProcessedDays uint, err error)
 }
 
 type orderRepository struct {
@@ -38,8 +44,27 @@ func NewOrderRepository(c *OrderRepositoryConfig) OrderRepository {
 	}
 }
 
+func (u orderRepository) WithTx(tx *gorm.DB) *orderRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
+}
+
 func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {
 	var orderList []*dtos.OrderList
+
+	sellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		sellerConfirmationExpirationInterval = 2880
+	}
+
+	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
+	if err != nil {
+		sellerConfirmationExpirationInterval = 4320
+	}
 
 	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
 		Select(`
@@ -59,7 +84,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			END AS seller_confirmation_expiration_datetime,
 			CASE
 				WHEN orders.status = @on_process_status 
-				THEN tbl_on_process.history_datetime + INTERVAL '1 minute' * (tbl_processed_days.max_processed_days)::INTEGER
+				THEN tbl_on_process.history_datetime + INTERVAL '1 day' * (tbl_processed_days.max_processed_days)::INTEGER
 				ELSE null
 			END AS on_process_expiration_datetime,
 			CASE
@@ -71,8 +96,8 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			sql.Named("pending_seller_status", constants.PendingSellerStatus),
 			sql.Named("on_process_status", constants.OnProcessStatus),
 			sql.Named("delivered_status", constants.DeliveredStatus),
-			sql.Named("interval_seller_confirmation_expiration", constants.SellerConfirmationExpirationInterval),
-			sql.Named("interval_auto_complete_delivered_expiration", constants.AutoCompleteDeliveredExpirationInterval)).
+			sql.Named("interval_seller_confirmation_expiration", sellerConfirmationExpirationInterval),
+			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval)).
 		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
 			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
@@ -80,6 +105,15 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
 			sql.Named("delivered_title", constants.DeliveredTitle)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
+
+	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
+		Select(`
+			orders.id AS order_id, 
+			ARRAY_AGG(product_reviews.id) AS product_review_id_array 
+		`).
+		Joins("JOIN order_details ON order_details.order_id = orders.id").
+		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
+		Group("orders.id")
 
 	queryResult := r.db.Debug().Model(&models.Order{}).
 		Select(`
@@ -95,20 +129,31 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			transactions.transaction_datetime AS transaction_datetime,
 			orders.status AS order_status,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
-			refunds.id AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @completed_status THEN refunds.id
+					ELSE null
+				END
+			) AS refund_id,
 			orders.claim_status AS claim_status,
+			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
-		`).
+		`, sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
 		Where("transactions.user_id = ?", id).
 		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
+
+	if query.FilterIsReviewed != "" && !strings.EqualFold(query.FilterIsReviewed, "all") {
+		queryResult.Where("(NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)))::text = ?", query.FilterIsReviewed)
+	}
 
 	if query.Search != "" {
 		subQuerySearch := r.db.Model(&models.Order{}).
@@ -154,8 +199,18 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 	return orderList, pagination, nil
 }
 
-func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error) {
-	var orderListDetails *dtos.OrderListDetails
+func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {
+	var orderList []*dtos.OrderList
+
+	sellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		sellerConfirmationExpirationInterval = 2880
+	}
+
+	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
+	if err != nil {
+		sellerConfirmationExpirationInterval = 4320
+	}
 
 	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
 		Select(`
@@ -175,7 +230,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			END AS seller_confirmation_expiration_datetime,
 			CASE
 				WHEN orders.status = @on_process_status 
-				THEN tbl_on_process.history_datetime + INTERVAL '1 minute' * (tbl_processed_days.max_processed_days)::INTEGER
+				THEN tbl_on_process.history_datetime + INTERVAL '1 day' * (tbl_processed_days.max_processed_days)::INTEGER
 				ELSE null
 			END AS on_process_expiration_datetime,
 			CASE
@@ -187,8 +242,8 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			sql.Named("pending_seller_status", constants.PendingSellerStatus),
 			sql.Named("on_process_status", constants.OnProcessStatus),
 			sql.Named("delivered_status", constants.DeliveredStatus),
-			sql.Named("interval_seller_confirmation_expiration", constants.SellerConfirmationExpirationInterval),
-			sql.Named("interval_auto_complete_delivered_expiration", constants.AutoCompleteDeliveredExpirationInterval)).
+			sql.Named("interval_seller_confirmation_expiration", sellerConfirmationExpirationInterval),
+			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval)).
 		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
 			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
@@ -196,6 +251,147 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
 			sql.Named("delivered_title", constants.DeliveredTitle)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
+
+	queryResult := r.db.Model(&models.Order{}).
+		Select(`
+			orders.transaction_id AS transaction_id,
+			orders.invoice_number AS invoice_number,
+			orders.id AS order_id,
+			orders.merchant_id AS merchant_id,
+			merchants.name AS shop_name,
+			users.id AS user_id,
+			users.full_name AS user_full_name,
+			courier_services.id AS courier_service_id,
+			courier_services.description AS courier_description,
+			transactions.transaction_datetime AS transaction_datetime,
+			orders.status AS order_status,
+			orders.total_price_after_discount::float AS total_price,
+			(
+				CASE
+					WHEN orders.status = @completed_status THEN refunds.id
+					ELSE null
+				END
+			) AS refund_id,
+			orders.claim_status AS claim_status,
+			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
+			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
+			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
+		`, sql.Named("completed_status", constants.CompletedStatus)).
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON users.id = transactions.user_id").
+		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
+		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
+		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Where("orders.merchant_id = ?", merchantID)
+		// Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
+
+	if query.Search != "" {
+		subQuerySearch := r.db.Model(&models.Order{}).
+			Select("DISTINCT orders.id").
+			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
+			Joins("JOIN order_details ON order_details.order_id = orders.id").
+			Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+			Where("merchants.name ILIKE @search OR product_snapshots.name ILIKE @search", sql.Named("search", "%"+query.Search+"%"))
+
+		queryResult.Where("orders.id IN (?)", subQuerySearch)
+	}
+
+	if strings.EqualFold(query.FilterOrderStatus, constants.OngoingStatus) {
+		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
+			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
+		} else {
+			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
+				constants.PendingPaymentStatus,
+				constants.PendingSellerStatus,
+				constants.OnProcessStatus,
+				constants.OutForDeliveryStatus,
+				constants.DeliveredStatus,
+				constants.ComplainedStatus)
+		}
+	} else if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
+		queryResult.Where("orders.status ILIKE ?", "%canceled%")
+	} else {
+		if query.FilterOrderStatus != "" && !strings.EqualFold(query.FilterOrderStatus, constants.AllStatus) {
+			queryResult.Where("orders.status ILIKE ?", query.FilterOrderStatus)
+		}
+	}
+
+	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
+		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+	}
+
+	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&orderList)
+
+	if queryResult.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return orderList, pagination, nil
+}
+
+func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error) {
+	var orderListDetails *dtos.OrderListDetails
+
+	sellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		sellerConfirmationExpirationInterval = 2880
+	}
+
+	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
+	if err != nil {
+		sellerConfirmationExpirationInterval = 4320
+	}
+
+	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
+		Select(`
+			order_details.order_id AS order_id,
+			MAX(product_snapshots.process_day) AS max_processed_days
+		`).
+		Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+		Group("order_details.order_id")
+
+	subQueryExpirationTime := r.db.Model(&models.Order{}).
+		Select(`
+			orders.id AS order_id,
+			CASE
+				WHEN orders.status = @pending_seller_status 
+				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 minute' * (@interval_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS seller_confirmation_expiration_datetime,
+			CASE
+				WHEN orders.status = @on_process_status 
+				THEN tbl_on_process.history_datetime + INTERVAL '1 day' * (tbl_processed_days.max_processed_days)::INTEGER
+				ELSE null
+			END AS on_process_expiration_datetime,
+			CASE
+				WHEN orders.status = @delivered_status 
+				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
+				ELSE null
+			END AS delivered_expiration_datetime
+		`,
+			sql.Named("pending_seller_status", constants.PendingSellerStatus),
+			sql.Named("on_process_status", constants.OnProcessStatus),
+			sql.Named("delivered_status", constants.DeliveredStatus),
+			sql.Named("interval_seller_confirmation_expiration", sellerConfirmationExpirationInterval),
+			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval)).
+		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
+			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
+		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
+			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
+		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
+			sql.Named("delivered_title", constants.DeliveredTitle)).
+		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
+
+	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
+		Select(`
+		orders.id AS order_id, 
+		ARRAY_AGG(product_reviews.id) AS product_review_id_array 
+	`).
+		Joins("JOIN order_details ON order_details.order_id = orders.id").
+		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
+		Group("orders.id")
 
 	subQueryTotalPriceBeforeDiscount := r.db.Model(&models.OrderDetail{}).
 		Select(`
@@ -246,8 +442,14 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			orders.total_price_after_discount::float / transactions.total_price::float * (?) AS total_marketplace_voucher_discount,
 			orders.shipping_fee AS shipping_fee,
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment,
-			refunds.id AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @completed_status THEN refunds.id
+					ELSE null
+				END
+			) AS refund_id,
 			orders.claim_status AS claim_status,
+			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
@@ -255,7 +457,8 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			subQueryTotalPriceBeforeDiscount,
 			subQueryMerchantPromotion,
 			subQueryMerchantVoucher,
-			subQueryMarketplaceVoucher).
+			subQueryMarketplaceVoucher,
+			sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
@@ -263,6 +466,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
 		Where("orders.id = ?", id).
 		First(&orderListDetails)
 
@@ -334,119 +538,34 @@ func (r *orderRepository) Create(newModel []*models.Order) (model []*models.Orde
 	return
 }
 
-func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error) {
-	var orderList []*dtos.OrderList
-
-	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
-		Select(`
-			order_details.order_id AS order_id,
-			MAX(product_snapshots.process_day) AS max_processed_days
-		`).
-		Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
-		Group("order_details.order_id")
-
-	subQueryExpirationTime := r.db.Model(&models.Order{}).
-		Select(`
-			orders.id AS order_id,
-			CASE
-				WHEN orders.status = @pending_seller_status 
-				THEN tbl_seller_confirmation.history_datetime + INTERVAL '1 minute' * (@interval_seller_confirmation_expiration)::INTEGER
-				ELSE null
-			END AS seller_confirmation_expiration_datetime,
-			CASE
-				WHEN orders.status = @on_process_status 
-				THEN tbl_on_process.history_datetime + INTERVAL '1 minute' * (tbl_processed_days.max_processed_days)::INTEGER
-				ELSE null
-			END AS on_process_expiration_datetime,
-			CASE
-				WHEN orders.status = @delivered_status 
-				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
-				ELSE null
-			END AS delivered_expiration_datetime
-		`,
-			sql.Named("pending_seller_status", constants.PendingSellerStatus),
-			sql.Named("on_process_status", constants.OnProcessStatus),
-			sql.Named("delivered_status", constants.DeliveredStatus),
-			sql.Named("interval_seller_confirmation_expiration", constants.SellerConfirmationExpirationInterval),
-			sql.Named("interval_auto_complete_delivered_expiration", constants.AutoCompleteDeliveredExpirationInterval)).
-		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
-			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
-		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
-			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
-		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
-			sql.Named("delivered_title", constants.DeliveredTitle)).
-		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
-
+func (r *orderRepository) PendingPaymentGetAll() (pendingOrders []*models.Order, err error) {
 	queryResult := r.db.Model(&models.Order{}).
-		Select(`
-			orders.transaction_id AS transaction_id,
-			orders.invoice_number AS invoice_number,
-			orders.id AS order_id,
-			orders.merchant_id AS merchant_id,
-			merchants.name AS shop_name,
-			users.id AS user_id,
-			users.full_name AS user_full_name,
-			courier_services.id AS courier_service_id,
-			courier_services.description AS courier_description,
-			transactions.transaction_datetime AS transaction_datetime,
-			orders.status AS order_status,
-			orders.total_price_after_discount::float AS total_price,
-			refunds.id AS refund_id,
-			orders.claim_status AS claim_status,
-			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
-			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
-			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
-		`).
-		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
-		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
-		Joins("JOIN users ON users.id = transactions.user_id").
-		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
-		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
-		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
-		Where("orders.merchant_id = ?", merchantID)
-		// Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
-
-	if query.Search != "" {
-		subQuerySearch := r.db.Model(&models.Order{}).
-			Select("DISTINCT orders.id").
-			Joins("JOIN merchants ON merchants.id = orders.merchant_id").
-			Joins("JOIN order_details ON order_details.order_id = orders.id").
-			Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
-			Where("merchants.name ILIKE @search OR product_snapshots.name ILIKE @search", sql.Named("search", "%"+query.Search+"%"))
-
-		queryResult.Where("orders.id IN (?)", subQuerySearch)
-	}
-
-	if strings.EqualFold(query.FilterOrderStatus, constants.OngoingStatus) {
-		if query.FilterOngoingOrderStatus != "" && !strings.EqualFold(query.FilterOngoingOrderStatus, constants.AllStatus) {
-			queryResult.Where("orders.status ILIKE ?", query.FilterOngoingOrderStatus)
-		} else {
-			queryResult.Where("LOWER(orders.status) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?), LOWER(?))",
-				constants.PendingPaymentStatus,
-				constants.PendingSellerStatus,
-				constants.OnProcessStatus,
-				constants.OutForDeliveryStatus,
-				constants.DeliveredStatus,
-				constants.ComplainedStatus)
-		}
-	} else if strings.EqualFold(query.FilterOrderStatus, constants.CanceledStatus) {
-		queryResult.Where("orders.status ILIKE ?", "%canceled%")
-	} else {
-		if query.FilterOrderStatus != "" && !strings.EqualFold(query.FilterOrderStatus, constants.AllStatus) {
-			queryResult.Where("orders.status ILIKE ?", query.FilterOrderStatus)
-		}
-	}
-
-	if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
-		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
-	}
-
-	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
-		Find(&orderList)
+		Preload("Transaction").
+		Where("orders.status = ?", constants.PendingPaymentStatus).
+		Find(&pendingOrders)
 
 	if queryResult.Error != nil {
-		return nil, nil, e.ErrDatabaseOperationFailed
+		err = e.ErrDatabaseOperationFailed
+		return
 	}
 
-	return orderList, pagination, nil
+	return
+}
+
+func (r *orderRepository) GetMaxProcessedDaysByOrderID(orderID uuid.UUID) (maxProcessedDays uint, err error) {
+	queryResult := r.db.Model(&models.OrderDetail{}).
+		Select(`
+			MAX(product_snapshots.process_day) AS max_processed_days
+		`).
+		Where("order_details.order_id = ?", orderID).
+		Joins("JOIN product_snapshots ON product_snapshots.id = order_details.product_snapshot_id").
+		Group("order_details.order_id").
+		Scan(&maxProcessedDays)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
 }

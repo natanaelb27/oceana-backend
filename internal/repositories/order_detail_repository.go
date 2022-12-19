@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"log"
+
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,9 +12,11 @@ import (
 )
 
 type OrderDetailRepository interface {
+	WithTx(tx *gorm.DB) *orderDetailRepository
 	OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error)
 	Create(newModel []*models.OrderDetail) (model []*models.OrderDetail, err error)
 	GetByID(id uuid.UUID) (model *models.OrderDetail, err error)
+	GetDetailsByID(id uuid.UUID) (model *models.OrderDetail, err error)
 }
 
 type orderDetailRepository struct {
@@ -26,6 +31,15 @@ func NewOrderDetailRepository(c *OrderDetailRepositoryConfig) OrderDetailReposit
 	return &orderDetailRepository{
 		db: c.DB,
 	}
+}
+
+func (u orderDetailRepository) WithTx(tx *gorm.DB) *orderDetailRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dtos.OrderDetailList, error) {
@@ -45,6 +59,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		`).
 		Joins("JOIN product_media_snapshots ON ps.id = product_media_snapshots.product_snapshot_id").
 		Where("ps.id = product_snapshots.id").
+		Where("product_media_snapshots.type = ?", product_media_constants.TypeImage).
 		Limit(1)
 
 	queryResult := r.db.Model(&models.OrderDetail{}).
@@ -56,13 +71,17 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 			(?) AS product_variations,
 			order_details.quantity AS quantity,
 			product_snapshots.price AS price,
-			order_details.total_price AS total_price
+			order_details.total_price AS total_price,
+			product_reviews.id AS product_review_id,
+			product_reviews.rating AS rating,
+			product_reviews.review AS review
 		`, subQueryProductImage,
 			subQueryVariants).
 		Joins("JOIN orders ON order_details.order_id = orders.id").
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
+		Joins("LEFT JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
 		Where("orders.id = ?", id).
 		Find(&orderDetailList)
 
@@ -88,6 +107,26 @@ func (r *orderDetailRepository) Create(newModel []*models.OrderDetail) (model []
 
 func (r *orderDetailRepository) GetByID(id uuid.UUID) (model *models.OrderDetail, err error) {
 	queryResult := r.db.First(&model, id)
+
+	if queryResult.Error != nil {
+		if queryResult.RowsAffected == 0 {
+			err = e.ErrDataNotFound
+			return
+		}
+
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *orderDetailRepository) GetDetailsByID(id uuid.UUID) (model *models.OrderDetail, err error) {
+	queryResult := r.db.Model(&models.OrderDetail{}).
+		Preload("ProductSnapshot").
+		Preload("Order").
+		Preload("Order.Transaction").
+		First(&model, id)
 
 	if queryResult.Error != nil {
 		if queryResult.RowsAffected == 0 {
