@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"os"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -29,7 +30,7 @@ func NewRefundRepository(c *RefundRepositoryConfig) RefundRepository {
 func (r *refundRepository) UpdateAllByStatusByRefundExpirationDatetimeLteNow(status string, datas *models.Refund) (err error) {
 	queryResult := r.db.
 		Where("status = ?", status).
-		Where("refund_expiration_datetime <= ?", time.Now()).
+		Where("refund_request_datetime + INTERVAL '1 minute' * (?)::INTEGER<= ?", os.Getenv("CRON_REFUND_AUTO_APPROVE_BUYER_REQUEST_INTERVAL"), time.Now()).
 		Updates(&datas)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
