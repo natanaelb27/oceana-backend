@@ -10,9 +10,9 @@ import (
 type ProductView struct {
 	ID           uint
 	UserId       uuid.UUID
-	User         User
+	User         User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	ProductId    uint
-	Product      Product
+	Product      Product `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	LastViewedAt time.Time
 	Count        uint
 	CreatedAt    time.Time

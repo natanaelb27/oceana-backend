@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"errors"
 	"log"
 	"math"
@@ -153,9 +154,17 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 				wallet_transaction_payments.wallet_id,
 				subQueryRefund.amount AS amount, 
 				transactions.transaction_datetime, 
-				'Refund Transaction' AS transaction_type,
+				(
+					CASE
+						WHEN orders.status = @canceled_by_system THEN 'Canceled Transaction'
+						WHEN orders.status = @canceled_by_seller THEN 'Canceled Transaction'
+						ELSE 'Refund Transaction'
+					END
+				) AS transaction_type,
 				'Credit' AS type
-			`).
+			`,
+			sql.Named("canceled_by_system", constants.SystemCanceledStatus),
+			sql.Named("canceled_by_seller", constants.SellerCanceledStatus)).
 		Joins("JOIN (?) subQueryRefund ON refunds.id = subQueryRefund.refund_id", subQueryRefund).
 		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").

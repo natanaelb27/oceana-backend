@@ -1,10 +1,13 @@
 package services
 
 import (
+	"strings"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 )
 
 type ProductReviewService interface {
@@ -13,24 +16,42 @@ type ProductReviewService interface {
 }
 
 type productReviewService struct {
+	orderDetailRepository        r.OrderDetailRepository
 	productReviewRepository      r.ProductReviewRepository
 	productReviewMediaRepository r.ProductReviewMediaRepository
 }
 
 type ProductReviewServiceConfig struct {
+	OrderDetailRepository        r.OrderDetailRepository
 	ProductReviewRepository      r.ProductReviewRepository
 	ProductReviewMediaRepository r.ProductReviewMediaRepository
 }
 
 func NewProductReviewService(c *ProductReviewServiceConfig) ProductReviewService {
 	return &productReviewService{
+		orderDetailRepository:        c.OrderDetailRepository,
 		productReviewRepository:      c.ProductReviewRepository,
 		productReviewMediaRepository: c.ProductReviewMediaRepository,
 	}
 }
 
 func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error) {
+	request.Review = strings.TrimSpace(request.Review)
+
 	productReview := request.ToModel()
+
+	orderDetail, err := pr.orderDetailRepository.GetDetailsByID(request.OrderDetailID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if orderDetail.Order.Transaction.UserID != request.UserID {
+		return nil, e.ErrForbiddenOrder
+	}
+
+	productReview.ProductID = orderDetail.ProductSnapshot.ProductID
+
 	newProductReview, err := pr.productReviewRepository.Create(productReview)
 	if err != nil {
 		return nil, err

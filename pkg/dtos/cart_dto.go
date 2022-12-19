@@ -7,14 +7,16 @@ import (
 )
 
 type CartUpsertRequest struct {
-	ProductItemID uint  `json:"product_item_id" binding:"required,numeric"`
-	Quantity      *uint `json:"quantity" binding:"required"`
+	ProductItemID uint    `json:"product_item_id" binding:"required,numeric"`
+	Quantity      *uint   `json:"quantity" binding:"required"`
+	Action        *string `json:"action"`
 }
 
 func (source *CartUpsertRequest) CartUpsertRequestToInternalCartRequest() (target *in_cart_dtos.CartRequest) {
 	target = &in_cart_dtos.CartRequest{
 		ProductItemID: source.ProductItemID,
 		Quantity:      source.Quantity,
+		Action: source.Action,
 	}
 	return
 }

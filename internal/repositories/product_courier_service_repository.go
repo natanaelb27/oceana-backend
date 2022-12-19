@@ -1,18 +1,22 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ProductCourierServiceRepository interface {
+	WithTx(tx *gorm.DB) *productCourierServiceRepository
 	Create(productCourierService *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	GetAll() (model []*models.ProductCourierService, err error)
 	GetById(id uint) (model *models.ProductCourierService, err error)
 	GetByConditionMap(conditionMap map[string]any) (model *models.ProductCourierService, err error)
 	Update(id uint, newModel *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	Delete(id uint) (model *models.ProductCourierService, err error)
+	DeleteByMerchantCourierServiceIDProductID(merchantCourierServiceID uint, productID uint) (err error)
 }
 
 type productCourierServiceRepository struct {
@@ -27,6 +31,15 @@ func NewProductCourierServiceRepository(c *ProductCourierServiceRepositoryConfig
 	return &productCourierServiceRepository{
 		db: c.DB,
 	}
+}
+
+func (u productCourierServiceRepository) WithTx(tx *gorm.DB) *productCourierServiceRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productCourierServiceRepository) Create(newModel *models.ProductCourierService) (model *models.ProductCourierService, err error) {
@@ -96,6 +109,19 @@ func (r *productCourierServiceRepository) Delete(id uint) (model *models.Product
 	}
 
 	model.ID = id
+
+	return
+}
+
+func (r *productCourierServiceRepository) DeleteByMerchantCourierServiceIDProductID(merchantCourierServiceID uint, productID uint) (err error) {
+	result := r.db.
+		Where("merchant_courier_service_id = ?", merchantCourierServiceID).
+		Where("product_id = ?", productID).
+		Delete(&models.ProductCourierService{})
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
 
 	return
 }
