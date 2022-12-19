@@ -249,12 +249,13 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
 		Joins("LEFT JOIN (?) user_usage ON user_usage.product_merchant_promotion_id = product_merchant_promotions.id", subQueryUserUsage).
 		Where(`
-			product_merchant_promotions.maximum_quota > 
+			product_merchant_promotions.maximum_quota >= 
 			CASE
-				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota + COALESCE(user_usage.user_cart_quantity, 0)
+				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota + COALESCE(user_usage.user_cart_quantity, 0) + @quantity
 				ELSE -2
 			END
-		`).
+		`,
+			sql.Named("quantity", quantity)).
 		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
 		Where(`
 			CASE
