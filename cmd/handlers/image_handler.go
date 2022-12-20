@@ -19,3 +19,17 @@ func (h *Handler) UploadImage(c *gin.Context) {
 	}
 	utils.ResponseSuccess(c, response, nil)
 }
+
+func (h *Handler) DeleteImage(c *gin.Context) {
+	var request *externalDtos.DeleteImageRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	response, err := h.imageService.Delete(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+	utils.ResponseSuccess(c, response, nil)
+}
