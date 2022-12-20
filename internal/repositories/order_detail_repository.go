@@ -62,6 +62,24 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		Where("product_media_snapshots.type = ?", product_media_constants.TypeImage).
 		Limit(1)
 
+	subQueryReviewImage := r.db.Model(&models.ProductReviewMedia{}).
+		Select(`
+			product_reviews.order_detail_id,
+			ARRAY_AGG(product_review_media.media_url) AS review_images
+		`).
+		Joins("JOIN product_reviews ON product_reviews.id = product_review_media.product_review_id").
+		Where("type = ?", product_media_constants.TypeImage).
+		Group("product_reviews.order_detail_id")
+
+	subQueryReviewVideo := r.db.Model(&models.ProductReviewMedia{}).
+		Select(`
+			product_reviews.order_detail_id,
+			ARRAY_AGG(product_review_media.media_url) AS review_videos
+		`).
+		Joins("JOIN product_reviews ON product_reviews.id = product_review_media.product_review_id").
+		Where("type = ?", product_media_constants.TypeVideo).
+		Group("product_reviews.order_detail_id")
+
 	queryResult := r.db.Model(&models.OrderDetail{}).
 		Select(`
 			order_details.id AS order_detail_id,
@@ -74,7 +92,10 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 			order_details.total_price AS total_price,
 			product_reviews.id AS product_review_id,
 			product_reviews.rating AS rating,
-			product_reviews.review AS review
+			product_reviews.review AS review,
+			tbl_review_image.review_images AS review_images,
+			tbl_review_video.review_videos AS review_videos,
+			product_reviews.created_at AS review_created_datetime
 		`, subQueryProductImage,
 			subQueryVariants).
 		Joins("JOIN orders ON order_details.order_id = orders.id").
@@ -82,6 +103,8 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
 		Joins("LEFT JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
+		Joins("LEFT JOIN (?) tbl_review_image ON order_details.id = tbl_review_image.order_detail_id", subQueryReviewImage).
+		Joins("LEFT JOIN (?) tbl_review_video ON order_details.id = tbl_review_video.order_detail_id", subQueryReviewVideo).
 		Where("orders.id = ?", id).
 		Find(&orderDetailList)
 
