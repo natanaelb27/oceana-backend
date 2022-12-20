@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -33,6 +34,7 @@ type MerchantPromotionResponse struct {
 	Name                     string                              `json:"name"`
 	StartDatetime            time.Time                           `json:"start_datetime"`
 	EndDatetime              time.Time                           `json:"end_datetime"`
+	PromotionStatus          string                              `json:"promotion_status"`
 	CreatedAt                time.Time                           `json:"created_at"`
 	UpdatedAt                time.Time                           `json:"updated_at"`
 	ProductMerchantPromotion []*ProductMerchantPromotionResponse `json:"product_merchant_promotion"`
@@ -45,6 +47,7 @@ func NewMerchantPromotionResponse(source *models.MerchantPromotion, pmpResponse 
 		Name:                     source.Name,
 		StartDatetime:            source.StartDatetime,
 		EndDatetime:              source.EndDatetime,
+		PromotionStatus:          utils.PromotionOrVoucherStatus(source.StartDatetime, source.EndDatetime),
 		CreatedAt:                source.CreatedAt,
 		UpdatedAt:                source.UpdatedAt,
 		ProductMerchantPromotion: pmpResponse,
@@ -56,6 +59,8 @@ func NewMerchantPromotionResponse(source *models.MerchantPromotion, pmpResponse 
 type MerchantPromotionQuery struct {
 	SearchPromotionName   string `json:"search_promotion_name"`
 	FilterPromotionStatus string `json:"filter_promotion_status"`
+	Limit                 uint   `json:"limit"`
+	Page                  uint   `json:"page"`
 }
 
 func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
@@ -63,9 +68,31 @@ func NewMerchantPromotionQuery(c *gin.Context) *MerchantPromotionQuery {
 
 	searchPromotionName := c.Query("search-promotion-name")
 	filterPromotionStatus := c.Query("filter-promotion-status")
+	limit := c.Query("limit")
+	page := c.Query("page")
 
 	query.SearchPromotionName = searchPromotionName
 	query.FilterPromotionStatus = filterPromotionStatus
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
 
 	return &query
 }

@@ -21,11 +21,11 @@ type ProductDetails struct {
 	DiscountType          *string               `json:"discount_type"`
 	Discount              *uint                 `json:"discount"`
 	Price                 float64               `json:"price"`
-	PriceAfterDiscount    *float64              `json:"price_before_discount"`
+	PriceAfterDiscount    *float64              `json:"price_after_discount"`
 	PriceMax              float64               `json:"price_max"`
-	PriceMaxAfterDiscount *float64              `json:"price_max_before_discount"`
+	PriceMaxAfterDiscount *float64              `json:"price_max_after_discount"`
 	PriceMin              float64               `json:"price_min"`
-	PriceMinAfterDiscount *float64              `json:"price_min_before_discount"`
+	PriceMinAfterDiscount *float64              `json:"price_min_after_discount"`
 	ProductModel          []*ProductModel       `json:"product_model" gorm:"-"`
 	ProductVariation      []*ProductVariation   `json:"product_variation" gorm:"-"`
 }

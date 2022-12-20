@@ -78,6 +78,7 @@ var (
 	ErrDeleteDefaultAddressConflict              = errors.New("cannot delete default address")
 	ErrWrongWalletPin                            = errors.New("wrong wallet pin")
 	ErrRefundAlreadyExist                        = errors.New("refund already exist")
+	ErrProductReviewExist                        = errors.New("order detail has been reviewed")
 
 	ErrUnauthorized                     = errors.New("access is denied due to invalid credentials")
 	ErrUserNotFound                     = errors.New("user not found")
@@ -121,6 +122,7 @@ var (
 	ErrStatusIsNotPendingSeller                                   = errors.New("status is not pending seller")
 	ErrStatusIsNotOnProcess                                       = errors.New("status is not on process")
 	ErrStatusIsNotDelivered                                       = errors.New("status is not delivered")
+	ErrStatusIsNotCompleted                                       = errors.New("status is not completed")
 	ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime = errors.New("new voucher start period is earlier than the current start period")
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
@@ -266,7 +268,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrMerchantPromotionProductConflict) ||
 		errors.Is(err, ErrDeleteDefaultAddressConflict) ||
 		errors.Is(err, ErrDeleteShopAddressConflict) ||
-		errors.Is(err, ErrRefundAlreadyExist) {
+		errors.Is(err, ErrRefundAlreadyExist) ||
+		errors.Is(err, ErrProductReviewExist) {
 		return http.StatusConflict
 	} else if errors.Is(err, ErrForbidden) ||
 		errors.Is(err, ErrForbiddenMerchant) ||
@@ -311,6 +314,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStatusIsNotOnProcess) ||
 		errors.Is(err, ErrStatusIsNotDelivered) ||
 		errors.Is(err, ErrVoucherNotUpcoming) ||
+		errors.Is(err, ErrStatusIsNotCompleted) ||
 		errors.Is(err, ErrVoucherPeriodExceedMaximumDays) ||
 		errors.Is(err, ErrBlockedWallet) ||
 		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) ||
