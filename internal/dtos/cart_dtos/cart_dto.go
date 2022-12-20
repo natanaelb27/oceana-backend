@@ -25,13 +25,15 @@ type Product struct {
 	CartsID                    uint     `json:"carts_id"`
 	ProductID                  uint     `json:"product_id"`
 	ProductItemID              uint     `json:"product_item_id"`
-	ProductMerchantPromotionID uint     `json:"product_merchant_promotion_id"`
 	ProductName                string   `json:"product_name"`
 	ProductVariation           string   `json:"product_variation"`
 	Quantity                   uint     `json:"quantity"`
 	StockQuantity              uint     `json:"stock_quantity"`
 	Price                      uint     `json:"price"`
 	PriceAfterDiscount         *float64 `json:"price_after_discount"`
+	ProductMerchantPromotionID uint     `json:"product_merchant_promotion_id"`
+	PromoUserQuota             uint     `json:"promo_user_quota"`
+	PromoGlobalQuota           uint     `json:"promo_global_quota"`
 }
 
 type Merchant struct {

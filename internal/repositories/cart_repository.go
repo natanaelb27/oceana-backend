@@ -62,7 +62,7 @@ func (r *cartRepository) Create(newModel *models.Cart) (model *models.Cart, err 
 }
 
 func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, userId uuid.UUID) (result []*in_cart_dtos.Product, err error) {
-	sqTotalViewCount := sql.Named("sqTotalViewCount",
+	sqCartQuantityTotal := sql.Named("sqCartQuantityTotal",
 		r.db.Model(&models.Cart{}).
 			Select("SUM(carts.quantity)").
 			Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
@@ -83,36 +83,34 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 	subQueryPromoValidation := sql.Named("subQueryPromoValidation",
 		r.db.Raw(`
 			CASE
-				-- validate maximum user limit
-				-- pmp.maximum_user_limit <> -1 means that if there is no user limit
-				-- validate merchant promo user quota - ump.usage + carts.quantity > pmp.maximum_user_limit  means if user merchant promo usage + carts quantity then show original price
-				WHEN pmp.maximum_user_limit <> -1 AND (@sqTotalViewCount) + COALESCE(ump.usage,0) > pmp.maximum_user_limit  
+				WHEN pmp.maximum_user_limit <> -1 AND (@sqCartQuantityTotal) + COALESCE(ump.usage,0) > pmp.maximum_user_limit  
 					THEN false
-				-- validate merchant promo global quota
-				WHEN pmp.maximum_quota <> -1 AND (@sqTotalViewCount) + pmp.current_quota > pmp.maximum_quota
+				WHEN pmp.maximum_quota <> -1 AND (@sqCartQuantityTotal) + pmp.current_quota > pmp.maximum_quota
 					THEN false
-				-- validate mp start and end date
 				WHEN NOW() NOT BETWEEN mp.start_datetime AND mp.end_datetime
 					THEN false
 			ELSE true
 			END		
-		`,
-			sqTotalViewCount,
+			`,
+			sqCartQuantityTotal,
 		),
 	)
-	queryResult := r.db.Model(&models.Cart{}).Select(`
+	sqPromo := r.db.Table("product_merchant_promotions pmp").
+		Select(`ump.id as ump_id, pmp.id as pmp_id, mp.id as mp_id, *`).
+		Joins("LEFT JOIN user_merchant_promotions ump ON ump.product_merchant_promotion_id = pmp.id AND ump.user_id = carts.user_id").
+		Joins("LEFT JOIN merchant_promotions mp ON mp.id = pmp.merchant_promotion_id").
+		Where("pmp.product_id = products.id").
+		Where("(@subQueryPromoValidation) = true", subQueryPromoValidation).
+		Order("pmp.id ASC").
+		Limit(1)
+
+	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
 			carts.id AS carts_id,
 			carts.user_id AS user_id,
 			products.id AS product_id,
 			products.name AS product_name,
 			-- hide promo id when promo condition dont met
-			(
-				CASE 
-					WHEN (@subQueryPromoValidation) = false
-						THEN null
-				ELSE pmp.id
-				END
-			) AS promo_id,
+			promo.pmp_id AS product_merchant_promotion_id,
 			carts.product_item_id AS product_item_id,
 			carts.quantity AS quantity,
 			product_items.stock_quantity AS stock_quantity,
@@ -120,23 +118,36 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			-- select user limit
 			(
 				CASE 
-					WHEN (@subQueryPromoValidation) = false
+					WHEN promo.pmp_id IS NULL
 						THEN product_items.stock_quantity
-				ELSE GREATEST(COALESCE(pmp.maximum_user_limit, 0) - COALESCE(ump.usage, 0), 0)
+					WHEN promo.maximum_user_limit = -1
+						THEN product_items.stock_quantity
+				ELSE GREATEST(
+					COALESCE(
+						promo.maximum_user_limit, 
+						0
+					) - COALESCE(
+						promo.usage, 
+						0
+					), 
+					0
+				)
 				END
 			) AS promo_user_quota,
 			-- maximum global quota
 			(
-				CASE 
-					WHEN (@subQueryPromoValidation) = false
+				CASE 	
+					WHEN promo.pmp_id IS NULL
+						THEN product_items.stock_quantity
+					WHEN promo.maximum_quota = -1
 						THEN product_items.stock_quantity
 				ELSE (
 					GREATEST(
 						COALESCE(
-							pmp.maximum_quota
-							, 0
-						) - pmp.current_quota
-						, 0
+							promo.maximum_quota, 
+							0
+						) - promo.current_quota, 
+						0
 					)
 				)
 				END
@@ -144,19 +155,17 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			-- count price after discount
 			(
 				CASE 
-					WHEN (@subQueryPromoValidation) = false
-						THEN product_items.price
-					WHEN pmp.discount_type = 'percentage' 
+					WHEN promo.discount_type = 'percentage' 
 						THEN product_items.price - LEAST
 						(
-							(pmp.discount / 100.0) * product_items.price, 
-							pmp.maximum_discount_amount
+							(promo.discount / 100.0) * product_items.price, 
+							promo.maximum_discount_amount
 						)
 					-- price after nominal promo
-					WHEN pmp.discount_type = 'nominal' 
+					WHEN promo.discount_type = 'nominal' 
 						THEN GREATEST
 						(
-							product_items.price - pmp.discount, 
+							product_items.price - promo.discount, 
 							0
 						)
 				ELSE product_items.price
@@ -164,16 +173,13 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			) AS price_after_discount,
 			(@subQueryProductVariations) AS product_variation
 		`,
-		sqTotalViewCount,
+		sqCartQuantityTotal,
 		subQueryProductVariations,
-		subQueryPromoValidation,
 	).
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
-		Joins("LEFT JOIN product_merchant_promotions pmp ON products.id = pmp.product_id AND pmp.status = ?", "active").
-		Joins("LEFT JOIN user_merchant_promotions ump ON ump.product_merchant_promotion_id = pmp.id AND ump.user_id = carts.user_id").
-		Joins("LEFT JOIN merchant_promotions mp ON mp.id = pmp.merchant_promotion_id").
 		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
+		Joins("LEFT JOIN LATERAL (?) promo ON products.id = promo.product_id", sqPromo).
 		Where("carts.user_id = ?", userId).
 		Where("merchants.id = ?", merchantId).
 		Order("carts.id DESC").
