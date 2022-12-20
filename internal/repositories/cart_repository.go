@@ -104,11 +104,12 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 		Order("pmp.id ASC").
 		Limit(1)
 
-	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
+	queryResult := r.db.Model(&models.Cart{}).Select(`
 			carts.id AS carts_id,
 			carts.user_id AS user_id,
 			products.id AS product_id,
 			products.name AS product_name,
+			products.weight AS product_weight,
 			-- hide promo id when promo condition dont met
 			promo.pmp_id AS product_merchant_promotion_id,
 			carts.product_item_id AS product_item_id,
@@ -194,7 +195,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 
 func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_dtos.Merchant, err error) {
 	// join products, product_items
-	queryResult := r.db.Debug().Model(&models.Cart{}).Select(`
+	queryResult := r.db.Model(&models.Cart{}).Select(`
 		merchants.id AS merchant_id,
 		merchants.name AS name,
 		provinces.name AS merchant_province,
