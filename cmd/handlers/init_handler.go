@@ -385,7 +385,8 @@ func Init() *Handler {
 		RefundMediaRepository:  refundMediaRepository,
 		UserRepository:         userRepository,
 	})
-	imageService := services.NewImageService(&services.ImageServiceConfig{})
+	
+	mediaService := services.NewMediaService(&services.MediaServiceConfig{})
 
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
@@ -411,7 +412,7 @@ func Init() *Handler {
 		TransactionService:        transactionService,
 		CityService:               cityService,
 		RefundService:             refundService,
-		ImageService:              imageService,
+		MediaService:              mediaService,
 	})
 
 	return h

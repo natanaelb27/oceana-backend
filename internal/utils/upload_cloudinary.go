@@ -9,7 +9,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-func UploadImage(input interface{}) (string, error) {
+func UploadMedia(input interface{}) (string, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
 
 	defer cancel()
@@ -22,7 +22,7 @@ func UploadImage(input interface{}) (string, error) {
 	return resp.SecureURL, nil
 }
 
-func DeleteImage(publicID string) (string, error) {
+func DeleteMedia(publicID string) (string, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
 
 	defer cancel()

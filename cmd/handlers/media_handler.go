@@ -6,13 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) UploadImage(c *gin.Context) {
-	var request *externalDtos.UploadImageRequest
+func (h *Handler) UploadMedia(c *gin.Context) {
+	var request *externalDtos.UploadMediaRequest
 	if err := c.ShouldBind(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	response, err := h.imageService.Upload(request)
+	response, err := h.mediaService.Upload(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -20,13 +20,13 @@ func (h *Handler) UploadImage(c *gin.Context) {
 	utils.ResponseSuccess(c, response, nil)
 }
 
-func (h *Handler) DeleteImage(c *gin.Context) {
-	var request *externalDtos.DeleteImageRequest
+func (h *Handler) DeleteMedia(c *gin.Context) {
+	var request *externalDtos.DeleteMediaRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	response, err := h.imageService.Delete(request)
+	response, err := h.mediaService.Delete(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

@@ -79,7 +79,8 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +96,8 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +113,8 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +130,8 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +147,8 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -159,7 +164,8 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		if err != nil {
 			return nil, err
 		}
-		videoUrl, err := utils.UploadImage(videoFile)
+		defer videoFile.Close()
+		videoUrl, err := utils.UploadMedia(videoFile)
 		if err != nil {
 			return nil, err
 		}
