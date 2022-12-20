@@ -199,6 +199,7 @@ func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_
 		merchants.id AS merchant_id,
 		merchants.name AS name,
 		provinces.name AS merchant_province,
+		cities.id AS city_id,
 		NULL as products
 	`).
 		Where("carts.user_id = ?", userId).
@@ -210,7 +211,7 @@ func (r *cartRepository) GetCartsMerchants(userId uuid.UUID) (result []*in_cart_
 		Joins("JOIN districts ON sub_districts.district_id = districts.id").
 		Joins("JOIN cities ON districts.city_id = cities.id").
 		Joins("JOIN provinces ON cities.province_id = provinces.id").
-		Group("merchants.id, provinces.name").
+		Group("merchants.id, provinces.name, cities.id").
 		Find(&result)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed

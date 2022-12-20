@@ -41,6 +41,7 @@ type Merchant struct {
 	MerchantID       uint       `json:"merchant_id"`
 	Name             string     `json:"name"`
 	MerchantProvince string     `json:"merchant_province"`
+	CityID           uint       `json:"city_id"`
 	Products         []*Product `json:"products" gorm:"-"`
 }
 
