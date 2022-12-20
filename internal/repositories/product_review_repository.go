@@ -8,6 +8,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -15,6 +16,7 @@ type ProductReviewRepository interface {
 	Create(newModel *models.ProductReview) (model *models.ProductReview, err error)
 	GetByProductID(id uint, pagination *utils.Pagination, query *externalDtos.ProductReviewQuery) ([]*dtos.ProductReviewList, *utils.Pagination, error)
 	GetDetailsByProductID(id uint) (*dtos.ProductReviewDetails, error)
+	GetByOrderDetailID(id uuid.UUID) (model *models.ProductReview, err error)
 }
 
 type productReviewRepository struct {
@@ -166,4 +168,20 @@ func (pr *productReviewRepository) GetDetailsByProductID(id uint) (*dtos.Product
 	}
 
 	return productReviewDetails, nil
+}
+func (pr *productReviewRepository) GetByOrderDetailID(id uuid.UUID) (model *models.ProductReview, err error) {
+	queryResult := pr.db.Model(&models.ProductReview{}).
+		Where("order_detail_id = ?", id).
+		First(&model)
+
+	if queryResult.Error != nil {
+		if queryResult.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrDataNotFound
+		}
+
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return
+
 }

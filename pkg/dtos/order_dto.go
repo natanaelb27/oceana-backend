@@ -98,6 +98,7 @@ type OrderListGetAllResponse struct {
 	InvoiceNumber                        string                  `json:"invoice_number"`
 	MerchantID                           uint                    `json:"merchant_id"`
 	ShopName                             string                  `json:"shop_name"`
+	ShopPhoto                            string                  `json:"shop_photo"`
 	UserID                               uuid.UUID               `json:"user_id"`
 	UserFullName                         string                  `json:"user_full_name"`
 	CourierServiceID                     uint                    `json:"courier_service_id"`
@@ -122,6 +123,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGe
 			InvoiceNumber:                        result.InvoiceNumber,
 			MerchantID:                           result.MerchantID,
 			ShopName:                             result.ShopName,
+			ShopPhoto:                            result.ShopPhoto,
 			UserID:                               result.UserID,
 			UserFullName:                         result.UserFullName,
 			CourierServiceID:                     result.CourierServiceID,
@@ -148,6 +150,7 @@ type OrderListDetailsGetByIDResponse struct {
 	InvoiceNumber                        string                       `json:"invoice_number"`
 	MerchantID                           uint                         `json:"merchant_id"`
 	ShopName                             string                       `json:"shop_name"`
+	ShopPhoto                            string                       `json:"shop_photo"`
 	UserID                               uuid.UUID                    `json:"user_id"`
 	UserFullName                         string                       `json:"user_full_name"`
 	OrderDetails                         []*dtos.OrderDetailList      `json:"order_details"`
@@ -179,6 +182,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		InvoiceNumber:                        source.InvoiceNumber,
 		MerchantID:                           source.MerchantID,
 		ShopName:                             source.ShopName,
+		ShopPhoto:                            source.ShopPhoto,
 		UserID:                               source.UserID,
 		UserFullName:                         source.UserFullName,
 		OrderDetails:                         source.OrderDetails,
