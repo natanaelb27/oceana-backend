@@ -15,8 +15,7 @@ func UploadImage(input interface{}) (string, error) {
 	defer cancel()
 
 	cld, _ := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"))
-	useFilenameValue := true
-	resp, err := cld.Upload.Upload(ctx, input, uploader.UploadParams{Folder: os.Getenv("CLOUDINARY_UPLOAD_FOLDER"), UseFilename: &useFilenameValue})
+	resp, err := cld.Upload.Upload(ctx, input, uploader.UploadParams{Folder: os.Getenv("CLOUDINARY_UPLOAD_FOLDER")})
 	if err != nil {
 		return "", err
 	}
