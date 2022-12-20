@@ -94,7 +94,8 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 			product_reviews.rating AS rating,
 			product_reviews.review AS review,
 			tbl_review_image.review_images AS review_images,
-			tbl_review_video.review_videos AS review_videos
+			tbl_review_video.review_videos AS review_videos,
+			product_reviews.created_at AS review_created_datetime
 		`, subQueryProductImage,
 			subQueryVariants).
 		Joins("JOIN orders ON order_details.order_id = orders.id").
