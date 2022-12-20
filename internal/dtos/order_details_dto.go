@@ -21,5 +21,5 @@ type OrderDetailList struct {
 	Review                *string        `json:"review"`
 	ReviewImages          pq.StringArray `json:"review_images" gorm:"type:text[]"`
 	ReviewVideos          pq.StringArray `json:"review_videos" gorm:"type:text[]"`
-	ReviewCreatedDatetime time.Time      `json:"review_created_datetime"`
+	ReviewCreatedDatetime *time.Time     `json:"review_created_datetime"`
 }
