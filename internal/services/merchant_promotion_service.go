@@ -15,7 +15,7 @@ import (
 
 type MerchantPromotionService interface {
 	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error)
-	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, error)
+	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, *utils.Pagination, error)
 	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
 	GetDetailsByID(merchantPromotionID uint) (*internalDtos.MerchantPromotionDetails, error)
 	Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error)
@@ -91,10 +91,10 @@ func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpReques
 	return responses, nil
 }
 
-func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, error) {
+func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, *utils.Pagination, error) {
 	merchant, err := mp.merchantRepository.GetByUserID(userID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pagination := &utils.Pagination{
@@ -104,7 +104,7 @@ func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.Merchan
 
 	merchantPromotions, pagination, err := mp.merchantPromotionRepository.GetAllDetails(merchant.ID, query, pagination)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	merchantPromotionList := []*internalDtos.MerchantPromotionDetails{}
@@ -113,7 +113,7 @@ func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.Merchan
 		pmp, err := mp.productMerchantPromotionRepository.GetProductDetailsByMerchantPromotionID(v.ID)
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		merchantPromotionList = append(merchantPromotionList, &internalDtos.MerchantPromotionDetails{
@@ -128,7 +128,7 @@ func (mp *merchantPromotionService) GetAll(userID uuid.UUID, query *dtos.Merchan
 
 	}
 
-	return merchantPromotionList, nil
+	return merchantPromotionList, pagination, nil
 }
 
 func (mp *merchantPromotionService) GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error) {

@@ -42,7 +42,7 @@ func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
 
 	query := dtos.NewMerchantPromotionQuery(c)
 
-	results, err := h.merchantPromotionService.GetAll(userID, query)
+	results, pagination, err := h.merchantPromotionService.GetAll(userID, query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -54,7 +54,7 @@ func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
 	// 	responseData = append(responseData, dtos.NewMerchantPromotionResponse(result, nil))
 	// }
 
-	utils.ResponseSuccess(c, results, nil)
+	utils.ResponseSuccess(c, results, pagination)
 }
 
 func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
