@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -131,7 +132,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		refundMedia := &models.RefundMedia{
 			RefundID: refund.ID,
 			MediaURL: imageUrl,
-			Type:     "photo",
+			Type:     product_media_constants.TypeImage,
 		}
 
 		refundMediaList = append(refundMediaList, refundMedia)
@@ -151,7 +152,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		refundMedia := &models.RefundMedia{
 			RefundID: refund.ID,
 			MediaURL: imageUrl,
-			Type:     "photo",
+			Type:     product_media_constants.TypeImage,
 		}
 
 		refundMediaList = append(refundMediaList, refundMedia)
@@ -172,7 +173,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		refundMedia := &models.RefundMedia{
 			RefundID: refund.ID,
 			MediaURL: imageUrl,
-			Type:     "photo",
+			Type:     product_media_constants.TypeImage,
 		}
 
 		refundMediaList = append(refundMediaList, refundMedia)
@@ -193,7 +194,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		refundMedia := &models.RefundMedia{
 			RefundID: refund.ID,
 			MediaURL: imageUrl,
-			Type:     "photo",
+			Type:     product_media_constants.TypeImage,
 		}
 
 		refundMediaList = append(refundMediaList, refundMedia)
@@ -214,7 +215,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		refundMedia := &models.RefundMedia{
 			RefundID: refund.ID,
 			MediaURL: imageUrl,
-			Type:     "photo",
+			Type:     product_media_constants.TypeImage,
 		}
 
 		refundMediaList = append(refundMediaList, refundMedia)
@@ -234,7 +235,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		refundMedia := &models.RefundMedia{
 			RefundID: refund.ID,
 			MediaURL: videoUrl,
-			Type:     "video",
+			Type:     product_media_constants.TypeVideo,
 		}
 
 		refundMediaList = append(refundMediaList, refundMedia)

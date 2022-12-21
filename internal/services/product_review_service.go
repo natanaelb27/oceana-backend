@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -86,7 +87,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
-			Type:            "photo",
+			Type:            product_media_constants.TypeImage,
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -102,7 +103,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
-			Type:            "photo",
+			Type:            product_media_constants.TypeImage,
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -118,7 +119,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
-			Type:            "photo",
+			Type:            product_media_constants.TypeImage,
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -134,7 +135,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
-			Type:            "photo",
+			Type:            product_media_constants.TypeImage,
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -150,7 +151,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        imageUrl,
-			Type:            "photo",
+			Type:            product_media_constants.TypeImage,
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
@@ -166,7 +167,7 @@ func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreate
 		productReviewMedia := &models.ProductReviewMedia{
 			ProductReviewID: newProductReview.ID,
 			MediaURL:        videoUrl,
-			Type:            "video",
+			Type:            product_media_constants.TypeVideo,
 		}
 		pr.productReviewMediaRepository.Create(productReviewMedia)
 	}
