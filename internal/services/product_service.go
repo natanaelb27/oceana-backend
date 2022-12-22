@@ -29,6 +29,7 @@ type ProductService interface {
 	UpdateProductUsingModel(userID uuid.UUID, request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
 	GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error)
 	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
+	CheckCourierService(request *productInternalDtos.ProductCheckCourierService) (*productInternalDtos.ProductCheckCourierServiceResponse, error)
 }
 
 type productService struct {
@@ -1172,4 +1173,8 @@ func (s *productService) GetAvailableProductsByPromotionPeriod(id uuid.UUID, que
 	}
 
 	return dtos.NewAvailableProductsResponse(availableProduct), nil
+}
+
+func (s *productService) CheckCourierService(request *productInternalDtos.ProductCheckCourierService) (*productInternalDtos.ProductCheckCourierServiceResponse, error) {
+	return s.productRepository.CheckCourierService(request)
 }

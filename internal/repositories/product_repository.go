@@ -31,6 +31,7 @@ type ProductRepository interface {
 	UpdateUsingMap(id uint, dataMap map[string]any) (err error)
 	GetById(id uint) (model *models.Product, err error)
 	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error)
+	CheckCourierService(request *product_dtos.ProductCheckCourierService) (result *product_dtos.ProductCheckCourierServiceResponse, err error)
 }
 
 type productRepository struct {
@@ -640,6 +641,39 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 		return
 	}
 	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productRepository) CheckCourierService(request *product_dtos.ProductCheckCourierService) (result *product_dtos.ProductCheckCourierServiceResponse, err error) {
+	sqPCS := r.db.
+		Select(`
+			pcs.product_id  
+		`).
+		Table("product_courier_services pcs").
+		Joins("JOIN merchant_courier_services mcs ON mcs.id = pcs.merchant_courier_service_id AND mcs.is_active IS TRUE").
+		Joins("JOIN courier_services cs ON cs.id = mcs.courier_service_id").
+		Joins("JOIN couriers c ON c.id = cs.courier_id").
+		Where("pcs.product_id IN (?)", request.ProductIDs).
+		Where("c.code = ?", request.CourierCode).
+		Where("cs.code = ?", request.CourierServiceCode).
+		Group("pcs.product_id")
+	queryResult := r.db.
+		Select(`
+			COALESCE(array_agg(pcs.product_id), '{}') AS available_products
+		`,
+		).
+		Table("(?) pcs", sqPCS).
+		Order("available_products ASC").
+		Scan(&result)
+	if queryResult.Error != nil && queryResult.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.Error == gorm.ErrRecordNotFound {
 		err = e.ErrDataNotFound
 		return
 	}
