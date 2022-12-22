@@ -11,6 +11,6 @@ func admin(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handle
 	privateRoute := private.Group(path)
 	{
 		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "100") }, h.GetAllRefundDetailsByAdmin)
-		privateRoute.GET("/refunds/:refund-id/complete-refund", func(c *gin.Context) { middlewares.Role(c, "100") }, h.UpdateCompleteRefund)
+		privateRoute.POST("/refunds/:refund-id/complete-refund", func(c *gin.Context) { middlewares.Role(c, "100") }, h.UpdateCompleteRefund)
 	}
 }

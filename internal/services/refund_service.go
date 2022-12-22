@@ -40,6 +40,7 @@ type refundService struct {
 	walletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
 	walletRepository                       r.WalletRepository
 	sealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
+	orderTrackingRepository                r.OrderTrackingRepository
 	sealabsPayService                      SealabsPayService
 }
 
@@ -55,6 +56,7 @@ type RefundServiceConfig struct {
 	WalletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
 	WalletRepository                       r.WalletRepository
 	SealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
+	OrderTrackingRepository                r.OrderTrackingRepository
 	SealabsPayService                      SealabsPayService
 }
 
@@ -71,6 +73,7 @@ func NewRefundService(c *RefundServiceConfig) RefundService {
 		walletTransactionPaymentRepository:     c.WalletTransactionPaymentRepository,
 		walletRepository:                       c.WalletRepository,
 		sealabsPayTransactionPaymentRepository: c.SealabsPayTransactionPaymentRepository,
+		orderTrackingRepository:                c.OrderTrackingRepository,
 		sealabsPayService:                      c.SealabsPayService,
 	}
 }
@@ -629,6 +632,27 @@ func (s *refundService) UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUI
 	_, err = s.orderRepository.Update(refund.OrderID, &models.Order{
 		Status: constants.CompletedStatus,
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderTracking := []*models.OrderTracking{
+		{
+			OrderID:         refund.OrderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.ConfirmedTitle,
+			Description:     constants.ConfirmedDescription,
+		},
+		{
+			OrderID:         refund.OrderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.CompletedTitle,
+			Description:     constants.CompletedDescription,
+		},
+	}
+
+	_, err = s.orderTrackingRepository.Create(orderTracking)
 
 	if err != nil {
 		return nil, err

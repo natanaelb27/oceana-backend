@@ -389,6 +389,7 @@ func Init() *Handler {
 		WalletTransactionPaymentRepository:     walletTransactionPaymentRepository,
 		WalletRepository:                       walletRepository,
 		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
+		OrderTrackingRepository:                orderTrackingRepository,
 		SealabsPayService:                      sealabsPayService,
 	})
 
