@@ -29,6 +29,7 @@ type OrderService interface {
 	CronOrderProcessExpiration() error
 	CronAutoCompleteDelivered() error
 	SellerCancelOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
+	UpdateCompleteOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 }
 
 type orderService struct {
@@ -612,6 +613,7 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 			continue
 		}
 
+
 		_, err = s.orderRepository.Update(v.OrderID, &models.Order{
 			Status: constants.CompletedStatus,
 		})
@@ -692,6 +694,52 @@ func (s *orderService) SellerCancelOrder(orderID uuid.UUID, userID uuid.UUID) (*
 	}
 
 	err = s.RefundCanceledOrder(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedOrder, nil
+}
+
+func (s *orderService) UpdateCompleteOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error) {
+	order, err := s.orderRepository.GetByID(orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	if userID != order.Transaction.UserID {
+		return nil, e.ErrForbiddenOrder
+	}
+
+	if order.Status != constants.DeliveredStatus {
+		return nil, e.ErrStatusIsNotDelivered
+	}
+
+	order.Status = constants.CompletedStatus
+
+	updatedOrder, err := s.orderRepository.Update(orderID, order)
+
+	if err != nil {
+		return nil, err
+	}
+
+	orderTracking := []*models.OrderTracking{
+		{
+			OrderID:         orderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.ConfirmedTitle,
+			Description:     constants.ConfirmedDescription,
+		},
+		{
+			OrderID:         orderID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.CompletedTitle,
+			Description:     constants.CompletedDescription,
+		},
+	}
+
+	_, err = s.orderTrackingRepository.Create(orderTracking)
 
 	if err != nil {
 		return nil, err

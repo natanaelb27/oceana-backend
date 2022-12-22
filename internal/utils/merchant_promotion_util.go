@@ -24,7 +24,7 @@ func ValidateMpCreateDatetime(startDatetime, endDatetime time.Time) error {
 		return e.ErrPromotionPeriodMinimumOneHour
 	}
 
-	if int(endDatetime.Sub(startDatetime).Hours()/24) > 180 {
+	if int(endDatetime.Sub(startDatetime).Hours()/24) > 90 {
 		return e.ErrPromotionPeriodExceedMaximumDays
 	}
 

@@ -115,7 +115,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
 		Group("orders.id")
 
-	queryResult := r.db.Debug().Model(&models.Order{}).
+	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			orders.transaction_id AS transaction_id,
 			orders.invoice_number AS invoice_number,
@@ -484,7 +484,9 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 }
 
 func (r *orderRepository) GetByID(id uuid.UUID) (model *models.Order, err error) {
-	queryResult := r.db.First(&model, id)
+	queryResult := r.db.Model(&models.Order{}).
+		Preload("Transaction").
+		First(&model, id)
 	if queryResult.Error == gorm.ErrRecordNotFound {
 		err = e.ErrDataNotFound
 		return
