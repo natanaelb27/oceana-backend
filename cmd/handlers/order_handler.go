@@ -165,3 +165,30 @@ func (h *Handler) SellerCancelOrder(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
+
+func (h *Handler) OrderCompleteOrder(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	orderID, err := uuid.Parse(c.Param("order-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.orderService.UpdateCompleteOrder(orderID, id)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewOrderProcessOrderResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+

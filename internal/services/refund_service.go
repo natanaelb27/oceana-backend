@@ -22,6 +22,8 @@ type RefundService interface {
 	GetDetailsByID(userID uuid.UUID, refundID uuid.UUID) (*dtos.GetRefundDetailsResponse, error)
 	GetAllDetailsByMerchant(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
 	GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
+	UpdateApproveRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
+	UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 }
 
 type refundService struct {
@@ -458,4 +460,69 @@ func (s *refundService) GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAl
 	}
 
 	return dtos.NewGetAllRefundDetailsResponse(refundDetailList), pagination, nil
+}
+
+func (s *refundService) UpdateApproveRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refund, err := s.refundRepository.GetByID(refundID)
+	if err != nil {
+		return nil, err
+	}
+
+	if merchant.ID != refund.Order.MerchantID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	if refund.Status != constants.RefundStatusOngoing {
+		return nil, e.ErrRefundStatusIsNotOngoing
+	}
+
+	refund.Status = constants.RefundStatusApproved
+
+	updatedRefund, err := s.refundRepository.Update(refundID, refund)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedRefund, nil
+}
+
+func (s *refundService) UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refund, err := s.refundRepository.GetByID(refundID)
+	if err != nil {
+		return nil, err
+	}
+
+	if merchant.ID != refund.Order.MerchantID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	if refund.Status != constants.RefundStatusOngoing {
+		return nil, e.ErrRefundStatusIsNotOngoing
+	}
+
+	refund.Status = constants.RefundStatusRejected
+
+	timeNow := time.Now()
+	refund.RejectedDatetime = &timeNow
+
+	updatedRefund, err := s.refundRepository.Update(refundID, refund)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedRefund, nil
 }

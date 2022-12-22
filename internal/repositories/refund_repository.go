@@ -20,6 +20,8 @@ type RefundRepository interface {
 	GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetails, error)
 	GetAllDetailsByMerchant(merchantID uint, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
 	GetAllDetails(query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
+	Update(id uuid.UUID, newModel *models.Refund) (model *models.Refund, err error)
+	GetByID(id uuid.UUID) (model *models.Refund, err error)
 }
 
 type refundRepository struct {
@@ -330,4 +332,44 @@ func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, 
 	}
 
 	return refundDetails, pagination, nil
+}
+
+func (r *refundRepository) Update(id uuid.UUID, newModel *models.Refund) (model *models.Refund, err error) {
+	queryResult := r.db.Model(&model).Where("id = ?", id).Updates(&newModel)
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model = newModel
+	model.ID = id
+
+	return
+}
+
+func (r *refundRepository) GetByID(id uuid.UUID) (model *models.Refund, err error) {
+	queryResult := r.db.Model(&models.Refund{}).
+		Preload("Order").
+		First(&model, id)
+
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
 }

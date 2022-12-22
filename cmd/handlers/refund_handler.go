@@ -115,3 +115,53 @@ func (h *Handler) GetAllRefundDetailsByAdmin(c *gin.Context) {
 
 	utils.ResponseSuccess(c, results, pagination)
 }
+
+func (h *Handler) UpdateApproveRefund(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	refundID, err := uuid.Parse(c.Param("refund-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.refundService.UpdateApproveRefund(refundID, id)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewApproveRefundResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UpdateRejectRefund(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	refundID, err := uuid.Parse(c.Param("refund-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.refundService.UpdateRejectRefund(refundID, id)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewApproveRefundResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}

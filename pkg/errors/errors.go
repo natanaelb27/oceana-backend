@@ -126,15 +126,16 @@ var (
 	ErrStatusIsNotCompleted                                       = errors.New("status is not completed")
 	ErrUpdatedVoucherStartDatetimeEarlierThanCurrentStartDatetime = errors.New("new voucher start period is earlier than the current start period")
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
-	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
+	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 90 days")
 	ErrBlockedWallet                                              = errors.New("wallet is currently blocked")
-	ErrFileSize 												  = errors.New("file size is larger than permitted")
+	ErrRefundStatusIsNotOngoing                                   = errors.New("refund status is not ongoing")
+	ErrFileSize                                                   = errors.New("file size is larger than permitted")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
 	ErrPromotionPeriodMinimumOneHour                       = errors.New("promotion period must be at least 1 hour")
 	ErrPromotionStartDatetimeMinimumOneDayFromNow          = errors.New("promotion start period must be at least 1 day from now")
-	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 180 days")
+	ErrPromotionPeriodExceedMaximumDays                    = errors.New("promotion period must be less than 90 days")
 	ErrPromotionIsOngoing                                  = errors.New("promotion is ongoing")
 	ErrPromotionHasEnded                                   = errors.New("promotion has ended")
 	ErrPromotionDatetimeUpdatedBeyondRange                 = errors.New("updated promotion start/end period must be between current start/end period")
@@ -332,6 +333,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
 		errors.Is(err, ErrWalletBalanceNotEnough) ||
+		errors.Is(err, ErrProductStatusInactive) ||
+		errors.Is(err, ErrRefundStatusIsNotOngoing) ||
 		errors.Is(err, ErrFileSize) ||
 		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
