@@ -194,3 +194,23 @@ func NewGetRefundDetailsResponse(source *dtos.RefundDetails) (target *GetRefundD
 
 	return
 }
+
+type ApproveRefundResponse struct {
+	ID                    uuid.UUID  `json:"id"`
+	OrderID               uuid.UUID  `json:"order_id"`
+	Reason                string     `json:"reason"`
+	RefundRequestDatetime time.Time  `json:"refund_request_datetime"`
+	Status                string     `json:"status"`
+	RejectedDatetime      *time.Time `json:"rejected_datetime"`
+}
+
+func NewApproveRefundResponse(source *models.Refund) *ApproveRefundResponse {
+	return &ApproveRefundResponse{
+		ID:                    source.ID,
+		OrderID:               source.OrderID,
+		Reason:                source.Reason,
+		RefundRequestDatetime: source.RefundRequestDatetime,
+		Status:                source.Status,
+		RejectedDatetime:      source.RejectedDatetime,
+	}
+}

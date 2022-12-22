@@ -28,6 +28,10 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.GET("/transaction-history", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderListGetAllByMerchantID)
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantOrderListDetailsGetByID)
 
+		// refunds
+		privateRoute.PATCH("/refunds/:refund-id/approve", func(c *gin.Context) { middlewares.Role(c, "010") }, h.UpdateApproveRefund)
+		privateRoute.PATCH("/refunds/:refund-id/reject", func(c *gin.Context) { middlewares.Role(c, "010") }, h.UpdateRejectRefund)
+
 		// product
 		privateRoute.PUT("/products/:product_id",
 			middlewares.DBTransactionMiddleware(),
