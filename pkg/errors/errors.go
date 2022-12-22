@@ -128,6 +128,7 @@ var (
 	ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime          = errors.New("new voucher end period is exceeding the current end period")
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 180 days")
 	ErrBlockedWallet                                              = errors.New("wallet is currently blocked")
+	ErrFileSize 												  = errors.New("file size is larger than permitted")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -331,6 +332,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
 		errors.Is(err, ErrWalletBalanceNotEnough) ||
+		errors.Is(err, ErrFileSize) ||
 		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
 	}

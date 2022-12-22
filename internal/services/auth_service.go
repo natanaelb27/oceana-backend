@@ -77,7 +77,8 @@ func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}

@@ -45,6 +45,7 @@ func Init(h *handlers.Handler) {
 	sealabsPay(public, private, h)
 	refund(public, private, h)
 	admin(public, private, h)
+	media(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

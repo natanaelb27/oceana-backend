@@ -123,8 +123,9 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		if err != nil {
 			return nil, err
 		}
+		defer photoFile.Close()
 
-		imageUrl, err := utils.UploadImage(photoFile)
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -143,8 +144,9 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		if err != nil {
 			return nil, err
 		}
+		defer photoFile.Close()
 
-		imageUrl, err := utils.UploadImage(photoFile)
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -164,8 +166,9 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		if err != nil {
 			return nil, err
 		}
+		defer photoFile.Close()
 
-		imageUrl, err := utils.UploadImage(photoFile)
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -185,8 +188,9 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		if err != nil {
 			return nil, err
 		}
+		defer photoFile.Close()
 
-		imageUrl, err := utils.UploadImage(photoFile)
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +211,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 			return nil, err
 		}
 
-		imageUrl, err := utils.UploadImage(photoFile)
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +231,8 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		if err != nil {
 			return nil, err
 		}
-		videoUrl, err := utils.UploadImage(videoFile)
+		defer videoFile.Close()
+		videoUrl, err := utils.UploadMedia(videoFile)
 		if err != nil {
 			return nil, err
 		}
