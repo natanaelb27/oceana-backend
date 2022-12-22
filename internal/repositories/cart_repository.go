@@ -74,7 +74,7 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 	subQueryProductVariations := sql.Named("subQueryProductVariations",
 		r.db.
 			Table("product_variations pvariations").
-			Select(`string_agg(CONCAT(pvarianttype."name", ':', pvariants."name"),', ' ORDER BY pvarianttype.id) AS value`).
+			Select(`string_agg(pvariants."name",', ' ORDER BY pvarianttype.id) AS value`).
 			Joins(`JOIN product_variants pvariants ON pvariants.id = pvariations.product_variant_id `).
 			Joins(`JOIN product_variant_types pvarianttype ON pvarianttype.id = pvariants.product_variant_type_id  `).
 			Where("pvariations.product_item_id = carts.product_item_id").
