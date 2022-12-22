@@ -57,7 +57,7 @@ func (r *rajaOngkirRepository) GetShippingCost(request *dtos.GetRajaOngkirShippi
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, e.ErrDatabaseOperationFailed
+		return nil, e.ErrDataNotFound
 	}
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)

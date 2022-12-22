@@ -9,6 +9,7 @@ type GetRajaOngkirShippingCostRequest struct {
 	Destination uint   `json:"destination" binding:"required"`
 	Weight      uint   `json:"weight" binding:"required"`
 	Courier     string `json:"courier" binding:"required"`
+	ProductIDs  []uint `json:"product_ids" binding:"required"`
 }
 
 type RajaOngkirShippingServiceCost struct {

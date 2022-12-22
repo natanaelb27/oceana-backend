@@ -47,6 +47,7 @@ var (
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
 	ErrEmailNotFound                  = errors.New("email not found")
+	ErrCourierServicesNotFound        = errors.New("courier services not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
@@ -254,6 +255,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionNotFound) ||
 		errors.Is(err, ErrProductMerchantPromotionNotFound) ||
 		errors.Is(err, ErrOrderNotFound) ||
+		errors.Is(err, ErrCourierServicesNotFound) ||
 		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
