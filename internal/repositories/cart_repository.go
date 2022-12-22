@@ -71,15 +71,29 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 			Where("merchants.id = ?", merchantId).
 			Where("p.id = products.id"),
 	)
-	subQueryProductVariations := sql.Named("subQueryProductVariations",
-		r.db.
-			Table("product_variations pvariations").
-			Select(`string_agg(CONCAT(pvarianttype."name", ':', pvariants."name"),', ' ORDER BY pvarianttype.id) AS value`).
-			Joins(`JOIN product_variants pvariants ON pvariants.id = pvariations.product_variant_id `).
-			Joins(`JOIN product_variant_types pvarianttype ON pvarianttype.id = pvariants.product_variant_type_id  `).
-			Where("pvariations.product_item_id = carts.product_item_id").
-			Group("pvariations.product_item_id"),
-	)
+	sqProductVariantMedia := r.db.
+		Table("product_variant_media pvm").
+		Select(`
+			pvm.id as product_variant_id,
+			pvm.media_url as media_url
+		`).
+		Where("pvm.product_variant_id = pvariations.product_variant_id").
+		Order("pvm.id ASC").
+		Group("pvm.id, pvm.media_url").
+		Limit(1)
+
+	subQueryProductVariations := r.db.
+		Table("product_variations pvariations").
+		Select(`
+			string_agg(pvariants."name",', ' ORDER BY pvarianttype.id) AS variations,
+			pvariations.product_item_id as product_item_id,
+			MIN(pvariants.id) AS product_variant_id
+		`).
+		Joins(`JOIN product_variants pvariants ON pvariants.id = pvariations.product_variant_id`).
+		Joins(`JOIN product_variant_types pvarianttype ON pvarianttype.id = pvariants.product_variant_type_id `).
+		Where("pvariations.product_item_id = carts.product_item_id").
+		Group("pvariations.product_item_id")
+
 	subQueryPromoValidation := sql.Named("subQueryPromoValidation",
 		r.db.Raw(`
 			CASE
@@ -103,13 +117,30 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 		Where("(@subQueryPromoValidation) = true", subQueryPromoValidation).
 		Order("pmp.id ASC").
 		Limit(1)
-
+	sqProductMedia := r.db.
+		Table("product_media pm").
+		Select(`
+			pm.id,
+			pm.product_id,
+			pm.media_url
+		`).
+		Where("pm.type = 'image'").
+		Where("pm.product_id = products.id").
+		Order("pm.id ASC").
+		Limit(1)
 	queryResult := r.db.Model(&models.Cart{}).Select(`
 			carts.id AS carts_id,
 			carts.user_id AS user_id,
 			products.id AS product_id,
 			products.name AS product_name,
 			products.weight AS product_weight,
+			(
+				CASE 
+					WHEN pvm.media_url <> ''
+						THEN pvm.media_url
+					ELSE pm.media_url
+				END
+			) AS product_media_url,
 			-- hide promo id when promo condition dont met
 			promo.pmp_id AS product_merchant_promotion_id,
 			carts.product_item_id AS product_item_id,
@@ -172,15 +203,16 @@ func (r *cartRepository) GetCartsProductsByUserIdMerchants(merchantId uint, user
 				ELSE product_items.price
 				END
 			) AS price_after_discount,
-			(@subQueryProductVariations) AS product_variation
+			pvariations.variations AS product_variation
 		`,
-		sqCartQuantityTotal,
-		subQueryProductVariations,
 	).
 		Joins(`JOIN product_items ON product_items.id = carts.product_item_id`).
 		Joins(`JOIN products ON products.id = product_items.product_id`).
 		Joins(`JOIN merchants ON merchants.id = products.merchant_id`).
 		Joins("LEFT JOIN LATERAL (?) promo ON products.id = promo.product_id", sqPromo).
+		Joins("LEFT JOIN LATERAL (?) pm ON products.id = pm.product_id", sqProductMedia).
+		Joins("LEFT JOIN LATERAL (?) pvariations ON carts.product_item_id = pvariations.product_item_id", subQueryProductVariations).
+		Joins(`LEFT JOIN LATERAL (?) pvm ON pvm.product_variant_id = pvariations.product_variant_id`, sqProductVariantMedia).
 		Where("carts.user_id = ?", userId).
 		Where("merchants.id = ?", merchantId).
 		Order("carts.id DESC").

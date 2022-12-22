@@ -28,6 +28,7 @@ type Product struct {
 	ProductName                string   `json:"product_name"`
 	ProductWeight              uint     `json:"product_weight"`
 	ProductVariation           string   `json:"product_variation"`
+	ProductMediaURL            string   `json:"product_media_url"`
 	Quantity                   uint     `json:"quantity"`
 	StockQuantity              uint     `json:"stock_quantity"`
 	Price                      uint     `json:"price"`

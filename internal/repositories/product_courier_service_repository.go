@@ -3,6 +3,7 @@ package repositories
 import (
 	"log"
 
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
@@ -12,6 +13,7 @@ type ProductCourierServiceRepository interface {
 	WithTx(tx *gorm.DB) *productCourierServiceRepository
 	Create(productCourierService *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	GetAll() (model []*models.ProductCourierService, err error)
+	GetAllCourierAndCourierServiceFromProductIDs(ids []uint) (results []*internalDtos.CourierAndCourierServices, err error)
 	GetById(id uint) (model *models.ProductCourierService, err error)
 	GetByConditionMap(conditionMap map[string]any) (model *models.ProductCourierService, err error)
 	Update(id uint, newModel *models.ProductCourierService) (model *models.ProductCourierService, err error)
@@ -62,6 +64,36 @@ func (r *productCourierServiceRepository) GetAll() (model []*models.ProductCouri
 	queryResult := r.db.Find(&model)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *productCourierServiceRepository) GetAllCourierAndCourierServiceFromProductIDs(ids []uint) (results []*internalDtos.CourierAndCourierServices, err error) {
+	sqPCS := r.db.
+		Select(`
+			cs.courier_id,
+			mcs.courier_service_id,
+			cs.code 
+		`).
+		Table("product_courier_services pcs").
+		Joins("JOIN merchant_courier_services mcs ON mcs.id = pcs.merchant_courier_service_id AND mcs.is_active IS TRUE").
+		Joins("JOIN courier_services cs ON cs.id = mcs.courier_service_id").
+		Joins("JOIN couriers c ON c.id = cs.courier_id").
+		Where("pcs.product_id IN (?)", ids).
+		Group("courier_service_id, cs.courier_id, cs.code")
+	queryResult := r.db.
+		Select(`
+			c.code AS code,
+			ARRAY_AGG(l.code) AS service_codes
+		`).
+		Table("couriers c").
+		Joins("JOIN (?) l ON c.id = l.courier_id", sqPCS).
+		Group("c.id").
+		Find(&results)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
 		return
 	}
 

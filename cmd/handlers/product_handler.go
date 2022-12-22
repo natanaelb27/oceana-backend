@@ -179,6 +179,22 @@ func (h *Handler) ProductCreate(c *gin.Context) {
 	utils.ResponseSuccess(c, response, nil)
 }
 
+func (h *Handler) ProductCheckCourierService(c *gin.Context) {
+	var request *product_dtos.ProductCheckCourierService
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	response, err := h.productService.CheckCourierService(request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, response, nil)
+}
+
 func (h *Handler) ProductUpdate(c *gin.Context) {
 	productIDInt, err := strconv.Atoi(c.Param("product_id"))
 	if err != nil {

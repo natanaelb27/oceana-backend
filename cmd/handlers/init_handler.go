@@ -335,7 +335,8 @@ func Init() *Handler {
 	})
 
 	rajaOngkirService := services.NewRajaOngkirService(&services.RajaOngkirServiceConfig{
-		RajaOngkirRepository: rajaOngkirRepository,
+		RajaOngkirRepository:            rajaOngkirRepository,
+		ProductCourierServiceRepository: productCourierServiceRepository,
 	})
 
 	marketplaceVoucherService := services.NewMarketplaceVoucherService(&services.MarketplaceVoucherServiceConfig{
@@ -385,6 +386,8 @@ func Init() *Handler {
 		RefundMediaRepository:  refundMediaRepository,
 		UserRepository:         userRepository,
 	})
+	
+	mediaService := services.NewMediaService(&services.MediaServiceConfig{})
 
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
@@ -410,6 +413,7 @@ func Init() *Handler {
 		TransactionService:        transactionService,
 		CityService:               cityService,
 		RefundService:             refundService,
+		MediaService:              mediaService,
 	})
 
 	return h

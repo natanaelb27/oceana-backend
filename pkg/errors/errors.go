@@ -47,6 +47,7 @@ var (
 	ErrDataNotFound                   = errors.New("data not found")
 	ErrMerchantNotFound               = errors.New("merchant not found")
 	ErrEmailNotFound                  = errors.New("email not found")
+	ErrCourierServicesNotFound        = errors.New("courier services not found")
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
@@ -128,6 +129,7 @@ var (
 	ErrVoucherPeriodExceedMaximumDays                             = errors.New("voucher period must be less than 90 days")
 	ErrBlockedWallet                                              = errors.New("wallet is currently blocked")
 	ErrRefundStatusIsNotOngoing                                   = errors.New("refund status is not ongoing")
+	ErrFileSize                                                   = errors.New("file size is larger than permitted")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -255,6 +257,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionNotFound) ||
 		errors.Is(err, ErrProductMerchantPromotionNotFound) ||
 		errors.Is(err, ErrOrderNotFound) ||
+		errors.Is(err, ErrCourierServicesNotFound) ||
 		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound
 	} else if errors.Is(err, ErrEmailAddressAlreadyExist) ||
@@ -331,7 +334,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrDifferentTotalPayment) ||
 		errors.Is(err, ErrWalletBalanceNotEnough) ||
 		errors.Is(err, ErrProductStatusInactive) ||
-		errors.Is(err, ErrRefundStatusIsNotOngoing) {
+		errors.Is(err, ErrRefundStatusIsNotOngoing) ||
+		errors.Is(err, ErrFileSize) ||
+		errors.Is(err, ErrProductStatusInactive) {
 		return http.StatusUnprocessableEntity
 	}
 

@@ -223,3 +223,13 @@ type PcsUpdateInfo struct {
 type PvarUpdateInfo struct {
 	After *models.ProductVariation
 }
+
+type ProductCheckCourierService struct {
+	CourierCode        string `json:"courier_code" binding:"required"`
+	CourierServiceCode string `json:"courier_service_code" binding:"required"`
+	ProductIDs         []uint `json:"product_ids" binding:"required"`
+}
+
+type ProductCheckCourierServiceResponse struct {
+	AvailableProducts pq.Int64Array `json:"available_products" gorm:"type:integer[]"`
+}
