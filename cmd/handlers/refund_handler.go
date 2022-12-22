@@ -136,7 +136,7 @@ func (h *Handler) UpdateApproveRefund(c *gin.Context) {
 		return
 	}
 
-	responseData := dtos.NewApproveRefundResponse(result)
+	responseData := dtos.NewUpdateRefundResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
@@ -161,7 +161,32 @@ func (h *Handler) UpdateRejectRefund(c *gin.Context) {
 		return
 	}
 
-	responseData := dtos.NewApproveRefundResponse(result)
+	responseData := dtos.NewUpdateRefundResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UpdateCompleteRefund(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	refundID, err := uuid.Parse(c.Param("refund-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.refundService.UpdateCompleteRefund(refundID, id)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewUpdateRefundResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
 }

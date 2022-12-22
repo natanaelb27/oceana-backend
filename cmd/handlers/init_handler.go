@@ -378,15 +378,20 @@ func Init() *Handler {
 	})
 
 	refundService := services.NewRefundService(&services.RefundServiceConfig{
-		MerchantRepository:     merchantRepository,
-		OrderRepository:        orderRepository,
-		OrderDetailRepository:  orderDetailRepository,
-		RefundRepository:       refundRepository,
-		RefundDetailRepository: refundDetailRepository,
-		RefundMediaRepository:  refundMediaRepository,
-		UserRepository:         userRepository,
+		MerchantRepository:                     merchantRepository,
+		OrderRepository:                        orderRepository,
+		OrderDetailRepository:                  orderDetailRepository,
+		RefundRepository:                       refundRepository,
+		RefundDetailRepository:                 refundDetailRepository,
+		RefundMediaRepository:                  refundMediaRepository,
+		UserRepository:                         userRepository,
+		TransactionRepository:                  transactionRepository,
+		WalletTransactionPaymentRepository:     walletTransactionPaymentRepository,
+		WalletRepository:                       walletRepository,
+		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
+		SealabsPayService:                      sealabsPayService,
 	})
-	
+
 	mediaService := services.NewMediaService(&services.MediaServiceConfig{})
 
 	h := New(&HandlerConfig{

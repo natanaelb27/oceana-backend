@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"math"
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
@@ -24,37 +25,53 @@ type RefundService interface {
 	GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
 	UpdateApproveRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
+	UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 }
 
 type refundService struct {
-	merchantRepository     r.MerchantRepository
-	orderRepository        r.OrderRepository
-	orderDetailRepository  r.OrderDetailRepository
-	refundRepository       r.RefundRepository
-	refundDetailRepository r.RefundDetailRepository
-	refundMediaRepository  r.RefundMediaRepository
-	userRepository         r.UserRepository
+	merchantRepository                     r.MerchantRepository
+	orderRepository                        r.OrderRepository
+	orderDetailRepository                  r.OrderDetailRepository
+	refundRepository                       r.RefundRepository
+	refundDetailRepository                 r.RefundDetailRepository
+	refundMediaRepository                  r.RefundMediaRepository
+	userRepository                         r.UserRepository
+	transactionRepository                  r.TransactionRepository
+	walletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
+	walletRepository                       r.WalletRepository
+	sealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
+	sealabsPayService                      SealabsPayService
 }
 
 type RefundServiceConfig struct {
-	MerchantRepository     r.MerchantRepository
-	OrderRepository        r.OrderRepository
-	OrderDetailRepository  r.OrderDetailRepository
-	RefundRepository       r.RefundRepository
-	RefundDetailRepository r.RefundDetailRepository
-	RefundMediaRepository  r.RefundMediaRepository
-	UserRepository         r.UserRepository
+	MerchantRepository                     r.MerchantRepository
+	OrderRepository                        r.OrderRepository
+	OrderDetailRepository                  r.OrderDetailRepository
+	RefundRepository                       r.RefundRepository
+	RefundDetailRepository                 r.RefundDetailRepository
+	RefundMediaRepository                  r.RefundMediaRepository
+	UserRepository                         r.UserRepository
+	TransactionRepository                  r.TransactionRepository
+	WalletTransactionPaymentRepository     r.WalletTransactionPaymentRepository
+	WalletRepository                       r.WalletRepository
+	SealabsPayTransactionPaymentRepository r.SealabsPayTransactionPaymentRepository
+	SealabsPayService                      SealabsPayService
 }
 
 func NewRefundService(c *RefundServiceConfig) RefundService {
 	return &refundService{
-		merchantRepository:     c.MerchantRepository,
-		orderRepository:        c.OrderRepository,
-		orderDetailRepository:  c.OrderDetailRepository,
-		refundRepository:       c.RefundRepository,
-		refundDetailRepository: c.RefundDetailRepository,
-		refundMediaRepository:  c.RefundMediaRepository,
-		userRepository:         c.UserRepository,
+		merchantRepository:                     c.MerchantRepository,
+		orderRepository:                        c.OrderRepository,
+		orderDetailRepository:                  c.OrderDetailRepository,
+		refundRepository:                       c.RefundRepository,
+		refundDetailRepository:                 c.RefundDetailRepository,
+		refundMediaRepository:                  c.RefundMediaRepository,
+		userRepository:                         c.UserRepository,
+		transactionRepository:                  c.TransactionRepository,
+		walletTransactionPaymentRepository:     c.WalletTransactionPaymentRepository,
+		walletRepository:                       c.WalletRepository,
+		sealabsPayTransactionPaymentRepository: c.SealabsPayTransactionPaymentRepository,
+		sealabsPayService:                      c.SealabsPayService,
 	}
 }
 
@@ -519,6 +536,99 @@ func (s *refundService) UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID)
 	refund.RejectedDatetime = &timeNow
 
 	updatedRefund, err := s.refundRepository.Update(refundID, refund)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedRefund, nil
+}
+
+func (s *refundService) UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error) {
+	user, err := s.userRepository.GetByID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if user.Role != "100" {
+		return nil, e.ErrForbidden
+	}
+
+	refund, err := s.refundRepository.GetByID(refundID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if refund.Status != constants.RefundStatusApproved && refund.Status != constants.RefundStatusApprovedBySystem {
+		return nil, e.ErrRefundStatusIsNotApproved
+	}
+
+	transaction, err := s.transactionRepository.GetByOrderID(refund.OrderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refundDetail, err := s.refundRepository.GetDetailsByID(refundID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if transaction.PaymentMethodID == constants.WalletID {
+		walletTransactionPayment, err := s.walletTransactionPaymentRepository.GetByTransactionID(transaction.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		newWallet := &models.Wallet{
+			Balance: walletTransactionPayment.Wallet.Balance + uint(refundDetail.TotalUserRefundAmount),
+		}
+
+		_, err = s.walletRepository.Update(walletTransactionPayment.WalletID, newWallet)
+
+		if err != nil {
+			return nil, err
+		}
+
+	} else if transaction.PaymentMethodID == constants.SealabsPayID {
+		sealabsPayTransactionPayment, err := s.sealabsPayTransactionPaymentRepository.GetByTransactionID(transaction.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		txIDInt, err := strconv.Atoi(sealabsPayTransactionPayment.TxID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = s.sealabsPayService.Refund(&dtos.SealabsPayRefundRequest{
+			TxnID:  txIDInt,
+			Amount: int(refundDetail.TotalUserRefundAmount),
+			Reason: refund.Reason,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	refund.Status = constants.RefundStatusCompleted
+
+	updatedRefund, err := s.refundRepository.Update(refundID, refund)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.orderRepository.Update(refund.OrderID, &models.Order{
+		Status: constants.CompletedStatus,
+	})
 
 	if err != nil {
 		return nil, err

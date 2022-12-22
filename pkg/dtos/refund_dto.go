@@ -195,7 +195,7 @@ func NewGetRefundDetailsResponse(source *dtos.RefundDetails) (target *GetRefundD
 	return
 }
 
-type ApproveRefundResponse struct {
+type UpdateRefundResponse struct {
 	ID                    uuid.UUID  `json:"id"`
 	OrderID               uuid.UUID  `json:"order_id"`
 	Reason                string     `json:"reason"`
@@ -204,8 +204,8 @@ type ApproveRefundResponse struct {
 	RejectedDatetime      *time.Time `json:"rejected_datetime"`
 }
 
-func NewApproveRefundResponse(source *models.Refund) *ApproveRefundResponse {
-	return &ApproveRefundResponse{
+func NewUpdateRefundResponse(source *models.Refund) *UpdateRefundResponse {
+	return &UpdateRefundResponse{
 		ID:                    source.ID,
 		OrderID:               source.OrderID,
 		Reason:                source.Reason,
