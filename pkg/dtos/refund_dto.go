@@ -50,20 +50,22 @@ func NewCreateRefundResponse(source *models.Refund) (target *CreateRefundRespons
 }
 
 type GetAllRefundQuery struct {
-	SearchInvoice   string     `json:"search-invoice"`
-	FilterStatus    string     `json:"filter-status"`
-	FilterStartDate *time.Time `json:"filter-start-date"`
-	FilterEndDate   *time.Time `json:"filter-end-date"`
-	Sort            string     `json:"sort"`
-	SortBy          string     `json:"sort-by"`
-	Limit           uint       `json:"limit"`
-	Page            uint       `json:"page"`
+	SearchInvoice       string     `json:"search-invoice"`
+	FilterGroupedStatus string     `json:"filter-grouped-status"`
+	FilterStatus        string     `json:"filter-status"`
+	FilterStartDate     *time.Time `json:"filter-start-date"`
+	FilterEndDate       *time.Time `json:"filter-end-date"`
+	Sort                string     `json:"sort"`
+	SortBy              string     `json:"sort-by"`
+	Limit               uint       `json:"limit"`
+	Page                uint       `json:"page"`
 }
 
 func NewGetAllRefundQuery(c *gin.Context) *GetAllRefundQuery {
 	var query GetAllRefundQuery
 
 	searchInvoice := c.Query("search-invoice")
+	filterGroupedStatus := strings.ToLower(c.Query("filter-grouped-status"))
 	filterStatus := strings.ToLower(c.Query("filter-status"))
 	filterStartDate := c.Query("filter-start-date")
 	filterEndDate := c.Query("filter-end-date")
@@ -85,6 +87,7 @@ func NewGetAllRefundQuery(c *gin.Context) *GetAllRefundQuery {
 	}
 
 	query.SearchInvoice = searchInvoice
+	query.FilterGroupedStatus = filterGroupedStatus
 	query.FilterStatus = filterStatus
 
 	if filterStartDate != "" && filterEndDate != "" {
