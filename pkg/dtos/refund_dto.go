@@ -8,6 +8,7 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -216,5 +217,33 @@ func NewUpdateRefundResponse(source *models.Refund) *UpdateRefundResponse {
 		RefundRequestDatetime: source.RefundRequestDatetime,
 		Status:                source.Status,
 		RejectedDatetime:      source.RejectedDatetime,
+	}
+}
+
+type CalculateRefundDetailsQuery struct {
+	Quantity uint `json:"quantity"`
+}
+
+func NewCalculateRefundDetailsQuery(c *gin.Context) *CalculateRefundDetailsQuery {
+	var query CalculateRefundDetailsQuery
+
+	query.Quantity = utils.StringToUint(c.Query("quantity"))
+
+	return &query
+}
+
+type CalculateRefundDetailsResponse struct {
+	OrderDetailID      uuid.UUID `json:"order_detail_id"`
+	AmountUserGet      float64   `json:"amount_user_get"`
+	AmountMerchantLost float64   `json:"amount_merchant_lost"`
+	Quantity           uint      `json:"quantity"`
+}
+
+func NewCalculateRefundDetailsResponse(source *models.RefundDetail) *CalculateRefundDetailsResponse {
+	return &CalculateRefundDetailsResponse{
+		OrderDetailID:      source.OrderDetailID,
+		AmountUserGet:      source.AmountUserGet,
+		AmountMerchantLost: source.AmountMerchantLost,
+		Quantity:           source.Quantity,
 	}
 }

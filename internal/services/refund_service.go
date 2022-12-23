@@ -26,6 +26,7 @@ type RefundService interface {
 	UpdateApproveRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
+	CalculateRefundDetails(orderDetailID uuid.UUID, query *dtos.CalculateRefundDetailsQuery) (interface{}, error)
 }
 
 type refundService struct {
@@ -659,4 +660,16 @@ func (s *refundService) UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUI
 	}
 
 	return updatedRefund, nil
+}
+
+func (s *refundService) CalculateRefundDetails(orderDetailID uuid.UUID, query *dtos.CalculateRefundDetailsQuery) (interface{}, error) {
+	refundDetails, err := s.refundDetailRepository.CalculateRefundDetails(orderDetailID, query.Quantity)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refundDetails.Quantity = query.Quantity
+
+	return dtos.NewCalculateRefundDetailsResponse(refundDetails), err
 }
