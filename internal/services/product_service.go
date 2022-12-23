@@ -442,7 +442,7 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 	for _, c := range request.Couriers {
 		for _, cs := range c.CourierServices {
 			// if is active false then continue to next iteration
-			if !cs.IsActive {
+			if !cs.IsSelected {
 				continue
 			}
 			// get merchant courier service
@@ -865,11 +865,11 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			}
 
 			// if nothing changes then continue to next iteration
-			if vOCS.IsActive == rCS[iVOCS].IsActive {
+			if vOCS.IsSelected == rCS[iVOCS].IsSelected {
 				continue
 			}
 			// if is active change from true to false then delete product courier services
-			if vOCS.IsActive && !rCS[iVOCS].IsActive {
+			if vOCS.IsSelected && !rCS[iVOCS].IsSelected {
 				// append to delete
 				pcsDeletes = append(pcsDeletes, &productInternalDtos.PcsUpdateInfo{
 					Before: &models.ProductCourierService{
@@ -878,7 +878,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 					},
 				})
 			}
-			if !vOCS.IsActive && rCS[iVOCS].IsActive {
+			if !vOCS.IsSelected && rCS[iVOCS].IsSelected {
 				// append to create
 				pcsCreates = append(pcsCreates, &productInternalDtos.PcsUpdateInfo{
 					After: &models.ProductCourierService{
@@ -1158,15 +1158,15 @@ func (s *productService) GetUpdateModelByProductID(productID uint) (*productInte
 			return nil, err
 		}
 
-		csIsActive := false
+		csIsSelected := false
 		for _, cs := range courierServices {
-			if cs.IsActive {
-				csIsActive = true
+			if cs.IsSelected {
+				csIsSelected = true
 			}
 		}
 
 		productModel.Couriers[iC].CourierServices = courierServices
-		productModel.Couriers[iC].IsActive = csIsActive
+		productModel.Couriers[iC].IsSelected = csIsSelected
 	}
 
 	return productModel, nil
