@@ -142,6 +142,7 @@ func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductU
 		Select(`
 			c.id AS id,
 			c.code AS code,
+			c.logo_url AS logo_url,
 			c.name AS name
 		`).
 		Joins("JOIN courier_services cs ON  mcs.courier_service_id = cs.id ").

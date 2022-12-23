@@ -140,6 +140,7 @@ type Courier struct {
 	ID              uint              `json:"id"`
 	Code            string            `json:"code"`
 	Name            string            `json:"name"`
+	LogoURL         string            `json:"logo_url"`
 	IsActive        bool              `json:"is_active" gorm:"-"`
 	CourierServices []*CourierService `json:"courier_services" gorm:"-"`
 }
