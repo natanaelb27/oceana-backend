@@ -82,7 +82,7 @@ func (r *productCourierServiceRepository) GetAllCourierAndCourierServiceFromProd
 		Joins("JOIN courier_services cs ON cs.id = mcs.courier_service_id").
 		Joins("JOIN couriers c ON c.id = cs.courier_id").
 		Where("pcs.product_id IN (?)", ids).
-		Group("courier_service_id, cs.courier_id, cs.code")
+		Group("mcs.courier_service_id, cs.courier_id, cs.code")
 	queryResult := r.db.
 		Select(`
 			c.code AS code,
