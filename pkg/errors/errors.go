@@ -131,6 +131,7 @@ var (
 	ErrRefundStatusIsNotOngoing                                   = errors.New("refund status is not ongoing")
 	ErrFileSize                                                   = errors.New("file size is larger than permitted")
 	ErrRefundStatusIsNotApproved                                  = errors.New("refund status is not approved")
+	ErrOrderFundsAlreadyClaimed                                   = errors.New("order funds have been claimed")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -338,7 +339,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrRefundStatusIsNotOngoing) ||
 		errors.Is(err, ErrFileSize) ||
 		errors.Is(err, ErrProductStatusInactive) ||
-		errors.Is(err, ErrRefundStatusIsNotApproved) {
+		errors.Is(err, ErrRefundStatusIsNotApproved) ||
+		errors.Is(err, ErrOrderFundsAlreadyClaimed) {
 		return http.StatusUnprocessableEntity
 	}
 
