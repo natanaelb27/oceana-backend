@@ -7,7 +7,7 @@ import (
 )
 
 func refund(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {
-	path := "/refund"
+	path := "/refunds"
 	privateRoute := private.Group(path)
 	{
 		privateRoute.GET("/:refund-id", func(c *gin.Context) { middlewares.Role(c, "111") }, h.GetDetailsByID)
