@@ -19,8 +19,8 @@ type OrderDetailRefund struct {
 }
 
 type CreateRefundRequest struct {
-	OrderDetail []*OrderDetailRefund  `json:"order_detail" binding:"required"`
-	Reason      string                `json:"reason" binding:"required"`
+	OrderDetail []*OrderDetailRefund  `form:"order_detail" json:"order_detail" binding:"required"`
+	Reason      string                `form:"reason" json:"reason" binding:"required"`
 	Photo1      *multipart.FileHeader `form:"photo_1"`
 	Photo2      *multipart.FileHeader `form:"photo_2"`
 	Photo3      *multipart.FileHeader `form:"photo_3"`

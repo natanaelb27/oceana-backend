@@ -22,7 +22,7 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 	}
 
 	var request *dtos.CreateRefundRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
+	if err := c.ShouldBind(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
