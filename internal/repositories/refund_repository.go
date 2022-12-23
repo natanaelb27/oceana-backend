@@ -109,12 +109,14 @@ func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externa
 		result.Where("orders.invoice_number = ?", query.SearchInvoice)
 	}
 
-	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
-		if query.FilterStatus == constants.RefundStatusApproved {
-			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
-		} else {
-			result.Where("refunds.status = ?", query.FilterStatus)
+	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
+		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
+			result.Where("refunds.status IN (?, ?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted, constants.RefundStatusRejected)
 		}
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		result.Where("refunds.status = ?", query.FilterStatus)
 	}
 
 	if query.FilterStartDate != nil && query.FilterEndDate != nil {
@@ -239,12 +241,14 @@ func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *exter
 		result.Where("orders.invoice_number = ?", query.SearchInvoice)
 	}
 
-	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
-		if query.FilterStatus == constants.RefundStatusApproved {
-			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
-		} else {
-			result.Where("refunds.status = ?", query.FilterStatus)
+	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
+		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
+			result.Where("refunds.status IN (?, ?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted, constants.RefundStatusRejected)
 		}
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		result.Where("refunds.status = ?", query.FilterStatus)
 	}
 
 	if query.FilterStartDate != nil && query.FilterEndDate != nil {
@@ -311,12 +315,14 @@ func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, 
 		result.Where("orders.invoice_number = ?", query.SearchInvoice)
 	}
 
-	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
-		if query.FilterStatus == constants.RefundStatusApproved {
-			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
-		} else {
-			result.Where("refunds.status = ?", query.FilterStatus)
+	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
+		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
+			result.Where("refunds.status IN (?, ?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted, constants.RefundStatusRejected)
 		}
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		result.Where("refunds.status = ?", query.FilterStatus)
 	}
 
 	if query.FilterStartDate != nil && query.FilterEndDate != nil {
