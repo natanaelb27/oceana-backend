@@ -106,7 +106,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 
 	var refundDetailList []*models.RefundDetail
 
-	for _, rd := range request.OrderDetail {
+	for _, rd := range request.OrderDetailRefund {
 		orderDetail, err := s.orderDetailRepository.GetByID(rd.OrderDetailID)
 
 		if err != nil {

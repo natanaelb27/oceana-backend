@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -23,6 +25,14 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 
 	var request *dtos.CreateRefundRequest
 	if err := c.ShouldBind(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	orderDetailRefund := []*dtos.OrderDetailRefund{}
+
+	err = json.Unmarshal([]byte(request.OrderDetailForm), &orderDetailRefund)
+	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
