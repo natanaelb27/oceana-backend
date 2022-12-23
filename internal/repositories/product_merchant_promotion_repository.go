@@ -125,7 +125,7 @@ func (pmp *productMerchantPromotionRepository) GetProductDetailsByMerchantPromot
 		`).
 		Group("product_items.product_id")
 
-	result := pmp.db.Debug().Model(&models.ProductMerchantPromotion{}).
+	result := pmp.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
 			product_merchant_promotions.product_id AS product_id,
 			products.name AS product_name,

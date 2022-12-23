@@ -68,7 +68,7 @@ func (r *marketplaceVoucherRepository) Create(newModel *models.MarketplaceVouche
 }
 
 func (r *marketplaceVoucherRepository) GetAllByActive() (model []*models.MarketplaceVoucher, err error) {
-	queryResult := r.db.Debug().
+	queryResult := r.db.
 		Where("NOW()::timestamp BETWEEN start_datetime::timestamp AND end_datetime::timestamp").
 		Find(&model)
 	if queryResult.Error != nil && queryResult.Error != e.ErrDataNotFound {

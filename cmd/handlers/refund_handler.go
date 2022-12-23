@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -22,7 +24,15 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 	}
 
 	var request *dtos.CreateRefundRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
+	if err := c.ShouldBind(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	orderDetailRefund := []*dtos.OrderDetailRefund{}
+
+	err = json.Unmarshal([]byte(request.OrderDetailRefundForm), &orderDetailRefund)
+	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
@@ -136,7 +146,7 @@ func (h *Handler) UpdateApproveRefund(c *gin.Context) {
 		return
 	}
 
-	responseData := dtos.NewApproveRefundResponse(result)
+	responseData := dtos.NewUpdateRefundResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
 }
@@ -161,7 +171,32 @@ func (h *Handler) UpdateRejectRefund(c *gin.Context) {
 		return
 	}
 
-	responseData := dtos.NewApproveRefundResponse(result)
+	responseData := dtos.NewUpdateRefundResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) UpdateCompleteRefund(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	refundID, err := uuid.Parse(c.Param("refund-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	result, err := h.refundService.UpdateCompleteRefund(refundID, id)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewUpdateRefundResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
 }

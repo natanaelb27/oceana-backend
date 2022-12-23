@@ -31,7 +31,7 @@ type RefundDetails struct {
 	RefundStatus            string         `json:"refund_status"`
 	Images                  pq.StringArray `json:"images" gorm:"type:text[]"`
 	Videos                  pq.StringArray `json:"videos" gorm:"type:text[]"`
-	RefundItems             []*RefundItems `json:"refund_items"`
+	RefundItems             []*RefundItems `json:"refund_items" gorm:"-"`
 	TotalUserRefundAmount   float64        `json:"total_user_refund_amount"`
 	TotalMerchantLostAmount float64        `json:"total_merchant_lost_amount"`
 }

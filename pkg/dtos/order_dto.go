@@ -222,14 +222,32 @@ func NewOrderProcessDeliveryResponse(source *models.Order) *OrderProcessDelivery
 	}
 }
 
-type OrderProcessOrderResponse struct {
-	ID     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
+type UpdateOrderResponse struct {
+	ID                      uuid.UUID `json:"id"`
+	InvoiceNumber           string    `json:"invoice_number"`
+	TransactionID           uuid.UUID `json:"transaction_id"`
+	MerchantID              uint      `json:"merchant_id"`
+	AddressSnapshotID       uint      `json:"address_snapshot_id"`
+	CourierServiceID        uint      `json:"courier_service_id"`
+	TotalPrice              float64   `json:"total_price"`
+	TotalPriceAfterDiscount float64   `json:"total_price_after_discount"`
+	ShippingFee             uint      `json:"shipping_fee"`
+	Status                  string    `json:"status"`
+	ClaimStatus             bool      `json:"claim_status"`
 }
 
-func NewOrderProcessOrderResponse(source *models.Order) *OrderProcessOrderResponse {
-	return &OrderProcessOrderResponse{
-		ID:     source.ID,
-		Status: source.Status,
+func NewUpdateOrderResponse(source *models.Order) *UpdateOrderResponse {
+	return &UpdateOrderResponse{
+		ID:                      source.ID,
+		InvoiceNumber:           source.InvoiceNumber,
+		TransactionID:           source.TransactionID,
+		MerchantID:              source.MerchantID,
+		AddressSnapshotID:       source.AddressSnapshotID,
+		CourierServiceID:        source.CourierServiceID,
+		TotalPrice:              source.TotalPrice,
+		TotalPriceAfterDiscount: source.TotalPriceAfterDiscount,
+		ShippingFee:             source.ShippingFee,
+		Status:                  source.Status,
+		ClaimStatus:             source.ClaimStatus,
 	}
 }
