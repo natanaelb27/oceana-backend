@@ -24,6 +24,22 @@ func (h *Handler) LogisticGet(c *gin.Context) {
 	utils.ResponseSuccess(c, results, nil)
 }
 
+func (h *Handler) LogisticGetSelected(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	results, err := h.logisticService.GetByMerchantIdSelected(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, nil)
+}
+
 func (h *Handler) LogisticUpdate(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {

@@ -11,6 +11,7 @@ import (
 type LogisticService interface {
 	GetByMerchantId(id uuid.UUID) (*internalLogisticDtos.Logistic, error)
 	Update(id uuid.UUID, request *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error)
+	GetByMerchantIdSelected(userID uuid.UUID) (*internalLogisticDtos.Logistic, error)
 }
 
 type logisticService struct {
@@ -92,6 +93,34 @@ func (s *logisticService) GetByMerchantId(userID uuid.UUID) (*internalLogisticDt
 	}
 
 	return logistics, nil
+}
+
+func (s *logisticService) GetByMerchantIdSelected(userID uuid.UUID) (*internalLogisticDtos.Logistic, error) {
+	logistics, err := s.GetByMerchantId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	newCouriers := make([]*internalLogisticDtos.Courier, 0)
+
+	for _, vCourier := range logistics.Courier {
+		newCourierServices := make([]*internalLogisticDtos.CourierService, 0)
+		for _, v := range vCourier.CourierService {
+			if v.IsSelected {
+				newCourierServices = append(newCourierServices, v)
+			}
+		}
+		vCourier.CourierService = newCourierServices
+		newCouriers = append(newCouriers, vCourier)
+	}
+
+	newLogistics := &internalLogisticDtos.Logistic{
+		PreorderDay:  logistics.PreorderDay,
+		IsPrintLabel: logistics.IsPrintLabel,
+		Courier:      newCouriers,
+	}
+
+	return newLogistics, nil
 }
 
 func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error) {

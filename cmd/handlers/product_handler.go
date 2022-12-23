@@ -156,21 +156,20 @@ func (h *Handler) FavoriteProduct(c *gin.Context) {
 }
 
 func (h *Handler) ProductCreate(c *gin.Context) {
-	merchantIDInt, err := strconv.Atoi(c.Param("merchant_id"))
-	if err != nil {
-		utils.ResponseError(c, e.ErrInvalidParams)
-		return
-	}
-
 	var request *product_dtos.ProductModel
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	request.MerchantID = uint(merchantIDInt)
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
 
-	response, err := h.productService.CreateProduct(request)
+	trx := c.MustGet("tx").(*gorm.DB)
+	response, err := h.productService.WithTx(trx).CreateProduct(request, id)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -217,14 +216,6 @@ func (h *Handler) ProductUpdate(c *gin.Context) {
 	request.ID = uint(productIDInt)
 
 	trx := c.MustGet("tx").(*gorm.DB)
-
-	// _, err = h.productService.WithTx(trx).UpdateProductUsingModel(userId, request)
-	// if err != nil {
-	// 	utils.ResponseError(c, err)
-	// 	return
-	// }
-
-	// utils.ResponseError(c, e.ErrBlockedWallet)
 	response, err := h.productService.WithTx(trx).UpdateProductUsingModel(userId, request)
 	if err != nil {
 		utils.ResponseError(c, err)
