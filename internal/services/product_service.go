@@ -25,7 +25,7 @@ type ProductService interface {
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
 	FavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
-	CreateProduct(request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
+	CreateProduct(request *productInternalDtos.ProductModel, userID uuid.UUID) (*productInternalDtos.ProductModel, error)
 	UpdateProductUsingModel(userID uuid.UUID, request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error)
 	GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error)
 	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
@@ -311,7 +311,19 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 	return dtos.NewGetProductFavoriteResponse(updatedFavoriteProduct), nil
 }
 
-func (s *productService) CreateProduct(request *productInternalDtos.ProductModel) (*productInternalDtos.ProductModel, error) {
+func (s *productService) CreateProduct(request *productInternalDtos.ProductModel, userID uuid.UUID) (*productInternalDtos.ProductModel, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	request.MerchantID = merchant.ID
+
+	if request.Status != constants.ProductStatusActive &&
+		request.Status != constants.ProductStatusInactive {
+		request.Status = constants.ProductStatusInactive
+	}
+
 	// create product
 	// check if category exist
 	product := &models.Product{
@@ -454,7 +466,7 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 			}
 		}
 	}
-
+	fmt.Println("S")
 	// get created product model
 	productModel, err := s.GetUpdateModelByProductID(createdProduct.ID)
 	if err != nil {
@@ -494,7 +506,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// check if product status not its enum
 	if request.Status != constants.ProductStatusActive &&
 		request.Status != constants.ProductStatusInactive {
-		return nil, e.ErrInvalidModel
+		return nil, e.ErrInvalidModelStatus
 	}
 	// check if product condition not its enum
 	if request.Condition != constants.ProductConditionNew &&
@@ -985,7 +997,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		fmt.Printf("\tid: %v\n\tprice: %v\n\tstock quantity: %v\n\tsku: %v\n", v.Before.ID, v.After.Price, v.After.StockQuantity, v.After.SKU)
 		newPiMap := map[string]any{
 			"price":          v.After.Price,
-			"stock_quantity": v.After.Price,
+			"stock_quantity": v.After.StockQuantity,
 			"sku":            v.After.SKU,
 		}
 		// to allow updates stock and SKU to 0 use maps for updates
@@ -1056,7 +1068,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		for iVI, vVI := range vPI.VariantIndex {
 			// validate if value is less than request variant length (variant type length)
 			// if request variant index is more than variant type length then err
-			if int(vVI) >= len(variantsMap) {
+			if int(vVI) > len(variantsMap) {
 				return nil, e.ErrInvalidModel
 			}
 			// append choosen variant indexes
