@@ -19,15 +19,15 @@ type OrderDetailRefund struct {
 }
 
 type CreateRefundRequest struct {
-	OrderDetailRefund []*OrderDetailRefund  `json:"order_detail_refund"`
-	OrderDetailForm   string                `form:"order_detail_form" json:"order_detail_form" binding:"required"`
-	Reason            string                `form:"reason" json:"reason" binding:"required"`
-	Photo1            *multipart.FileHeader `form:"photo_1"`
-	Photo2            *multipart.FileHeader `form:"photo_2"`
-	Photo3            *multipart.FileHeader `form:"photo_3"`
-	Photo4            *multipart.FileHeader `form:"photo_4"`
-	Photo5            *multipart.FileHeader `form:"photo_5"`
-	Video             *multipart.FileHeader `form:"video"`
+	OrderDetailRefund     []*OrderDetailRefund  `json:"order_detail_refund"`
+	OrderDetailRefundForm string                `form:"order_detail_refund_form" json:"order_detail_refund_form" binding:"required"`
+	Reason                string                `form:"reason" json:"reason" binding:"required"`
+	Photo1                *multipart.FileHeader `form:"photo_1"`
+	Photo2                *multipart.FileHeader `form:"photo_2"`
+	Photo3                *multipart.FileHeader `form:"photo_3"`
+	Photo4                *multipart.FileHeader `form:"photo_4"`
+	Photo5                *multipart.FileHeader `form:"photo_5"`
+	Video                 *multipart.FileHeader `form:"video"`
 }
 
 type CreateRefundResponse struct {

@@ -31,7 +31,7 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 
 	orderDetailRefund := []*dtos.OrderDetailRefund{}
 
-	err = json.Unmarshal([]byte(request.OrderDetailForm), &orderDetailRefund)
+	err = json.Unmarshal([]byte(request.OrderDetailRefundForm), &orderDetailRefund)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
