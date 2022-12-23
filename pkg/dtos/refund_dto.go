@@ -19,14 +19,15 @@ type OrderDetailRefund struct {
 }
 
 type CreateRefundRequest struct {
-	OrderDetail []*OrderDetailRefund  `json:"order_detail" binding:"required"`
-	Reason      string                `json:"reason" binding:"required"`
-	Photo1      *multipart.FileHeader `form:"photo_1"`
-	Photo2      *multipart.FileHeader `form:"photo_2"`
-	Photo3      *multipart.FileHeader `form:"photo_3"`
-	Photo4      *multipart.FileHeader `form:"photo_4"`
-	Photo5      *multipart.FileHeader `form:"photo_5"`
-	Video       *multipart.FileHeader `form:"video"`
+	OrderDetailRefund []*OrderDetailRefund  `json:"order_detail_refund"`
+	OrderDetailForm   string                `form:"order_detail_form" json:"order_detail_form" binding:"required"`
+	Reason            string                `form:"reason" json:"reason" binding:"required"`
+	Photo1            *multipart.FileHeader `form:"photo_1"`
+	Photo2            *multipart.FileHeader `form:"photo_2"`
+	Photo3            *multipart.FileHeader `form:"photo_3"`
+	Photo4            *multipart.FileHeader `form:"photo_4"`
+	Photo5            *multipart.FileHeader `form:"photo_5"`
+	Video             *multipart.FileHeader `form:"video"`
 }
 
 type CreateRefundResponse struct {
@@ -195,7 +196,7 @@ func NewGetRefundDetailsResponse(source *dtos.RefundDetails) (target *GetRefundD
 	return
 }
 
-type ApproveRefundResponse struct {
+type UpdateRefundResponse struct {
 	ID                    uuid.UUID  `json:"id"`
 	OrderID               uuid.UUID  `json:"order_id"`
 	Reason                string     `json:"reason"`
@@ -204,8 +205,8 @@ type ApproveRefundResponse struct {
 	RejectedDatetime      *time.Time `json:"rejected_datetime"`
 }
 
-func NewApproveRefundResponse(source *models.Refund) *ApproveRefundResponse {
-	return &ApproveRefundResponse{
+func NewUpdateRefundResponse(source *models.Refund) *UpdateRefundResponse {
+	return &UpdateRefundResponse{
 		ID:                    source.ID,
 		OrderID:               source.OrderID,
 		Reason:                source.Reason,

@@ -25,6 +25,7 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.PATCH("/orders/:order-id/process-delivery", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessDelivery)
 		privateRoute.PATCH("/orders/:order-id/process-order", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
 		privateRoute.PATCH("/orders/:order-id/cancel-order", func(c *gin.Context) { middlewares.Role(c, "010") }, h.SellerCancelOrder)
+		privateRoute.PATCH("/orders/:order-id/claim-funds", func(c *gin.Context) { middlewares.Role(c, "010") }, h.SellerClaimFunds)
 		privateRoute.GET("/transaction-history", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderListGetAllByMerchantID)
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantOrderListDetailsGetByID)
 
@@ -49,6 +50,6 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.GET("/logistics/selected", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGetSelected)
 
 		// refunds
-		privateRoute.GET("/refund", func(c *gin.Context) { middlewares.Role(c, "010") }, h.GetAllRefundDetailsByMerchant)
+		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "010") }, h.GetAllRefundDetailsByMerchant)
 	}
 }

@@ -22,6 +22,7 @@ type RefundRepository interface {
 	GetAllDetails(query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
 	Update(id uuid.UUID, newModel *models.Refund) (model *models.Refund, err error)
 	GetByID(id uuid.UUID) (model *models.Refund, err error)
+	GetDetailsByOrderIDAndStatus(orderID uuid.UUID, status string) (refundDetails []*dtos.RefundDetails, err error)
 }
 
 type refundRepository struct {
@@ -151,7 +152,7 @@ func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetai
 			`).
 		Group("refund_id")
 
-	result := r.db.Debug().Model(&models.Refund{}).
+	result := r.db.Model(&models.Refund{}).
 		Select(`
 			refunds.id AS refund_id,
 			refunds.order_id AS order_id,
@@ -367,6 +368,59 @@ func (r *refundRepository) GetByID(id uuid.UUID) (model *models.Refund, err erro
 	}
 
 	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *refundRepository) GetDetailsByOrderIDAndStatus(orderID uuid.UUID, status string) (refundDetails []*dtos.RefundDetails, err error) {
+	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
+		Select(`
+				refund_id AS refund_id,
+				type AS type,
+				ARRAY_AGG(media_url) AS media_url
+			`).
+		Group("refund_id, type")
+
+	subQueryRefundDetails := r.db.Model(&models.RefundDetail{}).
+		Select(`
+					refund_id AS refund_id,
+					SUM(amount_user_get) AS total_user_refund_amount,
+					SUM(amount_merchant_lost) AS total_merchant_lost_amount
+				`).
+		Group("refund_id")
+
+	result := r.db.Model(&models.Refund{}).
+		Select(`
+				refunds.id AS refund_id,
+				refunds.order_id AS order_id,
+				orders.invoice_number AS invoice_number,
+				orders.merchant_id AS merchant_id,
+				merchants.name AS shop_name,
+				transactions.user_id AS user_id,
+				users.full_name AS user_full_name,
+				refunds.refund_request_datetime AS refund_request_datetime,
+				refunds.rejected_datetime AS rejected_datetime,
+				refunds.status AS refund_status,
+				tbl_refund_images.media_url AS images,
+				tbl_refund_videos.media_url AS videos,
+				tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
+				tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+			`).
+		Joins("JOIN orders ON refunds.order_id = orders.id").
+		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
+		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
+		Joins("JOIN users ON transactions.user_id = users.id").
+		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
+		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
+		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Where("refunds.status = ?", status).
+		Where("refunds.order_id = ?", orderID).
+		Find(&refundDetails)
+
+	if result.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
 	}

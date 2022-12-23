@@ -26,7 +26,7 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderListDetailsGetByID)
 		privateRoute.PATCH("/orders/:order-id/complete-order", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderCompleteOrder)
 		privateRoute.GET("/pending-payment", func(c *gin.Context) { middlewares.Role(c, "001") }, h.PendingPaymentGetAllByUser)
-		privateRoute.POST("/refund/:order-id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CreateRefund)
-		privateRoute.GET("/refund", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllRefundDetailsByBuyer)
+		privateRoute.POST("/refunds/:order-id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CreateRefund)
+		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllRefundDetailsByBuyer)
 	}
 }

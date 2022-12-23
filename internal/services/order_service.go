@@ -30,6 +30,7 @@ type OrderService interface {
 	CronAutoCompleteDelivered() error
 	SellerCancelOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 	UpdateCompleteOrder(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
+	SellerClaimFunds(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error)
 }
 
 type orderService struct {
@@ -613,7 +614,6 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 			continue
 		}
 
-
 		_, err = s.orderRepository.Update(v.OrderID, &models.Order{
 			Status: constants.CompletedStatus,
 		})
@@ -740,6 +740,71 @@ func (s *orderService) UpdateCompleteOrder(orderID uuid.UUID, userID uuid.UUID) 
 	}
 
 	_, err = s.orderTrackingRepository.Create(orderTracking)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedOrder, nil
+}
+
+func (s *orderService) SellerClaimFunds(orderID uuid.UUID, userID uuid.UUID) (*models.Order, error) {
+	merchant, err := s.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := s.orderRepository.GetByID(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if order.MerchantID != merchant.ID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	if order.Status != constants.CompletedStatus {
+		return nil, e.ErrStatusIsNotCompleted
+	}
+
+	if order.ClaimStatus {
+		return nil, e.ErrOrderFundsAlreadyClaimed
+	}
+
+	order.ClaimStatus = true
+
+	updatedOrder, err := s.orderRepository.Update(orderID, order)
+
+	if err != nil {
+		return nil, err
+	}
+
+	wallet, err := s.walletRepository.GetByUserId(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	completedRefundDetails, err := s.refundRepository.GetDetailsByOrderIDAndStatus(orderID, constants.RefundStatusCompleted)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var totalRefundMerchantLost float64 = 0
+	for _, refund := range completedRefundDetails {
+		totalRefundMerchantLost += refund.TotalMerchantLostAmount
+	}
+
+	totalOrderFunds := order.TotalPriceAfterDiscount - totalRefundMerchantLost
+
+	newWallet := &models.Wallet{
+		Balance: wallet.Balance + uint(totalOrderFunds),
+	}
+
+	_, err = s.walletRepository.Update(wallet.ID, newWallet)
 
 	if err != nil {
 		return nil, err

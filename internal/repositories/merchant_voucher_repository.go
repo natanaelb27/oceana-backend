@@ -270,7 +270,7 @@ func (r *merchantVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query *ex
 }
 
 func (r *merchantVoucherRepository) ValidateMerchantVoucherByBuyer(merchantVoucherID uint, userID uuid.UUID) (resultMerchantVoucherID *uint, err error) {
-	queryResult := r.db.Debug().Model(&models.Order{}).
+	queryResult := r.db.Model(&models.Order{}).
 		Select(`
 			order_merchant_vouchers.merchant_voucher_id
 		`).

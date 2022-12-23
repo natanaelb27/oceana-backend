@@ -105,7 +105,7 @@ func (r *refundDetailRepository) GetDetailsByRefundID(refundID uuid.UUID) ([]*dt
 		Where("product_media_snapshots.type = ?", product_media_constants.TypeImage).
 		Limit(1)
 
-	result := r.db.Debug().Model(&models.RefundDetail{}).
+	result := r.db.Model(&models.RefundDetail{}).
 		Select(`
 			refund_details.id AS refund_detail_id,
 			refund_details.order_detail_id AS order_detail_id,
