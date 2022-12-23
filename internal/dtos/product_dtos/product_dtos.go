@@ -133,7 +133,7 @@ type CourierService struct {
 	ID          uint   `json:"id"`
 	Code        string `json:"code"`
 	Description string `json:"name"`
-	IsActive    bool   `json:"is_active"`
+	IsSelected  bool   `json:"is_selected"`
 }
 
 type Courier struct {
@@ -141,7 +141,7 @@ type Courier struct {
 	Code            string            `json:"code"`
 	Name            string            `json:"name"`
 	LogoURL         string            `json:"logo_url"`
-	IsActive        bool              `json:"is_active" gorm:"-"`
+	IsSelected      bool              `json:"is_selected" gorm:"-"`
 	CourierServices []*CourierService `json:"courier_services" gorm:"-"`
 }
 

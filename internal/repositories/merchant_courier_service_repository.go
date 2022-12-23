@@ -163,7 +163,7 @@ func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductU
 }
 
 func (r *merchantCourierServiceRepository) GetAllCourierServicesForProductUpdate(courierID uint, merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error) {
-	result := r.db.
+	result := r.db.Debug().
 		Table("merchant_courier_services mcs").
 		Select(`
 			cs.id AS id,
@@ -175,10 +175,11 @@ func (r *merchantCourierServiceRepository) GetAllCourierServicesForProductUpdate
 						THEN TRUE
 					ELSE FALSE
 				END
-			) AS is_active
+			) AS is_selected
 		`).
 		Joins("JOIN courier_services cs ON  mcs.courier_service_id = cs.id ").
 		Joins("LEFT JOIN product_courier_services pcs ON mcs.id = pcs.merchant_courier_service_id AND (?) = pcs.product_id", productID).
+		Where("mcs.is_active = TRUE").
 		Where("cs.courier_id = ?", courierID).
 		Where("merchant_id = ?", merchantID).
 		Find(&model)
