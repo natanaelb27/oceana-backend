@@ -46,6 +46,8 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		// logistic
 		privateRoute.GET("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGet)
 		privateRoute.PATCH("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticUpdate)
+		privateRoute.GET("/logistics/selected", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGetSelected)
+
 		// refunds
 		privateRoute.GET("/refund", func(c *gin.Context) { middlewares.Role(c, "010") }, h.GetAllRefundDetailsByMerchant)
 	}

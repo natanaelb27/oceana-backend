@@ -182,7 +182,7 @@ type ProductModel struct {
 	// gorm:"-" tells gorm ignore this field when write and read with struct
 	ProductItems []*ProductItem `json:"product_items" gorm:"-"`
 	Variants     []*Variants    `json:"variants" gorm:"-"`
-	Couriers     []*Courier     `json:"couriers" binding:"min=1" gorm:"-"`
+	Couriers     []*Courier     `json:"couriers" gorm:"-"`
 }
 
 type PmUpdateInfo struct {

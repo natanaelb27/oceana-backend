@@ -1152,8 +1152,8 @@ func (s *productService) GetUpdateModelByProductID(productID uint) (*productInte
 	productModel.Couriers = couriers
 
 	//  courier > courier_services
-	for iC := range couriers {
-		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesByMerchantIDProductIDForProductUpdate(productModel.MerchantID, productModel.ID)
+	for iC, vC := range couriers {
+		courierServices, err := s.merchantCourierServiceRepository.GetAllCourierServicesForProductUpdate(vC.ID, productModel.MerchantID, productModel.ID)
 		if err != nil && err != e.ErrDataNotFound {
 			return nil, err
 		}
