@@ -37,6 +37,8 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 		return
 	}
 
+	request.OrderDetailRefund = orderDetailRefund
+
 	results, err := h.refundService.Create(id, orderID, request)
 	if err != nil {
 		utils.ResponseError(c, err)

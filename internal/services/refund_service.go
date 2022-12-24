@@ -80,6 +80,18 @@ func NewRefundService(c *RefundServiceConfig) RefundService {
 }
 
 func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dtos.CreateRefundRequest) (*dtos.CreateRefundResponse, error) {
+	for _, v := range request.OrderDetailRefund {
+		orderDetail, err := s.orderDetailRepository.GetByID(v.OrderDetailID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if orderDetail.OrderID != orderID {
+			return nil, e.ErrOrderDoesNotHaveThatOrderDetail
+		}
+	}
+
 	order, err := s.orderRepository.OrderListDetailsGetByID(orderID)
 
 	if err != nil {
@@ -90,8 +102,28 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		return nil, e.ErrForbiddenOrder
 	}
 
-	if order.OrderStatus != constants.DeliveredStatus {
+	if order.OrderStatus != constants.DeliveredStatus && order.OrderStatus != constants.ComplainedStatus {
 		return nil, e.ErrStatusIsNotDelivered
+	}
+
+	existingRefunds, err := s.refundRepository.GetByOrderID(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range existingRefunds {
+		if v.Status == constants.RefundStatusApproved {
+			return nil, e.ErrCreateRefundIsOngoing
+		}
+
+		if v.Status == constants.RefundStatusApproved || v.Status == constants.RefundStatusApprovedBySystem {
+			return nil, e.ErrCreateRefundIsApproved
+		}
+
+		if v.Status == constants.RefundStatusCompleted {
+			return nil, e.ErrCreateRefundIsCompleted
+		}
 	}
 
 	refund, err := s.refundRepository.Create(&models.Refund{
