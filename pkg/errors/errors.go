@@ -136,6 +136,7 @@ var (
 	ErrCreateRefundIsOngoing                                      = errors.New("cannot create new refund while refund is in progress")
 	ErrCreateRefundIsApproved                                     = errors.New("cannot create new refund, refund is already approved")
 	ErrCreateRefundIsCompleted                                    = errors.New("cannot create new refund, refund is already completed")
+	ErrPromotionNotUpcoming                                       = errors.New("promotion is not upcoming")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -348,7 +349,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrOrderFundsAlreadyClaimed) ||
 		errors.Is(err, ErrCreateRefundIsOngoing) ||
 		errors.Is(err, ErrCreateRefundIsApproved) ||
-		errors.Is(err, ErrCreateRefundIsCompleted) {
+		errors.Is(err, ErrCreateRefundIsCompleted) ||
+		errors.Is(err, ErrPromotionNotUpcoming) {
 		return http.StatusUnprocessableEntity
 	}
 
