@@ -225,6 +225,7 @@ func (s *orderService) OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UU
 
 func (s *orderService) OrderListDetailsGetByMerchantID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error) {
 	merchant, err := s.merchantRepository.GetByUserID(userID)
+
 	if err != nil {
 		return nil, err
 	}
