@@ -29,6 +29,7 @@ type RefundDetails struct {
 	RefundRequestDatetime   time.Time      `json:"refund_request_datetime"`
 	RejectedDatetime        *time.Time     `json:"rejected_datetime"`
 	RefundStatus            string         `json:"refund_status"`
+	RefundReason            string         `json:"refund_reason"`
 	Images                  pq.StringArray `json:"images" gorm:"type:text[]"`
 	Videos                  pq.StringArray `json:"videos" gorm:"type:text[]"`
 	RefundItems             []*RefundItems `json:"refund_items" gorm:"-"`

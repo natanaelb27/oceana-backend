@@ -147,6 +147,7 @@ type GetRefundDetailsResponse struct {
 	RefundRequestDatetime   time.Time           `json:"refund_request_datetime"`
 	RejectedDatetime        *time.Time          `json:"rejected_datetime"`
 	RefundStatus            string              `json:"refund_status"`
+	RefundReason            string              `json:"refund_reason"`
 	Images                  pq.StringArray      `json:"images" gorm:"type:text[]"`
 	Videos                  pq.StringArray      `json:"videos" gorm:"type:text[]"`
 	RefundItems             []*dtos.RefundItems `json:"refund_items"`
@@ -167,6 +168,7 @@ func NewGetAllRefundDetailsResponse(source []*dtos.RefundDetails) (target []*Get
 			RefundRequestDatetime:   result.RefundRequestDatetime,
 			RejectedDatetime:        result.RejectedDatetime,
 			RefundStatus:            result.RefundStatus,
+			RefundReason:            result.RefundReason,
 			Images:                  result.Images,
 			Videos:                  result.Videos,
 			RefundItems:             result.RefundItems,
@@ -190,6 +192,7 @@ func NewGetRefundDetailsResponse(source *dtos.RefundDetails) (target *GetRefundD
 		RefundRequestDatetime:   source.RefundRequestDatetime,
 		RejectedDatetime:        source.RejectedDatetime,
 		RefundStatus:            source.RefundStatus,
+		RefundReason:            source.RefundReason,
 		Images:                  source.Images,
 		Videos:                  source.Videos,
 		RefundItems:             source.RefundItems,

@@ -92,6 +92,7 @@ func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externa
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
@@ -167,6 +168,7 @@ func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetai
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
@@ -224,6 +226,7 @@ func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *exter
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
@@ -299,6 +302,7 @@ func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, 
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
@@ -411,6 +415,7 @@ func (r *refundRepository) GetDetailsByOrderIDAndStatus(orderID uuid.UUID, statu
 				refunds.refund_request_datetime AS refund_request_datetime,
 				refunds.rejected_datetime AS rejected_datetime,
 				refunds.status AS refund_status,
+				refunds.reason AS refund_reason,
 				tbl_refund_images.media_url AS images,
 				tbl_refund_videos.media_url AS videos,
 				tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
@@ -436,7 +441,7 @@ func (r *refundRepository) GetDetailsByOrderIDAndStatus(orderID uuid.UUID, statu
 }
 
 func (r *refundRepository) GetByOrderID(orderID uuid.UUID) (model []*models.Refund, err error) {
-	
+
 	result := r.db.Model(&models.Refund{}).
 		Where("order_id = ?", orderID).
 		Find(&model)
