@@ -361,6 +361,7 @@ func (s *refundService) GetAllDetailsByBuyer(userID uuid.UUID, query *dtos.GetAl
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 
@@ -391,7 +392,7 @@ func (s *refundService) GetDetailsByID(userID uuid.UUID, refundID uuid.UUID) (*d
 		return nil, err
 	}
 
-	if refundDetails.UserID != userID && merchant.UserID != userID && user.Role != "100" {
+	if refundDetails.UserID != userID && merchant.ID != refundDetails.MerchantID && user.Role != "100" {
 		return nil, e.ErrForbidden
 	}
 
@@ -450,6 +451,7 @@ func (s *refundService) GetAllDetailsByMerchant(userID uuid.UUID, query *dtos.Ge
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 
@@ -508,6 +510,7 @@ func (s *refundService) GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAl
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 

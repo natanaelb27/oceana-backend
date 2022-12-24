@@ -137,22 +137,23 @@ func NewGetAllRefundQuery(c *gin.Context) *GetAllRefundQuery {
 }
 
 type GetRefundDetailsResponse struct {
-	RefundID                uuid.UUID           `json:"refund_id"`
-	OrderID                 uuid.UUID           `json:"order_id"`
-	InvoiceNumber           string              `json:"invoice_number"`
-	MerchantID              uint                `json:"merchant_id"`
-	ShopName                string              `json:"shop_name"`
-	UserID                  uuid.UUID           `json:"user_id"`
-	UserFullName            string              `json:"user_full_name"`
-	RefundRequestDatetime   time.Time           `json:"refund_request_datetime"`
-	RejectedDatetime        *time.Time          `json:"rejected_datetime"`
-	RefundStatus            string              `json:"refund_status"`
-	RefundReason            string              `json:"refund_reason"`
-	Images                  pq.StringArray      `json:"images" gorm:"type:text[]"`
-	Videos                  pq.StringArray      `json:"videos" gorm:"type:text[]"`
-	RefundItems             []*dtos.RefundItems `json:"refund_items"`
-	TotalUserRefundAmount   float64             `json:"total_user_refund_amount"`
-	TotalMerchantLostAmount float64             `json:"total_merchant_lost_amount"`
+	RefundID                                   uuid.UUID           `json:"refund_id"`
+	OrderID                                    uuid.UUID           `json:"order_id"`
+	InvoiceNumber                              string              `json:"invoice_number"`
+	MerchantID                                 uint                `json:"merchant_id"`
+	ShopName                                   string              `json:"shop_name"`
+	UserID                                     uuid.UUID           `json:"user_id"`
+	UserFullName                               string              `json:"user_full_name"`
+	RefundRequestDatetime                      time.Time           `json:"refund_request_datetime"`
+	RejectedDatetime                           *time.Time          `json:"rejected_datetime"`
+	RefundStatus                               string              `json:"refund_status"`
+	RefundReason                               string              `json:"refund_reason"`
+	Images                                     pq.StringArray      `json:"images" gorm:"type:text[]"`
+	Videos                                     pq.StringArray      `json:"videos" gorm:"type:text[]"`
+	RefundItems                                []*dtos.RefundItems `json:"refund_items"`
+	TotalUserRefundAmount                      float64             `json:"total_user_refund_amount"`
+	TotalMerchantLostAmount                    float64             `json:"total_merchant_lost_amount"`
+	RefundSellerConfirmationExpirationDatetime *time.Time          `json:"refund_seller_confirmation_expiration_datetime"`
 }
 
 func NewGetAllRefundDetailsResponse(source []*dtos.RefundDetails) (target []*GetRefundDetailsResponse) {
@@ -174,6 +175,7 @@ func NewGetAllRefundDetailsResponse(source []*dtos.RefundDetails) (target []*Get
 			RefundItems:             result.RefundItems,
 			TotalUserRefundAmount:   result.TotalUserRefundAmount,
 			TotalMerchantLostAmount: result.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: result.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 
@@ -198,6 +200,7 @@ func NewGetRefundDetailsResponse(source *dtos.RefundDetails) (target *GetRefundD
 		RefundItems:             source.RefundItems,
 		TotalUserRefundAmount:   source.TotalUserRefundAmount,
 		TotalMerchantLostAmount: source.TotalMerchantLostAmount,
+		RefundSellerConfirmationExpirationDatetime: source.RefundSellerConfirmationExpirationDatetime,
 	}
 
 	return
