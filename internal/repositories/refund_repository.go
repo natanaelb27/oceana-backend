@@ -23,6 +23,7 @@ type RefundRepository interface {
 	Update(id uuid.UUID, newModel *models.Refund) (model *models.Refund, err error)
 	GetByID(id uuid.UUID) (model *models.Refund, err error)
 	GetDetailsByOrderIDAndStatus(orderID uuid.UUID, status string) (refundDetails []*dtos.RefundDetails, err error)
+	GetByOrderID(orderID uuid.UUID) (model []*models.Refund, err error)
 }
 
 type refundRepository struct {
@@ -425,6 +426,20 @@ func (r *refundRepository) GetDetailsByOrderIDAndStatus(orderID uuid.UUID, statu
 		Where("refunds.status = ?", status).
 		Where("refunds.order_id = ?", orderID).
 		Find(&refundDetails)
+
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *refundRepository) GetByOrderID(orderID uuid.UUID) (model []*models.Refund, err error) {
+	
+	result := r.db.Model(&models.Refund{}).
+		Where("order_id = ?", orderID).
+		Find(&model)
 
 	if result.Error != nil {
 		err = e.ErrDatabaseOperationFailed

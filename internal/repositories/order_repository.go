@@ -66,6 +66,34 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		sellerConfirmationExpirationInterval = 4320
 	}
 
+	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoCompleteOrderRejectedRefundExpirationInterval = 1440
+	}
+
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryRefundRank := r.db.Model(&models.Refund{}).
+		Select(`
+			order_id AS order_id,
+			status AS status,
+			refund_request_datetime AS refund_request_datetime,
+			rejected_datetime AS rejected_datetime,
+			RANK() OVER (PARTITION BY order_id ORDER BY refund_request_datetime DESC) AS refund_rank
+		`)
+
+	subQueryLastRefundStatus := r.db.Table("(?) AS tbl_refund_rank", subQueryRefundRank).
+		Select(`
+			tbl_refund_rank.order_id AS order_id,
+			tbl_refund_rank.status AS status,
+			tbl_refund_rank.refund_request_datetime AS refund_request_datetime,
+			tbl_refund_rank.rejected_datetime AS rejected_datetime
+		`).
+		Where("tbl_refund_rank.refund_rank = 1")
+
 	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
 		Select(`
 			order_details.order_id AS order_id,
@@ -91,20 +119,40 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 				WHEN orders.status = @delivered_status 
 				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
 				ELSE null
-			END AS delivered_expiration_datetime
+			END AS delivered_expiration_datetime,
+			CASE
+				WHEN orders.status = @complained_status 
+				THEN tbl_ongoing_last_refund_status.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime,
+			CASE
+				WHEN orders.status = @complained_status 
+				THEN tbl_rejected_last_refund_status.rejected_datetime + INTERVAL '1 minute' * (@interval_auto_complete_order_rejected_refund_expiration)::INTEGER
+				ELSE null
+			END AS refund_rejected_auto_complete_order_expiration_datetime
 		`,
 			sql.Named("pending_seller_status", constants.PendingSellerStatus),
 			sql.Named("on_process_status", constants.OnProcessStatus),
 			sql.Named("delivered_status", constants.DeliveredStatus),
+			sql.Named("complained_status", constants.ComplainedStatus),
 			sql.Named("interval_seller_confirmation_expiration", sellerConfirmationExpirationInterval),
-			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval)).
+			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+			sql.Named("interval_auto_complete_order_rejected_refund_expiration", autoCompleteOrderRejectedRefundExpirationInterval),
+		).
 		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
 			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
 			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
 			sql.Named("delivered_title", constants.DeliveredTitle)).
-		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
+		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_rejected_last_refund_status ON orders.id = tbl_rejected_last_refund_status.order_id AND tbl_rejected_last_refund_status.status = @refund_rejected_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_rejected_status", constants.RefundStatusRejected)).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_ongoing_last_refund_status ON orders.id = tbl_ongoing_last_refund_status.order_id AND tbl_ongoing_last_refund_status.status = @refund_ongoing_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing))
 
 	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
 		Select(`
@@ -140,7 +188,9 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
-			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
+			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime,
+			tbl_expiration_time.refund_rejected_auto_complete_order_expiration_datetime AS refund_rejected_auto_complete_order_expiration_datetime
 		`, sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
@@ -213,6 +263,34 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		sellerConfirmationExpirationInterval = 4320
 	}
 
+	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoCompleteOrderRejectedRefundExpirationInterval = 1440
+	}
+
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryRefundRank := r.db.Model(&models.Refund{}).
+		Select(`
+			order_id AS order_id,
+			status AS status,
+			refund_request_datetime AS refund_request_datetime,
+			rejected_datetime AS rejected_datetime,
+			RANK() OVER (PARTITION BY order_id ORDER BY refund_request_datetime DESC) AS refund_rank
+		`)
+
+	subQueryLastRefundStatus := r.db.Table("(?) AS tbl_refund_rank", subQueryRefundRank).
+		Select(`
+			tbl_refund_rank.order_id AS order_id,
+			tbl_refund_rank.status AS status,
+			tbl_refund_rank.refund_request_datetime AS refund_request_datetime,
+			tbl_refund_rank.rejected_datetime AS rejected_datetime
+		`).
+		Where("tbl_refund_rank.refund_rank = 1")
+
 	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
 		Select(`
 			order_details.order_id AS order_id,
@@ -238,20 +316,49 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 				WHEN orders.status = @delivered_status 
 				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
 				ELSE null
-			END AS delivered_expiration_datetime
+			END AS delivered_expiration_datetime,
+			CASE
+				WHEN orders.status = @complained_status 
+				THEN tbl_ongoing_last_refund_status.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime,
+			CASE
+				WHEN orders.status = @complained_status 
+				THEN tbl_rejected_last_refund_status.rejected_datetime + INTERVAL '1 minute' * (@interval_auto_complete_order_rejected_refund_expiration)::INTEGER
+				ELSE null
+			END AS refund_rejected_auto_complete_order_expiration_datetime
 		`,
 			sql.Named("pending_seller_status", constants.PendingSellerStatus),
 			sql.Named("on_process_status", constants.OnProcessStatus),
 			sql.Named("delivered_status", constants.DeliveredStatus),
+			sql.Named("complained_status", constants.ComplainedStatus),
 			sql.Named("interval_seller_confirmation_expiration", sellerConfirmationExpirationInterval),
-			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval)).
+			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+			sql.Named("interval_auto_complete_order_rejected_refund_expiration", autoCompleteOrderRejectedRefundExpirationInterval),
+		).
 		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
 			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
 			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
 			sql.Named("delivered_title", constants.DeliveredTitle)).
-		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
+		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_rejected_last_refund_status ON orders.id = tbl_rejected_last_refund_status.order_id AND tbl_rejected_last_refund_status.status = @refund_rejected_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_rejected_status", constants.RefundStatusRejected)).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_ongoing_last_refund_status ON orders.id = tbl_ongoing_last_refund_status.order_id AND tbl_ongoing_last_refund_status.status = @refund_ongoing_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing))
+
+	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
+		Select(`
+			orders.id AS order_id, 
+			ARRAY_AGG(product_reviews.id) AS product_review_id_array 
+		`).
+		Joins("JOIN order_details ON order_details.order_id = orders.id").
+		Joins("LEFT JOIN product_reviews ON product_reviews.order_detail_id = order_details.id").
+		Group("orders.id")
 
 	queryResult := r.db.Model(&models.Order{}).
 		Select(`
@@ -275,9 +382,12 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 				END
 			) AS refund_id,
 			orders.claim_status AS claim_status,
+			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
-			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
+			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime,
+			tbl_expiration_time.refund_rejected_auto_complete_order_expiration_datetime AS refund_rejected_auto_complete_order_expiration_datetime
 		`, sql.Named("completed_status", constants.CompletedStatus)).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
@@ -285,8 +395,13 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
 		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
+		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
 		Where("orders.merchant_id = ?", merchantID)
 		// Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
+
+	if query.FilterIsReviewed != "" && !strings.EqualFold(query.FilterIsReviewed, "all") {
+		queryResult.Where("(NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)))::text = ?", query.FilterIsReviewed)
+	}
 
 	if query.Search != "" {
 		subQuerySearch := r.db.Model(&models.Order{}).
@@ -346,6 +461,34 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		sellerConfirmationExpirationInterval = 4320
 	}
 
+	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoCompleteOrderRejectedRefundExpirationInterval = 1440
+	}
+
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryRefundRank := r.db.Model(&models.Refund{}).
+		Select(`
+			order_id AS order_id,
+			status AS status,
+			refund_request_datetime AS refund_request_datetime,
+			rejected_datetime AS rejected_datetime,
+			RANK() OVER (PARTITION BY order_id ORDER BY refund_request_datetime DESC) AS refund_rank
+		`)
+
+	subQueryLastRefundStatus := r.db.Table("(?) AS tbl_refund_rank", subQueryRefundRank).
+		Select(`
+			tbl_refund_rank.order_id AS order_id,
+			tbl_refund_rank.status AS status,
+			tbl_refund_rank.refund_request_datetime AS refund_request_datetime,
+			tbl_refund_rank.rejected_datetime AS rejected_datetime
+		`).
+		Where("tbl_refund_rank.refund_rank = 1")
+
 	subQueryOrderProcessedDays := r.db.Model(&models.OrderDetail{}).
 		Select(`
 			order_details.order_id AS order_id,
@@ -371,20 +514,40 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 				WHEN orders.status = @delivered_status 
 				THEN tbl_delivered.history_datetime + INTERVAL '1 minute' * (@interval_auto_complete_delivered_expiration)::INTEGER
 				ELSE null
-			END AS delivered_expiration_datetime
+			END AS delivered_expiration_datetime,
+			CASE
+				WHEN orders.status = @complained_status 
+				THEN tbl_ongoing_last_refund_status.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime,
+			CASE
+				WHEN orders.status = @complained_status 
+				THEN tbl_rejected_last_refund_status.rejected_datetime + INTERVAL '1 minute' * (@interval_auto_complete_order_rejected_refund_expiration)::INTEGER
+				ELSE null
+			END AS refund_rejected_auto_complete_order_expiration_datetime
 		`,
 			sql.Named("pending_seller_status", constants.PendingSellerStatus),
 			sql.Named("on_process_status", constants.OnProcessStatus),
 			sql.Named("delivered_status", constants.DeliveredStatus),
+			sql.Named("complained_status", constants.ComplainedStatus),
 			sql.Named("interval_seller_confirmation_expiration", sellerConfirmationExpirationInterval),
-			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval)).
+			sql.Named("interval_auto_complete_delivered_expiration", autoCompleteDeliveredExpirationInterval),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+			sql.Named("interval_auto_complete_order_rejected_refund_expiration", autoCompleteOrderRejectedRefundExpirationInterval),
+		).
 		Joins("LEFT JOIN order_trackings tbl_seller_confirmation ON tbl_seller_confirmation.order_id = orders.id AND tbl_seller_confirmation.title = @payment_verified_title",
 			sql.Named("payment_verified_title", constants.PaymentVerifiedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
 			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
 			sql.Named("delivered_title", constants.DeliveredTitle)).
-		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays)
+		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_rejected_last_refund_status ON orders.id = tbl_rejected_last_refund_status.order_id AND tbl_rejected_last_refund_status.status = @refund_rejected_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_rejected_status", constants.RefundStatusRejected)).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_ongoing_last_refund_status ON orders.id = tbl_ongoing_last_refund_status.order_id AND tbl_ongoing_last_refund_status.status = @refund_ongoing_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing))
 
 	subQueryIsAllReviewed := r.db.Model(&models.Order{}).
 		Select(`
@@ -455,7 +618,9 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
 			tbl_expiration_time.on_process_expiration_datetime AS on_process_expiration_datetime,
-			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime
+			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime,
+			tbl_expiration_time.refund_rejected_auto_complete_order_expiration_datetime AS refund_rejected_auto_complete_order_expiration_datetime
 		`,
 			subQueryTotalPriceBeforeDiscount,
 			subQueryMerchantPromotion,
