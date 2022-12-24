@@ -8,6 +8,7 @@ import (
 
 type CourierServiceRepository interface {
 	GetAllByCourierID(courierID uint) (model []*internalDtos.CourierService, err error)
+	GetByCourierIDAndServiceCode(courierID uint, courierServiceCode string) (model *internalDtos.CourierService, err error)
 }
 
 type courierServiceRepository struct {
@@ -31,5 +32,16 @@ func (r *courierServiceRepository) GetAllByCourierID(courierID uint) (model []*i
 		return
 	}
 
+	return
+}
+
+func (r *courierServiceRepository) GetByCourierIDAndServiceCode(courierID uint, courierServiceCode string) (model *internalDtos.CourierService, err error) {
+	queryResult := r.db.
+		Where("courier_id = ? AND code = ?", courierID, courierServiceCode).
+		First(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 	return
 }

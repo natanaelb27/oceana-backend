@@ -337,6 +337,8 @@ func Init() *Handler {
 	rajaOngkirService := services.NewRajaOngkirService(&services.RajaOngkirServiceConfig{
 		RajaOngkirRepository:            rajaOngkirRepository,
 		ProductCourierServiceRepository: productCourierServiceRepository,
+		CourierRepository:               courierRepository,
+		CourierServiceRepository:        courierServiceRepository,
 	})
 
 	marketplaceVoucherService := services.NewMarketplaceVoucherService(&services.MarketplaceVoucherServiceConfig{
