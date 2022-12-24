@@ -122,6 +122,8 @@ func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery)
 			SellerConfirmationExpirationDatetime: order.SellerConfirmationExpirationDatetime,
 			OnProcessExpirationDatetime:          order.OnProcessExpirationDatetime,
 			DeliveredExpirationDatetime:          order.DeliveredExpirationDatetime,
+			RefundSellerConfirmationExpirationDatetime:        order.RefundSellerConfirmationExpirationDatetime,
+			RefundRejectedAutoCompleteOrderExpirationDatetime: order.RefundRejectedAutoCompleteOrderExpirationDatetime,
 		})
 	}
 
@@ -175,6 +177,8 @@ func (s *orderService) OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos
 			SellerConfirmationExpirationDatetime: order.SellerConfirmationExpirationDatetime,
 			OnProcessExpirationDatetime:          order.OnProcessExpirationDatetime,
 			DeliveredExpirationDatetime:          order.DeliveredExpirationDatetime,
+			RefundSellerConfirmationExpirationDatetime:        order.RefundSellerConfirmationExpirationDatetime,
+			RefundRejectedAutoCompleteOrderExpirationDatetime: order.RefundRejectedAutoCompleteOrderExpirationDatetime,
 		})
 	}
 
