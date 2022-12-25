@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"math"
+	"os"
 	"strconv"
 	"time"
 
@@ -27,6 +28,7 @@ type RefundService interface {
 	UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	CalculateRefundDetails(orderDetailID uuid.UUID, query *dtos.CalculateRefundDetailsQuery) (interface{}, error)
+	CronAutoCompleteRejectedByExpiration() error
 }
 
 type refundService struct {
@@ -710,4 +712,70 @@ func (s *refundService) CalculateRefundDetails(orderDetailID uuid.UUID, query *d
 	refundDetails.Quantity = query.Quantity
 
 	return dtos.NewCalculateRefundDetailsResponse(refundDetails), err
+}
+
+func (s *refundService) CronAutoCompleteRejectedByExpiration() error {
+	lastRefund, err := s.refundRepository.GetComplainedOrderLastRefund()
+
+	if err != nil {
+		return err
+	}
+
+	var newOrderTrackings []*models.OrderTracking
+
+	for _, lr := range lastRefund {
+		if lr.Status != constants.RefundStatusRejected {
+			continue
+		}
+
+		interval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
+		if err != nil {
+			interval = 1440
+		}
+
+		if !time.Now().After(lr.RejectedDatetime.Add(time.Minute * time.Duration(interval))) {
+			continue
+		}
+
+		_, err = s.orderRepository.Update(lr.OrderID, &models.Order{
+			Status: constants.CompletedStatus,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		_, err = s.orderRepository.Update(lr.OrderID, &models.Order{
+			Status: constants.CompletedStatus,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		now := time.Now()
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         lr.OrderID,
+			HistoryDatetime: now,
+			Title:           constants.ConfirmedTitle,
+			Description:     constants.ConfirmedDescription,
+		})
+
+		newOrderTrackings = append(newOrderTrackings, &models.OrderTracking{
+			OrderID:         lr.OrderID,
+			HistoryDatetime: now,
+			Title:           constants.CompletedTitle,
+			Description:     constants.CompletedDescription,
+		})
+	}
+
+	if len(newOrderTrackings) != 0 {
+		_, err = s.orderTrackingRepository.Create(newOrderTrackings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

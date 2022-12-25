@@ -58,7 +58,6 @@ func Init() {
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
-
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
 		OrderDetailRepository:                  orderDetailRepository,
 		OrderRepository:                        orderRepository,
@@ -71,11 +70,18 @@ func Init() {
 		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
 	})
 
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		RefundRepository:        refundRepository,
+		OrderRepository:         orderRepository,
+		OrderTrackingRepository: orderTrackingRepository,
+	})
+
 	c := New(&CronConfig{
 		Scheduler:            *gocron.NewScheduler(time.UTC),
 		RoleService:          roleService,
 		OrderService:         orderService,
 		OrderTrackingService: orderTrackingService,
+		RefundService:        refundService,
 	})
 
 	// cron that runs per 15 second
