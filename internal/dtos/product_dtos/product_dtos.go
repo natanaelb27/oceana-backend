@@ -141,7 +141,7 @@ type Courier struct {
 	Code            string            `json:"code"`
 	Name            string            `json:"name"`
 	LogoURL         string            `json:"logo_url"`
-	IsSelected      bool              `json:"is_selected" gorm:"-" binding:"required"`
+	IsSelected      bool              `json:"is_selected" gorm:"-"`
 	CourierServices []*CourierService `json:"courier_services" gorm:"-"`
 }
 
