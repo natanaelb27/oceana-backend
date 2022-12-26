@@ -14,9 +14,14 @@ import (
 
 func newErrorMessage(ve validator.FieldError) (msg string) {
 	tag := ve.ActualTag()
+	fmt.Println(tag)
 	switch tag {
 	case "required":
 		msg = "is required."
+	case "gte":
+		msg = fmt.Sprintf("must be greater than equal to %v.", ve.Param())
+	case "lte":
+		msg = fmt.Sprintf("must be less than equal to %v.", ve.Param())
 	case "min":
 		msg = fmt.Sprintf("length must be at least %v.", ve.Param())
 	case "len":

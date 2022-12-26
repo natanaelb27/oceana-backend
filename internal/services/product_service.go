@@ -331,7 +331,7 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 		CategoryID:  request.CategoryID,
 		Name:        request.Name,
 		Description: request.Description,
-		IsHazardous: request.IsHazardous,
+		IsHazardous: *request.IsHazardous,
 		Weight:      request.Weight,
 		PackageSize: request.PackageSize,
 		Condition:   request.Condition,

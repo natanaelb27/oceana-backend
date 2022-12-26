@@ -141,7 +141,7 @@ type Courier struct {
 	Code            string            `json:"code"`
 	Name            string            `json:"name"`
 	LogoURL         string            `json:"logo_url"`
-	IsSelected      bool              `json:"is_selected" gorm:"-"`
+	IsSelected      bool              `json:"is_selected" gorm:"-" binding:"required"`
 	CourierServices []*CourierService `json:"courier_services" gorm:"-"`
 }
 
@@ -151,7 +151,7 @@ type Logistics struct {
 }
 
 type Variants struct {
-	Name    string         `json:"name"`
+	Name    string         `json:"name" binding:"required"`
 	Options pq.StringArray `json:"options" gorm:"type:text[]"`
 	Images  pq.StringArray `json:"images" gorm:"type:text[]"`
 }
@@ -161,29 +161,29 @@ type ProductItem struct {
 	SKU string `json:"sku"`
 	// pq.Int64Array which is integer[] in gorm can receive array of integer from sql (for example array_agg)
 	VariantIndex  pq.Int64Array `json:"variant_index" gorm:"type:integer[]"`
-	Price         uint          `json:"price"`
-	StockQuantity uint          `json:"stock_quantity"`
+	Price         uint          `json:"price" binding:"gte=1,lte=999999999999"`
+	StockQuantity uint          `json:"stock_quantity" binding:"gte=0,lte=999"`
 }
 
 type ProductModel struct {
 	ID          uint           `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	CategoryID  uint           `json:"category_id"`
+	Name        string         `json:"name" binding:"required"`
+	Description string         `json:"description" binding:"required"`
+	CategoryID  uint           `json:"category_id" binding:"required"`
 	MerchantID  uint           `json:"merchant_id"`
-	Weight      uint           `json:"weight"`
-	IsHazardous bool           `json:"is_hazardous"`
+	Weight      uint           `json:"weight" binding:"required"`
+	IsHazardous *bool          `json:"is_hazardous" binding:"required"`
 	PackageSize string         `json:"package_size"`
-	Condition   string         `json:"condition"`
-	Status      string         `json:"status"`
+	Condition   string         `json:"condition" binding:"required"`
+	Status      string         `json:"status" binding:"required"`
 	ProcessDay  uint           `json:"process_day"`
 	PreorderDay uint           `json:"preorder_day"`
-	Images      pq.StringArray `json:"images" gorm:"type:text[]"`
-	Videos      pq.StringArray `json:"videos" gorm:"type:text[]"`
+	Images      pq.StringArray `json:"images" gorm:"type:text[]" binding:"min=1"`
+	Videos      pq.StringArray `json:"videos" gorm:"type:text[]" binding:"min=0"`
 	// gorm:"-" tells gorm ignore this field when write and read with struct
-	ProductItems []*ProductItem `json:"product_items" gorm:"-"`
-	Variants     []*Variants    `json:"variants" gorm:"-"`
-	Couriers     []*Courier     `json:"couriers" gorm:"-"`
+	ProductItems []*ProductItem `json:"product_items" gorm:"-" binding:"dive,min=1"`
+	Variants     []*Variants    `json:"variants" gorm:"-" binding:"dive"`
+	Couriers     []*Courier     `json:"couriers" gorm:"-" binding:"dive"`
 }
 
 type PmUpdateInfo struct {
