@@ -24,7 +24,7 @@ type AuthService interface {
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
 	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
-	RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error)
+	RefreshAccessToken(c *gin.Context, refreshToken string, userID uuid.UUID) (string, error)
 }
 
 type authService struct {
@@ -388,10 +388,17 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	return responseData, nil
 }
 
-func (u *authService) RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error) {
+func (u *authService) RefreshAccessToken(c *gin.Context, refreshToken string, userID uuid.UUID) (string, error) {
 	user, err := u.userRepository.GetByID(userID)
 	if err != nil {
-		return "", err
+		return "", e.ErrUserNotFound
+	}
+	redisRefreshToken, err := u.redisRepository.Get(c, "refresh-token:"+userID.String())
+	if err != nil {
+		return "", e.ErrExpiredRefreshToken
+	}
+	if refreshToken != redisRefreshToken {
+		return "", e.ErrInvalidRefreshToken
 	}
 	accessToken, err := utils.GenerateUserTokenString(user)
 	if err != nil {

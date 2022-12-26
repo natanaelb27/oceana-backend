@@ -8,6 +8,7 @@ import (
 
 type CourierRepository interface {
 	GetAll() (model []*models.Courier, err error)
+	GetByCode(code string) (model *models.Courier, err error)
 }
 
 type courierRepository struct {
@@ -33,5 +34,14 @@ func (r *courierRepository) GetAll() (model []*models.Courier, err error) {
 		return
 	}
 
+	return
+}
+
+func (r *courierRepository) GetByCode(code string) (model *models.Courier, err error) {
+	queryResult := r.db.Where("code = ?", code).First(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 	return
 }
