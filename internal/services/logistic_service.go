@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	internalLogisticDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -12,6 +14,7 @@ type LogisticService interface {
 	GetByMerchantId(id uuid.UUID) (*internalLogisticDtos.Logistic, error)
 	Update(id uuid.UUID, request *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error)
 	GetByMerchantIdSelected(userID uuid.UUID) (*internalLogisticDtos.Logistic, error)
+	ProductGetByMerchantID(merchantID uint) (*internalLogisticDtos.Logistic, error)
 }
 
 type logisticService struct {
@@ -121,6 +124,15 @@ func (s *logisticService) GetByMerchantIdSelected(userID uuid.UUID) (*internalLo
 	}
 
 	return newLogistics, nil
+}
+
+func (s *logisticService) ProductGetByMerchantID(merchantID uint) (*internalLogisticDtos.Logistic, error) {
+	merchantUser, err := s.merchantRepository.GetByMerchantIDJoinUser(merchantID)
+	fmt.Println(merchantUser.ID)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetByMerchantIdSelected(merchantUser.UserID)
 }
 
 func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error) {
