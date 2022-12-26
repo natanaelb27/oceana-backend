@@ -258,3 +258,19 @@ func (h *Handler) GetAvailableProductsByPromotionPeriod(c *gin.Context) {
 
 	utils.ResponseSuccess(c, result, nil)
 }
+
+func (h *Handler) ProductLogisticsByMerchantID(c *gin.Context) {
+	merchantID, err := strconv.Atoi(c.Param("merchant-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
+
+	results, err := h.logisticService.ProductGetByMerchantID(uint(merchantID))
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, nil)
+}

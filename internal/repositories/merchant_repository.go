@@ -18,6 +18,7 @@ type MerchantRepository interface {
 	UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error)
 	UpdateProfilePhoto(userID uuid.UUID, photo string) (model *models.Merchant, err error)
 	GetInformationByID(id uint) (merchantInformation *dtos.MerchantInformation, err error)
+	GetByMerchantIDJoinUser(merchantID uint) (model *models.Merchant, err error)
 }
 
 type merchantRepository struct {
@@ -186,5 +187,17 @@ func (m *merchantRepository) UpdateProfilePhoto(userID uuid.UUID, photo string) 
 		return
 	}
 
+	return
+}
+
+func (m *merchantRepository) GetByMerchantIDJoinUser(merchantID uint) (model *models.Merchant, err error) {
+	result := m.db.
+		Joins("JOIN users ON users.id = merchants.user_id").
+		Where("merchants.id = ?", merchantID).
+		First(&model)
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
 	return
 }
