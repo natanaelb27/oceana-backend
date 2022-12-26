@@ -185,13 +185,22 @@ func (h *Handler) UserResetPassword(c *gin.Context) {
 }
 
 func (h *Handler) RefreshAccessToken(c *gin.Context) {
-	id := utils.GinGetUUID(c, "id")
-	if id == uuid.Nil {
-		utils.ResponseError(c, e.ErrUnauthorized)
+	refreshToken, _ := c.Cookie("refresh_token")
+
+	jwtWrapper, err := utils.NewJwtWrapper()
+	if err != nil {
+		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
+		c.Abort()
 		return
 	}
-
-	accessToken, err := h.authService.RefreshAccessToken(c, id)
+	claims, err := jwtWrapper.ValidateToken(refreshToken)
+	if err != nil {
+		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
+		c.Abort()
+		return
+	}
+	userID := claims.User.ID
+	accessToken, err := h.authService.RefreshAccessToken(c, refreshToken, userID)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
