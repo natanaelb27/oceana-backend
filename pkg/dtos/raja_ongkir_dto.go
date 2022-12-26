@@ -19,9 +19,10 @@ type RajaOngkirShippingServiceCost struct {
 }
 
 type RajaOngkirShippingService struct {
-	Service     string                          `json:"service"`
-	Description string                          `json:"description"`
-	Cost        []RajaOngkirShippingServiceCost `json:"cost"`
+	CourierServiceID uint                            `json:"courier_service_id"`
+	Service          string                          `json:"service"`
+	Description      string                          `json:"description"`
+	Cost             []RajaOngkirShippingServiceCost `json:"cost"`
 }
 
 type GetRajaOngkirShippingCostResponse struct {
