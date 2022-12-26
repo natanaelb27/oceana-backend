@@ -7,4 +7,6 @@ const (
 	RefundStatusApprovedBySystem = "approved by system"
 	RefundStatusCompleted        = "completed"
 	RefundStatusRejected         = "rejected"
+
+	RefundGroupedStatusProcessed = "processed"
 )

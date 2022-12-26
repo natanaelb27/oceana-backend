@@ -1,7 +1,10 @@
 package repositories
 
 import (
+	"database/sql"
 	"fmt"
+	"os"
+	"strconv"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/refund_media_constants"
@@ -23,6 +26,7 @@ type RefundRepository interface {
 	Update(id uuid.UUID, newModel *models.Refund) (model *models.Refund, err error)
 	GetByID(id uuid.UUID) (model *models.Refund, err error)
 	GetDetailsByOrderIDAndStatus(orderID uuid.UUID, status string) (refundDetails []*dtos.RefundDetails, err error)
+	GetByOrderID(orderID uuid.UUID) (model []*models.Refund, err error)
 }
 
 type refundRepository struct {
@@ -63,6 +67,24 @@ func (r *refundRepository) Create(newModel *models.Refund) (model *models.Refund
 func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error) {
 	var refundDetails []*dtos.RefundDetails
 
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryExpirationTime := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			CASE
+				WHEN refunds.status = @refund_ongoing_status
+				THEN refunds.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime
+		`,
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+		)
+
 	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
 		Select(`
 			refund_id AS refund_id,
@@ -91,10 +113,12 @@ func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externa
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
-			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime
 		`).
 		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
@@ -103,18 +127,21 @@ func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externa
 		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
 		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
 		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Joins("LEFT JOIN (?) tbl_expiration_time ON refunds.id = tbl_expiration_time.refund_id", subQueryExpirationTime).
 		Where("transactions.user_id = ?", userID)
 
 	if query.SearchInvoice != "" {
 		result.Where("orders.invoice_number = ?", query.SearchInvoice)
 	}
 
-	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
-		if query.FilterStatus == constants.RefundStatusApproved {
-			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
-		} else {
-			result.Where("refunds.status = ?", query.FilterStatus)
+	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
+		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
+			result.Where("refunds.status IN (?, ?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted, constants.RefundStatusRejected)
 		}
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		result.Where("refunds.status = ?", query.FilterStatus)
 	}
 
 	if query.FilterStartDate != nil && query.FilterEndDate != nil {
@@ -136,6 +163,24 @@ func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externa
 func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetails, error) {
 	var refundDetails *dtos.RefundDetails
 
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryExpirationTime := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			CASE
+				WHEN refunds.status = @refund_ongoing_status
+				THEN refunds.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime
+		`,
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+		)
+
 	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
 		Select(`
 			refund_id AS refund_id,
@@ -164,10 +209,12 @@ func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetai
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
-			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime
 		`).
 		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
@@ -176,6 +223,7 @@ func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetai
 		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
 		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
 		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Joins("LEFT JOIN (?) tbl_expiration_time ON refunds.id = tbl_expiration_time.refund_id", subQueryExpirationTime).
 		Where("refunds.id = ?", refundID).
 		First(&refundDetails)
 
@@ -193,6 +241,24 @@ func (r *refundRepository) GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetai
 func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error) {
 	var refundDetails []*dtos.RefundDetails
 
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryExpirationTime := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			CASE
+				WHEN refunds.status = @refund_ongoing_status
+				THEN refunds.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime
+		`,
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+		)
+
 	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
 		Select(`
 			refund_id AS refund_id,
@@ -221,10 +287,12 @@ func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *exter
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
-			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime
 		`).
 		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
@@ -233,18 +301,21 @@ func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *exter
 		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
 		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
 		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Joins("LEFT JOIN (?) tbl_expiration_time ON refunds.id = tbl_expiration_time.refund_id", subQueryExpirationTime).
 		Where("orders.merchant_id = ?", merchantID)
 
 	if query.SearchInvoice != "" {
 		result.Where("orders.invoice_number = ?", query.SearchInvoice)
 	}
 
-	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
-		if query.FilterStatus == constants.RefundStatusApproved {
-			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
-		} else {
-			result.Where("refunds.status = ?", query.FilterStatus)
+	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
+		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
+			result.Where("refunds.status IN (?, ?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted, constants.RefundStatusRejected)
 		}
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		result.Where("refunds.status = ?", query.FilterStatus)
 	}
 
 	if query.FilterStartDate != nil && query.FilterEndDate != nil {
@@ -266,6 +337,24 @@ func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *exter
 func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error) {
 	var refundDetails []*dtos.RefundDetails
 
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
+	subQueryExpirationTime := r.db.Model(&models.Refund{}).
+		Select(`
+			refunds.id AS refund_id,
+			CASE
+				WHEN refunds.status = @refund_ongoing_status
+				THEN refunds.refund_request_datetime + INTERVAL '1 minute' * (@interval_auto_approve_refund_seller_confirmation_expiration)::INTEGER
+				ELSE null
+			END AS refund_seller_confirmation_expiration_datetime
+		`,
+			sql.Named("refund_ongoing_status", constants.RefundStatusOngoing),
+			sql.Named("interval_auto_approve_refund_seller_confirmation_expiration", autoApproveRefundSellerConfirmationExpirationInterval),
+		)
+
 	subQueryRefundMedia := r.db.Model(&models.RefundMedia{}).
 		Select(`
 			refund_id AS refund_id,
@@ -294,10 +383,12 @@ func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, 
 			refunds.refund_request_datetime AS refund_request_datetime,
 			refunds.rejected_datetime AS rejected_datetime,
 			refunds.status AS refund_status,
+			refunds.reason AS refund_reason,
 			tbl_refund_images.media_url AS images,
 			tbl_refund_videos.media_url AS videos,
 			tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
-			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount
+			tbl_refund_details.total_merchant_lost_amount AS total_merchant_lost_amount,
+			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime
 		`).
 		Joins("JOIN orders ON refunds.order_id = orders.id").
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
@@ -305,18 +396,21 @@ func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, 
 		Joins("JOIN users ON transactions.user_id = users.id").
 		Joins("LEFT JOIN (?) tbl_refund_images ON refunds.id = tbl_refund_images.refund_id AND tbl_refund_images.type = ?", subQueryRefundMedia, refund_media_constants.TypeImage).
 		Joins("LEFT JOIN (?) tbl_refund_videos ON refunds.id = tbl_refund_videos.refund_id AND tbl_refund_videos.type = ?", subQueryRefundMedia, refund_media_constants.TypeVideo).
-		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails)
+		Joins("LEFT JOIN (?) tbl_refund_details ON refunds.id = tbl_refund_details.refund_id", subQueryRefundDetails).
+		Joins("LEFT JOIN (?) tbl_expiration_time ON refunds.id = tbl_expiration_time.refund_id", subQueryExpirationTime)
 
 	if query.SearchInvoice != "" {
 		result.Where("orders.invoice_number = ?", query.SearchInvoice)
 	}
 
-	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
-		if query.FilterStatus == constants.RefundStatusApproved {
-			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
-		} else {
-			result.Where("refunds.status = ?", query.FilterStatus)
+	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
+		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
+			result.Where("refunds.status IN (?, ?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusCompleted, constants.RefundStatusRejected)
 		}
+	}
+
+	if query.FilterStatus != "" && query.FilterStatus != constants.RefundFilterAll {
+		result.Where("refunds.status = ?", query.FilterStatus)
 	}
 
 	if query.FilterStartDate != nil && query.FilterEndDate != nil {
@@ -404,6 +498,7 @@ func (r *refundRepository) GetDetailsByOrderIDAndStatus(orderID uuid.UUID, statu
 				refunds.refund_request_datetime AS refund_request_datetime,
 				refunds.rejected_datetime AS rejected_datetime,
 				refunds.status AS refund_status,
+				refunds.reason AS refund_reason,
 				tbl_refund_images.media_url AS images,
 				tbl_refund_videos.media_url AS videos,
 				tbl_refund_details.total_user_refund_amount AS total_user_refund_amount,
@@ -419,6 +514,20 @@ func (r *refundRepository) GetDetailsByOrderIDAndStatus(orderID uuid.UUID, statu
 		Where("refunds.status = ?", status).
 		Where("refunds.order_id = ?", orderID).
 		Find(&refundDetails)
+
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *refundRepository) GetByOrderID(orderID uuid.UUID) (model []*models.Refund, err error) {
+
+	result := r.db.Model(&models.Refund{}).
+		Where("order_id = ?", orderID).
+		Find(&model)
 
 	if result.Error != nil {
 		err = e.ErrDatabaseOperationFailed

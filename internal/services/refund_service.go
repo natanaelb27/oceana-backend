@@ -26,6 +26,7 @@ type RefundService interface {
 	UpdateApproveRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
+	CalculateRefundDetails(orderDetailID uuid.UUID, query *dtos.CalculateRefundDetailsQuery) (interface{}, error)
 }
 
 type refundService struct {
@@ -79,6 +80,18 @@ func NewRefundService(c *RefundServiceConfig) RefundService {
 }
 
 func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dtos.CreateRefundRequest) (*dtos.CreateRefundResponse, error) {
+	for _, v := range request.OrderDetailRefund {
+		orderDetail, err := s.orderDetailRepository.GetByID(v.OrderDetailID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if orderDetail.OrderID != orderID {
+			return nil, e.ErrOrderDoesNotHaveThatOrderDetail
+		}
+	}
+
 	order, err := s.orderRepository.OrderListDetailsGetByID(orderID)
 
 	if err != nil {
@@ -89,8 +102,28 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 		return nil, e.ErrForbiddenOrder
 	}
 
-	if order.OrderStatus != constants.DeliveredStatus {
+	if order.OrderStatus != constants.DeliveredStatus && order.OrderStatus != constants.ComplainedStatus {
 		return nil, e.ErrStatusIsNotDelivered
+	}
+
+	existingRefunds, err := s.refundRepository.GetByOrderID(orderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range existingRefunds {
+		if v.Status == constants.RefundStatusApproved {
+			return nil, e.ErrCreateRefundIsOngoing
+		}
+
+		if v.Status == constants.RefundStatusApproved || v.Status == constants.RefundStatusApprovedBySystem {
+			return nil, e.ErrCreateRefundIsApproved
+		}
+
+		if v.Status == constants.RefundStatusCompleted {
+			return nil, e.ErrCreateRefundIsCompleted
+		}
 	}
 
 	refund, err := s.refundRepository.Create(&models.Refund{
@@ -322,11 +355,13 @@ func (s *refundService) GetAllDetailsByBuyer(userID uuid.UUID, query *dtos.GetAl
 			RefundRequestDatetime:   rd.RefundRequestDatetime,
 			RejectedDatetime:        rd.RejectedDatetime,
 			RefundStatus:            rd.RefundStatus,
+			RefundReason:            rd.RefundReason,
 			Images:                  rd.Images,
 			Videos:                  rd.Videos,
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 
@@ -357,7 +392,7 @@ func (s *refundService) GetDetailsByID(userID uuid.UUID, refundID uuid.UUID) (*d
 		return nil, err
 	}
 
-	if refundDetails.UserID != userID && merchant.UserID != userID && user.Role != "100" {
+	if refundDetails.UserID != userID && merchant.ID != refundDetails.MerchantID && user.Role != "100" {
 		return nil, e.ErrForbidden
 	}
 
@@ -410,11 +445,13 @@ func (s *refundService) GetAllDetailsByMerchant(userID uuid.UUID, query *dtos.Ge
 			RefundRequestDatetime:   rd.RefundRequestDatetime,
 			RejectedDatetime:        rd.RejectedDatetime,
 			RefundStatus:            rd.RefundStatus,
+			RefundReason:            rd.RefundReason,
 			Images:                  rd.Images,
 			Videos:                  rd.Videos,
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 
@@ -467,11 +504,13 @@ func (s *refundService) GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAl
 			RefundRequestDatetime:   rd.RefundRequestDatetime,
 			RejectedDatetime:        rd.RejectedDatetime,
 			RefundStatus:            rd.RefundStatus,
+			RefundReason:            rd.RefundReason,
 			Images:                  rd.Images,
 			Videos:                  rd.Videos,
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
+			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
 		})
 	}
 
@@ -659,4 +698,16 @@ func (s *refundService) UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUI
 	}
 
 	return updatedRefund, nil
+}
+
+func (s *refundService) CalculateRefundDetails(orderDetailID uuid.UUID, query *dtos.CalculateRefundDetailsQuery) (interface{}, error) {
+	refundDetails, err := s.refundDetailRepository.CalculateRefundDetails(orderDetailID, query.Quantity)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refundDetails.Quantity = query.Quantity
+
+	return dtos.NewCalculateRefundDetailsResponse(refundDetails), err
 }

@@ -19,6 +19,7 @@ type MerchantRepository interface {
 	UpdateProfilePhoto(userID uuid.UUID, photo string) (model *models.Merchant, err error)
 	GetInformationByID(id uint) (merchantInformation *dtos.MerchantInformation, err error)
 	GetByMerchantIDJoinUser(merchantID uint) (model *models.Merchant, err error)
+	GetByID(id uint) (model *models.Merchant, err error)
 }
 
 type merchantRepository struct {
@@ -199,5 +200,23 @@ func (m *merchantRepository) GetByMerchantIDJoinUser(merchantID uint) (model *mo
 		err = e.ErrDataNotFound
 		return
 	}
+	return
+}
+
+func (m *merchantRepository) GetByID(id uint) (model *models.Merchant, err error) {
+	result := m.db.Model(&models.Merchant{}).
+		Where("id = ?", id).
+		First(&model)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrMerchantNotFound
+		return
+	}
+
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
 	return
 }
