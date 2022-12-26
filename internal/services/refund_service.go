@@ -361,7 +361,8 @@ func (s *refundService) GetAllDetailsByBuyer(userID uuid.UUID, query *dtos.GetAl
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
-			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
+			RefundSellerConfirmationExpirationDatetime:        rd.RefundSellerConfirmationExpirationDatetime,
+			RefundRejectedAutoCompleteOrderExpirationDatetime: rd.RefundRejectedAutoCompleteOrderExpirationDatetime,
 		})
 	}
 
@@ -451,7 +452,8 @@ func (s *refundService) GetAllDetailsByMerchant(userID uuid.UUID, query *dtos.Ge
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
-			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
+			RefundSellerConfirmationExpirationDatetime:        rd.RefundSellerConfirmationExpirationDatetime,
+			RefundRejectedAutoCompleteOrderExpirationDatetime: rd.RefundRejectedAutoCompleteOrderExpirationDatetime,
 		})
 	}
 
@@ -510,7 +512,8 @@ func (s *refundService) GetAllDetailsByAdmin(userID uuid.UUID, query *dtos.GetAl
 			RefundItems:             refundItems,
 			TotalUserRefundAmount:   rd.TotalUserRefundAmount,
 			TotalMerchantLostAmount: rd.TotalMerchantLostAmount,
-			RefundSellerConfirmationExpirationDatetime: rd.RefundSellerConfirmationExpirationDatetime,
+			RefundSellerConfirmationExpirationDatetime:        rd.RefundSellerConfirmationExpirationDatetime,
+			RefundRejectedAutoCompleteOrderExpirationDatetime: rd.RefundRejectedAutoCompleteOrderExpirationDatetime,
 		})
 	}
 
