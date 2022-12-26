@@ -44,6 +44,31 @@ func (h *Handler) ProductGetAll(c *gin.Context) {
 	utils.ResponseSuccess(c, results, pagination)
 }
 
+func (h *Handler) MyShopProductGetAll(c *gin.Context) {
+	query := product_dtos.NewProductQuery(c)
+
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	merchant, err := h.merchantService.MerchantGetProfile(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	query.MerchantID = merchant.ID
+
+	results, pagination, err := h.productService.GetAll(query)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}
+
 func (h *Handler) GetPurchaseQuantitiesByID(c *gin.Context) {
 	id := utils.GinGetUUID(c, "id")
 	if id == uuid.Nil {
