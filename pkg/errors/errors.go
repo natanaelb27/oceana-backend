@@ -51,6 +51,7 @@ var (
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
+	ErrInvalidRefreshToken            = errors.New("invalid refresh token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
 	ErrInvalidVerificationCode        = errors.New("invalid verification code")
 	ErrInvalidSealabsPayID            = errors.New("invalid sealabs pay id")
@@ -63,6 +64,7 @@ var (
 	ErrInvalidVariantsMedia           = errors.New("invalid variants media")
 	ErrInvalidDiscountType            = errors.New("invalid discount type")
 	ErrInvalidDiscount                = errors.New("invalid discount")
+	ErrExpiredRefreshToken            = errors.New("expired refresh token")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -254,7 +256,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStepUpNotFound) ||
 		errors.Is(err, ErrStepUpScopeIncorrect) ||
 		errors.Is(err, ErrVerificationCodeNotFound) ||
-		errors.Is(err, ErrWrongWalletPin) {
+		errors.Is(err, ErrWrongWalletPin) ||
+		errors.Is(err, ErrInvalidRefreshToken) ||
+		errors.Is(err, ErrExpiredRefreshToken) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
