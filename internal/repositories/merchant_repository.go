@@ -18,6 +18,7 @@ type MerchantRepository interface {
 	UpdateProfileAddressShopDefault(userID uuid.UUID, addressID uuid.UUID) (model *models.Merchant, err error)
 	UpdateProfilePhoto(userID uuid.UUID, photo string) (model *models.Merchant, err error)
 	GetInformationByID(id uint) (merchantInformation *dtos.MerchantInformation, err error)
+	GetByID(id uint) (model *models.Merchant, err error)
 }
 
 type merchantRepository struct {
@@ -183,6 +184,23 @@ func (m *merchantRepository) UpdateProfilePhoto(userID uuid.UUID, photo string) 
 
 	if getUpdated.RowsAffected == 0 {
 		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+func (m *merchantRepository) GetByID(id uint) (model *models.Merchant, err error) {
+	result := m.db.Model(&models.Merchant{}).
+		Where("id = ?", id).
+		First(&model)
+
+	if result.Error == gorm.ErrRecordNotFound {
+		err = e.ErrMerchantNotFound
+		return
+	}
+
+	if result.Error != nil {
+		err = e.ErrDatabaseOperationFailed
 		return
 	}
 

@@ -37,6 +37,8 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 		return
 	}
 
+	request.OrderDetailRefund = orderDetailRefund
+
 	results, err := h.refundService.Create(id, orderID, request)
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -199,4 +201,23 @@ func (h *Handler) UpdateCompleteRefund(c *gin.Context) {
 	responseData := dtos.NewUpdateRefundResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) CalculateRefundDetails(c *gin.Context) {
+	orderDetailID, err := uuid.Parse(c.Param("order-detail-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewCalculateRefundDetailsQuery(c)
+
+	result, err := h.refundService.CalculateRefundDetails(orderDetailID, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, result, nil)
 }
