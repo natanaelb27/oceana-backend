@@ -28,7 +28,20 @@ func GenerateUserTokenString(user *models.User) (string, error) {
 		return "", err
 	}
 	jwtUser := internalDtos.NewJwtUser(user)
-	token, err := jwtWrapper.GenerateToken(jwtUser)
+	token, err := jwtWrapper.GenerateToken(jwtUser, nil)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+func GenerateRefreshTokenString(user *models.User) (string, error) {
+	jwtWrapper, err := NewRefreshTokenJwtWrapper()
+	if err != nil {
+		return "", err 
+	}
+	jwtUser := internalDtos.NewJwtUser(user)
+	token, err := jwtWrapper.GenerateToken(jwtUser, jwtWrapper)
 	if err != nil {
 		return "", err
 	}

@@ -109,7 +109,7 @@ func (h *Handler) setLoginCookies(c *gin.Context, userLoginData *internalDtos.Us
 	}
 	accessTokenExpirationSeconds := 3600 * jwtExpirationHours
 	c.SetCookie("access_token", userLoginData.AccessToken, accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, true)
-	c.SetCookie("refresh_token", userLoginData.RefreshToken, int(userLoginData.ExpireDuration), "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("refresh_token", userLoginData.RefreshToken, userLoginData.ExpireDuration, "/", os.Getenv("DOMAIN"), false, true)
 	c.SetCookie("access_token_verifier", "", accessTokenExpirationSeconds, "/", os.Getenv("DOMAIN"), false, false)
 	return nil
 }
@@ -193,7 +193,7 @@ func (h *Handler) RefreshAccessToken(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	claims, err := jwtWrapper.ValidateToken(refreshToken)
+	claims, err := jwtWrapper.ValidateToken(refreshToken, nil)
 	if err != nil {
 		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
 		c.Abort()
