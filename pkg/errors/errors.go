@@ -187,6 +187,7 @@ var (
 	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
 	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
 	ErrProductStatusInactive                                  = errors.New("product is delisted")
+	ErrCourierServiceNotSupportProduct                        = errors.New("courier service does not support the product")
 )
 
 func GetStatusCode(err error) int {
@@ -354,7 +355,8 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrCreateRefundIsOngoing) ||
 		errors.Is(err, ErrCreateRefundIsApproved) ||
 		errors.Is(err, ErrCreateRefundIsCompleted) ||
-		errors.Is(err, ErrPromotionNotUpcoming) {
+		errors.Is(err, ErrPromotionNotUpcoming) ||
+		errors.Is(err, ErrCourierServiceNotSupportProduct) {
 		return http.StatusUnprocessableEntity
 	}
 

@@ -19,6 +19,7 @@ type ProductCourierServiceRepository interface {
 	Update(id uint, newModel *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	Delete(id uint) (model *models.ProductCourierService, err error)
 	DeleteByMerchantCourierServiceIDProductID(merchantCourierServiceID uint, productID uint) (err error)
+	GetAllByProductIDAndCourierServiceID(productID uint, courierServiceID uint) (model *models.ProductCourierService, err error)
 }
 
 type productCourierServiceRepository struct {
@@ -150,6 +151,24 @@ func (r *productCourierServiceRepository) DeleteByMerchantCourierServiceIDProduc
 		Where("merchant_courier_service_id = ?", merchantCourierServiceID).
 		Where("product_id = ?", productID).
 		Delete(&models.ProductCourierService{})
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productCourierServiceRepository) GetAllByProductIDAndCourierServiceID(productID uint, courierServiceID uint) (model *models.ProductCourierService, err error) {
+	result := r.db.Model(&models.ProductCourierService{}).
+		Where("product_courier_services.product_id = ?", productID).
+		Preload("MerchantCourierService", "courier_service_id = ?", courierServiceID).
+		First(&model)
+
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return
