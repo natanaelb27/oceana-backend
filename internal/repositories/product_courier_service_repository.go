@@ -161,7 +161,7 @@ func (r *productCourierServiceRepository) DeleteByMerchantCourierServiceIDProduc
 
 func (r *productCourierServiceRepository) GetAllByProductIDAndCourierServiceID(productID uint, courierServiceID uint) (model *models.ProductCourierService, err error) {
 	result := r.db.Model(&models.ProductCourierService{}).
-		Joins("merchant_courier_services ON merchant_courier_services.id = product_courier_services.merchant_courier_service_id").
+		Joins("JOIN merchant_courier_services ON merchant_courier_services.id = product_courier_services.merchant_courier_service_id").
 		Where("product_courier_services.product_id = ?", productID).
 		Where("merchant_courier_services.courier_service_id = ?", courierServiceID).
 		Where("merchant_courier_services.is_active = true").
