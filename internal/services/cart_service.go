@@ -38,6 +38,7 @@ type cartService struct {
 	orderTrackingRepository                 r.OrderTrackingRepository
 	productRepository                       r.ProductRepository
 	productItemRepository                   r.ProductItemRepository
+	productCourierServiceRepository         r.ProductCourierServiceRepository
 	productMerchantPromotionRepository      r.ProductMerchantPromotionRepository
 	productSnapshotRepository               r.ProductSnapshotRepository
 	productMediaSnapshotRepository          r.ProductMediaSnapshotRepository
@@ -63,6 +64,7 @@ type CartServiceConfig struct {
 	OrderTrackingRepository                 r.OrderTrackingRepository
 	ProductRepository                       r.ProductRepository
 	ProductItemRepository                   r.ProductItemRepository
+	ProductCourierServiceRepository         r.ProductCourierServiceRepository
 	ProductMerchantPromotionRepository      r.ProductMerchantPromotionRepository
 	ProductSnapshotRepository               r.ProductSnapshotRepository
 	ProductMediaSnapshotRepository          r.ProductMediaSnapshotRepository
@@ -89,6 +91,7 @@ func NewCartService(c *CartServiceConfig) CartService {
 		orderTrackingRepository:                 c.OrderTrackingRepository,
 		productRepository:                       c.ProductRepository,
 		productItemRepository:                   c.ProductItemRepository,
+		productCourierServiceRepository:         c.ProductCourierServiceRepository,
 		productMerchantPromotionRepository:      c.ProductMerchantPromotionRepository,
 		productSnapshotRepository:               c.ProductSnapshotRepository,
 		productMediaSnapshotRepository:          c.ProductMediaSnapshotRepository,
@@ -115,6 +118,7 @@ func (u cartService) WithTx(tx *gorm.DB) *cartService {
 	u.orderTrackingRepository = u.orderTrackingRepository.WithTx(tx)
 	u.productRepository = u.productRepository.WithTx(tx)
 	u.productItemRepository = u.productItemRepository.WithTx(tx)
+	u.productCourierServiceRepository = u.productCourierServiceRepository.WithTx(tx)
 	u.productMerchantPromotionRepository = u.productMerchantPromotionRepository.WithTx(tx)
 	u.productSnapshotRepository = u.productSnapshotRepository.WithTx(tx)
 	u.productMediaSnapshotRepository = u.productMediaSnapshotRepository.WithTx(tx)
@@ -325,6 +329,14 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		var sumProduct float64 = 0
 
 		for _, product := range cartOrderItem.Products {
+			_, err := p.productCourierServiceRepository.GetAllByProductIDAndCourierServiceID(product.ProductID, cartOrderItem.CourierServiceID)
+
+			if errors.Is(err, e.ErrDataNotFound) {
+				return nil, e.ErrCourierServiceNotSupportProduct
+			} else if err != nil {
+				return nil, err
+			}
+
 			productMerchantPromotion := &internalDtos.ProductMerchantPromotionDetails{}
 
 			if product.ProductMerchantPromotionID != nil {

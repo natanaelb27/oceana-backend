@@ -859,7 +859,7 @@ func (r *productRepository) UpdateUsingMap(id uint, dataMap map[string]any) (err
 
 func (r *productRepository) GetById(id uint) (model *models.Product, err error) {
 	result := r.db.First(&model, id)
-	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
 		err = e.ErrDatabaseOperationFailed
 		return
 	}

@@ -46,9 +46,14 @@ func NewRefundRepository(c *RefundRepositoryConfig) RefundRepository {
 }
 
 func (r *refundRepository) UpdateAllByStatusByRefundExpirationDatetimeLteNow(status string, datas *models.Refund) (err error) {
+	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
+	if err != nil {
+		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+	}
+
 	queryResult := r.db.
 		Where("status = ?", status).
-		Where("refund_request_datetime + INTERVAL '1 minute' * (?)::INTEGER<= ?", os.Getenv("CRON_REFUND_AUTO_APPROVE_BUYER_REQUEST_INTERVAL"), time.Now()).
+		Where("refund_request_datetime + INTERVAL '1 minute' * (?)::INTEGER<= ?", autoApproveRefundSellerConfirmationExpirationInterval, time.Now()).
 		Updates(&datas)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed

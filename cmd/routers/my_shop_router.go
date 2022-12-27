@@ -21,6 +21,7 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.GET("/promotions", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionGetAll)
 		privateRoute.GET("/promotions/:merchant-promotion-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionGetByID)
 		privateRoute.PUT("/promotions/:merchant-promotion-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionUpdate)
+		privateRoute.DELETE("/promotions/:merchant-promotion-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionDelete)
 		// orders
 		privateRoute.PATCH("/orders/:order-id/process-delivery", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessDelivery)
 		privateRoute.PATCH("/orders/:order-id/process-order", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
