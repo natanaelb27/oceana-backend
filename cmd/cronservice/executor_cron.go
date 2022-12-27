@@ -24,5 +24,29 @@ func (c *Cron) Per15Seconds() {
 			log.Print("CRON: ERROR: refundService.CronAutoApproveRefundByExpirationTime:", err)
 		}
 		// add any services that will run per 15 seconds here
+
+		err = nil
+		err = c.orderService.CronPaymentExpiration()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronPaymentExpiration:", err)
+		}
+
+		err = nil
+		err = c.orderService.CronPendingSellerExpiration()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronPendingSellerExpiration:", err)
+		}
+
+		err = nil
+		err = c.orderService.CronOrderProcessExpiration()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronOrderProcessExpiration:", err)
+		}
+
+		err = nil
+		err = c.orderService.CronAutoCompleteDelivered()
+		if err != nil {
+			log.Print("CRON: ERROR: orderService.CronAutoCompleteDelivered:", err)
+		}
 	})
 }

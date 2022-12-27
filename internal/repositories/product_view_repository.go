@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -8,6 +10,7 @@ import (
 )
 
 type ProductViewRepository interface {
+	WithTx(tx *gorm.DB) *productViewRepository
 	Create(productView *models.ProductView) (model *models.ProductView, err error)
 	GetByUserIDAndProductID(userID uuid.UUID, productID uint) (model *models.ProductView, err error)
 	Update(id uint, newModel *models.ProductView) (model *models.ProductView, err error)
@@ -25,6 +28,15 @@ func NewProductViewRepository(c *ProductViewRepositoryConfig) ProductViewReposit
 	return &productViewRepository{
 		db: c.DB,
 	}
+}
+
+func (u productViewRepository) WithTx(tx *gorm.DB) *productViewRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productViewRepository) Create(newModel *models.ProductView) (model *models.ProductView, err error) {

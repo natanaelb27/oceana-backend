@@ -19,12 +19,12 @@ import (
 type AuthService interface {
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
-	RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error)
+	RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*internalDtos.UserLoginData, error)
 	LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error)
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
 	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
-	RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error)
+	RefreshAccessToken(c *gin.Context, refreshToken string, userID uuid.UUID) (string, error)
 }
 
 type authService struct {
@@ -77,7 +77,8 @@ func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest
 		if err != nil {
 			return nil, err
 		}
-		imageUrl, err := utils.UploadImage(photoFile)
+		defer photoFile.Close()
+		imageUrl, err := utils.UploadMedia(photoFile)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +183,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 	}
 	return nil, e.ErrUserNotFound
 }
-func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*externalDtos.UserCreateResponse, error) {
+func (u *authService) RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*internalDtos.UserLoginData, error) {
 	_, err := u.userRepository.GetByUsername(userRegisterWithGoogleRequest.Username)
 	if err != e.ErrDataNotFound {
 		return nil, e.ErrUsernameAlreadyExist
@@ -195,7 +196,7 @@ func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *external
 	email := &models.Email{
 		Address: userRegisterWithGoogleRequest.Email,
 	}
-	createdEmail, err := u.emailRepository.Create(email)
+	_, err = u.emailRepository.Create(email)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +214,7 @@ func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *external
 		return nil, err
 	}
 	user.Password = hashedPassword
-	
+
 	createdUser, err := u.userRepository.Create(user)
 	if err != nil {
 		return nil, err
@@ -229,10 +230,24 @@ func (u *authService) RegisterWithGoogle(userRegisterWithGoogleRequest *external
 	if err != nil {
 		return nil, err
 	}
-	responseData := externalDtos.NewUserCreateResponse(createdUser)
-	responseData.Email = createdEmail.Address
-	responseData.GoogleID = nil
-	return responseData, nil
+
+	token, err := utils.GenerateUserTokenString(createdUser)
+	if err != nil {
+		return nil, err
+	}
+	userLoginData := &internalDtos.UserLoginData{
+		AccessToken:  token,
+		RefreshToken: token,
+		Role:         createdUser.Role,
+	}
+	refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
+	refreshTokenDuration := time.Duration(refreshTokenDaysDuration) * 24 * time.Hour
+	err = u.redisRepository.Set(c, "refresh-token:"+user.ID.String(), token, refreshTokenDuration)
+	if err != nil {
+		return nil, err
+	}
+	userLoginData.ExpireDuration = refreshTokenDuration
+	return userLoginData, nil
 }
 
 func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest *externalDtos.UserLoginWithGoogleRequest) (*internalDtos.UserLoginData, error) {
@@ -291,11 +306,6 @@ func (u *authService) StepUpPassword(c *gin.Context, id uuid.UUID, request *exte
 		return
 	}
 
-	err = u.redisRepository.Set(c, "upgrade-token-password:"+id.String(), token, 10*time.Minute)
-	if err != nil {
-		return
-	}
-
 	return
 }
 
@@ -319,11 +329,10 @@ func (u *authService) SendResetPasswordEmail(c *gin.Context, request *externalDt
 	}
 
 	to := []string{email.Address}
-	cc := []string{}
-	subject := "Reset Password Link"
-	message := "Reset Password Link (valid for 15 minutes): " + os.Getenv("FRONTEND_URL") + "/reset-password/" + resetPasswordID
+	subject := "Reset Password"
+	message := utils.WriteResetPasswordEmailMessage(os.Getenv("FRONTEND_URL") + "/reset-password/" + resetPasswordID)
 
-	err = utils.SendMail(to, cc, subject, message)
+	err = utils.SendMail(to, subject, message)
 	if err != nil {
 		return false, e.ErrSendingEmailFailed
 	}
@@ -379,10 +388,17 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	return responseData, nil
 }
 
-func (u *authService) RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error) {
+func (u *authService) RefreshAccessToken(c *gin.Context, refreshToken string, userID uuid.UUID) (string, error) {
 	user, err := u.userRepository.GetByID(userID)
 	if err != nil {
-		return "", err
+		return "", e.ErrUserNotFound
+	}
+	redisRefreshToken, err := u.redisRepository.Get(c, "refresh-token:"+userID.String())
+	if err != nil {
+		return "", e.ErrExpiredRefreshToken
+	}
+	if refreshToken != redisRefreshToken {
+		return "", e.ErrInvalidRefreshToken
 	}
 	accessToken, err := utils.GenerateUserTokenString(user)
 	if err != nil {

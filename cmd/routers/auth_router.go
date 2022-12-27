@@ -15,11 +15,11 @@ func auth(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 		publicRoute.POST("/register-google", h.UserRegisterWithGoogle)
 		publicRoute.POST("/login-google", h.UserLoginWithGoogle)
 		publicRoute.POST("/reset-password/verify", h.UserVerifyResetPassword)
-		publicRoute.POST("/reset-password/:resetPasswordID", h.UserResetPassword)
+		publicRoute.POST("/reset-password/:reset-password-id", h.UserResetPassword)
+		publicRoute.POST("/refresh", h.RefreshAccessToken)
 	}
 	privateRoute := private.Group(path)
 	{
 		privateRoute.POST("/step-up/password", func(c *gin.Context) { middlewares.Role(c, "001") }, h.StepUpPassword)
-		privateRoute.POST("/refresh", h.RefreshAccessToken)
 	}
 }

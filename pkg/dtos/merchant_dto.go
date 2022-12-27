@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"mime/multipart"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -57,6 +58,7 @@ type MerchantGetInformationByIDResponse struct {
 	ShopDistrict    string    `json:"shop_district"`
 	ShopCity        string    `json:"shop_city"`
 	ShopProvince    string    `json:"shop_province"`
+	JoinedDate      time.Time `json:"joined_date"`
 }
 
 func NewMerchantGetInformationByIDResponse(source *dtos.MerchantInformation) (target *MerchantGetInformationByIDResponse) {
@@ -73,6 +75,7 @@ func NewMerchantGetInformationByIDResponse(source *dtos.MerchantInformation) (ta
 		ShopDistrict:    source.ShopDistrict,
 		ShopCity:        source.ShopCity,
 		ShopProvince:    source.ShopProvince,
+		JoinedDate:      source.JoinedDate,
 	}
 	return
 }
@@ -94,4 +97,9 @@ func NewMerchantGetProfileResponse(source *models.Merchant) (target *MerchantGet
 		Photo:     source.Photo,
 	}
 	return
+}
+
+type MerchantUpdatePhotoRequest struct {
+	ID    uuid.UUID
+	Photo *multipart.FileHeader `form:"photo" json:"photo"`
 }

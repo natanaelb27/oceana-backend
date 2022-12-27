@@ -5,6 +5,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) CartGetAllByUserId(c *gin.Context) {
@@ -58,7 +59,9 @@ func (h *Handler) PayCartWithWallet(c *gin.Context) {
 
 	request.UserID = id
 
-	result, err := h.cartService.PayCartWithWallet(c, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.cartService.WithTx(tx).PayCartWithWallet(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

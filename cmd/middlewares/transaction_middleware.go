@@ -29,14 +29,14 @@ func DBTransactionMiddleware() gin.HandlerFunc {
 			}
 		}()
 
-		c.Set("db_trx", tx)
+		c.Set("tx", tx)
 		c.Next()
 
-		// run afterhandler function finishes
+		// run after handler function finishes
 		if StatusInList(c.Writer.Status(), []int{http.StatusOK, http.StatusCreated}) {
 			// commit transactions
 			if err := tx.Commit().Error; err != nil {
-				log.Print("trx commit error: ", err)
+				log.Print("tx commit error: ", err)
 			}
 		} else {
 			// rolling back transaction due to status code other than

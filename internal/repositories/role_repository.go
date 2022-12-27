@@ -33,13 +33,13 @@ func NewRoleRepository(c *RoleRepositoryConfig) RoleRepository {
 	}
 }
 
-func (u *roleRepository) WithTx(tx *gorm.DB) *roleRepository {
+func (u roleRepository) WithTx(tx *gorm.DB) *roleRepository {
 	if tx == nil {
 		log.Print("Transaction Database not found")
-		return u
+		return &u
 	}
 	u.db = tx
-	return u
+	return &u
 }
 
 func (r *roleRepository) Create(newModel *models.Role) (model *models.Role, err error) {

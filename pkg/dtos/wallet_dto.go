@@ -1,10 +1,13 @@
 package dtos
 
 import (
+	"strconv"
 	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -41,7 +44,6 @@ func NewWalletActivateResponse(source *models.Wallet) (target *WalletActivateRes
 }
 
 type WalletChangePinRequest struct {
-	UpgradeToken    string `json:"upgrade_token" binding:"required"`
 	Pin             string `json:"pin" binding:"required,len=6"`
 	PinConfirmation string `json:"pin_confirmation" binding:"required,eqfield=Pin"`
 }
@@ -68,6 +70,40 @@ func NewWalletChangePinResponse(source *models.Wallet) (target *WalletChangePinR
 	return
 }
 
+type WalletDetailsQuery struct {
+	Limit uint `json:"limit"`
+	Page  uint `json:"page"`
+}
+
+func NewWalletDetailsQuery(c *gin.Context) *WalletDetailsQuery {
+	var query WalletDetailsQuery
+
+	limit := c.Query("limit")
+	page := c.Query("page")
+
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		query.Page = 1
+	} else if pageInt <= 0 {
+		query.Page = 1
+	} else {
+		query.Page = uint(pageInt)
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+
+	if err != nil {
+		query.Limit = 10
+	} else if limitInt <= 0 {
+		query.Limit = 10
+	} else {
+		query.Limit = uint(limitInt)
+	}
+
+	return &query
+}
+
 type WalletDetailsResponse struct {
 	ID                       uuid.UUID                        `json:"id"`
 	UserID                   uuid.UUID                        `json:"user_id"`
@@ -92,5 +128,31 @@ func NewWalletDetailsResponse(sourceModel *models.Wallet, sourceDto []*dtos.Wall
 		CreatedAt:                sourceModel.CreatedAt,
 		UpdatedAt:                sourceModel.UpdatedAt,
 	}
+	return
+}
+
+type TopupWalletRequest struct {
+	CardNumber   string `json:"card_number"`
+	TxID         string `json:"txn_id"`
+	Amount       string `json:"amount"`
+	Merchantcode string `json:"merchant_code"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	Signature    string `json:"signature"`
+}
+
+func (source *TopupWalletRequest) ToModel() (target *models.WalletTopup, err error) {
+	amount, err := strconv.Atoi(source.Amount)
+	if err != nil {
+		err = e.ErrInvalidAmount
+		return
+	}
+
+	target = &models.WalletTopup{
+		TxID:            source.TxID,
+		Amount:          uint(amount),
+		TransactionDate: time.Now(),
+	}
+
 	return
 }

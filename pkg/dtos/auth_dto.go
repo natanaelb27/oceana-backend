@@ -111,12 +111,12 @@ type AuthStepUpPasswordRequest struct {
 }
 
 type AuthStepUpPasswordResponse struct {
-	UpgradeToken string `json:"upgrade_token"`
+	Status bool `json:"status"`
 }
 
-func NewAuthStepUpPasswordResponse(token string) (target *AuthStepUpPasswordResponse) {
+func NewAuthStepUpPasswordResponse() (target *AuthStepUpPasswordResponse) {
 	target = &AuthStepUpPasswordResponse{
-		UpgradeToken: token,
+		Status: true,
 	}
 	return
 }

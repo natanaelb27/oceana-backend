@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	internalLogisticDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -11,6 +13,8 @@ import (
 type LogisticService interface {
 	GetByMerchantId(id uuid.UUID) (*internalLogisticDtos.Logistic, error)
 	Update(id uuid.UUID, request *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error)
+	GetByMerchantIdSelected(userID uuid.UUID) (*internalLogisticDtos.Logistic, error)
+	ProductGetByMerchantID(merchantID uint) (*internalLogisticDtos.Logistic, error)
 }
 
 type logisticService struct {
@@ -75,12 +79,13 @@ func (s *logisticService) GetByMerchantId(userID uuid.UUID) (*internalLogisticDt
 			ID:             courier.ID,
 			Code:           courier.Code,
 			Name:           courier.Name,
+			LogoURL:        courier.LogoURL,
 			IsSelected:     courierIsSelected,
 			CourierService: courierServices,
 		})
 	}
 	merchantConfiguration, err := s.merchantConfigurationRepository.GetByMerchantID(merchant.ID)
-	if err != nil {
+	if err != nil && err != e.ErrDataNotFound {
 		return nil, err
 	}
 
@@ -90,7 +95,44 @@ func (s *logisticService) GetByMerchantId(userID uuid.UUID) (*internalLogisticDt
 		Courier:      newCouriers,
 	}
 
-	return logistics, err
+	return logistics, nil
+}
+
+func (s *logisticService) GetByMerchantIdSelected(userID uuid.UUID) (*internalLogisticDtos.Logistic, error) {
+	logistics, err := s.GetByMerchantId(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	newCouriers := make([]*internalLogisticDtos.Courier, 0)
+
+	for _, vCourier := range logistics.Courier {
+		newCourierServices := make([]*internalLogisticDtos.CourierService, 0)
+		for _, v := range vCourier.CourierService {
+			if v.IsSelected {
+				newCourierServices = append(newCourierServices, v)
+			}
+		}
+		vCourier.CourierService = newCourierServices
+		newCouriers = append(newCouriers, vCourier)
+	}
+
+	newLogistics := &internalLogisticDtos.Logistic{
+		PreorderDay:  logistics.PreorderDay,
+		IsPrintLabel: logistics.IsPrintLabel,
+		Courier:      newCouriers,
+	}
+
+	return newLogistics, nil
+}
+
+func (s *logisticService) ProductGetByMerchantID(merchantID uint) (*internalLogisticDtos.Logistic, error) {
+	merchantUser, err := s.merchantRepository.GetByMerchantIDJoinUser(merchantID)
+	fmt.Println(merchantUser.ID)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetByMerchantIdSelected(merchantUser.UserID)
 }
 
 func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error) {

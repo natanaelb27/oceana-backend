@@ -1,8 +1,12 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/lib/pq"
@@ -11,9 +15,11 @@ import (
 )
 
 type MerchantPromotionRepository interface {
+	WithTx(tx *gorm.DB) *merchantPromotionRepository
 	CreateMyShopPromotion(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error)
-	GetAll(merchantID uint, query *dtos.MerchantPromotionQuery) (models []*models.MerchantPromotion, err error)
+	GetAllDetails(merchantID uint, query *dtos.MerchantPromotionQuery, pagination *utils.Pagination) ([]*internalDtos.MerchantPromotionDetails, *utils.Pagination, error)
 	GetByID(id uint) (*models.MerchantPromotion, error)
+	GetDetailsByID(id uint) (*internalDtos.MerchantPromotionDetails, error)
 	Update(newModel *models.MerchantPromotion) (model *models.MerchantPromotion, err error)
 }
 
@@ -29,6 +35,15 @@ func NewMerchantPromotionRepository(c *MerchantPromotionRepositoryConfig) Mercha
 	return &merchantPromotionRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantPromotionRepository) WithTx(tx *gorm.DB) *merchantPromotionRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (mp *merchantPromotionRepository) CreateMyShopPromotion(newModel *models.MerchantPromotion, productIDList []int64) (model *models.MerchantPromotion, err error) {
@@ -58,7 +73,9 @@ func (mp *merchantPromotionRepository) CreateMyShopPromotion(newModel *models.Me
 	return
 }
 
-func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.MerchantPromotionQuery) (model []*models.MerchantPromotion, err error) {
+func (mp *merchantPromotionRepository) GetAllDetails(merchantID uint, query *dtos.MerchantPromotionQuery, pagination *utils.Pagination) ([]*internalDtos.MerchantPromotionDetails, *utils.Pagination, error) {
+	var merchantPromotionDetails []*internalDtos.MerchantPromotionDetails
+
 	queryResult := mp.db.Model(&models.MerchantPromotion{}).Select(`
 		id,
 		merchant_id,
@@ -71,10 +88,11 @@ func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.Merch
 			WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
 			WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
 		) AS promotion_status
-	`)
+	`).
+		Where("merchant_id = ?", merchantID)
 
 	if query.SearchPromotionName != "" {
-		queryResult.Where("name = ?", query.SearchPromotionName)
+		queryResult.Where("name ILIKE ", "%"+query.SearchPromotionName+"%")
 	}
 
 	if query.FilterPromotionStatus == constants.OngoingPromotionOrVoucher {
@@ -89,12 +107,15 @@ func (mp *merchantPromotionRepository) GetAll(merchantID uint, query *dtos.Merch
 		queryResult.Where("end_datetime::timestamp < NOW()::timestamp")
 	}
 
-	queryResult.Where("merchant_id = ?", merchantID).Find(&model)
+	queryResult.
+		Scopes(utils.Paginate(pagination, queryResult)).
+		Find(&merchantPromotionDetails)
+
 	if queryResult.Error != nil {
-		return nil, e.ErrDatabaseOperationFailed
+		return nil, nil, e.ErrDatabaseOperationFailed
 	}
 
-	return
+	return merchantPromotionDetails, pagination, nil
 
 }
 
@@ -106,6 +127,37 @@ func (mp *merchantPromotionRepository) GetByID(id uint) (*models.MerchantPromoti
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, e.ErrPromotionNotFound
 		}
+		return nil, e.ErrDatabaseOperationFailed
+	}
+
+	return merchantPromotion, nil
+}
+
+func (mp *merchantPromotionRepository) GetDetailsByID(id uint) (*internalDtos.MerchantPromotionDetails, error) {
+	var merchantPromotion *internalDtos.MerchantPromotionDetails
+
+	result := mp.db.Model(&models.MerchantPromotion{}).
+		Select(`
+			id,
+			merchant_id,
+			name,
+			start_datetime,
+			end_datetime,
+			(
+				CASE WHEN NOW()::timestamp BETWEEN start_datetime::timestamp 
+				AND end_datetime::timestamp THEN 'ongoing'
+				WHEN start_datetime::timestamp > NOW()::timestamp  THEN 'upcoming' 
+				WHEN end_datetime::timestamp < NOW()::timestamp  THEN 'ended' END
+			) AS promotion_status
+		`).
+		Where("id = ?", id).
+		First(&merchantPromotion)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrPromotionNotFound
+		}
+
 		return nil, e.ErrDatabaseOperationFailed
 	}
 

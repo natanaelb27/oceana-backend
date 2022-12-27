@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -9,6 +11,7 @@ import (
 )
 
 type UserMerchantPromotionRepository interface {
+	WithTx(tx *gorm.DB) *userMerchantPromotionRepository
 	GetUserUsage(userID uuid.UUID, productMerchantPromotionID uint) (model *models.UserMerchantPromotion, err error)
 	UpsertUsingMap(modelMap map[string]any) (model *models.UserMerchantPromotion, err error)
 }
@@ -25,6 +28,15 @@ func NewUserMerchantPromotionRepository(c *UserMerchantPromotionRepositoryConfig
 	return &userMerchantPromotionRepository{
 		db: c.DB,
 	}
+}
+
+func (u userMerchantPromotionRepository) WithTx(tx *gorm.DB) *userMerchantPromotionRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *userMerchantPromotionRepository) GetUserUsage(userID uuid.UUID, productMerchantPromotionID uint) (model *models.UserMerchantPromotion, err error) {

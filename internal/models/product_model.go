@@ -21,6 +21,7 @@ type Product struct {
 	Status      string
 	ProcessDay  uint
 	PreorderDay uint
+	IsPreorder  bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt

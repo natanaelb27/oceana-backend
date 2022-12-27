@@ -56,12 +56,22 @@ func (h *Handler) UserRegisterWithGoogle(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	responseData, err := h.authService.RegisterWithGoogle(request)
+	userLoginData, err := h.authService.RegisterWithGoogle(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
-	utils.ResponseSuccess(c, responseData, nil)
+	userLoginResponse := &externalDtos.UserLoginResponse{
+		Role: userLoginData.Role,
+	}
+
+	err = h.setLoginCookies(c, userLoginData)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, userLoginResponse, nil)
 }
 
 func (h *Handler) UserLoginWithGoogle(c *gin.Context) {
@@ -123,9 +133,25 @@ func (h *Handler) StepUpPassword(c *gin.Context) {
 		return
 	}
 
-	responseData := externalDtos.NewAuthStepUpPasswordResponse(result)
+	responseData := externalDtos.NewAuthStepUpPasswordResponse()
+
+	h.setUpgradeTokenPassword(c, result)
 
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) setUpgradeTokenPassword(c *gin.Context, upgradeTokenPassword string) error {
+	expMinute, err := strconv.Atoi(os.Getenv("JWT_UPGRADE_TOKEN_PASSWORD_EXPIRATION_MINUTES"))
+	if err != nil {
+		return err
+	}
+
+	expSecond := 60 * expMinute
+
+	c.SetCookie("upgrade_token_password", upgradeTokenPassword, expSecond, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("upgrade_token_password_verifier", "", expSecond, "/", os.Getenv("DOMAIN"), false, false)
+
+	return nil
 }
 
 func (h *Handler) UserVerifyResetPassword(c *gin.Context) {
@@ -159,13 +185,22 @@ func (h *Handler) UserResetPassword(c *gin.Context) {
 }
 
 func (h *Handler) RefreshAccessToken(c *gin.Context) {
-	id := utils.GinGetUUID(c, "id")
-	if id == uuid.Nil {
-		utils.ResponseError(c, e.ErrUnauthorized)
+	refreshToken, _ := c.Cookie("refresh_token")
+
+	jwtWrapper, err := utils.NewJwtWrapper()
+	if err != nil {
+		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
+		c.Abort()
 		return
 	}
-
-	accessToken, err := h.authService.RefreshAccessToken(c, id)
+	claims, err := jwtWrapper.ValidateToken(refreshToken)
+	if err != nil {
+		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
+		c.Abort()
+		return
+	}
+	userID := claims.User.ID
+	accessToken, err := h.authService.RefreshAccessToken(c, refreshToken, userID)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

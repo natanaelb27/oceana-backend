@@ -107,7 +107,6 @@ func (h *Handler) RoleDelete(c *gin.Context) {
 }
 
 func (h *Handler) RoleCreateFailingWithTransaction(c *gin.Context) {
-	trx := c.MustGet("tx").(*gorm.DB)
 
 	var request *dtos.RoleCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -117,8 +116,10 @@ func (h *Handler) RoleCreateFailingWithTransaction(c *gin.Context) {
 
 	model := request.ToModel()
 
+	tx := c.MustGet("tx").(*gorm.DB)
+
 	// call wanted method with transactions
-	result, err := h.roleService.WithTx(trx).MultipleOperationFailingWithTransaction(model)
+	result, err := h.roleService.WithTx(tx).MultipleOperationFailingWithTransaction(model)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
