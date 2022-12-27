@@ -173,6 +173,7 @@ var (
 	ErrOrderDoesNotHaveThatOrderDetail                         = errors.New("order does not have that order detail")
 	ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount    = errors.New("purchased amount does not exceed the merchant voucher's minimum purchased amount")
 	ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount = errors.New("purchased amount does not exceed the marketplace voucher's minimum purchased amount")
+	ErrWalletBalanceNotEnough                                  = errors.New("wallet balance is not enough")
 
 	// 422
 	ErrMarketplaceVoucherNotOngoing                           = errors.New("marketplace voucher is not ongoing")
@@ -185,7 +186,6 @@ var (
 	ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota = errors.New("the amount purchased exceeds the remaining merchant promotion quota")
 	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
 	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
-	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
 	ErrProductStatusInactive                                  = errors.New("product is delisted")
 	ErrCourierServiceNotSupportProduct                        = errors.New("courier service does not support the product")
 )
@@ -250,6 +250,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrProductDoesNotHaveThatProductItem) ||
 		errors.Is(err, ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount) ||
 		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) ||
+		errors.Is(err, ErrWalletBalanceNotEnough) ||
 		errors.Is(err, ErrOrderDoesNotHaveThatOrderDetail) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
@@ -345,7 +346,6 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
-		errors.Is(err, ErrWalletBalanceNotEnough) ||
 		errors.Is(err, ErrProductStatusInactive) ||
 		errors.Is(err, ErrRefundStatusIsNotOngoing) ||
 		errors.Is(err, ErrFileSize) ||
