@@ -28,11 +28,8 @@ type RefundService interface {
 	UpdateRejectRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUID) (*models.Refund, error)
 	CalculateRefundDetails(orderDetailID uuid.UUID, query *dtos.CalculateRefundDetailsQuery) (interface{}, error)
-<<<<<<< HEAD
 	CronAutoCompleteRejectedByExpiration() error
-=======
 	CronAutoApproveRefundByExpirationTime() error
->>>>>>> d66975385e664d7f7c3bd00ba8adb3e165aec1cd
 }
 
 type refundService struct {
@@ -749,7 +746,7 @@ func (s *refundService) CronAutoCompleteRejectedByExpiration() error {
 
 		interval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 1440
+			interval = constants.CronAutoCompleteOrderRejectedRefundExpirationInterval
 		}
 
 		if !time.Now().After(lr.RejectedDatetime.Add(time.Minute * time.Duration(interval))) {

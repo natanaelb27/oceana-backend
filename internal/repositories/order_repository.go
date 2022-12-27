@@ -58,22 +58,22 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 
 	sellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = 2880
+		sellerConfirmationExpirationInterval = constants.CronSellerConfirmationExpirationInterval
 	}
 
 	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = 4320
+		sellerConfirmationExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
 	}
 
 	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
 	if err != nil {
-		autoCompleteOrderRejectedRefundExpirationInterval = 1440
+		autoCompleteOrderRejectedRefundExpirationInterval = constants.CronAutoCompleteOrderRejectedRefundExpirationInterval
 	}
 
 	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 	if err != nil {
-		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+		autoApproveRefundSellerConfirmationExpirationInterval = constants.CronAutoApproveRefundSellerConfirmationExpirationInterval
 	}
 
 	subQueryRefundRank := r.db.Model(&models.Refund{}).
@@ -284,22 +284,22 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 
 	sellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = 2880
+		sellerConfirmationExpirationInterval = constants.CronSellerConfirmationExpirationInterval
 	}
 
 	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = 4320
+		sellerConfirmationExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
 	}
 
 	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
 	if err != nil {
-		autoCompleteOrderRejectedRefundExpirationInterval = 1440
+		autoCompleteOrderRejectedRefundExpirationInterval = constants.CronAutoCompleteOrderRejectedRefundExpirationInterval
 	}
 
 	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 	if err != nil {
-		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+		autoApproveRefundSellerConfirmationExpirationInterval = constants.CronAutoApproveRefundSellerConfirmationExpirationInterval
 	}
 
 	subQueryRefundRank := r.db.Model(&models.Refund{}).
@@ -511,22 +511,22 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 
 	sellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = 2880
+		sellerConfirmationExpirationInterval = constants.CronSellerConfirmationExpirationInterval
 	}
 
 	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = 4320
+		sellerConfirmationExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
 	}
 
 	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
 	if err != nil {
-		autoCompleteOrderRejectedRefundExpirationInterval = 1440
+		autoCompleteOrderRejectedRefundExpirationInterval = constants.CronAutoCompleteOrderRejectedRefundExpirationInterval
 	}
 
 	autoApproveRefundSellerConfirmationExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_APPROVE_REFUND_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 	if err != nil {
-		autoApproveRefundSellerConfirmationExpirationInterval = 2880
+		autoApproveRefundSellerConfirmationExpirationInterval = constants.CronAutoApproveRefundSellerConfirmationExpirationInterval
 	}
 
 	subQueryRefundRank := r.db.Model(&models.Refund{}).
