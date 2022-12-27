@@ -368,10 +368,13 @@ func (s *orderService) RefundCanceledOrder(orderID uuid.UUID) error {
 		return err
 	}
 
+	timeNow := time.Now()
+
 	refund, err := s.refundRepository.Create(&models.Refund{
 		OrderID:               orderID,
-		RefundRequestDatetime: time.Now(),
+		RefundRequestDatetime: timeNow,
 		Status:                constants.RefundStatusCompleted,
+		CompletedDatetime:     &timeNow,
 	})
 
 	if err != nil {
@@ -783,6 +786,9 @@ func (s *orderService) SellerClaimFunds(orderID uuid.UUID, userID uuid.UUID) (*m
 	}
 
 	order.ClaimStatus = true
+
+	timeNow := time.Now()
+	order.ClaimDatetime = &timeNow
 
 	updatedOrder, err := s.orderRepository.Update(orderID, order)
 

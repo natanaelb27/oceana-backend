@@ -15,6 +15,7 @@ type Refund struct {
 	RefundRequestDatetime time.Time
 	Status                string
 	RejectedDatetime      *time.Time
+	CompletedDatetime     *time.Time
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             gorm.DeletedAt

@@ -680,6 +680,9 @@ func (s *refundService) UpdateCompleteRefund(refundID uuid.UUID, userID uuid.UUI
 
 	refund.Status = constants.RefundStatusCompleted
 
+	timeNow := time.Now()
+	refund.CompletedDatetime = &timeNow
+
 	updatedRefund, err := s.refundRepository.Update(refundID, refund)
 
 	if err != nil {
