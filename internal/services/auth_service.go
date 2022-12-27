@@ -24,7 +24,7 @@ type AuthService interface {
 	StepUpPassword(c *gin.Context, id uuid.UUID, request *externalDtos.AuthStepUpPasswordRequest) (token string, err error)
 	SendResetPasswordEmail(c *gin.Context, request *externalDtos.UserVerifyResetPasswordRequest) (bool, error)
 	ResetPassword(c *gin.Context, resetPasswordID string, request *externalDtos.ResetPasswordRequest) (*externalDtos.ResetPasswordResponse, error)
-	RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error)
+	RefreshAccessToken(c *gin.Context, refreshToken string, userID uuid.UUID) (string, error)
 }
 
 type authService struct {
@@ -121,7 +121,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 		if err != nil {
 			return nil, err
 		}
-		refreshTokenCode, err := utils.GenerateUserTokenString(user)
+		refreshTokenCode, err := utils.GenerateRefreshTokenString(user)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +132,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 			return nil, err
 		}
 		userLoginData.RefreshToken = refreshTokenCode
-		userLoginData.ExpireDuration = refreshTokenDuration
+		userLoginData.ExpireDuration = int(refreshTokenDuration.Seconds())
 		return userLoginData, nil
 	}
 
@@ -142,7 +142,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 		if err != nil {
 			return nil, err
 		}
-		refreshTokenCode, err := utils.GenerateUserTokenString(user)
+		refreshTokenCode, err := utils.GenerateRefreshTokenString(user)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +153,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 			return nil, err
 		}
 		userLoginData.RefreshToken = refreshTokenCode
-		userLoginData.ExpireDuration = refreshTokenDuration
+		userLoginData.ExpireDuration = int(refreshTokenDuration.Seconds())
 		return userLoginData, nil
 	}
 
@@ -167,7 +167,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 		if err != nil {
 			return nil, err
 		}
-		refreshTokenCode, err := utils.GenerateUserTokenString(user)
+		refreshTokenCode, err := utils.GenerateRefreshTokenString(user)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +178,7 @@ func (u *authService) Login(c *gin.Context, userLoginRequest *externalDtos.UserL
 			return nil, err
 		}
 		userLoginData.RefreshToken = refreshTokenCode
-		userLoginData.ExpireDuration = refreshTokenDuration
+		userLoginData.ExpireDuration = int(refreshTokenDuration.Seconds())
 		return userLoginData, nil
 	}
 	return nil, e.ErrUserNotFound
@@ -235,9 +235,13 @@ func (u *authService) RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleR
 	if err != nil {
 		return nil, err
 	}
+	refreshToken, err := utils.GenerateRefreshTokenString(user)
+	if err != nil {
+		return nil, err
+	}
 	userLoginData := &internalDtos.UserLoginData{
 		AccessToken:  token,
-		RefreshToken: token,
+		RefreshToken: refreshToken,
 		Role:         createdUser.Role,
 	}
 	refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
@@ -246,7 +250,7 @@ func (u *authService) RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleR
 	if err != nil {
 		return nil, err
 	}
-	userLoginData.ExpireDuration = refreshTokenDuration
+	userLoginData.ExpireDuration = int(refreshTokenDuration.Seconds())
 	return userLoginData, nil
 }
 
@@ -270,9 +274,13 @@ func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest
 	if err != nil {
 		return nil, err
 	}
+	refreshToken, err := utils.GenerateRefreshTokenString(user)
+	if err != nil {
+		return nil, err
+	}
 	userLoginData := &internalDtos.UserLoginData{
 		AccessToken:  token,
-		RefreshToken: token,
+		RefreshToken: refreshToken,
 		Role:         user.Role,
 	}
 	refreshTokenDaysDuration, _ := strconv.Atoi(os.Getenv("REFRESH_TOKEN_DAYS_DURATION"))
@@ -281,7 +289,7 @@ func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest
 	if err != nil {
 		return nil, err
 	}
-	userLoginData.ExpireDuration = refreshTokenDuration
+	userLoginData.ExpireDuration = int(refreshTokenDuration.Seconds())
 	return userLoginData, nil
 }
 
@@ -388,10 +396,17 @@ func (u *authService) ResetPassword(c *gin.Context, resetPasswordID string, requ
 	return responseData, nil
 }
 
-func (u *authService) RefreshAccessToken(c *gin.Context, userID uuid.UUID) (string, error) {
+func (u *authService) RefreshAccessToken(c *gin.Context, refreshToken string, userID uuid.UUID) (string, error) {
 	user, err := u.userRepository.GetByID(userID)
 	if err != nil {
-		return "", err
+		return "", e.ErrUserNotFound
+	}
+	redisRefreshToken, err := u.redisRepository.Get(c, "refresh-token:"+userID.String())
+	if err != nil {
+		return "", e.ErrExpiredRefreshToken
+	}
+	if refreshToken != redisRefreshToken {
+		return "", e.ErrInvalidRefreshToken
 	}
 	accessToken, err := utils.GenerateUserTokenString(user)
 	if err != nil {

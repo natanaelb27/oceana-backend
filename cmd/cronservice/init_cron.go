@@ -55,6 +55,9 @@ func Init() {
 		OrderRepository:         orderRepository,
 	})
 
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		RefundRepository: refundRepository,
+	})
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})

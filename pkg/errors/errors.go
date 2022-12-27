@@ -51,6 +51,7 @@ var (
 	ErrInvalidRequest                 = errors.New("invalid request")
 	ErrInvalidIdentifier              = errors.New("invalid identifier")
 	ErrInvalidToken                   = errors.New("invalid token")
+	ErrInvalidRefreshToken            = errors.New("invalid refresh token")
 	ErrPasswordCannotContainsUsername = errors.New("password cannot contains username")
 	ErrInvalidVerificationCode        = errors.New("invalid verification code")
 	ErrInvalidSealabsPayID            = errors.New("invalid sealabs pay id")
@@ -63,6 +64,7 @@ var (
 	ErrInvalidVariantsMedia           = errors.New("invalid variants media")
 	ErrInvalidDiscountType            = errors.New("invalid discount type")
 	ErrInvalidDiscount                = errors.New("invalid discount")
+	ErrExpiredRefreshToken            = errors.New("expired refresh token")
 
 	ErrWrongEmailAddress                         = errors.New("wrong email address")
 	ErrWrongPassword                             = errors.New("wrong password")
@@ -136,6 +138,7 @@ var (
 	ErrCreateRefundIsOngoing                                      = errors.New("cannot create new refund while refund is in progress")
 	ErrCreateRefundIsApproved                                     = errors.New("cannot create new refund, refund is already approved")
 	ErrCreateRefundIsCompleted                                    = errors.New("cannot create new refund, refund is already completed")
+	ErrPromotionNotUpcoming                                       = errors.New("promotion is not upcoming")
 
 	ErrPromotionStartDatetimeEarlierThanNow                = errors.New("promotion start period is earlier than now")
 	ErrPromotionEndDatetimeEarlierThanVoucherStartDatetime = errors.New("promotion end period is earlier than the start period")
@@ -170,6 +173,7 @@ var (
 	ErrOrderDoesNotHaveThatOrderDetail                         = errors.New("order does not have that order detail")
 	ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount    = errors.New("purchased amount does not exceed the merchant voucher's minimum purchased amount")
 	ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount = errors.New("purchased amount does not exceed the marketplace voucher's minimum purchased amount")
+	ErrWalletBalanceNotEnough                                  = errors.New("wallet balance is not enough")
 
 	// 422
 	ErrMarketplaceVoucherNotOngoing                           = errors.New("marketplace voucher is not ongoing")
@@ -182,8 +186,8 @@ var (
 	ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota = errors.New("the amount purchased exceeds the remaining merchant promotion quota")
 	ErrPurchasedQuantityExceedRemainingUserLimit              = errors.New("the amount purchased exceeds the remaining user's limit")
 	ErrDifferentTotalPayment                                  = errors.New("there are changes in some promotion or discount")
-	ErrWalletBalanceNotEnough                                 = errors.New("wallet balance is not enough")
 	ErrProductStatusInactive                                  = errors.New("product is delisted")
+	ErrCourierServiceNotSupportProduct                        = errors.New("courier service does not support the product")
 )
 
 func GetStatusCode(err error) int {
@@ -246,6 +250,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrProductDoesNotHaveThatProductItem) ||
 		errors.Is(err, ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount) ||
 		errors.Is(err, ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount) ||
+		errors.Is(err, ErrWalletBalanceNotEnough) ||
 		errors.Is(err, ErrOrderDoesNotHaveThatOrderDetail) {
 		return http.StatusBadRequest
 	} else if errors.Is(err, ErrWrongEmailAddress) ||
@@ -254,7 +259,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrStepUpNotFound) ||
 		errors.Is(err, ErrStepUpScopeIncorrect) ||
 		errors.Is(err, ErrVerificationCodeNotFound) ||
-		errors.Is(err, ErrWrongWalletPin) {
+		errors.Is(err, ErrWrongWalletPin) ||
+		errors.Is(err, ErrInvalidRefreshToken) ||
+		errors.Is(err, ErrExpiredRefreshToken) {
 		return http.StatusUnauthorized
 	} else if errors.Is(err, ErrDataNotFound) ||
 		errors.Is(err, ErrMerchantNotFound) ||
@@ -339,7 +346,6 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota) ||
 		errors.Is(err, ErrPurchasedQuantityExceedRemainingUserLimit) ||
 		errors.Is(err, ErrDifferentTotalPayment) ||
-		errors.Is(err, ErrWalletBalanceNotEnough) ||
 		errors.Is(err, ErrProductStatusInactive) ||
 		errors.Is(err, ErrRefundStatusIsNotOngoing) ||
 		errors.Is(err, ErrFileSize) ||
@@ -348,7 +354,9 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrOrderFundsAlreadyClaimed) ||
 		errors.Is(err, ErrCreateRefundIsOngoing) ||
 		errors.Is(err, ErrCreateRefundIsApproved) ||
-		errors.Is(err, ErrCreateRefundIsCompleted) {
+		errors.Is(err, ErrCreateRefundIsCompleted) ||
+		errors.Is(err, ErrPromotionNotUpcoming) ||
+		errors.Is(err, ErrCourierServiceNotSupportProduct) {
 		return http.StatusUnprocessableEntity
 	}
 

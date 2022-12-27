@@ -21,6 +21,7 @@ type MerchantPromotionRepository interface {
 	GetByID(id uint) (*models.MerchantPromotion, error)
 	GetDetailsByID(id uint) (*internalDtos.MerchantPromotionDetails, error)
 	Update(newModel *models.MerchantPromotion) (model *models.MerchantPromotion, err error)
+	Delete(id uint) (model *models.MerchantPromotion, err error)
 }
 
 type merchantPromotionRepository struct {
@@ -178,6 +179,27 @@ func (mp *merchantPromotionRepository) Update(newModel *models.MerchantPromotion
 	}
 
 	model = newModel
+
+	return
+}
+
+func (mp *merchantPromotionRepository) Delete(id uint) (model *models.MerchantPromotion, err error) {
+	queryResult := mp.db.Delete(&model, id)
+
+	if queryResult.Error != nil && queryResult.Error != e.ErrDataNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.Error == e.ErrDataNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	model.ID = id
 
 	return
 }

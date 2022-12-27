@@ -9,6 +9,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
 
@@ -21,7 +22,7 @@ import (
 
 type ProductRepository interface {
 	WithTx(tx *gorm.DB) *productRepository
-	ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error)
+	GetDetails(internalQuery *internalDtos.ProductDetailsInternalQuery) (*dtos.ProductDetails, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 	CreateProduct(product *models.Product) (model *models.Product, err error)
@@ -57,7 +58,7 @@ func (u productRepository) WithTx(tx *gorm.DB) *productRepository {
 	return &u
 }
 
-func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.ProductDetails, error) {
+func (r *productRepository) GetDetails(internalQuery *internalDtos.ProductDetailsInternalQuery) (*dtos.ProductDetails, error) {
 	var productDetails *dtos.ProductDetails
 
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
@@ -76,7 +77,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			END
 		`).
 		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime").
-		Where("product_merchant_promotions.product_id = ?", productID)
+		Where("product_merchant_promotions.product_id = ?", internalQuery.ProductID)
 
 	subQueryProductItem := r.db.Model(&models.ProductItem{}).
 		Select(`
@@ -85,7 +86,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			MIN(price) AS price_min,
 			MAX(price) AS price_max
 		`).
-		Where("product_items.product_id = ?", productID).
+		Where("product_items.product_id = ?", internalQuery.ProductID).
 		Group("product_items.product_id")
 
 	subQueryTotalPurchased := r.db.Model(&models.ProductSnapshot{}).
@@ -94,7 +95,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 				SUM(order_details.quantity) AS total_purchased 
 			`).
 		Joins("JOIN order_details ON order_details.product_snapshot_id = product_snapshots.id").
-		Where("product_snapshots.product_id = ?", productID).
+		Where("product_snapshots.product_id = ?", internalQuery.ProductID).
 		Group("product_snapshots.product_id")
 
 	// subQueryProductReview := r.db.Model(&models.ProductItem{}).
@@ -114,7 +115,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			product_favorites.product_id AS product_id,
 			COUNT(*) AS like_count
 		`).
-		Where("product_favorites.product_id = ?", productID).
+		Where("product_favorites.product_id = ?", internalQuery.ProductID).
 		Where("is_favorite = TRUE").
 		Group("product_favorites.product_id")
 
@@ -123,7 +124,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			product_id,
 			ARRAY_AGG(media_url) AS images
 		`).
-		Where("product_id = ?", productID).
+		Where("product_id = ?", internalQuery.ProductID).
 		Where("type = ?", product_media_constants.TypeImage).
 		Group("product_id")
 
@@ -132,7 +133,7 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 			product_id,
 			ARRAY_AGG(media_url) AS videos
 		`).
-		Where("product_id = ?", productID).
+		Where("product_id = ?", internalQuery.ProductID).
 		Where("type = ?", product_media_constants.TypeVideo).
 		Group("product_id")
 
@@ -186,9 +187,11 @@ func (r *productRepository) ProductDetailsGetByID(productID uint) (*dtos.Product
 		Joins("LEFT JOIN (?) product_image_agg ON products.id = product_image_agg.product_id", subQueryProductImage).
 		Joins("LEFT JOIN (?) product_video_agg ON products.id = product_video_agg.product_id", subQueryProductVideo).
 		Joins("LEFT JOIN (?) product_purchase_agg ON products.id = product_purchase_agg.product_id", subQueryTotalPurchased).
-		Where("products.id = ?", productID).
-		Where("products.status = 'active'").
-		First(&productDetails)
+		Where("products.id = ?", internalQuery.ProductID)
+	if internalQuery.Status != constants.ProductInactiveStatus {
+		queryResult = queryResult.Where("products.status = 'active'")
+	}
+	queryResult = queryResult.First(&productDetails)
 
 	if queryResult.Error != nil {
 		if queryResult.Error == gorm.ErrRecordNotFound {
@@ -390,43 +393,51 @@ func (r *productRepository) subQueryProductMediaByProductID() *gorm.DB {
 	return query
 }
 
+func (r *productRepository) subQueryProductDiscount() *gorm.DB {
+	query := r.db.Model(&models.ProductMerchantPromotion{}).
+		Select(`
+		product_merchant_promotions.id,
+		merchant_promotions.name,
+		product_merchant_promotions.product_id,
+		product_merchant_promotions.discount_type,
+		product_merchant_promotions.discount,
+		product_merchant_promotions.maximum_discount_amount
+	`).
+		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
+		Where(`
+		product_merchant_promotions.maximum_quota > 
+		CASE
+			WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
+			ELSE -2
+		END
+	`).
+		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime")
+	return query
+}
+
+func (r *productRepository) subQueryProductReview() *gorm.DB {
+	query := r.db.Model(&models.ProductItem{}).
+		Select(`
+		product_items.product_id AS product_id,
+		AVG(product_reviews.rating) AS rating_star
+	`).
+		Joins("JOIN product_snapshots ON product_items.product_id = product_snapshots.product_id").
+		Joins("JOIN order_details ON product_snapshots.id = order_details.product_snapshot_id").
+		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
+		Group("product_items.product_id")
+	return query
+}
+
 func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
 	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
 	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
 	sqTotalPurchaseSum := sql.Named("total_purchase_count", r.subQueryProductPurchaseSum())
 	sqMediaURL := sql.Named("media_url", r.subQueryProductMediaByProductID())
+	subQueryProductDiscount := r.subQueryProductDiscount()
+	subQueryProductReview := r.subQueryProductReview()
 
 	var ProductDetails []*product_dtos.Product
-
-	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
-		Select(`
-			product_merchant_promotions.id,
-			merchant_promotions.name,
-			product_merchant_promotions.product_id,
-			product_merchant_promotions.discount_type,
-			product_merchant_promotions.discount,
-			product_merchant_promotions.maximum_discount_amount
-		`).
-		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Where(`
-			product_merchant_promotions.maximum_quota > 
-			CASE
-				WHEN product_merchant_promotions.maximum_quota > -1 THEN product_merchant_promotions.current_quota
-				ELSE -2
-			END
-		`).
-		Where("NOW() BETWEEN merchant_promotions.start_datetime AND merchant_promotions.end_datetime")
-
-	subQueryProductReview := r.db.Model(&models.ProductItem{}).
-		Select(`
-			product_items.product_id AS product_id,
-			AVG(product_reviews.rating) AS rating_star
-		`).
-		Joins("JOIN product_snapshots ON product_items.product_id = product_snapshots.product_id").
-		Joins("JOIN order_details ON product_snapshots.id = order_details.product_snapshot_id").
-		Joins("JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
-		Group("product_items.product_id")
 
 	query := r.db.Model(&models.Product{}).
 		Select(`
@@ -505,8 +516,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("JOIN districts ON districts.id = sub_districts.district_id").
 		Joins("JOIN cities ON cities.id = districts.city_id").
 		Joins("LEFT JOIN (?) product_review ON products.id = product_review.product_id", subQueryProductReview).
-		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount).
-		Where("products.status = 'active'")
+		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount)
 
 	// filter by merchant
 	if queryParams.MerchantID != 0 {
@@ -536,6 +546,158 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	if queryParams.RatingStarMinimum > 0 {
 		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
 	}
+
+	// filter by is active status
+	query.Where("products.status = ?", queryParams.Status)
+
+	// filter by merchant cities
+	if len(queryParams.MerchantCities) > 0 {
+		query = query.Where("cities.id in (?)", queryParams.MerchantCities)
+	}
+
+	// filter by cities
+	if len(queryParams.CourierServices) > 0 {
+		query.Where(`EXISTS (?)`,
+			r.subQueryProductCourierService(queryParams.CourierServices),
+		)
+	}
+
+	// search by products name
+	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
+
+	query.
+		Scopes(utils.Paginate(pagination, query)).
+		Order(fmt.Sprintf("%s %s", queryParams.SortBy, queryParams.Sort)).
+		Find(&ProductDetails)
+
+	if query.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return ProductDetails, pagination, nil
+}
+
+func (r *productRepository) MyShopGetAll(queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
+	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
+	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
+	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
+	sqTotalPurchaseSum := sql.Named("total_purchase_count", r.subQueryProductPurchaseSum())
+	sqMediaURL := sql.Named("media_url", r.subQueryProductMediaByProductID())
+	subQueryProductDiscount := r.subQueryProductDiscount()
+	subQueryProductReview := r.subQueryProductReview()
+
+	var ProductDetails []*product_dtos.Product
+
+	query := r.db.Model(&models.Product{}).
+		Select(`
+			products.id,
+            products.merchant_id,
+            products.category_id,
+            products.name,
+            products.description,
+            (@media_url) AS media_url,
+            products.is_hazardous,
+            products.weight,
+            products.package_size,
+            products.condition,
+            products.status AS product_status,
+			(@price_minimum) AS price_minimum,
+			(@price_maximum) AS price_maximum,
+			-- count price minimum after discount
+			(
+				CASE
+					WHEN pmp.discount_type = 'percentage' 
+						THEN (@price_minimum) - LEAST
+							(
+								(pmp.discount / 100.0) * (@price_minimum), 
+								pmp.maximum_discount_amount
+							)
+					WHEN pmp.discount_type = 'nominal' 
+						THEN GREATEST
+							(
+								(@price_minimum) - pmp.discount, 
+								0
+							)
+				ELSE (@price_minimum)
+				END
+			) AS price_minimum_after_discount,
+			-- count price maximum after discount
+			(
+				CASE
+					WHEN pmp.discount_type = 'percentage' 
+						THEN (@price_maximum) - LEAST
+							(
+								(pmp.discount / 100.0) * (@price_maximum), 
+								pmp.maximum_discount_amount
+							)
+					WHEN pmp.discount_type = 'nominal' 
+						THEN GREATEST
+							(
+								(@price_maximum) - pmp.discount, 
+								0
+							)
+				ELSE (@price_maximum)
+				END
+			) AS price_maximum_after_discount,
+			(@total_view_count) AS total_view_count,
+			(@total_purchase_count) AS total_purchase_count,
+			COALESCE(product_review.rating_star, 0) AS rating_star,
+			pmp.id as product_merchant_promotion_id,
+			pmp.name as merchant_promotion_name,
+			pmp.discount as discount,
+			pmp.discount_type as discount_type,
+			pmp.maximum_discount_amount as discount_maximum_discount_amount,
+            products.created_at,
+            products.updated_at,
+			merchants.id as "Merchant__id",
+			merchants.name as "Merchant__name",
+			cities.name as "Merchant__city"
+			`,
+			sqPriceMinimum,
+			sqPriceMaximum,
+			sqTotalViewCount,
+			sqTotalPurchaseSum,
+			sqMediaURL,
+		).
+		Joins("JOIN merchants ON merchants.id = products.merchant_id").
+		Joins("JOIN addresses ON addresses.id = merchants.address_id").
+		Joins("JOIN sub_districts ON sub_districts.id = addresses.sub_district_id").
+		Joins("JOIN districts ON districts.id = sub_districts.district_id").
+		Joins("JOIN cities ON cities.id = districts.city_id").
+		Joins("LEFT JOIN (?) product_review ON products.id = product_review.product_id", subQueryProductReview).
+		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount)
+
+	// filter by merchant
+	if queryParams.MerchantID != 0 {
+		query.Where("products.merchant_id = ?", queryParams.MerchantID)
+	}
+
+	// filter by price category
+	if queryParams.CategoryID != 0 {
+		query.Where("products.category_id IN ?", queryParams.Categories)
+	}
+
+	// filter by price minimum
+	if queryParams.PriceMinimum != 0 {
+		query.Where(`(@price_minimum) >= @query_price_minimum`,
+			sqPriceMinimum,
+			sql.Named("query_price_minimum", queryParams.PriceMinimum),
+		)
+	}
+	// filter by price maximum
+	if queryParams.PriceMaximum != 0 {
+		query.Where(`(@price_maximum) <= @query_price_maximum`,
+			sqPriceMaximum,
+			sql.Named("query_price_maximum", queryParams.PriceMaximum),
+		)
+	}
+
+	if queryParams.RatingStarMinimum > 0 {
+		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
+	}
+
+	// filter by is active status
+	query.Where("products.status = ?", queryParams.Status)
 
 	// filter by merchant cities
 	if len(queryParams.MerchantCities) > 0 {
@@ -697,7 +859,7 @@ func (r *productRepository) UpdateUsingMap(id uint, dataMap map[string]any) (err
 
 func (r *productRepository) GetById(id uint) (model *models.Product, err error) {
 	result := r.db.First(&model, id)
-	if result.Error != nil && result.Error == gorm.ErrRecordNotFound {
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
 		err = e.ErrDatabaseOperationFailed
 		return
 	}

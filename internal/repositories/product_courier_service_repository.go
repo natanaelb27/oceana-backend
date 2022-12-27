@@ -19,6 +19,7 @@ type ProductCourierServiceRepository interface {
 	Update(id uint, newModel *models.ProductCourierService) (model *models.ProductCourierService, err error)
 	Delete(id uint) (model *models.ProductCourierService, err error)
 	DeleteByMerchantCourierServiceIDProductID(merchantCourierServiceID uint, productID uint) (err error)
+	GetAllByProductIDAndCourierServiceID(productID uint, courierServiceID uint) (model *models.ProductCourierService, err error)
 }
 
 type productCourierServiceRepository struct {
@@ -150,6 +151,26 @@ func (r *productCourierServiceRepository) DeleteByMerchantCourierServiceIDProduc
 		Where("merchant_courier_service_id = ?", merchantCourierServiceID).
 		Where("product_id = ?", productID).
 		Delete(&models.ProductCourierService{})
+	if result.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *productCourierServiceRepository) GetAllByProductIDAndCourierServiceID(productID uint, courierServiceID uint) (model *models.ProductCourierService, err error) {
+	result := r.db.Model(&models.ProductCourierService{}).
+		Joins("JOIN merchant_courier_services ON merchant_courier_services.id = product_courier_services.merchant_courier_service_id").
+		Where("product_courier_services.product_id = ?", productID).
+		Where("merchant_courier_services.courier_service_id = ?", courierServiceID).
+		Where("merchant_courier_services.is_active = true").
+		First(&model)
+
+	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 	if result.RowsAffected == 0 {
 		err = e.ErrDataNotFound
 		return

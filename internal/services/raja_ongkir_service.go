@@ -15,17 +15,23 @@ type RajaOngkirService interface {
 type rajaOngkirService struct {
 	rajaOngkirRepository            r.RajaOngkirRepository
 	productCourierServiceRepository r.ProductCourierServiceRepository
+	courierRepository               r.CourierRepository
+	courierSerivceRepository        r.CourierServiceRepository
 }
 
 type RajaOngkirServiceConfig struct {
 	RajaOngkirRepository            r.RajaOngkirRepository
 	ProductCourierServiceRepository r.ProductCourierServiceRepository
+	CourierRepository               r.CourierRepository
+	CourierServiceRepository        r.CourierServiceRepository
 }
 
 func NewRajaOngkirService(c *RajaOngkirServiceConfig) RajaOngkirService {
 	return &rajaOngkirService{
 		rajaOngkirRepository:            c.RajaOngkirRepository,
 		productCourierServiceRepository: c.ProductCourierServiceRepository,
+		courierRepository:               c.CourierRepository,
+		courierSerivceRepository:        c.CourierServiceRepository,
 	}
 }
 
@@ -66,6 +72,15 @@ func (s *rajaOngkirService) GetRajaOngkirShippingCost(request *dtos.GetRajaOngki
 		if exists := serviceCodes[rajaOngkirShipping.Code+vROSC.Service]; !exists {
 			continue
 		}
+		courier, err := s.courierRepository.GetByCode(rajaOngkirShipping.Code)
+		if err != nil {
+			return nil, err
+		}
+		courierService, err := s.courierSerivceRepository.GetByCourierIDAndServiceCode(courier.ID, vROSC.Service)
+		if err != nil {
+			return nil, err
+		}
+		vROSC.CourierServiceID = courierService.ID
 		newRajaOngkirShipping.Costs = append(newRajaOngkirShipping.Costs, vROSC)
 	}
 	if len(newRajaOngkirShipping.Costs) == 0 {

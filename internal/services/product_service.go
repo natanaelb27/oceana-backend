@@ -7,6 +7,7 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	productInternalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -20,7 +21,7 @@ import (
 type ProductService interface {
 	WithTx(tx *gorm.DB) *productService
 	GetAll(query *productInternalDtos.ProductQuery) ([]*productInternalDtos.Product, *utils.Pagination, error)
-	ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error)
+	ProductDetailsGetByID(internalQuery *internalDtos.ProductDetailsInternalQuery) (*dtos.ProductDetailsGetByIDResponse, error)
 	GetPurchaseQuantitiesByID(userID uuid.UUID, quantity *dtos.PurchaseQuantitiesQuery) (*dtos.GetPurchaseQuantitiesByIDResponse, error)
 	ViewProduct(userID uuid.UUID, productID uint) (*dtos.GetProductViewResponse, error)
 	GetFavoriteProduct(userID uuid.UUID, productID uint) (*dtos.GetProductFavoriteResponse, error)
@@ -30,6 +31,7 @@ type ProductService interface {
 	GetUpdateModelByProductID(productID uint) (*productInternalDtos.ProductModel, error)
 	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
 	CheckCourierService(request *productInternalDtos.ProductCheckCourierService) (*productInternalDtos.ProductCheckCourierServiceResponse, error)
+	MyShopGetAll(query *productInternalDtos.ProductQuery) (responseProductDetails []*dtos.ProductDetailsGetByIDResponse, pagination *utils.Pagination, err error)
 }
 
 type productService struct {
@@ -103,8 +105,10 @@ func (u productService) WithTx(tx *gorm.DB) *productService {
 	return &u
 }
 
-func (s *productService) ProductDetailsGetByID(productID uint) (*dtos.ProductDetailsGetByIDResponse, error) {
-	productDetails, err := s.productRepository.ProductDetailsGetByID(productID)
+func (s *productService) ProductDetailsGetByID(internalQuery *internalDtos.ProductDetailsInternalQuery) (*dtos.ProductDetailsGetByIDResponse, error) {
+	productID := internalQuery.ProductID
+
+	productDetails, err := s.productRepository.GetDetails(internalQuery)
 
 	if err != nil {
 		return nil, err
@@ -331,7 +335,7 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 		CategoryID:  request.CategoryID,
 		Name:        request.Name,
 		Description: request.Description,
-		IsHazardous: request.IsHazardous,
+		IsHazardous: *request.IsHazardous,
 		Weight:      request.Weight,
 		PackageSize: request.PackageSize,
 		Condition:   request.Condition,
@@ -1189,4 +1193,40 @@ func (s *productService) GetAvailableProductsByPromotionPeriod(id uuid.UUID, que
 
 func (s *productService) CheckCourierService(request *productInternalDtos.ProductCheckCourierService) (*productInternalDtos.ProductCheckCourierServiceResponse, error) {
 	return s.productRepository.CheckCourierService(request)
+}
+
+func (s *productService) MyShopGetAll(query *productInternalDtos.ProductQuery) (responseProductDetails []*dtos.ProductDetailsGetByIDResponse, pagination *utils.Pagination, err error) {
+	pagination = &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	if query.CategoryID != 0 {
+		var categories []uint
+		categories, err = s.GetCategoryIds(query.CategoryID)
+		if err != nil {
+			return
+		}
+
+		query.Categories = categories
+	}
+
+	products, pagination, err := s.productRepository.GetAll(query, pagination)
+	if err != nil {
+		return
+	}
+
+	for _, vP := range products {
+		query := &internalDtos.ProductDetailsInternalQuery{
+			ProductID: vP.ID,
+			Status:    vP.ProductStatus,
+		}
+		productDetails, err := s.ProductDetailsGetByID(query)
+		if err != nil {
+			return nil, nil, err
+		}
+		responseProductDetails = append(responseProductDetails, productDetails)
+	}
+
+	return responseProductDetails, pagination, nil
 }

@@ -3,6 +3,8 @@ package handlers
 import (
 	"strconv"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -19,9 +21,12 @@ func (h *Handler) ProductDetailsGetByID(c *gin.Context) {
 		return
 	}
 
-	productID := uint(productIDUint64)
+	internalQuery := &internalDtos.ProductDetailsInternalQuery{
+		ProductID: uint(productIDUint64),
+		Status:    constants.ProductStatusActive,
+	}
 
-	productDetailsGetByIDResponse, err := h.productService.ProductDetailsGetByID(productID)
+	productDetailsGetByIDResponse, err := h.productService.ProductDetailsGetByID(internalQuery)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -36,6 +41,31 @@ func (h *Handler) ProductGetAll(c *gin.Context) {
 	query := product_dtos.NewProductQuery(c)
 
 	results, pagination, err := h.productService.GetAll(query)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}
+
+func (h *Handler) MyShopGetAll(c *gin.Context) {
+	query := product_dtos.NewProductQuery(c)
+
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	merchant, err := h.merchantService.MerchantGetProfile(id)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	query.MerchantID = merchant.ID
+
+	results, pagination, err := h.productService.MyShopGetAll(query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -257,4 +287,20 @@ func (h *Handler) GetAvailableProductsByPromotionPeriod(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, result, nil)
+}
+
+func (h *Handler) ProductLogisticsByMerchantID(c *gin.Context) {
+	merchantID, err := strconv.Atoi(c.Param("merchant-id"))
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidParams)
+		return
+	}
+
+	results, err := h.logisticService.ProductGetByMerchantID(uint(merchantID))
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, nil)
 }
