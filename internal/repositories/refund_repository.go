@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/refund_media_constants"
@@ -18,6 +19,7 @@ import (
 )
 
 type RefundRepository interface {
+	UpdateAllByStatusByRefundExpirationDatetimeLteNow(status string, datas *models.Refund) (err error)
 	Create(newModel *models.Refund) (model *models.Refund, err error)
 	GetAllDetailsByBuyer(userID uuid.UUID, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
 	GetDetailsByID(refundID uuid.UUID) (*dtos.RefundDetails, error)
@@ -41,6 +43,19 @@ func NewRefundRepository(c *RefundRepositoryConfig) RefundRepository {
 	return &refundRepository{
 		db: c.DB,
 	}
+}
+
+func (r *refundRepository) UpdateAllByStatusByRefundExpirationDatetimeLteNow(status string, datas *models.Refund) (err error) {
+	queryResult := r.db.
+		Where("status = ?", status).
+		Where("refund_request_datetime + INTERVAL '1 minute' * (?)::INTEGER<= ?", os.Getenv("CRON_REFUND_AUTO_APPROVE_BUYER_REQUEST_INTERVAL"), time.Now()).
+		Updates(&datas)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
 }
 
 func (r *refundRepository) Create(newModel *models.Refund) (model *models.Refund, err error) {

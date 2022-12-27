@@ -55,6 +55,9 @@ func Init() {
 		OrderRepository:         orderRepository,
 	})
 
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		RefundRepository: refundRepository,
+	})
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
@@ -76,6 +79,7 @@ func Init() {
 		RoleService:          roleService,
 		OrderService:         orderService,
 		OrderTrackingService: orderTrackingService,
+		RefundService:        refundService,
 	})
 
 	// cron that runs per 15 second
