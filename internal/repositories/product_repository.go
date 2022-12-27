@@ -33,6 +33,7 @@ type ProductRepository interface {
 	GetById(id uint) (model *models.Product, err error)
 	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error)
 	CheckCourierService(request *product_dtos.ProductCheckCourierService) (result *product_dtos.ProductCheckCourierServiceResponse, err error)
+	GetAllUserFavoriteProducts(userID uuid.UUID, queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 }
 
 type productRepository struct {
@@ -949,4 +950,151 @@ func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uin
 	}
 
 	return availableProducts, nil
+}
+
+func (r *productRepository) GetAllUserFavoriteProducts(userID uuid.UUID, queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
+	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
+	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
+	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
+	sqTotalPurchaseSum := sql.Named("total_purchase_count", r.subQueryProductPurchaseSum())
+	sqMediaURL := sql.Named("media_url", r.subQueryProductMediaByProductID())
+	subQueryProductDiscount := r.subQueryProductDiscount()
+	subQueryProductReview := r.subQueryProductReview()
+
+	var ProductDetails []*product_dtos.Product
+
+	query := r.db.Model(&models.Product{}).
+		Select(`
+			products.id,
+            products.merchant_id,
+            products.category_id,
+            products.name,
+            products.description,
+            (@media_url) AS media_url,
+            products.is_hazardous,
+            products.weight,
+            products.package_size,
+            products.condition,
+            products.status AS product_status,
+			(@price_minimum) AS price_minimum,
+			(@price_maximum) AS price_maximum,
+			-- count price minimum after discount
+			(
+				CASE
+					WHEN pmp.discount_type = 'percentage' 
+						THEN (@price_minimum) - LEAST
+							(
+								(pmp.discount / 100.0) * (@price_minimum), 
+								pmp.maximum_discount_amount
+							)
+					WHEN pmp.discount_type = 'nominal' 
+						THEN GREATEST
+							(
+								(@price_minimum) - pmp.discount, 
+								0
+							)
+				ELSE (@price_minimum)
+				END
+			) AS price_minimum_after_discount,
+			-- count price maximum after discount
+			(
+				CASE
+					WHEN pmp.discount_type = 'percentage' 
+						THEN (@price_maximum) - LEAST
+							(
+								(pmp.discount / 100.0) * (@price_maximum), 
+								pmp.maximum_discount_amount
+							)
+					WHEN pmp.discount_type = 'nominal' 
+						THEN GREATEST
+							(
+								(@price_maximum) - pmp.discount, 
+								0
+							)
+				ELSE (@price_maximum)
+				END
+			) AS price_maximum_after_discount,
+			(@total_view_count) AS total_view_count,
+			(@total_purchase_count) AS total_purchase_count,
+			COALESCE(product_review.rating_star, 0) AS rating_star,
+			pmp.id as product_merchant_promotion_id,
+			pmp.name as merchant_promotion_name,
+			pmp.discount as discount,
+			pmp.discount_type as discount_type,
+			pmp.maximum_discount_amount as discount_maximum_discount_amount,
+            products.created_at,
+            products.updated_at,
+			merchants.id as "Merchant__id",
+			merchants.name as "Merchant__name",
+			cities.name as "Merchant__city"
+			`,
+			sqPriceMinimum,
+			sqPriceMaximum,
+			sqTotalViewCount,
+			sqTotalPurchaseSum,
+			sqMediaURL,
+		).
+		Joins("JOIN merchants ON merchants.id = products.merchant_id").
+		Joins("JOIN addresses ON addresses.id = merchants.address_id").
+		Joins("JOIN sub_districts ON sub_districts.id = addresses.sub_district_id").
+		Joins("JOIN districts ON districts.id = sub_districts.district_id").
+		Joins("JOIN cities ON cities.id = districts.city_id").
+		Joins("LEFT JOIN (?) product_review ON products.id = product_review.product_id", subQueryProductReview).
+		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount).
+		Joins("JOIN product_favorites ON product_favorites.product_id = products.id AND product_favorites.is_favorite = true AND product_favorites.user_id = ?", userID)
+
+	// filter by merchant
+	if queryParams.MerchantID != 0 {
+		query.Where("products.merchant_id = ?", queryParams.MerchantID)
+	}
+
+	// filter by category
+	if queryParams.CategoryID != 0 {
+		query.Where("products.category_id IN ?", queryParams.Categories)
+	}
+
+	// filter by price minimum
+	if queryParams.PriceMinimum != 0 {
+		query.Where(`(@price_minimum) >= @query_price_minimum`,
+			sqPriceMinimum,
+			sql.Named("query_price_minimum", queryParams.PriceMinimum),
+		)
+	}
+	// filter by price maximum
+	if queryParams.PriceMaximum != 0 {
+		query.Where(`(@price_maximum) <= @query_price_maximum`,
+			sqPriceMaximum,
+			sql.Named("query_price_maximum", queryParams.PriceMaximum),
+		)
+	}
+
+	if queryParams.RatingStarMinimum > 0 {
+		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
+	}
+
+	// filter by merchant cities
+	if len(queryParams.MerchantCities) > 0 {
+		query = query.Where("cities.id in (?)", queryParams.MerchantCities)
+	}
+
+	// filter by cities
+	if len(queryParams.CourierServices) > 0 {
+		query.Where(`EXISTS (?)`,
+			r.subQueryProductCourierService(queryParams.CourierServices),
+		)
+	}
+
+	// search by products name
+	query.Where("products.name ILIKE ?", "%"+queryParams.Search+"%")
+
+	query.
+		Scopes(utils.Paginate(pagination, query)).
+		Order(fmt.Sprintf("%s %s", queryParams.SortBy, queryParams.Sort)).
+		Find(&ProductDetails)
+
+	if query.Error != nil {
+		return nil, nil, e.ErrDatabaseOperationFailed
+	}
+
+	return ProductDetails, pagination, nil
 }

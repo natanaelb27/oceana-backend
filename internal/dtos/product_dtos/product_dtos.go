@@ -243,3 +243,76 @@ type ProductCheckCourierService struct {
 type ProductCheckCourierServiceResponse struct {
 	AvailableProducts pq.Int64Array `json:"available_products" gorm:"type:integer[]"`
 }
+
+type ProductFavoriteQuery struct {
+	Search string
+	SortBy string
+	Sort   string
+	Limit  uint
+	Page   uint
+	// Filter
+	MerchantID        uint
+	CategoryID        uint
+	PriceMinimum      uint
+	PriceMaximum      uint
+	RatingStarMinimum uint
+	Status            string
+	MerchantCities    []string
+	CourierServices   []string
+	// Categories
+	Categories []uint
+}
+
+func NewProductFavoriteQuery(c *gin.Context) *ProductFavoriteQuery {
+	query := &ProductFavoriteQuery{}
+
+	query.Search = c.Query("search")
+	query.MerchantID = utils.StringToUint(c.Query("merchant-id"))
+	query.CategoryID = utils.StringToUint(c.Query("category-id"))
+	query.PriceMinimum = utils.StringToUint(c.Query("price-minimum"))
+	query.PriceMaximum = utils.StringToUint(c.Query("price-maximum"))
+	query.RatingStarMinimum = utils.StringToUint(c.Query("rating-star-minimum"))
+
+	query.Status = c.Query("status")
+	if query.Status == constants.ProductStatusInactive {
+		query.Status = constants.ProductStatusInactive
+	} else {
+		query.Status = constants.ProductStatusActive
+	}
+
+	query.Page = utils.StringToUint(c.Query("page"))
+	if query.Page == 0 {
+		query.Page = 1
+	}
+
+	query.Limit = utils.StringToUint(c.Query("limit"))
+	if query.Limit == 0 {
+		query.Limit = 10
+	}
+
+	merchantCitiesString := c.Query("merchant-cities")
+	if merchantCitiesString != "" {
+		query.MerchantCities = strings.Split(merchantCitiesString, ",")
+	}
+
+	courierServicesString := c.Query("courier-services")
+	if courierServicesString != "" {
+		query.CourierServices = strings.Split(courierServicesString, ",")
+	}
+
+	query.Sort = utils.QueryParamSort(c.Query("sort"))
+
+	sortBy := strings.ToLower(c.Query("sort-by"))
+	switch sortBy {
+	case "saved":
+		query.SortBy = "product_favorites.updated_at"
+	case "price":
+		query.SortBy = "price_minimum"
+	case "most-buy":
+		query.SortBy = "total_purchase_count"
+	default:
+		query.SortBy = "products.name"
+	}
+
+	return query
+}

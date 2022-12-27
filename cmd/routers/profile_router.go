@@ -28,5 +28,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.GET("/pending-payment", func(c *gin.Context) { middlewares.Role(c, "001") }, h.PendingPaymentGetAllByUser)
 		privateRoute.POST("/refunds/:order-id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CreateRefund)
 		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllRefundDetailsByBuyer)
+		privateRoute.GET("/favorites", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllUserFavoriteProducts)
 	}
 }

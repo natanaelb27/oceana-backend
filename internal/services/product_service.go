@@ -32,6 +32,7 @@ type ProductService interface {
 	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
 	CheckCourierService(request *productInternalDtos.ProductCheckCourierService) (*productInternalDtos.ProductCheckCourierServiceResponse, error)
 	MyShopGetAll(query *productInternalDtos.ProductQuery) (responseProductDetails []*dtos.ProductDetailsGetByIDResponse, pagination *utils.Pagination, err error)
+	GetAllUserFavoriteProducts(userID uuid.UUID, query *productInternalDtos.ProductQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error)
 }
 
 type productService struct {
@@ -1229,4 +1230,28 @@ func (s *productService) MyShopGetAll(query *productInternalDtos.ProductQuery) (
 	}
 
 	return responseProductDetails, pagination, nil
+}
+
+func (s *productService) GetAllUserFavoriteProducts(userID uuid.UUID, query *productInternalDtos.ProductQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error) {
+	pagination = &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	if query.CategoryID != 0 {
+		var categories []uint
+		categories, err = s.GetCategoryIds(query.CategoryID)
+		if err != nil {
+			return
+		}
+
+		query.Categories = categories
+	}
+
+	productDetails, pagination, err = s.productRepository.GetAllUserFavoriteProducts(userID, query, pagination)
+	if err != nil {
+		return
+	}
+
+	return productDetails, pagination, nil
 }
