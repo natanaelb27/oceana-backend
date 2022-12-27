@@ -3,6 +3,8 @@ package handlers
 import (
 	"strconv"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
@@ -19,9 +21,12 @@ func (h *Handler) ProductDetailsGetByID(c *gin.Context) {
 		return
 	}
 
-	productID := uint(productIDUint64)
+	internalQuery := &internalDtos.ProductDetailsInternalQuery{
+		ProductID: uint(productIDUint64),
+		Status:    constants.ProductStatusActive,
+	}
 
-	productDetailsGetByIDResponse, err := h.productService.ProductDetailsGetByID(productID)
+	productDetailsGetByIDResponse, err := h.productService.ProductDetailsGetByID(internalQuery)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -44,7 +49,7 @@ func (h *Handler) ProductGetAll(c *gin.Context) {
 	utils.ResponseSuccess(c, results, pagination)
 }
 
-func (h *Handler) MyShopProductGetAll(c *gin.Context) {
+func (h *Handler) MyShopGetAll(c *gin.Context) {
 	query := product_dtos.NewProductQuery(c)
 
 	id := utils.GinGetUUID(c, "id")
@@ -60,7 +65,7 @@ func (h *Handler) MyShopProductGetAll(c *gin.Context) {
 
 	query.MerchantID = merchant.ID
 
-	results, pagination, err := h.productService.GetAll(query)
+	results, pagination, err := h.productService.MyShopGetAll(query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

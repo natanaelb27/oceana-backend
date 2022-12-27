@@ -46,7 +46,7 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.GET("/products",
 			middlewares.DBTransactionMiddleware(),
 			func(c *gin.Context) { middlewares.Role(c, "010") },
-			h.MyShopProductGetAll)
+			h.MyShopGetAll)
 
 		// logistic
 		privateRoute.GET("/logistics", func(c *gin.Context) { middlewares.Role(c, "010") }, h.LogisticGet)
