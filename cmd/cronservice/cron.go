@@ -10,6 +10,7 @@ type Cron struct {
 	roleService          services.RoleService
 	orderService         services.OrderService
 	orderTrackingService services.OrderTrackingService
+	refundService        services.RefundService
 }
 
 type CronConfig struct {
@@ -17,6 +18,7 @@ type CronConfig struct {
 	RoleService          services.RoleService
 	OrderService         services.OrderService
 	OrderTrackingService services.OrderTrackingService
+	RefundService        services.RefundService
 }
 
 func New(c *CronConfig) *Cron {
@@ -25,5 +27,6 @@ func New(c *CronConfig) *Cron {
 		roleService:          c.RoleService,
 		orderService:         c.OrderService,
 		orderTrackingService: c.OrderTrackingService,
+		refundService:        c.RefundService,
 	}
 }
