@@ -17,7 +17,7 @@ type ProductDetails struct {
 	TotalStock            uint                  `json:"total_stock"`
 	LikeCount             uint                  `json:"like_count"`
 	TotalPurchased        uint                  `json:"total_purchased"`
-	ProductReviewDetails  *ProductReviewDetails `json:"product_review_details"`
+	ProductReviewDetails  *ProductReviewDetails `json:"product_review_details" gorm:"-"`
 	DiscountType          *string               `json:"discount_type"`
 	Discount              *uint                 `json:"discount"`
 	Price                 float64               `json:"price"`
@@ -45,4 +45,9 @@ type AvailableProducts struct {
 	PriceMax     uint   `json:"price_max"`
 	PriceMin     uint   `json:"price_min"`
 	TotalStock   uint   `json:"total_stock"`
+}
+
+type ProductDetailsInternalQuery struct {
+	ProductID uint
+	Status    string
 }

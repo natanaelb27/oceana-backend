@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -61,6 +62,7 @@ type ProductQuery struct {
 	PriceMinimum      uint
 	PriceMaximum      uint
 	RatingStarMinimum uint
+	Status            string
 	MerchantCities    []string
 	CourierServices   []string
 	// Categories
@@ -76,6 +78,13 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 	query.PriceMinimum = utils.StringToUint(c.Query("price-minimum"))
 	query.PriceMaximum = utils.StringToUint(c.Query("price-maximum"))
 	query.RatingStarMinimum = utils.StringToUint(c.Query("rating-star-minimum"))
+
+	query.Status = c.Query("status")
+	if query.Status == constants.ProductStatusInactive {
+		query.Status = constants.ProductStatusInactive
+	} else {
+		query.Status = constants.ProductStatusActive
+	}
 
 	query.Page = utils.StringToUint(c.Query("page"))
 	if query.Page == 0 {
