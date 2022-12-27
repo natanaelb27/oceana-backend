@@ -61,7 +61,6 @@ func Init() {
 	roleService := services.NewRoleService(&services.RoleServiceConfig{
 		RoleRepository: roleRepository,
 	})
-
 	orderService := services.NewOrderService(&services.OrderServiceConfig{
 		OrderDetailRepository:                  orderDetailRepository,
 		OrderRepository:                        orderRepository,
@@ -72,6 +71,12 @@ func Init() {
 		WalletRepository:                       walletRepository,
 		WalletTransactionPaymentRepository:     walletTransactionPaymentRepository,
 		SealabsPayTransactionPaymentRepository: sealabsPayTransactionPaymentRepository,
+	})
+
+	refundService := services.NewRefundService(&services.RefundServiceConfig{
+		RefundRepository:        refundRepository,
+		OrderRepository:         orderRepository,
+		OrderTrackingRepository: orderTrackingRepository,
 	})
 
 	c := New(&CronConfig{

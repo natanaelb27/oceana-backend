@@ -43,7 +43,7 @@ func (p *orderTrackingService) CronOrderTrackingUpdater() error {
 	for _, v := range orderTrackings {
 		interval, err := strconv.Atoi(os.Getenv("CRON_ORDER_TRACKING_UPDATE_INTERVAL"))
 		if err != nil {
-			interval = 15
+			interval = constants.CronOrderTrackingUpdateInterval
 		}
 		// if time after the last history date time hasnt pass 15 minutes then continue to next iteration
 		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {

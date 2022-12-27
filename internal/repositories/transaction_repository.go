@@ -3,6 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"log"
+	"os"
+	"strconv"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -56,6 +58,12 @@ func (r *transactionRepository) Create(newModel *models.Transaction) (model *mod
 }
 
 func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error) {
+	paymentExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_PAYMENT_EXPIRATION_INTERVAL"))
+
+	if err != nil {
+		paymentExpirationInterval = constants.CronPaymentExpirationInterval
+	}
+
 	subQueryPendingPaymentTransactions := r.db.Model(&models.Order{}).
 		Select(`
 			DISTINCT
@@ -75,7 +83,7 @@ func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pend
 			payment_methods.image AS payment_method_image,
 			transactions.transaction_datetime + INTERVAL '1 minute' * @interval_payment_expiration AS payment_expiration_datetime,
 			transactions.total_price_with_shipping_fee AS total_payment
-		`, sql.Named("interval_payment_expiration", constants.PaymentExpirationInterval)).
+		`, sql.Named("interval_payment_expiration", paymentExpirationInterval)).
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN users ON transactions.user_id = users.id").
 		Joins("JOIN (?) tbl_pending_payment ON transactions.id = tbl_pending_payment.transaction_id", subQueryPendingPaymentTransactions).

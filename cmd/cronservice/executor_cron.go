@@ -48,5 +48,11 @@ func (c *Cron) Per15Seconds() {
 		if err != nil {
 			log.Print("CRON: ERROR: orderService.CronAutoCompleteDelivered:", err)
 		}
+
+		err = nil
+		err = c.refundService.CronAutoCompleteRejectedByExpiration()
+		if err != nil {
+			log.Print("CRON: ERROR: refundService.CronAutoCompleteDelivered:", err)
+		}
 	})
 }

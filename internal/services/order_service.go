@@ -468,7 +468,7 @@ func (s *orderService) CronPaymentExpiration() error {
 	for _, v := range pendingPayment {
 		interval, err := strconv.Atoi(os.Getenv("CRON_PAYMENT_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 10
+			interval = constants.CronPaymentExpirationInterval
 		}
 
 		if !time.Now().After(v.Transaction.TransactionDatetime.Add(time.Minute * time.Duration(interval))) {
@@ -513,7 +513,7 @@ func (s *orderService) CronPendingSellerExpiration() error {
 	for _, v := range orderTrackings {
 		interval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 2880
+			interval = constants.CronSellerConfirmationExpirationInterval
 		}
 
 		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
@@ -616,7 +616,7 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 	for _, v := range orderTrackings {
 		interval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 4320
+			interval = constants.CronAutoCompleteDeliveredExpirationInterval
 		}
 
 		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
