@@ -190,6 +190,8 @@ func (r *refundRepository) GetAllDetailsByBuyer(userID uuid.UUID, query *externa
 	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
 		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
 			result.Where("refunds.status IN (?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusRejected)
+		} else if query.FilterGroupedStatus == constants.RefundGroupedStatusApproved {
+			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
 		}
 	}
 
@@ -428,6 +430,8 @@ func (r *refundRepository) GetAllDetailsByMerchant(merchantID uint, query *exter
 	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
 		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
 			result.Where("refunds.status IN (?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusRejected)
+		} else if query.FilterGroupedStatus == constants.RefundGroupedStatusApproved {
+			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
 		}
 	}
 
@@ -555,6 +559,8 @@ func (r *refundRepository) GetAllDetails(query *externalDtos.GetAllRefundQuery, 
 	if query.FilterGroupedStatus != "" && query.FilterGroupedStatus != constants.RefundFilterAll {
 		if query.FilterGroupedStatus == constants.RefundGroupedStatusProcessed {
 			result.Where("refunds.status IN (?, ?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem, constants.RefundStatusRejected)
+		} else if query.FilterGroupedStatus == constants.RefundGroupedStatusApproved {
+			result.Where("refunds.status IN (?, ?)", constants.RefundStatusApproved, constants.RefundStatusApprovedBySystem)
 		}
 	}
 
