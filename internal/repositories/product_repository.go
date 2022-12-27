@@ -505,8 +505,7 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 		Joins("JOIN districts ON districts.id = sub_districts.district_id").
 		Joins("JOIN cities ON cities.id = districts.city_id").
 		Joins("LEFT JOIN (?) product_review ON products.id = product_review.product_id", subQueryProductReview).
-		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount).
-		Where("products.status = 'active'")
+		Joins("LEFT JOIN (?) pmp ON products.id = pmp.product_id", subQueryProductDiscount)
 
 	// filter by merchant
 	if queryParams.MerchantID != 0 {
@@ -536,6 +535,9 @@ func (r *productRepository) GetAll(queryParams *product_dtos.ProductQuery, pagin
 	if queryParams.RatingStarMinimum > 0 {
 		query.Where("COALESCE(product_review.rating_star, 0) >= ?", queryParams.RatingStarMinimum)
 	}
+
+	// filter by is active status
+	query.Where("products.status = ?", queryParams.Status)
 
 	// filter by merchant cities
 	if len(queryParams.MerchantCities) > 0 {
