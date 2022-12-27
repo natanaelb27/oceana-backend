@@ -110,3 +110,28 @@ func (h *Handler) MerchantPromotionUpdate(c *gin.Context) {
 
 	utils.ResponseSuccess(c, responses, nil)
 }
+
+func (h *Handler) MerchantPromotionDelete(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionIDUint64, err := strconv.ParseUint(c.Param("merchant-promotion-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionID := uint(merchantPromotionIDUint64)
+
+	merchantPromotionDeleteResponse, err := h.merchantPromotionService.Delete(id, merchantPromotionID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantPromotionDeleteResponse, nil)
+}

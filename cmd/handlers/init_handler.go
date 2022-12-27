@@ -355,6 +355,7 @@ func Init() *Handler {
 		OrderTrackingRepository:                 orderTrackingRepository,
 		ProductRepository:                       productRepository,
 		ProductItemRepository:                   productItemRepository,
+		ProductCourierServiceRepository:         productCourierServiceRepository,
 		ProductMerchantPromotionRepository:      productMerchantPromotionRepository,
 		ProductSnapshotRepository:               productSnapshotRepository,
 		ProductMediaSnapshotRepository:          productMediaSnapshotRepository,
