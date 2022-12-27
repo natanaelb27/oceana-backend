@@ -121,7 +121,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 			id, 
 			wallet_id, 
 			amount, 
-			transaction_date, 
+			transaction_date AS transaction_datetime, 
 			'Top Up Transaction' AS transaction_type,
 			'Credit' AS type
 		`).
@@ -153,7 +153,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 				refunds.id AS id,
 				wallet_transaction_payments.wallet_id,
 				subQueryRefund.amount AS amount, 
-				transactions.transaction_datetime, 
+				refunds.completed_datetime AS transaction_datetime, 
 				(
 					CASE
 						WHEN orders.status = @canceled_by_system THEN 'Canceled Transaction'
@@ -187,7 +187,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 				orders.id AS id, 
 				wallets.id AS wallet_id, 
 				(orders.total_price_after_discount - (?)) AS amount,
-				transactions.transaction_datetime, 
+				orders.claim_datetime AS transaction_datetime, 
 				'Received Payment Transaction' AS transaction_type,
 				'Credit' AS type
 			`, subQuery).
