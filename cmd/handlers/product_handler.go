@@ -312,7 +312,7 @@ func (h *Handler) GetAllUserFavoriteProducts(c *gin.Context) {
 		return
 	}
 
-	query := product_dtos.NewProductQuery(c)
+	query := product_dtos.NewProductFavoriteQuery(c)
 
 	results, pagination, err := h.productService.GetAllUserFavoriteProducts(id, query)
 	if err != nil {

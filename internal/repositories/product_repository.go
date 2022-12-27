@@ -8,7 +8,6 @@ import (
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
@@ -22,8 +21,8 @@ import (
 
 type ProductRepository interface {
 	WithTx(tx *gorm.DB) *productRepository
-	GetDetails(internalQuery *internalDtos.ProductDetailsInternalQuery) (*dtos.ProductDetails, error)
-	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error)
+	GetDetails(internalQuery *internalDtos.ProductDetailsInternalQuery) (*internalDtos.ProductDetails, error)
+	GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*internalDtos.SelectedProductPurchaseQuantities, error)
 	GetAll(query *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 	CreateProduct(product *models.Product) (model *models.Product, err error)
 	GetByProductItemID(productItemID uint) (*models.Product, error)
@@ -31,9 +30,9 @@ type ProductRepository interface {
 	GetUpdateByProductID(id uint) (model *product_dtos.ProductModel, err error)
 	UpdateUsingMap(id uint, dataMap map[string]any) (err error)
 	GetById(id uint) (model *models.Product, err error)
-	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error)
+	GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*internalDtos.AvailableProducts, error)
 	CheckCourierService(request *product_dtos.ProductCheckCourierService) (result *product_dtos.ProductCheckCourierServiceResponse, err error)
-	GetAllUserFavoriteProducts(userID uuid.UUID, queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
+	GetAllUserFavoriteProducts(userID uuid.UUID, queryParams *product_dtos.ProductFavoriteQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error)
 }
 
 type productRepository struct {
@@ -59,8 +58,8 @@ func (u productRepository) WithTx(tx *gorm.DB) *productRepository {
 	return &u
 }
 
-func (r *productRepository) GetDetails(internalQuery *internalDtos.ProductDetailsInternalQuery) (*dtos.ProductDetails, error) {
-	var productDetails *dtos.ProductDetails
+func (r *productRepository) GetDetails(internalQuery *internalDtos.ProductDetailsInternalQuery) (*internalDtos.ProductDetails, error) {
+	var productDetails *internalDtos.ProductDetails
 
 	subQueryProductDiscount := r.db.Model(&models.ProductMerchantPromotion{}).
 		Select(`
@@ -204,8 +203,8 @@ func (r *productRepository) GetDetails(internalQuery *internalDtos.ProductDetail
 	return productDetails, nil
 }
 
-func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*dtos.SelectedProductPurchaseQuantities, error) {
-	var selectedProductPurchaseQuantities *dtos.SelectedProductPurchaseQuantities
+func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productID uint, productItemID uint, quantity uint) (*internalDtos.SelectedProductPurchaseQuantities, error) {
+	var selectedProductPurchaseQuantities *internalDtos.SelectedProductPurchaseQuantities
 
 	subQueryUserCart := r.db.Model(&models.Cart{}).
 		Select(`
@@ -871,8 +870,8 @@ func (r *productRepository) GetById(id uint) (model *models.Product, err error) 
 
 	return
 }
-func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProducts, error) {
-	var availableProducts []*dtos.AvailableProducts
+func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uint, query *externalDtos.AvailableProductsByPromotionPeriodQuery) ([]*internalDtos.AvailableProducts, error) {
+	var availableProducts []*internalDtos.AvailableProducts
 
 	subQueryProductImage := r.db.Model(&models.ProductMedia{}).
 		Select(`
@@ -952,7 +951,7 @@ func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uin
 	return availableProducts, nil
 }
 
-func (r *productRepository) GetAllUserFavoriteProducts(userID uuid.UUID, queryParams *product_dtos.ProductQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
+func (r *productRepository) GetAllUserFavoriteProducts(userID uuid.UUID, queryParams *product_dtos.ProductFavoriteQuery, pagination *utils.Pagination) ([]*product_dtos.Product, *utils.Pagination, error) {
 	sqPriceMinimum := sql.Named("price_minimum", r.subQueryProductItemsMinimumMaximumPrice("min"))
 	sqPriceMaximum := sql.Named("price_maximum", r.subQueryProductItemsMinimumMaximumPrice("max"))
 	sqTotalViewCount := sql.Named("total_view_count", r.subQueryProductViewsSum())
@@ -1022,8 +1021,8 @@ func (r *productRepository) GetAllUserFavoriteProducts(userID uuid.UUID, queryPa
 			pmp.discount as discount,
 			pmp.discount_type as discount_type,
 			pmp.maximum_discount_amount as discount_maximum_discount_amount,
-            products.created_at,
-            products.updated_at,
+            product_favorites.created_at,
+            product_favorites.updated_at,
 			merchants.id as "Merchant__id",
 			merchants.name as "Merchant__name",
 			cities.name as "Merchant__city"
