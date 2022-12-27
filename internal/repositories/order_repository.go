@@ -78,6 +78,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 
 	subQueryRefundRank := r.db.Model(&models.Refund{}).
 		Select(`
+			id AS refund_id,
 			order_id AS order_id,
 			status AS status,
 			refund_request_datetime AS refund_request_datetime,
@@ -87,6 +88,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 
 	subQueryLastRefundStatus := r.db.Table("(?) AS tbl_refund_rank", subQueryRefundRank).
 		Select(`
+			tbl_refund_rank.refund_id AS refund_id,
 			tbl_refund_rank.order_id AS order_id,
 			tbl_refund_rank.status AS status,
 			tbl_refund_rank.refund_request_datetime AS refund_request_datetime,
@@ -180,10 +182,16 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_price,
 			(
 				CASE
-					WHEN orders.status = @completed_status THEN refunds.id
+					WHEN orders.status = @completed_status THEN tbl_completed_last_refund_status.refund_id
 					ELSE null
 				END
 			) AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @complained_status THEN tbl_approved_last_refund_status.refund_id
+					ELSE null
+				END
+			) AS approved_refund_id,
 			orders.claim_status AS claim_status,
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
@@ -191,14 +199,26 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime,
 			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime,
 			tbl_expiration_time.refund_rejected_auto_complete_order_expiration_datetime AS refund_rejected_auto_complete_order_expiration_datetime
-		`, sql.Named("completed_status", constants.CompletedStatus)).
+		`,
+			sql.Named("completed_status", constants.CompletedStatus),
+			sql.Named("complained_status", constants.ComplainedStatus),
+		).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
-		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
+		// Joins("LEFT JOIN refunds completed_refunds ON orders.id = completed_refunds.order_id AND completed_refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
 		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_completed_last_refund_status ON orders.id = tbl_completed_last_refund_status.order_id AND tbl_completed_last_refund_status.status = @refund_completed_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_completed_status", constants.RefundStatusCompleted),
+		).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_approved_last_refund_status ON orders.id = tbl_approved_last_refund_status.order_id AND (tbl_approved_last_refund_status.status = @refund_approved_status OR tbl_approved_last_refund_status.status = @refund_approved_by_system_status)",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_approved_status", constants.RefundStatusApproved),
+			sql.Named("refund_approved_by_system_status", constants.RefundStatusApprovedBySystem),
+		).
 		Where("transactions.user_id = ?", id).
 		Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
@@ -275,6 +295,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 
 	subQueryRefundRank := r.db.Model(&models.Refund{}).
 		Select(`
+			id AS refund_id,
 			order_id AS order_id,
 			status AS status,
 			refund_request_datetime AS refund_request_datetime,
@@ -284,6 +305,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 
 	subQueryLastRefundStatus := r.db.Table("(?) AS tbl_refund_rank", subQueryRefundRank).
 		Select(`
+			tbl_refund_rank.refund_id AS refund_id,
 			tbl_refund_rank.order_id AS order_id,
 			tbl_refund_rank.status AS status,
 			tbl_refund_rank.refund_request_datetime AS refund_request_datetime,
@@ -377,10 +399,16 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			orders.total_price_after_discount::float AS total_price,
 			(
 				CASE
-					WHEN orders.status = @completed_status THEN refunds.id
+					WHEN orders.status = @completed_status THEN tbl_completed_last_refund_status.refund_id
 					ELSE null
 				END
 			) AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @complained_status THEN tbl_approved_last_refund_status.refund_id
+					ELSE null
+				END
+			) AS approved_refund_id,
 			orders.claim_status AS claim_status,
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
@@ -388,14 +416,26 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 			tbl_expiration_time.delivered_expiration_datetime AS delivered_expiration_datetime,
 			tbl_expiration_time.refund_seller_confirmation_expiration_datetime AS refund_seller_confirmation_expiration_datetime,
 			tbl_expiration_time.refund_rejected_auto_complete_order_expiration_datetime AS refund_rejected_auto_complete_order_expiration_datetime
-		`, sql.Named("completed_status", constants.CompletedStatus)).
+		`,
+			sql.Named("completed_status", constants.CompletedStatus),
+			sql.Named("complained_status", constants.ComplainedStatus),
+		).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
-		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
+		// Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
 		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_completed_last_refund_status ON orders.id = tbl_completed_last_refund_status.order_id AND tbl_completed_last_refund_status.status = @refund_completed_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_completed_status", constants.RefundStatusCompleted),
+		).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_approved_last_refund_status ON orders.id = tbl_approved_last_refund_status.order_id AND (tbl_approved_last_refund_status.status = @refund_approved_status OR tbl_approved_last_refund_status.status = @refund_approved_by_system_status)",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_approved_status", constants.RefundStatusApproved),
+			sql.Named("refund_approved_by_system_status", constants.RefundStatusApprovedBySystem),
+		).
 		Where("orders.merchant_id = ?", merchantID)
 		// Where("LOWER(orders.status) != LOWER(?)", constants.PendingPaymentStatus)
 
@@ -473,6 +513,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 
 	subQueryRefundRank := r.db.Model(&models.Refund{}).
 		Select(`
+			id AS refund_id,
 			order_id AS order_id,
 			status AS status,
 			refund_request_datetime AS refund_request_datetime,
@@ -482,6 +523,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 
 	subQueryLastRefundStatus := r.db.Table("(?) AS tbl_refund_rank", subQueryRefundRank).
 		Select(`
+			tbl_refund_rank.refund_id AS refund_id,
 			tbl_refund_rank.order_id AS order_id,
 			tbl_refund_rank.status AS status,
 			tbl_refund_rank.refund_request_datetime AS refund_request_datetime,
@@ -610,10 +652,16 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			(orders.total_price_after_discount::float / transactions.total_price::float * transactions.total_price_after_discount) + orders.shipping_fee AS total_payment,
 			(
 				CASE
-					WHEN orders.status = @completed_status THEN refunds.id
+					WHEN orders.status = @completed_status THEN tbl_completed_last_refund_status.refund_id
 					ELSE null
 				END
 			) AS refund_id,
+			(
+				CASE
+					WHEN orders.status = @complained_status THEN tbl_approved_last_refund_status.refund_id
+					ELSE null
+				END
+			) AS approved_refund_id,
 			orders.claim_status AS claim_status,
 			NOT (SELECT bool_or(product_review_id IS NULL) FROM unnest(tbl_review_array.product_review_id_array) AS data(product_review_id)) AS is_all_reviewed,
 			tbl_expiration_time.seller_confirmation_expiration_datetime AS seller_confirmation_expiration_datetime,
@@ -626,15 +674,26 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 			subQueryMerchantPromotion,
 			subQueryMerchantVoucher,
 			subQueryMarketplaceVoucher,
-			sql.Named("completed_status", constants.CompletedStatus)).
+			sql.Named("completed_status", constants.CompletedStatus),
+			sql.Named("complained_status", constants.ComplainedStatus),
+		).
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN users ON users.id = transactions.user_id").
 		Joins("JOIN payment_methods ON transactions.payment_method_id = payment_methods.id").
 		Joins("JOIN courier_services ON orders.courier_service_id = courier_services.id").
-		Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
+		// Joins("LEFT JOIN refunds ON orders.id = refunds.order_id AND refunds.status = ?", constants.RefundStatusCompleted).
 		Joins("LEFT JOIN (?) tbl_expiration_time ON tbl_expiration_time.order_id = orders.id", subQueryExpirationTime).
 		Joins("JOIN (?) tbl_review_array ON tbl_review_array.order_id = orders.id", subQueryIsAllReviewed).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_completed_last_refund_status ON orders.id = tbl_completed_last_refund_status.order_id AND tbl_completed_last_refund_status.status = @refund_completed_status",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_completed_status", constants.RefundStatusCompleted),
+		).
+		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_approved_last_refund_status ON orders.id = tbl_approved_last_refund_status.order_id AND (tbl_approved_last_refund_status.status = @refund_approved_status OR tbl_approved_last_refund_status.status = @refund_approved_by_system_status)",
+			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
+			sql.Named("refund_approved_status", constants.RefundStatusApproved),
+			sql.Named("refund_approved_by_system_status", constants.RefundStatusApprovedBySystem),
+		).
 		Where("orders.id = ?", id).
 		First(&orderListDetails)
 

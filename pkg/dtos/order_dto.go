@@ -108,6 +108,7 @@ type OrderListGetAllResponse struct {
 	OrderStatus                                       string                  `json:"order_status"`
 	TotalPrice                                        float64                 `json:"total_price"`
 	RefundID                                          *uuid.UUID              `json:"refund_id"`
+	ApprovedRefundID                                  *uuid.UUID              `json:"approved_refund_id"`
 	ClaimStatus                                       bool                    `json:"claim_status"`
 	IsAllReviewed                                     bool                    `json:"is_all_reviewed"`
 	SellerConfirmationExpirationDatetime              *time.Time              `json:"seller_confirmation_expiration_datetime"`
@@ -135,6 +136,7 @@ func NewOrderListGetAllResponse(source []*dtos.OrderList) (target []*OrderListGe
 			OrderStatus:                          result.OrderStatus,
 			TotalPrice:                           result.TotalPrice,
 			RefundID:                             result.RefundID,
+			ApprovedRefundID:                     result.ApprovedRefundID,
 			ClaimStatus:                          result.ClaimStatus,
 			IsAllReviewed:                        result.IsAllReviewed,
 			SellerConfirmationExpirationDatetime: result.SellerConfirmationExpirationDatetime,
@@ -172,6 +174,7 @@ type OrderListDetailsGetByIDResponse struct {
 	ShippingFee                                       uint                         `json:"shipping_fee"`
 	TotalPayment                                      float64                      `json:"total_payment"`
 	RefundID                                          *uuid.UUID                   `json:"refund_id"`
+	ApprovedRefundID                                  *uuid.UUID                   `json:"approved_refund_id"`
 	ClaimStatus                                       bool                         `json:"claim_status"`
 	IsAllReviewed                                     bool                         `json:"is_all_reviewed"`
 	SellerConfirmationExpirationDatetime              *time.Time                   `json:"seller_confirmation_expiration_datetime"`
@@ -206,6 +209,7 @@ func NewOrderListDetailsGetByIDResponse(source *dtos.OrderListDetails) (target *
 		ShippingFee:                          source.ShippingFee,
 		TotalPayment:                         source.TotalPayment,
 		RefundID:                             source.RefundID,
+		ApprovedRefundID:                     source.ApprovedRefundID,
 		ClaimStatus:                          source.ClaimStatus,
 		IsAllReviewed:                        source.IsAllReviewed,
 		SellerConfirmationExpirationDatetime: source.SellerConfirmationExpirationDatetime,
