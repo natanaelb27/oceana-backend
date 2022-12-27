@@ -109,7 +109,7 @@ func (p *walletService) GetWalletDetails(id uuid.UUID, query *externalDtos.Walle
 		Page:  query.Page,
 	}
 
-	walletTransactionHistory, pagination, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID, pagination)
+	walletTransactionHistory, pagination, err := p.walletRepository.GetWalletTransactionHistory(wallet.ID, pagination, query)
 	if err != nil {
 		return nil, nil, err
 	}
