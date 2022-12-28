@@ -139,12 +139,14 @@ func (r *productRepository) GetDetails(internalQuery *internalDtos.ProductDetail
 
 	queryResult := r.db.Model(&models.Product{}).
 		Select(`
+			products.id AS id,
 			products.name AS name,
 			products.merchant_id AS merchant_id,
 			products.is_hazardous AS is_hazardous,
 			products.weight AS weight,
 			products.package_size AS package_size,
 			products.condition AS condition,
+			products.status AS status,
 			products.category_id AS category_id,
 			categories.name AS category,
 			COALESCE(product_image_agg.images, '{}') AS images,

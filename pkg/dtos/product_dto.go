@@ -11,12 +11,14 @@ import (
 )
 
 type ProductDetailsGetByIDResponse struct {
+	ID                    uint                       `json:"id"`
 	Name                  string                     `json:"name"`
 	MerchantID            uint                       `json:"merchant_id"`
 	IsHazardous           bool                       `json:"is_hazardous"`
 	Weight                uint                       `json:"weight"`
 	PackageSize           string                     `json:"package_size"`
 	Condition             string                     `json:"condition"`
+	Status                string                     `json:"status"`
 	CategoryID            uint                       `json:"category_id"`
 	Category              string                     `json:"category"`
 	Images                pq.StringArray             `json:"images" gorm:"type:text[]"`
@@ -40,12 +42,14 @@ type ProductDetailsGetByIDResponse struct {
 
 func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *ProductDetailsGetByIDResponse) {
 	target = &ProductDetailsGetByIDResponse{
+		ID:                    source.ID,
 		Name:                  source.Name,
 		MerchantID:            source.MerchantID,
 		IsHazardous:           source.IsHazardous,
 		Weight:                source.Weight,
 		PackageSize:           source.PackageSize,
 		Condition:             source.Condition,
+		Status:                source.Status,
 		CategoryID:            source.CategoryID,
 		Category:              source.Category,
 		Images:                source.Images,

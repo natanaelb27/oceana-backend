@@ -6,25 +6,26 @@ import (
 )
 
 var (
-	ErrEmptyEmailAddress   = errors.New("email address should not be empty")
-	ErrEmptyPassword       = errors.New("password should not be empty")
-	ErrEmptyAmount         = errors.New("amount should not be empty")
-	ErrEmptyMembershipID   = errors.New("membership id should not be empty")
-	ErrEmptyName           = errors.New("name should not be empty")
-	ErrEmptyImage          = errors.New("image should not be empty")
-	ErrEmptyDescription    = errors.New("description should not be empty")
-	ErrEmptyStartTime      = errors.New("start time should not be empty")
-	ErrEmptyDurationMinute = errors.New("duration minute should not be empty")
-	ErrEmptyCapacity       = errors.New("capacity should not be empty")
-	ErrEmptyStock          = errors.New("stock should not be empty")
-	ErrEmptyCategoryID     = errors.New("category id should not be empty")
-	ErrEmptyMerchandiseID  = errors.New("merchandise id should not be empty")
-	ErrEmptyQuantity       = errors.New("quantity should not be empty")
-	ErrEmptyPrice          = errors.New("price should not be empty")
-	ErrEmptyEventID        = errors.New("event id should not be empty")
-	ErrEmptyRequstBody     = errors.New("request body should not be empty")
-	ErrRequestBodyTooLarge = errors.New("request body must not be larger than 1MB")
-	ErrEmptyVariants       = errors.New("variants cannot be empty")
+	ErrEmptyEmailAddress       = errors.New("email address should not be empty")
+	ErrEmptyPassword           = errors.New("password should not be empty")
+	ErrEmptyAmount             = errors.New("amount should not be empty")
+	ErrEmptyMembershipID       = errors.New("membership id should not be empty")
+	ErrEmptyName               = errors.New("name should not be empty")
+	ErrEmptyImage              = errors.New("image should not be empty")
+	ErrEmptyDescription        = errors.New("description should not be empty")
+	ErrEmptyStartTime          = errors.New("start time should not be empty")
+	ErrEmptyDurationMinute     = errors.New("duration minute should not be empty")
+	ErrEmptyCapacity           = errors.New("capacity should not be empty")
+	ErrEmptyStock              = errors.New("stock should not be empty")
+	ErrEmptyCategoryID         = errors.New("category id should not be empty")
+	ErrEmptyMerchandiseID      = errors.New("merchandise id should not be empty")
+	ErrEmptyQuantity           = errors.New("quantity should not be empty")
+	ErrEmptyPrice              = errors.New("price should not be empty")
+	ErrEmptyEventID            = errors.New("event id should not be empty")
+	ErrEmptyRequstBody         = errors.New("request body should not be empty")
+	ErrRequestBodyTooLarge     = errors.New("request body must not be larger than 1MB")
+	ErrEmptyVariants           = errors.New("variants cannot be empty")
+	ErrEmptyFirstVariantImages = errors.New("first variant images cannot be empty")
 
 	ErrInvalidEmailAddress            = errors.New("invalid email address")
 	ErrInvalidPassword                = errors.New("invalid password")
@@ -207,6 +208,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrEmptyEventID) ||
 		errors.Is(err, ErrEmptyRequstBody) ||
 		errors.Is(err, ErrEmptyVariants) ||
+		errors.Is(err, ErrEmptyFirstVariantImages) ||
 		errors.Is(err, ErrRequestBodyTooLarge) ||
 		errors.Is(err, ErrInvalidEmailAddress) ||
 		errors.Is(err, ErrInvalidPassword) ||

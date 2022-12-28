@@ -405,6 +405,10 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 
 			// create product variant media on first variant only
 			if iVariant == 0 {
+				if len(variant.Images) != len(variant.Options) {
+					return nil, e.ErrEmptyVariants
+				}
+
 				productVariantMedia := &models.ProductVariantMedia{
 					ProductVariantID: createdProductVariant.ID,
 					MediaURL:         variant.Images[iOption],

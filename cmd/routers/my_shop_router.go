@@ -34,18 +34,18 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 		privateRoute.PATCH("/refunds/:refund-id/reject", func(c *gin.Context) { middlewares.Role(c, "010") }, h.UpdateRejectRefund)
 
 		// product
-		privateRoute.PUT("/products/:product_id",
-			middlewares.DBTransactionMiddleware(),
+		privateRoute.PATCH("/products/:product_id",
 			func(c *gin.Context) { middlewares.Role(c, "011") },
+			middlewares.DBTransactionMiddleware(),
 			h.ProductUpdate,
 		)
 		privateRoute.POST("/products",
-			middlewares.DBTransactionMiddleware(),
 			func(c *gin.Context) { middlewares.Role(c, "010") },
+			middlewares.DBTransactionMiddleware(),
 			h.ProductCreate)
 		privateRoute.GET("/products",
-			middlewares.DBTransactionMiddleware(),
 			func(c *gin.Context) { middlewares.Role(c, "010") },
+			middlewares.DBTransactionMiddleware(),
 			h.MyShopGetAll)
 
 		// logistic
