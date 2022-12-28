@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -41,10 +42,15 @@ func (p *orderTrackingService) CronOrderTrackingUpdater() error {
 	newOrderTrackings := make([]*models.OrderTracking, 0)
 
 	for _, v := range orderTrackings {
+		fmt.Println("")
+		fmt.Println("")
+		fmt.Println("")
 		interval, err := strconv.Atoi(os.Getenv("CRON_ORDER_TRACKING_UPDATE_INTERVAL"))
 		if err != nil {
 			interval = constants.CronOrderTrackingUpdateInterval
 		}
+		fmt.Println(v.OrderID, !time.Now().After(v.HistoryDatetime.Add(time.Minute*time.Duration(interval))))
+		fmt.Println(v.Title)
 		// if time after the last history date time hasnt pass 15 minutes then continue to next iteration
 		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
 			continue
@@ -66,11 +72,6 @@ func (p *orderTrackingService) CronOrderTrackingUpdater() error {
 				Title:       constants.CronOrderTrackingTitleDelivered,
 				Description: constants.CronOrderTrackingDescriptionDelivered,
 			}
-			newOrder = &models.Order{
-				ID:     v.OrderID,
-				Status: constants.DeliveredStatus,
-			}
-		case constants.CronOrderTrackingTitleDelivered:
 			newOrder = &models.Order{
 				ID:     v.OrderID,
 				Status: constants.DeliveredStatus,
