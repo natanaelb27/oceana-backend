@@ -309,7 +309,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 					THEN selected_product.stock
 					ELSE 
 						(CASE
-							WHEN product_discount_agg.maximum_quota <= -1 THEN selected_product.stock
+							WHEN product_discount_agg.maximum_quota <= -1 THEN selected_product.stock + 1
 							ELSE (
 								CASE
 									WHEN product_discount_agg.maximum_quota - product_discount_agg.current_quota - product_discount_agg.user_cart_quantity < 0 THEN 0
@@ -325,7 +325,7 @@ func (r *productRepository) GetPurchaseQuantitiesByID(userID uuid.UUID, productI
 					THEN selected_product.stock
 					ELSE 
 						(CASE
-							WHEN product_discount_agg.maximum_user_limit <= -1 THEN selected_product.stock
+							WHEN product_discount_agg.maximum_user_limit <= -1 THEN selected_product.stock + 1
 							ELSE product_discount_agg.maximum_user_limit - product_discount_agg.total_usage
 						END)
 				END
