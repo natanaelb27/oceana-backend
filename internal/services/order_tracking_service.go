@@ -70,11 +70,6 @@ func (p *orderTrackingService) CronOrderTrackingUpdater() error {
 				ID:     v.OrderID,
 				Status: constants.DeliveredStatus,
 			}
-		case constants.CronOrderTrackingTitleDelivered:
-			newOrder = &models.Order{
-				ID:     v.OrderID,
-				Status: constants.DeliveredStatus,
-			}
 		}
 
 		// if there is an update

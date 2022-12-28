@@ -147,7 +147,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
 			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
-			sql.Named("delivered_title", constants.DeliveredTitle)).
+			sql.Named("delivered_title", constants.CronOrderTrackingTitleDelivered)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays).
 		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_rejected_last_refund_status ON orders.id = tbl_rejected_last_refund_status.order_id AND tbl_rejected_last_refund_status.status = @refund_rejected_status",
 			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
@@ -373,7 +373,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
 			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
-			sql.Named("delivered_title", constants.DeliveredTitle)).
+			sql.Named("delivered_title", constants.CronOrderTrackingTitleDelivered)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays).
 		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_rejected_last_refund_status ON orders.id = tbl_rejected_last_refund_status.order_id AND tbl_rejected_last_refund_status.status = @refund_rejected_status",
 			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),
@@ -600,7 +600,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 		Joins("LEFT JOIN order_trackings tbl_on_process ON tbl_on_process.order_id = orders.id AND tbl_on_process.title = @order_processed_title",
 			sql.Named("order_processed_title", constants.OrderProcessedTitle)).
 		Joins("LEFT JOIN order_trackings tbl_delivered ON tbl_delivered.order_id = orders.id AND tbl_delivered.title = @delivered_title",
-			sql.Named("delivered_title", constants.DeliveredTitle)).
+			sql.Named("delivered_title", constants.CronOrderTrackingTitleDelivered)).
 		Joins("JOIN (?) tbl_processed_days ON tbl_processed_days.order_id = orders.id", subQueryOrderProcessedDays).
 		Joins("LEFT JOIN (@tbl_last_refund_status) tbl_rejected_last_refund_status ON orders.id = tbl_rejected_last_refund_status.order_id AND tbl_rejected_last_refund_status.status = @refund_rejected_status",
 			sql.Named("tbl_last_refund_status", subQueryLastRefundStatus),

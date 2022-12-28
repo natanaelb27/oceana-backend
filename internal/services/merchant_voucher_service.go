@@ -130,10 +130,6 @@ func (s *merchantVoucherService) Update(userID uuid.UUID, voucherID uint, reques
 		if request.EndDatetime.Before(time.Now()) {
 			return nil, e.ErrVoucherEndDatetimeEarlierThanNow
 		}
-
-		if request.EndDatetime.Sub(merchantVoucherDetails.EndDatetime).Minutes() > 0 {
-			return nil, e.ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime
-		}
 	}
 
 	if merchantVoucherDetails.VoucherStatus == "upcoming" {

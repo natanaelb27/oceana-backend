@@ -302,8 +302,8 @@ func (s *orderService) UpdateProcessDelivery(orderID uuid.UUID, userID uuid.UUID
 		{
 			OrderID:         orderID,
 			HistoryDatetime: time.Now(),
-			Title:           constants.OrderShippedTitle,
-			Description:     constants.OrderShippedDescription,
+			Title:           constants.CronOrderTrackingTitleSentFromOriginWarehouse,
+			Description:     constants.CronOrderTrackingDescriptionReceivedOnDestinationWarehouse,
 		},
 	}
 
