@@ -19,6 +19,7 @@ type MerchantPromotionService interface {
 	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
 	GetDetailsByID(merchantPromotionID uint) (*internalDtos.MerchantPromotionDetails, error)
 	Update(userID uuid.UUID, merchantPromotionID uint, mpRequest *dtos.MerchantPromotionRequest) (*dtos.MerchantPromotionResponse, error)
+	Delete(userID uuid.UUID, id uint) (*models.MerchantPromotion, error)
 }
 
 type merchantPromotionService struct {
@@ -292,4 +293,28 @@ func (mp *merchantPromotionService) Update(userID uuid.UUID, merchantPromotionID
 
 	response := dtos.NewMerchantPromotionResponse(mpModel, updatedPmpResponse)
 	return response, nil
+}
+
+func (mp *merchantPromotionService) Delete(userID uuid.UUID, id uint) (*models.MerchantPromotion, error) {
+	merchant, err := mp.merchantRepository.GetByUserID(userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	merchantPromotionDetails, err := mp.merchantPromotionRepository.GetDetailsByID(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if merchantPromotionDetails.MerchantID != merchant.ID {
+		return nil, e.ErrForbiddenMerchant
+	}
+
+	if merchantPromotionDetails.PromotionStatus != constants.UpcomingPromotionOrVoucher {
+		return nil, e.ErrPromotionNotUpcoming
+	}
+
+	return mp.merchantPromotionRepository.Delete(id)
 }

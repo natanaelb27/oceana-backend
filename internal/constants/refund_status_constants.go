@@ -9,4 +9,5 @@ const (
 	RefundStatusRejected         = "rejected"
 
 	RefundGroupedStatusProcessed = "processed"
+	RefundGroupedStatusApproved = "approved"
 )

@@ -179,7 +179,7 @@ func (p *marketplaceVoucherService) Delete(id uint) (*models.MarketplaceVoucher,
 		return nil, err
 	}
 
-	if marketplaceVoucherDetails.VoucherStatus != "upcoming" {
+	if marketplaceVoucherDetails.VoucherStatus != constants.UpcomingPromotionOrVoucher {
 		return nil, e.ErrVoucherNotUpcoming
 	}
 

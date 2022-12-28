@@ -71,15 +71,45 @@ func NewWalletChangePinResponse(source *models.Wallet) (target *WalletChangePinR
 }
 
 type WalletDetailsQuery struct {
-	Limit uint `json:"limit"`
-	Page  uint `json:"page"`
+	FilterType                 string     `json:"filter-type"`
+	FilterStartTransactionDate *time.Time `json:"filter-start-transaction-date"`
+	FilterEndTransactionDate   *time.Time `json:"filter-end-transaction-date"`
+	Limit                      uint       `json:"limit"`
+	Page                       uint       `json:"page"`
 }
 
 func NewWalletDetailsQuery(c *gin.Context) *WalletDetailsQuery {
 	var query WalletDetailsQuery
 
+	filterType := c.Query("filter-type")
+	filterStartTransactionDate := c.Query("filter-start-transaction-date")
+	filterEndTransactionDate := c.Query("filter-end-transaction-date")
 	limit := c.Query("limit")
 	page := c.Query("page")
+
+	query.FilterType = filterType
+
+	if filterStartTransactionDate != "" && filterEndTransactionDate != "" {
+		startDate, err := time.Parse("2006-01-02", filterStartTransactionDate)
+
+		if err != nil {
+			query.FilterStartTransactionDate = nil
+		} else {
+			query.FilterStartTransactionDate = &startDate
+		}
+
+		endDate, err := time.Parse("2006-01-02", filterEndTransactionDate)
+
+		if err != nil {
+			query.FilterEndTransactionDate = nil
+		} else {
+			query.FilterEndTransactionDate = &endDate
+		}
+
+	} else {
+		query.FilterStartTransactionDate = nil
+		query.FilterEndTransactionDate = nil
+	}
 
 	pageInt, err := strconv.Atoi(page)
 

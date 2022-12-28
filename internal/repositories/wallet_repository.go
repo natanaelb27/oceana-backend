@@ -10,6 +10,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,7 +22,7 @@ type WalletRepository interface {
 	Activate(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
 	Create(newModel *models.Wallet) (model *models.Wallet, err error)
 	Update(id uuid.UUID, newModel *models.Wallet) (model *models.Wallet, err error)
-	GetWalletTransactionHistory(id uuid.UUID, pagination *utils.Pagination) ([]*dtos.WalletTransactionHistory, *utils.Pagination, error)
+	GetWalletTransactionHistory(id uuid.UUID, pagination *utils.Pagination, query *externalDtos.WalletDetailsQuery) ([]*dtos.WalletTransactionHistory, *utils.Pagination, error)
 }
 
 type walletRepository struct {
@@ -105,7 +106,7 @@ func (w *walletRepository) Create(newModel *models.Wallet) (model *models.Wallet
 	return
 }
 
-func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination *utils.Pagination) ([]*dtos.WalletTransactionHistory, *utils.Pagination, error) {
+func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination *utils.Pagination, query *externalDtos.WalletDetailsQuery) ([]*dtos.WalletTransactionHistory, *utils.Pagination, error) {
 	var walletTransactionHistory []*dtos.WalletTransactionHistory
 	var wallet *models.Wallet
 	var merchant *models.Merchant
@@ -121,7 +122,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 			id, 
 			wallet_id, 
 			amount, 
-			transaction_date, 
+			transaction_date AS transaction_datetime, 
 			'Top Up Transaction' AS transaction_type,
 			'Credit' AS type
 		`).
@@ -153,7 +154,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 				refunds.id AS id,
 				wallet_transaction_payments.wallet_id,
 				subQueryRefund.amount AS amount, 
-				transactions.transaction_datetime, 
+				refunds.completed_datetime AS transaction_datetime, 
 				(
 					CASE
 						WHEN orders.status = @canceled_by_system THEN 'Canceled Transaction'
@@ -187,7 +188,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 				orders.id AS id, 
 				wallets.id AS wallet_id, 
 				(orders.total_price_after_discount - (?)) AS amount,
-				transactions.transaction_datetime, 
+				orders.claim_datetime AS transaction_datetime, 
 				'Received Payment Transaction' AS transaction_type,
 				'Credit' AS type
 			`, subQuery).
@@ -203,8 +204,17 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
 			queryWalletTransactionsAsSeller,
-		).
-			Order("transaction_date DESC")
+		)
+
+		if query.FilterType != "" && query.FilterType != "all" {
+			queryResult = w.db.Table("(?) AS tbl", queryResult).Where("type ILIKE ?", query.FilterType)
+		}
+
+		if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
+			queryResult = w.db.Table("(?) AS tbl", queryResult).Where("transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+		}
+
+		queryResult = w.db.Table("(?) AS tbl", queryResult).Order("transaction_datetime DESC")
 
 		var totalRows int64
 		queryResult = w.db.Table("(?) AS tbl", queryResult).Count(&totalRows)
@@ -226,8 +236,17 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 			queryWalletTopup,
 			queryWalletTransactionsAsBuyer,
 			queryRefundTransactions,
-		).
-			Order("transaction_date DESC")
+		)
+
+		if query.FilterType != "" && query.FilterType != "all" {
+			queryResult = w.db.Table("(?) AS tbl", queryResult).Where("type ILIKE ?", query.FilterType)
+		}
+
+		if query.FilterStartTransactionDate != nil && query.FilterEndTransactionDate != nil {
+			queryResult = w.db.Table("(?) AS tbl", queryResult).Where("transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
+		}
+
+		queryResult = w.db.Table("(?) AS tbl", queryResult).Order("transaction_datetime DESC")
 
 		var totalRows int64
 		queryResult = w.db.Table("(?) AS tbl", queryResult).Count(&totalRows)

@@ -368,10 +368,13 @@ func (s *orderService) RefundCanceledOrder(orderID uuid.UUID) error {
 		return err
 	}
 
+	timeNow := time.Now()
+
 	refund, err := s.refundRepository.Create(&models.Refund{
 		OrderID:               orderID,
-		RefundRequestDatetime: time.Now(),
+		RefundRequestDatetime: timeNow,
 		Status:                constants.RefundStatusCompleted,
+		CompletedDatetime:     &timeNow,
 	})
 
 	if err != nil {
@@ -468,7 +471,7 @@ func (s *orderService) CronPaymentExpiration() error {
 	for _, v := range pendingPayment {
 		interval, err := strconv.Atoi(os.Getenv("CRON_PAYMENT_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 10
+			interval = constants.CronPaymentExpirationInterval
 		}
 
 		if !time.Now().After(v.Transaction.TransactionDatetime.Add(time.Minute * time.Duration(interval))) {
@@ -513,7 +516,7 @@ func (s *orderService) CronPendingSellerExpiration() error {
 	for _, v := range orderTrackings {
 		interval, err := strconv.Atoi(os.Getenv("CRON_SELLER_CONFIRMATION_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 2880
+			interval = constants.CronSellerConfirmationExpirationInterval
 		}
 
 		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
@@ -616,7 +619,7 @@ func (s *orderService) CronAutoCompleteDelivered() error {
 	for _, v := range orderTrackings {
 		interval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 		if err != nil {
-			interval = 4320
+			interval = constants.CronAutoCompleteDeliveredExpirationInterval
 		}
 
 		if !time.Now().After(v.HistoryDatetime.Add(time.Minute * time.Duration(interval))) {
@@ -783,6 +786,9 @@ func (s *orderService) SellerClaimFunds(orderID uuid.UUID, userID uuid.UUID) (*m
 	}
 
 	order.ClaimStatus = true
+
+	timeNow := time.Now()
+	order.ClaimDatetime = &timeNow
 
 	updatedOrder, err := s.orderRepository.Update(orderID, order)
 

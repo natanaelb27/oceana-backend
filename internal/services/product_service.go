@@ -32,6 +32,8 @@ type ProductService interface {
 	GetAvailableProductsByPromotionPeriod(id uuid.UUID, query *dtos.AvailableProductsByPromotionPeriodQuery) ([]*dtos.AvailableProductsResponse, error)
 	CheckCourierService(request *productInternalDtos.ProductCheckCourierService) (*productInternalDtos.ProductCheckCourierServiceResponse, error)
 	MyShopGetAll(query *productInternalDtos.ProductQuery) (responseProductDetails []*dtos.ProductDetailsGetByIDResponse, pagination *utils.Pagination, err error)
+	GetAllUserFavoriteProducts(userID uuid.UUID, query *productInternalDtos.ProductFavoriteQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error)
+	DeleteFavoriteProducts(userID uuid.UUID, request *dtos.DeleteFavoriteProductsRequest) ([]*dtos.UpdateProductFavoriteResponse, error)
 }
 
 type productService struct {
@@ -292,7 +294,7 @@ func (s *productService) FavoriteProduct(userID uuid.UUID, productID uint) (*dto
 		model := &models.ProductFavorite{
 			UserId:     userID,
 			ProductId:  productID,
-			IsFavorite: false,
+			IsFavorite: true,
 		}
 
 		newFavoriteProduct, err := s.productFavoriteRepository.Create(model)
@@ -1233,4 +1235,52 @@ func (s *productService) MyShopGetAll(query *productInternalDtos.ProductQuery) (
 	}
 
 	return responseProductDetails, pagination, nil
+}
+
+func (s *productService) GetAllUserFavoriteProducts(userID uuid.UUID, query *productInternalDtos.ProductFavoriteQuery) (productDetails []*productInternalDtos.Product, pagination *utils.Pagination, err error) {
+	pagination = &utils.Pagination{
+		Limit: query.Limit,
+		Page:  query.Page,
+	}
+
+	if query.CategoryID != 0 {
+		var categories []uint
+		categories, err = s.GetCategoryIds(query.CategoryID)
+		if err != nil {
+			return
+		}
+
+		query.Categories = categories
+	}
+
+	productDetails, pagination, err = s.productRepository.GetAllUserFavoriteProducts(userID, query, pagination)
+	if err != nil {
+		return
+	}
+
+	return productDetails, pagination, nil
+}
+
+func (s *productService) DeleteFavoriteProducts(userID uuid.UUID, request *dtos.DeleteFavoriteProductsRequest) ([]*dtos.UpdateProductFavoriteResponse, error) {
+	var productFavorite []*models.ProductFavorite
+
+	for _, productID := range request.ProductIDs {
+		favoriteProduct, err := s.productFavoriteRepository.GetByUserIDAndProductID(userID, *productID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		favoriteProduct.IsFavorite = false
+
+		updatedFavoriteProduct, err := s.productFavoriteRepository.Update(favoriteProduct.ID, favoriteProduct)
+
+		if err != nil {
+			return nil, err
+		}
+
+		productFavorite = append(productFavorite, updatedFavoriteProduct)
+	}
+
+	return dtos.NewBatchUpdateProductFavoriteResponse(productFavorite), nil
 }

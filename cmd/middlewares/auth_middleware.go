@@ -23,7 +23,7 @@ func Auth(c *gin.Context) {
 			return
 		}
 
-		claims, err := jwtWrapper.ValidateToken(refreshToken)
+		claims, err := jwtWrapper.ValidateToken(refreshToken, nil)
 		if err != nil {
 			utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
 			c.Abort()
@@ -39,7 +39,7 @@ func Auth(c *gin.Context) {
 		return
 	}
 
-	claims, err := jwtWrapper.ValidateToken(clientToken)
+	claims, err := jwtWrapper.ValidateToken(clientToken, nil)
 	if err != nil {
 		utils.Response(c, http.StatusUnauthorized, nil, nil, http.StatusText(http.StatusUnauthorized), err.Error())
 		c.Abort()

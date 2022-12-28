@@ -304,3 +304,43 @@ func (h *Handler) ProductLogisticsByMerchantID(c *gin.Context) {
 
 	utils.ResponseSuccess(c, results, nil)
 }
+
+func (h *Handler) GetAllUserFavoriteProducts(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := product_dtos.NewProductFavoriteQuery(c)
+
+	results, pagination, err := h.productService.GetAllUserFavoriteProducts(id, query)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, pagination)
+}
+
+func (h *Handler) DeleteFavoriteProducts(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	var request *dtos.DeleteFavoriteProductsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	results, err := h.productService.DeleteFavoriteProducts(id, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, results, nil)
+}
