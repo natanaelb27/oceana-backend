@@ -8,6 +8,7 @@ import (
 
 type CourierRepository interface {
 	GetAll() (model []*models.Courier, err error)
+	GetByCode(code string) (model *models.Courier, err error)
 }
 
 type courierRepository struct {
@@ -25,11 +26,22 @@ func NewCourierRepository(c *CourierRepositoryConfig) CourierRepository {
 }
 
 func (r *courierRepository) GetAll() (model []*models.Courier, err error) {
-	queryResult := r.db.Find(&model)
+	queryResult := r.db.
+		Order("id ASC").
+		Find(&model)
 	if queryResult.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
 	}
 
+	return
+}
+
+func (r *courierRepository) GetByCode(code string) (model *models.Courier, err error) {
+	queryResult := r.db.Where("code = ?", code).First(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
 	return
 }

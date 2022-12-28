@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -9,8 +11,11 @@ import (
 )
 
 type ProductVariationRepository interface {
+	WithTx(tx *gorm.DB) *productVariationRepository
 	GetByProductID(productID uint) ([]*dtos.ProductVariation, error)
 	GetUpdateByProductID(productID uint) ([]*internalProductDtos.Variants, error)
+	Create(newModel *models.ProductVariation) (model *models.ProductVariation, err error)
+	DeleteAllByProductItemID(id uint) (err error)
 }
 
 type productVariationRepository struct {
@@ -25,6 +30,15 @@ func NewProductVariationRepository(c *ProductVariationRepositoryConfig) ProductV
 	return &productVariationRepository{
 		db: c.DB,
 	}
+}
+
+func (u productVariationRepository) WithTx(tx *gorm.DB) *productVariationRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productVariationRepository) GetByProductID(productID uint) ([]*dtos.ProductVariation, error) {
@@ -109,7 +123,7 @@ func (r *productVariationRepository) GetUpdateByProductID(productID uint) ([]*in
 			option.options AS options,
 			COALESCE(variant_image.images, '{}') AS images
 		`).
-		Joins("JOIN (?) option ON product_variant_types.id = option.product_variant_type_id", subQueryOptions).
+		Joins("LEFT JOIN (?) option ON product_variant_types.id = option.product_variant_type_id", subQueryOptions).
 		Joins("LEFT JOIN (?) variant_image ON product_variant_types.id = variant_image.product_variant_type_id", subQueryVariantImage).
 		Where("product_variant_types.product_id = ?", productID).
 		Find(&result)
@@ -118,4 +132,36 @@ func (r *productVariationRepository) GetUpdateByProductID(productID uint) ([]*in
 	}
 
 	return result, nil
+}
+
+func (r *productVariationRepository) Create(newModel *models.ProductVariation) (model *models.ProductVariation, err error) {
+	queryResult := r.db.Create(&newModel)
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrInsertFailed
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
+}
+
+func (r *productVariationRepository) DeleteAllByProductItemID(id uint) (err error) {
+	queryResult := r.db.
+		Where("product_item_id = ?", id).
+		Delete(&models.ProductVariation{})
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
 }

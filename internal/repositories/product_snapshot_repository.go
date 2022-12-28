@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ProductSnapshotRepository interface {
+	WithTx(tx *gorm.DB) *productSnapshotRepository
 	CreateProductSnapshot(model *models.ProductSnapshot) (newModel *models.ProductSnapshot, err error)
 }
 
@@ -22,6 +25,15 @@ func NewProductSnapshotRepository(c *ProductSnapshotRepositoryConfig) ProductSna
 	return &productSnapshotRepository{
 		db: c.DB,
 	}
+}
+
+func (u productSnapshotRepository) WithTx(tx *gorm.DB) *productSnapshotRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *productSnapshotRepository) CreateProductSnapshot(newModel *models.ProductSnapshot) (model *models.ProductSnapshot, err error) {

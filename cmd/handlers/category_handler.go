@@ -44,3 +44,21 @@ func (h *Handler) CategoryAncestorsGetByID(c *gin.Context) {
 
 	utils.ResponseSuccess(c, result, nil)
 }
+
+func (h *Handler) GetMerchantCategories(c *gin.Context) {
+	merchantIDUint64, err := strconv.ParseUint(c.Param("merchant-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+	merchantID := uint(merchantIDUint64)
+
+	result, err := h.categoryService.GetMerchantCategories(merchantID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, result, nil)
+}

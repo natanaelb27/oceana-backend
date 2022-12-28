@@ -53,22 +53,21 @@ func NewCategoryQuery(c *gin.Context) *CategoryQuery {
 	return &query
 }
 
-type CategoryGetAncestorsResponse struct {
+type GetCategoriesResponse struct {
 	ID       uint   `json:"id"`
 	MediaURL string `json:"media_url"`
 	Name     string `json:"name"`
 	ParentID uint   `json:"parent_id"`
 }
 
-func NewCategoryGetAncestorsResponse(source []*models.Category) (target []*CategoryGetAncestorsResponse) {
+func NewGetCategoriesResponse(source []*models.Category) (target []*GetCategoriesResponse) {
 	for _, result := range source {
-		target = append(target, &CategoryGetAncestorsResponse{
+		target = append(target, &GetCategoriesResponse{
 			ID:       result.ID,
 			MediaURL: result.MediaURL,
 			Name:     result.Name,
 			ParentID: result.ParentID,
 		})
-		// responseData = append(responseData, externalDtos.NewCategoryGetAncestorsResponse(result))
 	}
 
 	return

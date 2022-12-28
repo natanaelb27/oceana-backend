@@ -9,7 +9,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-func UploadImage(input interface{}) (string, error) {
+func UploadMedia(input interface{}) (string, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
 
 	defer cancel()
@@ -20,4 +20,16 @@ func UploadImage(input interface{}) (string, error) {
 		return "", err
 	}
 	return resp.SecureURL, nil
+}
+
+func DeleteMedia(publicID string) (string, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+
+	defer cancel()
+	cld, _ := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"))
+	resp, err := cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: publicID})
+	if err != nil {
+		return "", err
+	}
+	return resp.Result, nil
 }

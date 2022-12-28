@@ -3,10 +3,11 @@ package dtos
 import (
 	"mime/multipart"
 	"strconv"
+	"strings"
 	"time"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -14,9 +15,8 @@ import (
 type ProductReviewCreateRequest struct {
 	UserID        uuid.UUID
 	OrderDetailID uuid.UUID
-	ProductID     uint                  `form:"product_id" json:"product_id" binding:"required"`
 	Rating        uint                  `form:"rating" json:"rating" binding:"required"`
-	Review        string                `form:"review" json:"review" binding:"required"`
+	Review        string                `form:"review" json:"review"`
 	Photo1        *multipart.FileHeader `form:"photo_1"`
 	Photo2        *multipart.FileHeader `form:"photo_2"`
 	Photo3        *multipart.FileHeader `form:"photo_3"`
@@ -29,7 +29,6 @@ func (p *ProductReviewCreateRequest) ToModel() *models.ProductReview {
 	return &models.ProductReview{
 		UserID:        p.UserID,
 		OrderDetailID: p.OrderDetailID,
-		ProductID:     p.ProductID,
 		Rating:        p.Rating,
 		Review:        p.Review,
 	}
@@ -61,8 +60,13 @@ func NewProductReviewCreateResponse(source *models.ProductReview) (target *Produ
 }
 
 type ProductReviewQuery struct {
-	Limit uint `json:"limit"`
-	Page  uint `json:"page"`
+	Sort    string `json:"sort"`
+	SortBy  string `json:"sort-by"`
+	Limit   uint   `json:"limit"`
+	Page    uint   `json:"page"`
+	Media   bool   `json:"media"`
+	Comment bool   `json:"comment"`
+	Rating  []uint `json:"rating"`
 }
 
 func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
@@ -70,6 +74,8 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 
 	limit := c.Query("limit")
 	page := c.Query("page")
+	media := c.Query("media")
+	comment := c.Query("comment")
 
 	pageInt, err := strconv.Atoi(page)
 
@@ -91,17 +97,50 @@ func NewProductReviewQuery(c *gin.Context) *ProductReviewQuery {
 		query.Limit = uint(limitInt)
 	}
 
-	return &query
-}
+	query.Sort = utils.QueryParamSort(c.Query("sort"))
 
-type ProductReviewGetByProductIDResponse struct {
-	ProductReview []*internalDtos.ProductReviewGetByProductID `json:"product_review"`
-}
-
-func NewProductReviewGetByIDResponse(source []*internalDtos.ProductReviewGetByProductID) (target *ProductReviewGetByProductIDResponse) {
-	target = &ProductReviewGetByProductIDResponse{
-		ProductReview: source,
+	if strings.ToLower(media) == "true" {
+		query.Media = true
+	} else {
+		query.Media = false
 	}
 
-	return
+	sortBy := strings.ToLower(c.Query("sort-by"))
+
+	switch sortBy {
+	case "latest":
+		query.SortBy = `"product_reviews"."created_at"`
+	case "highest-rating":
+		query.SortBy = "rating"
+		query.Sort = "DESC"
+	case "lowest-rating":
+		query.SortBy = "rating"
+		query.Sort = "ASC"
+	default:
+		query.SortBy = `"product_reviews"."created_at"`
+	}
+
+	if strings.ToLower(comment) == "true" {
+		query.Comment = true
+	} else {
+		query.Comment = false
+	}
+
+	ratingQuery := c.Query("rating")
+	if ratingQuery != "" {
+		ratingSlices := strings.Split(ratingQuery, ",")
+		ratings := []uint{}
+
+		for _, ratingString := range ratingSlices {
+			rating, err := strconv.Atoi(ratingString)
+
+			if err == nil {
+				ratings = append(ratings, uint(rating))
+			}
+		}
+
+		query.Rating = ratings
+	}
+
+	return &query
 }

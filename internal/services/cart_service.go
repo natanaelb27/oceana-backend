@@ -18,9 +18,11 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type CartService interface {
+	WithTx(tx *gorm.DB) *cartService
 	Update(request *in_cart_dtos.CartRequest) (*models.Cart, error)
 	GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error)
 	PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.WalletPaymentResponse, error)
@@ -33,8 +35,10 @@ type cartService struct {
 	orderDetailRepository                   r.OrderDetailRepository
 	orderDetailMerchantPromotionRepository  r.OrderDetailMerchantPromotionRepository
 	orderMerchantVoucherRepository          r.OrderMerchantVoucherRepository
+	orderTrackingRepository                 r.OrderTrackingRepository
 	productRepository                       r.ProductRepository
 	productItemRepository                   r.ProductItemRepository
+	productCourierServiceRepository         r.ProductCourierServiceRepository
 	productMerchantPromotionRepository      r.ProductMerchantPromotionRepository
 	productSnapshotRepository               r.ProductSnapshotRepository
 	productMediaSnapshotRepository          r.ProductMediaSnapshotRepository
@@ -57,8 +61,10 @@ type CartServiceConfig struct {
 	OrderDetailRepository                   r.OrderDetailRepository
 	OrderDetailMerchantPromotionRepository  r.OrderDetailMerchantPromotionRepository
 	OrderMerchantVoucherRepository          r.OrderMerchantVoucherRepository
+	OrderTrackingRepository                 r.OrderTrackingRepository
 	ProductRepository                       r.ProductRepository
 	ProductItemRepository                   r.ProductItemRepository
+	ProductCourierServiceRepository         r.ProductCourierServiceRepository
 	ProductMerchantPromotionRepository      r.ProductMerchantPromotionRepository
 	ProductSnapshotRepository               r.ProductSnapshotRepository
 	ProductMediaSnapshotRepository          r.ProductMediaSnapshotRepository
@@ -82,8 +88,10 @@ func NewCartService(c *CartServiceConfig) CartService {
 		orderDetailRepository:                   c.OrderDetailRepository,
 		orderDetailMerchantPromotionRepository:  c.OrderDetailMerchantPromotionRepository,
 		orderMerchantVoucherRepository:          c.OrderMerchantVoucherRepository,
+		orderTrackingRepository:                 c.OrderTrackingRepository,
 		productRepository:                       c.ProductRepository,
 		productItemRepository:                   c.ProductItemRepository,
+		productCourierServiceRepository:         c.ProductCourierServiceRepository,
 		productMerchantPromotionRepository:      c.ProductMerchantPromotionRepository,
 		productSnapshotRepository:               c.ProductSnapshotRepository,
 		productMediaSnapshotRepository:          c.ProductMediaSnapshotRepository,
@@ -100,6 +108,33 @@ func NewCartService(c *CartServiceConfig) CartService {
 	}
 }
 
+func (u cartService) WithTx(tx *gorm.DB) *cartService {
+	u.addressSnapshotRepository = u.addressSnapshotRepository.WithTx(tx)
+	u.cartRepository = u.cartRepository.WithTx(tx)
+	u.orderRepository = u.orderRepository.WithTx(tx)
+	u.orderDetailRepository = u.orderDetailRepository.WithTx(tx)
+	u.orderDetailMerchantPromotionRepository = u.orderDetailMerchantPromotionRepository.WithTx(tx)
+	u.orderMerchantVoucherRepository = u.orderMerchantVoucherRepository.WithTx(tx)
+	u.orderTrackingRepository = u.orderTrackingRepository.WithTx(tx)
+	u.productRepository = u.productRepository.WithTx(tx)
+	u.productItemRepository = u.productItemRepository.WithTx(tx)
+	u.productCourierServiceRepository = u.productCourierServiceRepository.WithTx(tx)
+	u.productMerchantPromotionRepository = u.productMerchantPromotionRepository.WithTx(tx)
+	u.productSnapshotRepository = u.productSnapshotRepository.WithTx(tx)
+	u.productMediaSnapshotRepository = u.productMediaSnapshotRepository.WithTx(tx)
+	u.productVariationSnapshotRepository = u.productVariationSnapshotRepository.WithTx(tx)
+	u.merchantVoucherRepository = u.merchantVoucherRepository.WithTx(tx)
+	u.merchantPromotionRepository = u.merchantPromotionRepository.WithTx(tx)
+	u.marketplaceVoucherRepository = u.marketplaceVoucherRepository.WithTx(tx)
+	u.transactionRepository = u.transactionRepository.WithTx(tx)
+	u.transactionMarketplaceVoucherRepository = u.transactionMarketplaceVoucherRepository.WithTx(tx)
+	u.userMerchantPromotionRepository = u.userMerchantPromotionRepository.WithTx(tx)
+	u.walletRepository = u.walletRepository.WithTx(tx)
+	u.walletTransactionPaymentRepository = u.walletTransactionPaymentRepository.WithTx(tx)
+
+	return &u
+}
+
 func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.Cart, err error) {
 	cart, cartErr := p.cartRepository.GetByUserIdProductItemId(request.UserID, request.ProductItemID)
 	if cartErr != nil && cartErr != e.ErrDataNotFound {
@@ -112,7 +147,13 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 	if err != nil {
 		return
 	}
-	if productItem.StockQuantity < *request.Quantity {
+
+	if request.Action == nil {
+		cart.Quantity = *request.Quantity
+	} else if *request.Action == "increment" {
+		cart.Quantity += *request.Quantity
+	}
+	if productItem.StockQuantity < cart.Quantity {
 		err = e.ErrStockIsNotAvailable
 		return
 	}
@@ -128,8 +169,6 @@ func (p *cartService) Update(request *in_cart_dtos.CartRequest) (result *models.
 	if *request.Quantity == 0 && err != e.ErrDataNotFound {
 		return p.cartRepository.Delete(cart.ID)
 	}
-
-	cart.Quantity = *request.Quantity
 
 	return p.cartRepository.Update(cart.ID, cart)
 }
@@ -209,6 +248,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		IsPaid:              true,
 	}
 
+	newOrderTrackingList := []*models.OrderTracking{}
 	newOrderList := []*models.Order{}
 	newOrderDetailList := []*models.OrderDetail{}
 	newOrderDetailMerchantPromotionList := []*models.OrderDetailMerchantPromotion{}
@@ -224,7 +264,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
-	for _, cartOrderItem := range request.CartOrderItems {
+	for i, cartOrderItem := range request.CartOrderItems {
 		merchantVoucher := &internalDtos.MerchantVoucherDetails{}
 
 		if cartOrderItem.MerchantVoucherID != nil {
@@ -267,7 +307,7 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 		newOrder := &models.Order{
 			ID:                uuid.New(),
-			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1)),
+			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1+i)),
 			TransactionID:     newTransaction.ID,
 			MerchantID:        cartOrderItem.MerchantID,
 			AddressSnapshotID: addressSnapshot.ID,
@@ -277,9 +317,26 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			ClaimStatus:       false,
 		}
 
+		newOrderTracking := &models.OrderTracking{
+			OrderID:         newOrder.ID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.PaymentVerifiedTitle,
+			Description:     constants.PaymentVerifiedDescription,
+		}
+
+		newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
+
 		var sumProduct float64 = 0
 
 		for _, product := range cartOrderItem.Products {
+			_, err := p.productCourierServiceRepository.GetAllByProductIDAndCourierServiceID(product.ProductID, cartOrderItem.CourierServiceID)
+
+			if errors.Is(err, e.ErrDataNotFound) {
+				return nil, e.ErrCourierServiceNotSupportProduct
+			} else if err != nil {
+				return nil, err
+			}
+
 			productMerchantPromotion := &internalDtos.ProductMerchantPromotionDetails{}
 
 			if product.ProductMerchantPromotionID != nil {
@@ -316,6 +373,10 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					return nil, e.ErrProductDoesNotHaveThatProductItem
 				}
 
+				if pi.Status != constants.ProductActiveStatus {
+					return nil, e.ErrProductStatusInactive
+				}
+
 				if pi.StockQuantity < productItems.Quantity {
 					return nil, e.ErrProductStockNotEnough
 				}
@@ -329,6 +390,8 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 					Weight:      pi.Weight,
 					PackageSize: pi.PackageSize,
 					Condition:   pi.Condition,
+					ProcessDay:  pi.ProcessDay,
+					IsPreorder:  pi.IsPreorder,
 					SKU:         pi.SKU,
 					Price:       pi.Price,
 				}
@@ -510,6 +573,8 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
+	fmt.Println(newTransaction.TotalPriceWithShippingFee)
+
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, e.ErrDifferentTotalPayment
 	}
@@ -555,6 +620,12 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		return nil, err
 	}
 
+	_, err = p.orderTrackingRepository.Create(newOrderTrackingList)
+
+	if err != nil {
+		return nil, err
+	}
+
 	if len(newOrderMerchantVoucherList) > 0 {
 		_, err = p.orderMerchantVoucherRepository.Create(newOrderMerchantVoucherList)
 
@@ -589,6 +660,20 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 	if err != nil {
 		return nil, err
+	}
+
+	for _, cartID := range request.CartIDs {
+		deletedCart, err := p.cartRepository.Delete(*cartID)
+
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
+			return nil, err
+		} else {
+			if deletedCart.UserID != request.UserID {
+				return nil, e.ErrForbiddenOrder
+			}
+		}
 	}
 
 	return dtos.NewWalletPaymentResponse(newTransactionCreated), nil

@@ -2,11 +2,11 @@ package routers
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
 	"git.garena.com/azmi-adhani/group-project-backend/cmd/middlewares"
+	"github.com/fvbock/endless"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -40,11 +40,14 @@ func Init(h *handlers.Handler) {
 	rajaOngkir(public, private, h)
 	marketplaceVoucher(public, private, h)
 	courier(public, private, h)
+	city(public, private, h)
+	wallet(public, private, h)
+	sealabsPay(public, private, h)
+	refund(public, private, h)
+	admin(public, private, h)
+	media(public, private, h)
 
 	r.NoRoute(h.NotFound)
 
-	err := r.Run(fmt.Sprintf(":%v", os.Getenv("ROUTER_PORT")))
-	if err != nil {
-		log.Fatal("Routers initiation failed")
-	}
+	endless.ListenAndServe(fmt.Sprintf(":%v", os.Getenv("ROUTER_PORT")), r)
 }

@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) RoleGetAll(c *gin.Context) {
@@ -101,6 +102,30 @@ func (h *Handler) RoleDelete(c *gin.Context) {
 		return
 	}
 	responseData := dtos.NewRoleDeleteResponse(result)
+
+	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) RoleCreateFailingWithTransaction(c *gin.Context) {
+
+	var request *dtos.RoleCreateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	model := request.ToModel()
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	// call wanted method with transactions
+	result, err := h.roleService.WithTx(tx).MultipleOperationFailingWithTransaction(model)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	responseData := dtos.NewRoleCreateResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
 }

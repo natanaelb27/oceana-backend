@@ -12,7 +12,7 @@ type ProductFavorite struct {
 	UserId     uuid.UUID
 	User       User
 	ProductId  uint
-	Product    Product
+	Product    Product `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	IsFavorite bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

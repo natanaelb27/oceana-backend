@@ -22,11 +22,14 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.POST("/password/check-verification-code", func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProfileCheckPasswordVerificationCode)
 		privateRoute.POST("/password/request-verification-code", func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProfileRequestChangePasswordVerificationCode)
 		privateRoute.PATCH("/password", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UpdateProfilePassword)
-		privateRoute.POST("/sealabs-pay", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayCreate)
-		privateRoute.GET("/sealabs-pay", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayGetAll)
-		privateRoute.GET("/sealabs-pay/:sealabs_pay_id", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayGetById)
-		privateRoute.DELETE("/sealabs-pay/:sealabs_pay_id", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayDelete)
 		privateRoute.GET("/transaction-history", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderListGetAll)
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderListDetailsGetByID)
+		privateRoute.PATCH("/orders/:order-id/complete-order", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderCompleteOrder)
+		privateRoute.GET("/pending-payment", func(c *gin.Context) { middlewares.Role(c, "001") }, h.PendingPaymentGetAllByUser)
+		privateRoute.POST("/refunds/:order-id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CreateRefund)
+		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllRefundDetailsByBuyer)
+		privateRoute.GET("/favorites", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllUserFavoriteProducts)
+		privateRoute.DELETE("/favorites/batch-delete", func(c *gin.Context) { middlewares.Role(c, "001") }, h.DeleteFavoriteProducts)
+
 	}
 }

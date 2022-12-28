@@ -1,6 +1,10 @@
 package dtos
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type MerchantInformation struct {
 	ID              uint      `json:"id"`
@@ -15,4 +19,5 @@ type MerchantInformation struct {
 	ShopDistrict    string    `json:"shop_district"`
 	ShopCity        string    `json:"shop_city"`
 	ShopProvince    string    `json:"shop_province"`
+	JoinedDate      time.Time `json:"joined_date"`
 }

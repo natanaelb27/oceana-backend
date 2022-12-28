@@ -42,19 +42,19 @@ func (h *Handler) MerchantPromotionGetAll(c *gin.Context) {
 
 	query := dtos.NewMerchantPromotionQuery(c)
 
-	results, err := h.merchantPromotionService.GetAll(userID, query)
+	results, pagination, err := h.merchantPromotionService.GetAll(userID, query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
 	}
 
-	var responseData []*dtos.MerchantPromotionResponse = make([]*dtos.MerchantPromotionResponse, 0)
+	// var responseData []*dtos.MerchantPromotionResponse = make([]*dtos.MerchantPromotionResponse, 0)
 
-	for _, result := range results {
-		responseData = append(responseData, dtos.NewMerchantPromotionResponse(result, nil))
-	}
+	// for _, result := range results {
+	// 	responseData = append(responseData, dtos.NewMerchantPromotionResponse(result, nil))
+	// }
 
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, results, pagination)
 }
 
 func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
@@ -72,7 +72,7 @@ func (h *Handler) MerchantPromotionGetByID(c *gin.Context) {
 
 	merchantPromotionsID := uint(merchantPromotionsIDUint64)
 
-	responseData, err := h.merchantPromotionService.GetByID(merchantPromotionsID)
+	responseData, err := h.merchantPromotionService.GetDetailsByID(merchantPromotionsID)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -109,4 +109,29 @@ func (h *Handler) MerchantPromotionUpdate(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, responses, nil)
+}
+
+func (h *Handler) MerchantPromotionDelete(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionIDUint64, err := strconv.ParseUint(c.Param("merchant-promotion-id"), 10, 64)
+	if err != nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	merchantPromotionID := uint(merchantPromotionIDUint64)
+
+	merchantPromotionDeleteResponse, err := h.merchantPromotionService.Delete(id, merchantPromotionID)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantPromotionDeleteResponse, nil)
 }

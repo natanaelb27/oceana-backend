@@ -2,51 +2,63 @@ package dtos
 
 import (
 	"strconv"
+	"time"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 )
 
 type ProductDetailsGetByIDResponse struct {
-	Name                  string                   `json:"name"`
-	IsHazardous           bool                     `json:"is_hazardous"`
-	Weight                uint                     `json:"weight"`
-	PackageSize           string                   `json:"package_size"`
-	Condition             string                   `json:"condition"`
-	Category              string                   `json:"category"`
-	Images                pq.StringArray           `json:"images" gorm:"type:text[]"`
-	Description           string                   `json:"description"`
-	TotalStock            uint                     `json:"total_stock"`
-	LikeCount             uint                     `json:"like_count"`
-	RatingCount           uint                     `json:"rating_count"`
-	RatingStar            float64                  `json:"rating_star"`
-	DiscountType          *string                  `json:"discount_type"`
-	Discount              *uint                    `json:"discount"`
-	Price                 float64                  `json:"price"`
-	PriceAfterDiscount    *float64                 `json:"price_after_discount"`
-	PriceMax              float64                  `json:"price_max"`
-	PriceMaxAfterDiscount *float64                 `json:"price_max_after_discount"`
-	PriceMin              float64                  `json:"price_min"`
-	PriceMinAfterDiscount *float64                 `json:"price_min_after_discount"`
-	ProductModel          []*dtos.ProductModel     `json:"product_model"`
-	ProductVariation      []*dtos.ProductVariation `json:"product_variation"`
+	ID                    uint                       `json:"id"`
+	Name                  string                     `json:"name"`
+	MerchantID            uint                       `json:"merchant_id"`
+	IsHazardous           bool                       `json:"is_hazardous"`
+	Weight                uint                       `json:"weight"`
+	PackageSize           string                     `json:"package_size"`
+	Condition             string                     `json:"condition"`
+	Status                string                     `json:"status"`
+	CategoryID            uint                       `json:"category_id"`
+	Category              string                     `json:"category"`
+	Images                pq.StringArray             `json:"images" gorm:"type:text[]"`
+	Videos                pq.StringArray             `json:"videos" gorm:"type:text[]"`
+	Description           string                     `json:"description"`
+	TotalStock            uint                       `json:"total_stock"`
+	LikeCount             uint                       `json:"like_count"`
+	TotalPurchased        uint                       `json:"total_purchased"`
+	ProductReviewDetails  *dtos.ProductReviewDetails `json:"product_review_details"`
+	DiscountType          *string                    `json:"discount_type"`
+	Discount              *uint                      `json:"discount"`
+	Price                 float64                    `json:"price"`
+	PriceAfterDiscount    *float64                   `json:"price_after_discount"`
+	PriceMax              float64                    `json:"price_max"`
+	PriceMaxAfterDiscount *float64                   `json:"price_max_after_discount"`
+	PriceMin              float64                    `json:"price_min"`
+	PriceMinAfterDiscount *float64                   `json:"price_min_after_discount"`
+	ProductModel          []*dtos.ProductModel       `json:"product_model"`
+	ProductVariation      []*dtos.ProductVariation   `json:"product_variation"`
 }
 
 func NewProductDetailsGetByIDResponse(source *dtos.ProductDetails) (target *ProductDetailsGetByIDResponse) {
 	target = &ProductDetailsGetByIDResponse{
+		ID:                    source.ID,
 		Name:                  source.Name,
+		MerchantID:            source.MerchantID,
 		IsHazardous:           source.IsHazardous,
 		Weight:                source.Weight,
 		PackageSize:           source.PackageSize,
 		Condition:             source.Condition,
+		Status:                source.Status,
+		CategoryID:            source.CategoryID,
 		Category:              source.Category,
 		Images:                source.Images,
+		Videos:                source.Videos,
 		Description:           source.Description,
 		TotalStock:            source.TotalStock,
 		LikeCount:             source.LikeCount,
-		RatingCount:           source.RatingCount,
-		RatingStar:            source.RatingStar,
+		TotalPurchased:        source.TotalPurchased,
+		ProductReviewDetails:  source.ProductReviewDetails,
 		DiscountType:          source.DiscountType,
 		Discount:              source.Discount,
 		Price:                 source.Price,
@@ -115,6 +127,141 @@ func NewGetPurchaseQuantitiesByIDResponse(source *dtos.SelectedProductPurchaseQu
 		MaxPurchaseQuantity:        source.MaxPurchaseQuantity,
 		UserMaxPurchaseQuantity:    source.UserMaxPurchaseQuantity,
 		ProductMerchantPromotionID: source.ProductMerchantPromotionID,
+	}
+
+	return
+}
+
+type ProductCreateRequest struct {
+	CategoryID  uint   `json:"category_id" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description" binding:"required"`
+	IsHazardous bool   `json:"is_hazardous"`
+	Weight      uint   `json:"weight" binding:"required"`
+	PackageSize string `json:"package_size" binding:"required"`
+	Condition   string `json:"condition" binding:"required"`
+	Status      string `json:"status" binding:"required"`
+}
+
+func (source *ProductCreateRequest) ToModel(merchantID uint) (target *models.Product) {
+	target = &models.Product{
+		MerchantID:  merchantID,
+		CategoryID:  source.CategoryID,
+		Name:        source.Name,
+		Description: source.Description,
+		IsHazardous: source.IsHazardous,
+		Weight:      source.Weight,
+		PackageSize: source.PackageSize,
+		Condition:   source.Description,
+		Status:      source.Status,
+	}
+
+	return
+}
+
+type ProductCreateResponse struct {
+	ID          uint      `json:"id"`
+	MerchantID  uint      `json:"merchant_id"`
+	CategoryID  uint      `json:"category_id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsHazardous bool      `json:"is_hazardous"`
+	Weight      uint      `json:"weight"`
+	PackageSize string    `json:"package_size"`
+	Condition   string    `json:"condition"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func NewProductCreateResponse(source *models.Product) (target *ProductCreateResponse) {
+	target = &ProductCreateResponse{
+		ID:          source.ID,
+		MerchantID:  source.MerchantID,
+		CategoryID:  source.CategoryID,
+		Name:        source.Name,
+		Description: source.Description,
+		IsHazardous: source.IsHazardous,
+		Weight:      source.Weight,
+		PackageSize: source.PackageSize,
+		Condition:   source.Condition,
+		Status:      source.Status,
+		CreatedAt:   source.CreatedAt,
+		UpdatedAt:   source.UpdatedAt,
+	}
+
+	return
+}
+
+type AvailableProductsByPromotionPeriodQuery struct {
+	Search              string     `json:"search"`
+	FilterCategory      uint       `json:"filter-category"`
+	FilterStartDatetime *time.Time `json:"filter-start-datetime"`
+	FilterEndDatetime   *time.Time `json:"filter-end-datetime"`
+}
+
+func NewAvailableProductsByPromotionPeriodQuery(c *gin.Context) *AvailableProductsByPromotionPeriodQuery {
+	var query AvailableProductsByPromotionPeriodQuery
+
+	search := c.Query("search")
+	filterCategory := c.Query("filter-category")
+	filterStartDatetime := c.Query("filter-start-datetime")
+	filterEndDatetime := c.Query("filter-end-datetime")
+
+	query.Search = search
+
+	CategoryIdInt, err := strconv.Atoi(filterCategory)
+	if err != nil || CategoryIdInt <= 0 {
+		CategoryIdInt = 0
+	}
+
+	query.FilterCategory = uint(CategoryIdInt)
+
+	if filterStartDatetime != "" && filterEndDatetime != "" {
+		startDatetime, err := time.Parse("2006-01-02T15:04:05.000Z", filterStartDatetime)
+
+		if err != nil {
+			query.FilterStartDatetime = nil
+		} else {
+			query.FilterStartDatetime = &startDatetime
+		}
+
+		endDatetime, err := time.Parse("2006-01-02T15:04:05.000Z", filterEndDatetime)
+
+		if err != nil {
+			query.FilterEndDatetime = nil
+		} else {
+			query.FilterEndDatetime = &endDatetime
+		}
+
+	} else {
+		query.FilterStartDatetime = nil
+		query.FilterEndDatetime = nil
+	}
+
+	return &query
+
+}
+
+type AvailableProductsResponse struct {
+	ProductID    uint   `json:"product_id"`
+	ProductName  string `json:"product_name"`
+	ProductImage string `json:"product_image"`
+	PriceMax     uint   `json:"price_max"`
+	PriceMin     uint   `json:"price_min"`
+	TotalStock   uint   `json:"total_stock"`
+}
+
+func NewAvailableProductsResponse(source []*dtos.AvailableProducts) (target []*AvailableProductsResponse) {
+	for _, result := range source {
+		target = append(target, &AvailableProductsResponse{
+			ProductID:    result.ProductID,
+			ProductName:  result.ProductName,
+			ProductImage: result.ProductImage,
+			PriceMax:     result.PriceMax,
+			PriceMin:     result.PriceMin,
+			TotalStock:   result.TotalStock,
+		})
 	}
 
 	return

@@ -20,3 +20,25 @@ func NewGetProductFavoriteResponse(source *models.ProductFavorite) (target *GetP
 
 	return
 }
+
+type DeleteFavoriteProductsRequest struct {
+	ProductIDs []*uint `json:"product_ids" binding:"required"`
+}
+
+type UpdateProductFavoriteResponse struct {
+	UserID     uuid.UUID `json:"user_id"`
+	ProductID  uint      `json:"product_id"`
+	IsFavorite bool      `json:"is_favorite"`
+}
+
+func NewBatchUpdateProductFavoriteResponse(source []*models.ProductFavorite) (target []*UpdateProductFavoriteResponse) {
+	for _, result := range source {
+		target = append(target, &UpdateProductFavoriteResponse{
+			UserID:     result.UserId,
+			ProductID:  result.ProductId,
+			IsFavorite: result.IsFavorite,
+		})
+	}
+
+	return
+}

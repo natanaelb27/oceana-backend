@@ -23,6 +23,7 @@ type Order struct {
 	ShippingFee             uint
 	Status                  string
 	ClaimStatus             bool
+	ClaimDatetime           *time.Time
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 	DeletedAt               gorm.DeletedAt

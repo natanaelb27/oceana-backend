@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type OrderDetailMerchantPromotionRepository interface {
+	WithTx(tx *gorm.DB) *orderDetailMerchantPromotionRepository
 	Create(newModel []*models.OrderDetailMerchantPromotion) (model []*models.OrderDetailMerchantPromotion, err error)
 }
 
@@ -22,6 +25,15 @@ func NewOrderDetailMerchantPromotionRepository(c *OrderDetailMerchantPromotionRe
 	return &orderDetailMerchantPromotionRepository{
 		db: c.DB,
 	}
+}
+
+func (u orderDetailMerchantPromotionRepository) WithTx(tx *gorm.DB) *orderDetailMerchantPromotionRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *orderDetailMerchantPromotionRepository) Create(newModel []*models.OrderDetailMerchantPromotion) (model []*models.OrderDetailMerchantPromotion, err error) {

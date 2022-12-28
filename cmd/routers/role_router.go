@@ -19,6 +19,11 @@ func role(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	{
 		privateRoute.GET("/:id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.RoleGetById)
 		privateRoute.GET("/private-example", func(c *gin.Context) { middlewares.Role(c, "001") }, h.RoleGetAll)
+		privateRoute.POST("/failing",
+			middlewares.DBTransactionMiddleware(),
+			func(c *gin.Context) { middlewares.Role(c, "011") },
+			h.RoleCreateFailingWithTransaction,
+		)
 	}
 	// We can also define use the middleware on its group like below
 	// anotherPrivateRoute := private.Group(path, func(c *gin.Context) { middlewares.Role(c, "001") })

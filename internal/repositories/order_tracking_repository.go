@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -9,7 +11,10 @@ import (
 )
 
 type OrderTrackingRepository interface {
+	WithTx(tx *gorm.DB) *orderTrackingRepository
 	GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error)
+	GetByOrderStatus(orderStatus string) (result []*dtos.COTUOrderTracking, err error)
+	Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error)
 }
 
 type orderTrackingRepository struct {
@@ -24,6 +29,15 @@ func NewOrderTrackingRepository(c *OrderTrackingRepositoryConfig) OrderTrackingR
 	return &orderTrackingRepository{
 		db: c.DB,
 	}
+}
+
+func (u orderTrackingRepository) WithTx(tx *gorm.DB) *orderTrackingRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrackingHistory, error) {
@@ -45,4 +59,48 @@ func (r *orderTrackingRepository) GetByOrderID(id uuid.UUID) ([]*dtos.OrderTrack
 	}
 
 	return orderTrackingHistory, nil
+}
+
+func (r *orderTrackingRepository) GetByOrderStatus(orderStatus string) (result []*dtos.COTUOrderTracking, err error) {
+	sqOrderTrackings := r.db.
+		Table("order_trackings ot").
+		Select(`
+			ROW_NUMBER() OVER (PARTITION BY ot.order_id ORDER BY ot.history_datetime DESC) AS row_number,
+			ot.id AS id,
+			ot.order_id AS order_id,
+			ot.history_datetime AS history_datetime,
+			ot.title AS title,
+			ot.description AS description, 
+			o.id AS order_id,
+			o.status AS order_status
+		`).
+		Joins("JOIN orders o ON ot.order_id = o.id").
+		Where(`o.status = ?`, orderStatus).
+		Order("ot.history_datetime DESC")
+	queryResult := r.db.
+		Select(`
+			*
+		`).
+		Table("(?) o", sqOrderTrackings).
+		Where("o.row_number = ?", 1).
+		Find(&result)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return result, nil
+}
+
+func (r *orderTrackingRepository) Create(newModel []*models.OrderTracking) (model []*models.OrderTracking, err error) {
+	queryResult := r.db.Create(newModel)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
 }

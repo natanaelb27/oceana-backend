@@ -7,10 +7,12 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (h *Handler) MarketplaceVoucherGetAll(c *gin.Context) {
-	results, err := h.marketplaceVoucherService.GetAll()
+	query := dtos.NewMarketplaceVoucherQuery(c)
+	results, pagination, err := h.marketplaceVoucherService.GetAll(query)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -22,7 +24,7 @@ func (h *Handler) MarketplaceVoucherGetAll(c *gin.Context) {
 		responseData = append(responseData, dtos.NewMarketplaceVoucherGetResponse(result))
 	}
 
-	utils.ResponseSuccess(c, responseData, nil)
+	utils.ResponseSuccess(c, responseData, pagination)
 }
 
 func (h *Handler) MarketplaceVoucherGetAllByActive(c *gin.Context) {
@@ -120,4 +122,22 @@ func (h *Handler) MarketplaceVoucherDelete(c *gin.Context) {
 	responseData := dtos.NewMarketplaceVoucherDeleteResponse(result)
 
 	utils.ResponseSuccess(c, responseData, nil)
+}
+
+func (h *Handler) MarketplaceVoucherGetAllByBuyer(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+	if id == uuid.Nil {
+		utils.ResponseError(c, e.ErrInvalidIdentifier)
+		return
+	}
+
+	query := dtos.NewBuyerMarketplaceVoucherQuery(c)
+	merchantVouherGetAllResponse, pagination, err := h.marketplaceVoucherService.GetAllByBuyer(id, query)
+
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, merchantVouherGetAllResponse, pagination)
 }
