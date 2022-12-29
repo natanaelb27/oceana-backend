@@ -11,8 +11,8 @@ type OrderDetailMerchantPromotion struct {
 	ID                  uint
 	OrderDetailID       uuid.UUID
 	OrderDetail         OrderDetail
-	MerchantPromotionID uint
-	MerchantPromotion   MerchantPromotion
+	ProductMerchantPromotionID uint
+	ProductMerchantPromotion   ProductMerchantPromotion
 	TotalDiscount       float64
 	CreatedAt           time.Time
 	UpdatedAt           time.Time

@@ -97,7 +97,7 @@ var (
 	ErrPromotionNotFound                = errors.New("promotion not found")
 	ErrProductMerchantPromotionNotFound = errors.New("product merchant promotion not found")
 	ErrOrderNotFound                    = errors.New("order not found")
-	ErrTransactionNotFound                    = errors.New("transaction not found")
+	ErrTransactionNotFound              = errors.New("transaction not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
@@ -180,6 +180,7 @@ var (
 	// 422
 	ErrMarketplaceVoucherNotOngoing                           = errors.New("marketplace voucher is not ongoing")
 	ErrMarketplaceVoucherQuotaFull                            = errors.New("marketplace voucher's quota is full")
+	ErrMarketplaceVoucherUsedByUser                           = errors.New("marketplace voucher has been used by the user")
 	ErrMerchantVoucherNotOngoing                              = errors.New("merchant voucher is not ongoing")
 	ErrMerchantVoucherQuotaFull                               = errors.New("merchant voucher's quota is full")
 	ErrMerchantVoucherUsedByUser                              = errors.New("merchant voucher has been used by the user")
@@ -342,6 +343,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) ||
 		errors.Is(err, ErrMarketplaceVoucherNotOngoing) ||
 		errors.Is(err, ErrMarketplaceVoucherQuotaFull) ||
+		errors.Is(err, ErrMarketplaceVoucherUsedByUser) ||
 		errors.Is(err, ErrMerchantVoucherNotOngoing) ||
 		errors.Is(err, ErrMerchantVoucherQuotaFull) ||
 		errors.Is(err, ErrMerchantVoucherUsedByUser) ||
