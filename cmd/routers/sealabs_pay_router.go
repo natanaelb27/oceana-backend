@@ -23,5 +23,6 @@ func sealabsPay(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.H
 		privateRoute.PATCH("/:sealabs-pay-id", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPaySetDefault)
 		privateRoute.POST("/register-otp", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayRegisterOTP)
 		privateRoute.POST("/topup-otp", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayTopupOTP)
+		privateRoute.POST("/payment-otp", func(c *gin.Context) { middlewares.Role(c, "011") }, h.SealabsPayPaymentOTP)
 	}
 }

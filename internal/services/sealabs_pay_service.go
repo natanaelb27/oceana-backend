@@ -33,6 +33,7 @@ type SealabsPayService interface {
 	StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error
 	TopupWalletOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
 	RegisterOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
+	PaymentOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error)
 	Refund(request *externalDtos.SealabsPayRefundRequest) error
 }
 
@@ -219,7 +220,25 @@ func (p *sealabsPayService) RegisterOTP(inboundRequest *externalDtos.SealabsPayP
 	}
 
 	return otpURL, nil
+}
 
+func (p *sealabsPayService) PaymentOTP(inboundRequest *externalDtos.SealabsPayPaymentInboundRequest) (*string, error) {
+	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayPayment, inboundRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := p.generatePaymentRequest(inboundRequest, sealabsPayInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	otpURL, err := p.callSealabsPayPaymentApi(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return otpURL, nil
 }
 
 func (p *sealabsPayService) Refund(refundRequest *externalDtos.SealabsPayRefundRequest) error {

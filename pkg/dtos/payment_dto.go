@@ -37,7 +37,7 @@ type PayCartWithWalletRequest struct {
 	TotalPayment         float64          `json:"total_payment" binding:"required"`
 }
 
-type WalletPaymentResponse struct {
+type PaymentResponse struct {
 	ID                        uuid.UUID `json:"id"`
 	UserID                    uuid.UUID `json:"user_id"`
 	TransactionDatetime       time.Time `json:"transaction_datetime"`
@@ -50,8 +50,8 @@ type WalletPaymentResponse struct {
 	UpdatedAt                 time.Time `json:"updated_at"`
 }
 
-func NewWalletPaymentResponse(source *models.Transaction) (target *WalletPaymentResponse) {
-	target = &WalletPaymentResponse{
+func NewPaymentResponse(source *models.Transaction) (target *PaymentResponse) {
+	target = &PaymentResponse{
 		ID:                        source.ID,
 		UserID:                    source.UserID,
 		TransactionDatetime:       source.TransactionDatetime,
@@ -64,4 +64,14 @@ func NewWalletPaymentResponse(source *models.Transaction) (target *WalletPayment
 		UpdatedAt:                 source.UpdatedAt,
 	}
 	return
+}
+
+type PayCartWithSealabsPayRequest struct {
+	UserID               uuid.UUID        `json:"user_id"`
+	CartOrderItems       []*CartOrderItem `json:"cart_order_items" binding:"required"`
+	CartIDs              []*uint          `json:"cart_ids" binding:"required"`
+	MarketplaceVoucherID *uint            `json:"marketplace_voucher_id"`
+	AddressID            uuid.UUID        `json:"address_id" binding:"required"`
+	CardNumber           string           `json:"card_number" binding:"required"`
+	TotalPayment         float64          `json:"total_payment" binding:"required"`
 }

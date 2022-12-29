@@ -16,5 +16,9 @@ func cart(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 			middlewares.DBTransactionMiddleware(),
 			func(c *gin.Context) { middlewares.Role(c, "001") },
 			h.PayCartWithWallet)
+		privateRoute.POST("/payment/sealabs-pay",
+			middlewares.DBTransactionMiddleware(),
+			func(c *gin.Context) { middlewares.Role(c, "001") },
+			h.PayCartWithSealabsPay)
 	}
 }
