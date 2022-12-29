@@ -16,9 +16,11 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type RefundService interface {
+	WithTx(tx *gorm.DB) *refundService
 	Create(userID uuid.UUID, orderID uuid.UUID, request *dtos.CreateRefundRequest) (*dtos.CreateRefundResponse, error)
 	GetAllDetailsByBuyer(userID uuid.UUID, query *dtos.GetAllRefundQuery) ([]*dtos.GetRefundDetailsResponse, *utils.Pagination, error)
 	GetDetailsByID(userID uuid.UUID, refundID uuid.UUID) (*dtos.GetRefundDetailsResponse, error)
@@ -82,6 +84,24 @@ func NewRefundService(c *RefundServiceConfig) RefundService {
 	}
 }
 
+func (u refundService) WithTx(tx *gorm.DB) *refundService {
+	u.merchantRepository = u.merchantRepository.WithTx(tx)
+	u.orderRepository = u.orderRepository.WithTx(tx)
+	u.orderDetailRepository = u.orderDetailRepository.WithTx(tx)
+	u.refundRepository = u.refundRepository.WithTx(tx)
+	u.refundDetailRepository = u.refundDetailRepository.WithTx(tx)
+	u.refundMediaRepository = u.refundMediaRepository.WithTx(tx)
+	u.userRepository = u.userRepository.WithTx(tx)
+	u.transactionRepository = u.transactionRepository.WithTx(tx)
+	u.walletTransactionPaymentRepository = u.walletTransactionPaymentRepository.WithTx(tx)
+	u.walletRepository = u.walletRepository.WithTx(tx)
+	u.sealabsPayTransactionPaymentRepository = u.sealabsPayTransactionPaymentRepository.WithTx(tx)
+	u.orderTrackingRepository = u.orderTrackingRepository.WithTx(tx)
+	u.sealabsPayService = u.sealabsPayService.WithTx(tx)
+
+	return &u
+}
+
 func (p *refundService) CronAutoApproveRefundByExpirationTime() error {
 	newRefunds := &models.Refund{
 		Status: constants.RefundStatusApprovedBySystem,
@@ -128,7 +148,7 @@ func (s *refundService) Create(userID uuid.UUID, orderID uuid.UUID, request *dto
 	}
 
 	for _, v := range existingRefunds {
-		if v.Status == constants.RefundStatusApproved {
+		if v.Status == constants.RefundStatusOngoing {
 			return nil, e.ErrCreateRefundIsOngoing
 		}
 

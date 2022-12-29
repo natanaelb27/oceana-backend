@@ -8,9 +8,11 @@ import (
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type LogisticService interface {
+	WithTx(tx *gorm.DB) *logisticService
 	GetByMerchantId(id uuid.UUID) (*internalLogisticDtos.Logistic, error)
 	Update(id uuid.UUID, request *internalLogisticDtos.Logistic) (*internalLogisticDtos.Logistic, error)
 	GetByMerchantIdSelected(userID uuid.UUID) (*internalLogisticDtos.Logistic, error)
@@ -47,6 +49,18 @@ func NewLogisticService(c *LogisticServiceConfig) LogisticService {
 		merchantConfigurationRepository:  c.MerchantConfigurationRepository,
 		productRepository:                c.ProductRepository,
 	}
+}
+
+func (u logisticService) WithTx(tx *gorm.DB) *logisticService {
+	u.courierRepository = u.courierRepository.WithTx(tx)
+	u.courierServiceRepository = u.courierServiceRepository.WithTx(tx)
+	u.merchantCourierServiceRepository = u.merchantCourierServiceRepository.WithTx(tx)
+	u.userRepository = u.userRepository.WithTx(tx)
+	u.merchantRepository = u.merchantRepository.WithTx(tx)
+	u.merchantConfigurationRepository = u.merchantConfigurationRepository.WithTx(tx)
+	u.productRepository = u.productRepository.WithTx(tx)
+
+	return &u
 }
 
 func (s *logisticService) GetByMerchantId(userID uuid.UUID) (*internalLogisticDtos.Logistic, error) {

@@ -13,9 +13,9 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.GET("", h.UserGetProfile)
 		privateRoute.PUT("", h.UserUpdateProfile)
 		privateRoute.POST("/logout", h.UserLogout)
-		privateRoute.PATCH("/email", h.UserUpdateEmail)
+		privateRoute.PATCH("/email", middlewares.DBTransactionMiddleware(), h.UserUpdateEmail)
 		privateRoute.PATCH("/username", h.UserUpdateUsername)
-		privateRoute.POST("/register-shop", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserRegisterMerchant)
+		privateRoute.POST("/register-shop", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserRegisterMerchant)
 		privateRoute.PATCH("/wallet/activate", func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletActivate)
 		privateRoute.PATCH("/wallet/pin", func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletChangePin)
 		privateRoute.GET("/wallet", func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletGetDetails)
@@ -26,10 +26,10 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderListDetailsGetByID)
 		privateRoute.PATCH("/orders/:order-id/complete-order", func(c *gin.Context) { middlewares.Role(c, "001") }, h.OrderCompleteOrder)
 		privateRoute.GET("/pending-payment", func(c *gin.Context) { middlewares.Role(c, "001") }, h.PendingPaymentGetAllByUser)
-		privateRoute.POST("/refunds/:order-id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.CreateRefund)
+		privateRoute.POST("/refunds/:order-id", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.CreateRefund)
 		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllRefundDetailsByBuyer)
 		privateRoute.GET("/favorites", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllUserFavoriteProducts)
-		privateRoute.DELETE("/favorites/batch-delete", func(c *gin.Context) { middlewares.Role(c, "001") }, h.DeleteFavoriteProducts)
+		privateRoute.DELETE("/favorites/batch-delete", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.DeleteFavoriteProducts)
 
 	}
 }

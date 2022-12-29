@@ -11,6 +11,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) UserCreate(c *gin.Context) {
@@ -19,7 +20,10 @@ func (h *Handler) UserCreate(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	responseData, err := h.authService.Register(request)
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	responseData, err := h.authService.WithTx(tx).Register(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -56,7 +60,10 @@ func (h *Handler) UserRegisterWithGoogle(c *gin.Context) {
 		utils.ResponseError(c, err)
 		return
 	}
-	userLoginData, err := h.authService.RegisterWithGoogle(c, request)
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	userLoginData, err := h.authService.WithTx(tx).RegisterWithGoogle(c, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

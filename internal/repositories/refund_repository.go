@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -19,6 +20,7 @@ import (
 )
 
 type RefundRepository interface {
+	WithTx(tx *gorm.DB) *refundRepository
 	UpdateAllByStatusByRefundExpirationDatetimeLteNow(status string, datas *models.Refund) (err error)
 	Create(newModel *models.Refund) (model *models.Refund, err error)
 	GetAllDetailsByBuyer(userID uuid.UUID, query *externalDtos.GetAllRefundQuery, pagination *utils.Pagination) ([]*dtos.RefundDetails, *utils.Pagination, error)
@@ -44,6 +46,15 @@ func NewRefundRepository(c *RefundRepositoryConfig) RefundRepository {
 	return &refundRepository{
 		db: c.DB,
 	}
+}
+
+func (u refundRepository) WithTx(tx *gorm.DB) *refundRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *refundRepository) UpdateAllByStatusByRefundExpirationDatetimeLteNow(status string, datas *models.Refund) (err error) {

@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) LogisticGet(c *gin.Context) {
@@ -53,7 +54,9 @@ func (h *Handler) LogisticUpdate(c *gin.Context) {
 		return
 	}
 
-	results, err := h.logisticService.Update(id, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	results, err := h.logisticService.WithTx(tx).Update(id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

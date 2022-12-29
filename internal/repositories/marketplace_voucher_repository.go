@@ -26,6 +26,7 @@ type MarketplaceVoucherRepository interface {
 	GetDetailsByID(id uint) (*dtos.MarketplaceVoucherDetails, error)
 	AddCurrentQuota(ID uint, amount uint) (*models.MarketplaceVoucher, error)
 	GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMarketplaceVoucherQuery, pagination *utils.Pagination) ([]*dtos.MarketplaceVoucherDetails, *utils.Pagination, error)
+	ValidateMarketplaceVoucherByBuyer(marketplaceVoucherID uint, userID uuid.UUID) (resultMarketplaceVoucherID *uint, err error)
 }
 
 type marketplaceVoucherRepository struct {
@@ -314,4 +315,27 @@ func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query 
 	}
 
 	return marketplaceVoucherDetails, pagination, nil
+}
+
+func (r *marketplaceVoucherRepository) ValidateMarketplaceVoucherByBuyer(marketplaceVoucherID uint, userID uuid.UUID) (resultMarketplaceVoucherID *uint, err error) {
+	queryResult := r.db.Model(&models.Transaction{}).
+		Select(`
+			transaction_marketplace_vouchers.marketplace_voucher_id
+		`).
+		Joins("JOIN transaction_marketplace_vouchers ON transaction_marketplace_vouchers.transaction_id = transactions.id").
+		Where("transactions.user_id = ?", userID).
+		Where("transaction_marketplace_vouchers.marketplace_voucher_id = ?", marketplaceVoucherID).
+		Scan(&resultMarketplaceVoucherID)
+
+	if queryResult.Error != nil {
+		if queryResult.RowsAffected == 0 {
+			err = e.ErrDataNotFound
+			return
+		}
+
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
 }

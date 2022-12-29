@@ -11,9 +11,11 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type MerchantPromotionService interface {
+	WithTx(tx *gorm.DB) *merchantPromotionService
 	CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error)
 	GetAll(userID uuid.UUID, query *dtos.MerchantPromotionQuery) ([]*internalDtos.MerchantPromotionDetails, *utils.Pagination, error)
 	GetByID(merchantPromotionID uint) (*dtos.MerchantPromotionDetails, error)
@@ -40,6 +42,14 @@ func NewMerchantPromotionService(c *MerchantPromotionServiceConfig) MerchantProm
 		merchantPromotionRepository:        c.MerchantPromotionRepository,
 		productMerchantPromotionRepository: c.ProductMerchantPromotionRepository,
 	}
+}
+
+func (u merchantPromotionService) WithTx(tx *gorm.DB) *merchantPromotionService {
+	u.merchantRepository = u.merchantRepository.WithTx(tx)
+	u.merchantPromotionRepository = u.merchantPromotionRepository.WithTx(tx)
+	u.productMerchantPromotionRepository = u.productMerchantPromotionRepository.WithTx(tx)
+	
+	return &u
 }
 
 func (mp *merchantPromotionService) CreateMyShopPromotion(id uuid.UUID, mpRequest *dtos.MerchantPromotionRequest) ([]*dtos.ProductMerchantPromotionResponse, error) {

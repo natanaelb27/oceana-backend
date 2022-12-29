@@ -8,6 +8,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) MerchantPromotionCreate(c *gin.Context) {
@@ -23,7 +24,9 @@ func (h *Handler) MerchantPromotionCreate(c *gin.Context) {
 		return
 	}
 
-	responses, err := h.merchantPromotionService.CreateMyShopPromotion(id, mpRequest)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	responses, err := h.merchantPromotionService.WithTx(tx).CreateMyShopPromotion(id, mpRequest)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -102,7 +105,9 @@ func (h *Handler) MerchantPromotionUpdate(c *gin.Context) {
 
 	merchantPromotionID := uint(merchantPromotionIDUint64)
 
-	responses, err := h.merchantPromotionService.Update(userID, merchantPromotionID, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	responses, err := h.merchantPromotionService.WithTx(tx).Update(userID, merchantPromotionID, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
