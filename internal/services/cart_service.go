@@ -14,7 +14,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,7 +25,9 @@ type CartService interface {
 	WithTx(tx *gorm.DB) *cartService
 	Update(request *in_cart_dtos.CartRequest) (*models.Cart, error)
 	GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error)
-	PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.PaymentResponse, error)
+	PayCartWithWallet(c *gin.Context, request *externalDtos.PayCartWithWalletRequest) (*externalDtos.PaymentResponse, error)
+	PayCartWithSealabsPay(c *gin.Context, request *externalDtos.PayCartWithSealabsPayRequest) (*externalDtos.PaymentResponse, error)
+	PayCartWithSealabsPaySuccess(c *gin.Context, request *externalDtos.PayCartWithSealabsPaySuccessRequest) error
 }
 
 type cartService struct {
@@ -52,6 +54,7 @@ type cartService struct {
 	userMerchantPromotionRepository         r.UserMerchantPromotionRepository
 	walletRepository                        r.WalletRepository
 	walletTransactionPaymentRepository      r.WalletTransactionPaymentRepository
+	sealabsPayTransactionPaymentRepository  r.SealabsPayTransactionPaymentRepository
 }
 
 type CartServiceConfig struct {
@@ -78,6 +81,7 @@ type CartServiceConfig struct {
 	UserMerchantPromotionRepository         r.UserMerchantPromotionRepository
 	WalletRepository                        r.WalletRepository
 	WalletTransactionPaymentRepository      r.WalletTransactionPaymentRepository
+	SealabsPayTransactionPaymentRepository  r.SealabsPayTransactionPaymentRepository
 }
 
 func NewCartService(c *CartServiceConfig) CartService {
@@ -105,6 +109,7 @@ func NewCartService(c *CartServiceConfig) CartService {
 		userMerchantPromotionRepository:         c.UserMerchantPromotionRepository,
 		walletRepository:                        c.WalletRepository,
 		walletTransactionPaymentRepository:      c.WalletTransactionPaymentRepository,
+		sealabsPayTransactionPaymentRepository:  c.SealabsPayTransactionPaymentRepository,
 	}
 }
 
@@ -131,6 +136,7 @@ func (u cartService) WithTx(tx *gorm.DB) *cartService {
 	u.userMerchantPromotionRepository = u.userMerchantPromotionRepository.WithTx(tx)
 	u.walletRepository = u.walletRepository.WithTx(tx)
 	u.walletTransactionPaymentRepository = u.walletTransactionPaymentRepository.WithTx(tx)
+	u.sealabsPayTransactionPaymentRepository = u.sealabsPayTransactionPaymentRepository.WithTx(tx)
 
 	return &u
 }
@@ -181,7 +187,7 @@ func (p *cartService) GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant
 	return cartsMerchants, err
 }
 
-func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.PaymentResponse, error) {
+func (p *cartService) PayCartWithWallet(c *gin.Context, request *externalDtos.PayCartWithWalletRequest) (*externalDtos.PaymentResponse, error) {
 	redisKey := "wallet-pin-failed-count:" + request.UserID.String()
 	redisValue, err := p.redisRepository.Get(c, redisKey)
 
@@ -573,8 +579,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
-	fmt.Println(newTransaction.TotalPriceWithShippingFee)
-
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, e.ErrDifferentTotalPayment
 	}
@@ -676,10 +680,10 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		}
 	}
 
-	return dtos.NewPaymentResponse(newTransactionCreated), nil
+	return externalDtos.NewPaymentResponse(newTransactionCreated), nil
 }
 
-func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCartWithSealabsPayRequest) (*dtos.PaymentResponse, error) {
+func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *externalDtos.PayCartWithSealabsPayRequest) (*externalDtos.PaymentResponse, error) {
 	marketplaceVoucher := &internalDtos.MarketplaceVoucherDetails{}
 
 	if request.MarketplaceVoucherID != nil {
@@ -707,7 +711,6 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 		IsPaid:              false,
 	}
 
-	newOrderTrackingList := []*models.OrderTracking{}
 	newOrderList := []*models.Order{}
 	newOrderDetailList := []*models.OrderDetail{}
 	newOrderDetailMerchantPromotionList := []*models.OrderDetailMerchantPromotion{}
@@ -772,18 +775,9 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 			AddressSnapshotID: addressSnapshot.ID,
 			CourierServiceID:  cartOrderItem.CourierServiceID,
 			ShippingFee:       cartOrderItem.ShippingFee,
-			Status:            constants.PendingSellerStatus,
+			Status:            constants.PendingPaymentStatus,
 			ClaimStatus:       false,
 		}
-
-		newOrderTracking := &models.OrderTracking{
-			OrderID:         newOrder.ID,
-			HistoryDatetime: time.Now(),
-			Title:           constants.PaymentVerifiedTitle,
-			Description:     constants.PaymentVerifiedDescription,
-		}
-
-		newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
 
 		var sumProduct float64 = 0
 
@@ -1032,15 +1026,9 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
-	fmt.Println(newTransaction.TotalPriceWithShippingFee)
-
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, e.ErrDifferentTotalPayment
 	}
-
-	// if float64(wallet.Balance) < newTransaction.TotalPriceWithShippingFee {
-	// 	return nil, e.ErrWalletBalanceNotEnough
-	// }
 
 	newTransactionCreated, err := p.transactionRepository.Create(newTransaction)
 
@@ -1048,15 +1036,15 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 		return nil, err
 	}
 
-	// newWalletTransactionPayment := &models.SealabsPayTransactionPayment{
-	// 	TransactionID: newTransaction.ID,
-	// 	WalletID:      wallet.ID,
-	// }
-
-	// _, err = p.walletTransactionPaymentRepository.Create(newWalletTransactionPayment)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	newSealabsPayTransactionPayment := &models.SealabsPayTransactionPayment{
+		TransactionID:        newTransactionCreated.ID,
+		TxID:                 "",
+		SealabsPayCardNumber: request.CardNumber,
+	}
+	_, err = p.sealabsPayTransactionPaymentRepository.Create(newSealabsPayTransactionPayment)
+	if err != nil {
+		return nil, err
+	}
 
 	if request.MarketplaceVoucherID != nil {
 		_, err = p.marketplaceVoucherRepository.AddCurrentQuota(*request.MarketplaceVoucherID, 1)
@@ -1073,12 +1061,6 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 	}
 
 	_, err = p.orderRepository.Create(newOrderList)
-
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = p.orderTrackingRepository.Create(newOrderTrackingList)
 
 	if err != nil {
 		return nil, err
@@ -1110,16 +1092,6 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 		}
 	}
 
-	// newWallet := &models.Wallet{
-	// 	Balance: wallet.Balance - uint(math.Round(newTransaction.TotalPriceWithShippingFee)),
-	// }
-
-	// _, err = p.walletRepository.Update(wallet.ID, newWallet)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	for _, cartID := range request.CartIDs {
 		deletedCart, err := p.cartRepository.Delete(*cartID)
 
@@ -1134,5 +1106,75 @@ func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *dtos.PayCar
 		}
 	}
 
-	return dtos.NewPaymentResponse(newTransactionCreated), nil
+	return externalDtos.NewPaymentResponse(newTransactionCreated), nil
+}
+
+func (p *cartService) PayCartWithSealabsPaySuccess(c *gin.Context, request *externalDtos.PayCartWithSealabsPaySuccessRequest) error {
+	// check if signature matches with the one in redis
+	_, err := p.redisRepository.Get(c, request.Signature)
+	if err != nil {
+		return e.ErrInvalidSignature
+	}
+	// clean up signature from redis
+	err = p.redisRepository.Delete(c, request.Signature)
+	if err != nil {
+		return err
+	}
+
+	// update sealabs_pay_transaction with txn_id
+	sealabsPayTransaction, err := p.sealabsPayTransactionPaymentRepository.GetByTransactionID(request.TransactionID)
+	if err != nil {
+		return err
+	}
+
+	sealabsPayTransaction.TxID = request.SealabsPayTxnID
+
+	err = p.sealabsPayTransactionPaymentRepository.Update(sealabsPayTransaction)
+	if err != nil {
+		return err
+	}
+
+	// update transaction with with transaction_id that is_paid=true
+	transaction, err := p.transactionRepository.GetByID(request.TransactionID)
+	if err != nil {
+		return err
+	}
+
+	transaction.IsPaid = true
+
+	err = p.transactionRepository.Update(transaction)
+	if err != nil {
+		return err
+	}
+
+	// update order_status to pending seller
+	order, err := p.orderRepository.GetByTransactionID(transaction.ID)
+	if err != nil {
+		return err
+	}
+	
+	order.Status = constants.PendingSellerStatus
+
+	_, err = p.orderRepository.Update(order.ID, order)
+	if err != nil {
+		return err
+	}
+
+	// create order_tracking
+	newOrderTrackingList := []*models.OrderTracking{}
+	newOrderTracking := &models.OrderTracking{
+		OrderID:         order.ID,
+		HistoryDatetime: time.Now(),
+		Title:           constants.PaymentVerifiedTitle,
+		Description:     constants.PaymentVerifiedDescription,
+	}
+
+	newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
+
+	_, err = p.orderTrackingRepository.Create(newOrderTrackingList)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

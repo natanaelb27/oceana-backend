@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -8,7 +10,10 @@ import (
 )
 
 type SealabsPayTransactionPaymentRepository interface {
+	WithTx(tx *gorm.DB) *sealabsPayTransactionPaymentRepository
+	Create(newModel *models.SealabsPayTransactionPayment) (model *models.SealabsPayTransactionPayment, err error)
 	GetByTransactionID(id uuid.UUID) (model *models.SealabsPayTransactionPayment, err error)
+	Update(model *models.SealabsPayTransactionPayment) (err error)
 }
 
 type sealabsPayTransactionPaymentRepository struct {
@@ -23,6 +28,28 @@ func NewSealabsPayTransactionPaymentRepository(c *SealabsPayTransactionPaymentRe
 	return &sealabsPayTransactionPaymentRepository{
 		db: c.DB,
 	}
+}
+
+func (u sealabsPayTransactionPaymentRepository) WithTx(tx *gorm.DB) *sealabsPayTransactionPaymentRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
+}
+
+func (r *sealabsPayTransactionPaymentRepository) Create(newModel *models.SealabsPayTransactionPayment) (model *models.SealabsPayTransactionPayment, err error) {
+	queryResult := r.db.Create(newModel)
+
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	model = newModel
+
+	return
 }
 
 func (r *sealabsPayTransactionPaymentRepository) GetByTransactionID(id uuid.UUID) (model *models.SealabsPayTransactionPayment, err error) {
@@ -42,3 +69,18 @@ func (r *sealabsPayTransactionPaymentRepository) GetByTransactionID(id uuid.UUID
 
 	return
 }
+
+func (r *sealabsPayTransactionPaymentRepository) Update(model *models.SealabsPayTransactionPayment) (err error) {
+	queryResult := r.db.Updates(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+

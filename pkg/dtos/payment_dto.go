@@ -75,3 +75,10 @@ type PayCartWithSealabsPayRequest struct {
 	CardNumber           string           `json:"card_number" binding:"required"`
 	TotalPayment         float64          `json:"total_payment" binding:"required"`
 }
+
+type PayCartWithSealabsPaySuccessRequest struct {
+	TransactionID   uuid.UUID `json:"transaction_id" binding:"required"`
+	SealabsPayTxnID string    `json:"txn_id" binding:"required"`
+	CardNumber      string    `json:"card_number" binding:"required"`
+	Signature       string    `json:"signature" binding:"required"`
+}
