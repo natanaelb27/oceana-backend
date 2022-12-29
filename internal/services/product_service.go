@@ -1052,6 +1052,10 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	if err != nil {
 		return nil, err
 	}
+	// validate if original req pi is > ori pi
+	if len(productItems) < len(request.ProductItems) {
+		return nil, e.ErrInvalidModelProductItems
+	}
 	// get all product variants as index
 	productVariantsType, err := s.productVariantRepository.GetAllVariantIndexByProductID(product.ID)
 	if err != nil {

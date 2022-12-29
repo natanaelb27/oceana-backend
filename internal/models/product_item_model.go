@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type ProductItem struct {
@@ -15,5 +13,4 @@ type ProductItem struct {
 	StockQuantity uint
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
-	DeletedAt     gorm.DeletedAt
 }

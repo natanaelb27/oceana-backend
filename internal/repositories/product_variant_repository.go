@@ -133,7 +133,7 @@ func (r *productVariantRepository) Delete(id uint) (model *models.ProductVariant
 
 func (r *productVariantRepository) GetAllVariantIndexByProductID(productID uint) (productModel []*internalDtos.ProductVariationTypeListOfVariants, err error) {
 	sqProductVariants := r.db.Model(&models.ProductVariant{}).
-		Select("ARRAY_AGG(product_variants.id)").
+		Select("ARRAY_AGG(product_variants.id ORDER BY product_variants.id) as agg").
 		Joins("JOIN product_variant_types ON product_variants.product_variant_type_id = product_variant_types.id").
 		Where("product_variants.product_variant_type_id = pvt.id")
 	result := r.db.
