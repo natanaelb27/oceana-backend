@@ -14,6 +14,6 @@ func review(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 	}
 	privateRoute := private.Group(path)
 	{
-		privateRoute.POST("/order-details/:orderDetailID", middlewares.DBTransactionMiddleware(), h.ProductReviewCreate)
+		privateRoute.POST("/order-details/:orderDetailID", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProductReviewCreate)
 	}
 }

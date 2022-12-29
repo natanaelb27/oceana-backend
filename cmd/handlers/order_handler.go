@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) OrderListGetAll(c *gin.Context) {
@@ -104,7 +105,9 @@ func (h *Handler) OrderProcessDelivery(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.UpdateProcessDelivery(orderID, id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.orderService.WithTx(tx).UpdateProcessDelivery(orderID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -129,7 +132,9 @@ func (h *Handler) OrderProcessOrder(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.UpdateProcessOrder(orderID, id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.orderService.WithTx(tx).UpdateProcessOrder(orderID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -154,7 +159,9 @@ func (h *Handler) SellerCancelOrder(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.SellerCancelOrder(orderID, id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.orderService.WithTx(tx).SellerCancelOrder(orderID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -179,7 +186,9 @@ func (h *Handler) OrderCompleteOrder(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.UpdateCompleteOrder(orderID, id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.orderService.WithTx(tx).UpdateCompleteOrder(orderID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)
@@ -204,7 +213,9 @@ func (h *Handler) SellerClaimFunds(c *gin.Context) {
 		return
 	}
 
-	result, err := h.orderService.SellerClaimFunds(orderID, id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.orderService.WithTx(tx).SellerClaimFunds(orderID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)

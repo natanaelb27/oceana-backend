@@ -10,6 +10,6 @@ func wallet(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 	path := "/wallet"
 	privateRoute := private.Group(path)
 	{
-		privateRoute.POST("/topup", middlewares.DBTransactionMiddleware(), h.WalletTopup)
+		privateRoute.POST("/topup", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.WalletTopup)
 	}
 }

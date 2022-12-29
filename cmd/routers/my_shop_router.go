@@ -29,10 +29,10 @@ func myShop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handl
 			h.MerchantPromotionUpdate)
 		privateRoute.DELETE("/promotions/:merchant-promotion-id", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantPromotionDelete)
 		// orders
-		privateRoute.PATCH("/orders/:order-id/process-delivery", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessDelivery)
-		privateRoute.PATCH("/orders/:order-id/process-order", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
-		privateRoute.PATCH("/orders/:order-id/cancel-order", func(c *gin.Context) { middlewares.Role(c, "010") }, h.SellerCancelOrder)
-		privateRoute.PATCH("/orders/:order-id/claim-funds", func(c *gin.Context) { middlewares.Role(c, "010") }, h.SellerClaimFunds)
+		privateRoute.PATCH("/orders/:order-id/process-delivery", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessDelivery)
+		privateRoute.PATCH("/orders/:order-id/process-order", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderProcessOrder)
+		privateRoute.PATCH("/orders/:order-id/cancel-order", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "010") }, h.SellerCancelOrder)
+		privateRoute.PATCH("/orders/:order-id/claim-funds", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "010") }, h.SellerClaimFunds)
 		privateRoute.GET("/transaction-history", func(c *gin.Context) { middlewares.Role(c, "010") }, h.OrderListGetAllByMerchantID)
 		privateRoute.GET("/transaction-history/:orderId", func(c *gin.Context) { middlewares.Role(c, "010") }, h.MerchantOrderListDetailsGetByID)
 
