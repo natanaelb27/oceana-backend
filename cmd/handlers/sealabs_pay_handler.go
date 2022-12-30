@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) SealabsPayCreate(c *gin.Context) {
@@ -21,7 +22,9 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 		return
 	}
 
-	_, err := h.sealabsPayService.Create(c, userID, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	_, err := h.sealabsPayService.WithTx(tx).Create(c, userID, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -78,7 +81,9 @@ func (h *Handler) SealabsPayDelete(c *gin.Context) {
 		return
 	}
 
-	result, err := h.sealabsPayService.Delete(id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.sealabsPayService.WithTx(tx).Delete(id)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -102,7 +107,9 @@ func (h *Handler) SealabsPaySetDefault(c *gin.Context) {
 		return
 	}
 
-	err = h.sealabsPayService.SetDefault(id, userID)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	err = h.sealabsPayService.WithTx(tx).SetDefault(id, userID)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

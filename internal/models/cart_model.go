@@ -11,7 +11,7 @@ type Cart struct {
 	UserID        uuid.UUID
 	User          User
 	ProductItemID uint
-	ProductItem   ProductItem
+	ProductItem   ProductItem `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Quantity      uint
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

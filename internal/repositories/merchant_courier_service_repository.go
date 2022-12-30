@@ -163,7 +163,7 @@ func (r *merchantCourierServiceRepository) GetAllCouriersByMerchantIDForProductU
 }
 
 func (r *merchantCourierServiceRepository) GetAllCourierServicesForProductUpdate(courierID uint, merchantID uint, productID uint) (model []*internalProductDtos.CourierService, err error) {
-	result := r.db.Debug().
+	result := r.db.
 		Table("merchant_courier_services mcs").
 		Select(`
 			cs.id AS id,

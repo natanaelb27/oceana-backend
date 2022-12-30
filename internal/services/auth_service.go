@@ -14,9 +14,11 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type AuthService interface {
+	WithTx(tx *gorm.DB) *authService
 	Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error)
 	Login(c *gin.Context, userLoginRequest *externalDtos.UserLoginRequest) (*internalDtos.UserLoginData, error)
 	RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleRequest *externalDtos.UserRegisterWithGoogleRequest) (*internalDtos.UserLoginData, error)
@@ -48,6 +50,14 @@ func NewAuthService(c *AuthServiceConfig) AuthService {
 		walletRepository: c.WalletRepository,
 		redisRepository:  c.RedisRepository,
 	}
+}
+
+func (u authService) WithTx(tx *gorm.DB) *authService {
+	u.userRepository = u.userRepository.WithTx(tx)
+	u.emailRepository = u.emailRepository.WithTx(tx)
+	u.walletRepository = u.walletRepository.WithTx(tx)
+
+	return &u
 }
 
 func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest) (*externalDtos.UserCreateResponse, error) {

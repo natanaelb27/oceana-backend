@@ -61,6 +61,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrInvalidModel                   = errors.New("invalid model")
+	ErrInvalidModelProductItems       = errors.New("invalid model product items")
 	ErrInvalidModelStatus             = errors.New("invalid model status")
 	ErrInvalidVariantsMedia           = errors.New("invalid variants media")
 	ErrInvalidDiscountType            = errors.New("invalid discount type")
@@ -179,6 +180,7 @@ var (
 	// 422
 	ErrMarketplaceVoucherNotOngoing                           = errors.New("marketplace voucher is not ongoing")
 	ErrMarketplaceVoucherQuotaFull                            = errors.New("marketplace voucher's quota is full")
+	ErrMarketplaceVoucherUsedByUser                           = errors.New("marketplace voucher has been used by the user")
 	ErrMerchantVoucherNotOngoing                              = errors.New("merchant voucher is not ongoing")
 	ErrMerchantVoucherQuotaFull                               = errors.New("merchant voucher's quota is full")
 	ErrMerchantVoucherUsedByUser                              = errors.New("merchant voucher has been used by the user")
@@ -243,6 +245,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidResetPasswordID) ||
 		errors.Is(err, ErrInvalidModel) ||
 		errors.Is(err, ErrInvalidModelStatus) ||
+		errors.Is(err, ErrInvalidModelProductItems) ||
 		errors.Is(err, ErrInvalidVariantsMedia) ||
 		errors.Is(err, ErrInvalidDiscountType) ||
 		errors.Is(err, ErrInvalidDiscount) ||
@@ -340,6 +343,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrUpdatedVoucherEndDatetimeExceedCurrentEndDatetime) ||
 		errors.Is(err, ErrMarketplaceVoucherNotOngoing) ||
 		errors.Is(err, ErrMarketplaceVoucherQuotaFull) ||
+		errors.Is(err, ErrMarketplaceVoucherUsedByUser) ||
 		errors.Is(err, ErrMerchantVoucherNotOngoing) ||
 		errors.Is(err, ErrMerchantVoucherQuotaFull) ||
 		errors.Is(err, ErrMerchantVoucherUsedByUser) ||

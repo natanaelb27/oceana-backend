@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
@@ -13,6 +14,7 @@ import (
 )
 
 type ProductReviewRepository interface {
+	WithTx(tx *gorm.DB) *productReviewRepository
 	Create(newModel *models.ProductReview) (model *models.ProductReview, err error)
 	GetByProductID(id uint, pagination *utils.Pagination, query *externalDtos.ProductReviewQuery) ([]*dtos.ProductReviewList, *utils.Pagination, error)
 	GetDetailsByProductID(id uint) (*dtos.ProductReviewDetails, error)
@@ -31,6 +33,15 @@ func NewProductReviewRepository(c *ProductReviewRepositoryConfig) ProductReviewR
 	return &productReviewRepository{
 		db: c.DB,
 	}
+}
+
+func (u productReviewRepository) WithTx(tx *gorm.DB) *productReviewRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (pr *productReviewRepository) Create(newModel *models.ProductReview) (model *models.ProductReview, err error) {

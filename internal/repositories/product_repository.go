@@ -791,8 +791,8 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 			products.status AS status,
 			products.process_day AS process_day,
 			products.preorder_day AS preorder_day,
-			(@sqProductMediaImage) AS images,
-			(@sqProductMediaVideo) AS videos,
+			COALESCE((@sqProductMediaImage),'{}') AS images,
+			COALESCE((@sqProductMediaVideo),'{}') AS videos,
 			NULL AS product_items
 		`,
 			sql.Named("sqProductMediaImage", sqProductMediaImage),

@@ -2,6 +2,7 @@ package routers
 
 import (
 	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
+	"git.garena.com/azmi-adhani/group-project-backend/cmd/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,6 @@ func shop(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	}
 	privateRoute := private.Group(path)
 	{
-		privateRoute.GET("/vouchers/buyer", h.MerchantVoucherGetAllByBuyer)
+		privateRoute.GET("/vouchers/buyer", func(c *gin.Context) { middlewares.Role(c, "001") }, h.MerchantVoucherGetAllByBuyer)
 	}
 }

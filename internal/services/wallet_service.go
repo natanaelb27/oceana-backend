@@ -8,9 +8,11 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type WalletService interface {
+	WithTx(tx *gorm.DB) *walletService
 	Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error)
 	ChangePin(c *gin.Context, userId uuid.UUID, request *externalDtos.WalletChangePinRequest) (*models.Wallet, error)
 	CreateWalletTopup(c *gin.Context, userID uuid.UUID, request *externalDtos.TopupWalletRequest) error
@@ -38,6 +40,14 @@ func NewWalletService(c *WalletServiceConfig) WalletService {
 		walletTopupRepository: c.WalletTopupRepository,
 		sealabsPayRepository:  c.SealabsPayRepository,
 	}
+}
+
+func (u walletService) WithTx(tx *gorm.DB) *walletService {
+	u.walletRepository = u.walletRepository.WithTx(tx)
+	u.walletTopupRepository = u.walletTopupRepository.WithTx(tx)
+	u.sealabsPayRepository = u.sealabsPayRepository.WithTx(tx)
+
+	return &u
 }
 
 func (p *walletService) Activate(id uuid.UUID, requestModel *models.Wallet) (*models.Wallet, error) {
