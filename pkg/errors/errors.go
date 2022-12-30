@@ -98,6 +98,7 @@ var (
 	ErrPromotionNotFound                = errors.New("promotion not found")
 	ErrProductMerchantPromotionNotFound = errors.New("product merchant promotion not found")
 	ErrOrderNotFound                    = errors.New("order not found")
+	ErrTransactionNotFound              = errors.New("transaction not found")
 
 	ErrForbiddenMerchant = errors.New("user is not the merchant")
 	ErrForbiddenOrder    = errors.New("user is not the buyer")
@@ -276,6 +277,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrPromotionNotFound) ||
 		errors.Is(err, ErrProductMerchantPromotionNotFound) ||
 		errors.Is(err, ErrOrderNotFound) ||
+		errors.Is(err, ErrTransactionNotFound) ||
 		errors.Is(err, ErrCourierServicesNotFound) ||
 		errors.Is(err, ErrProductNotFound) {
 		return http.StatusNotFound

@@ -18,7 +18,9 @@ type TransactionRepository interface {
 	WithTx(tx *gorm.DB) *transactionRepository
 	Create(newModel *models.Transaction) (model *models.Transaction, err error)
 	PendingPaymentGetAllByUserID(id uuid.UUID) (pendingPaymentTransaction []*dtos.PendingPaymentTransaction, err error)
-	GetByOrderID(id uuid.UUID) (model *models.Transaction, err error)
+	GetByID(id uuid.UUID) (model *models.Transaction, err error)
+	GetByOrderID(orderID uuid.UUID) (model *models.Transaction, err error)
+	Update(model *models.Transaction) (err error)
 }
 
 type transactionRepository struct {
@@ -100,10 +102,25 @@ func (r *transactionRepository) PendingPaymentGetAllByUserID(id uuid.UUID) (pend
 	return
 }
 
-func (r *transactionRepository) GetByOrderID(id uuid.UUID) (model *models.Transaction, err error) {
+func (r *transactionRepository) GetByID(id uuid.UUID) (model *models.Transaction, err error) {
+	queryResult := r.db.First(&model, id)
+
+	if queryResult.Error != nil {
+		if queryResult.Error == gorm.ErrRecordNotFound {
+			return nil, e.ErrTransactionNotFound
+		}
+
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *transactionRepository) GetByOrderID(orderID uuid.UUID) (model *models.Transaction, err error) {
 	queryResult := r.db.Model(&models.Transaction{}).
 		Joins("JOIN orders ON transactions.id = orders.transaction_id").
-		Where("orders.id = ?", id).
+		Where("orders.id = ?", orderID).
 		First(&model)
 
 	if queryResult.Error != nil {
@@ -112,6 +129,20 @@ func (r *transactionRepository) GetByOrderID(id uuid.UUID) (model *models.Transa
 		}
 
 		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *transactionRepository) Update(model *models.Transaction) (err error) {
+	queryResult := r.db.Updates(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrDataNotFound
 		return
 	}
 
