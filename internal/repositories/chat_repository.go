@@ -5,6 +5,7 @@ import (
 	"log"
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -15,6 +16,7 @@ type ChatRepository interface {
 	GetAllChatList(userID uuid.UUID) (models []*internalDtos.ChatList, err error)
 	GetProfileForToUserID(userID uuid.UUID) (model *internalDtos.ChatResponse, err error)
 	GetChatWithToUserID(userID, toUserID uuid.UUID) (models []*internalDtos.Chat, err error)
+	Create(model *models.Chat) (err error)
 }
 
 type chatRepository struct {
@@ -168,6 +170,21 @@ func (r *chatRepository) GetChatWithToUserID(userID, toUserID uuid.UUID) (models
 	}
 	if queryResult.Error == gorm.ErrRecordNotFound {
 		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *chatRepository) Create(model *models.Chat) (err error) {
+	queryResult := r.db.Debug().
+		Create(&model)
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.RowsAffected == 0 {
+		err = e.ErrMerchantVoucherCodeAlreadyExist
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -14,6 +15,7 @@ type ChatService interface {
 	WithTx(tx *gorm.DB) *chatService
 	GetAllChatList(userID uuid.UUID) ([]*internalDtos.ChatList, error)
 	GetChat(userID uuid.UUID, toUserID uuid.UUID) (model *internalDtos.ChatResponse, err error)
+	Create(request *internalDtos.ChatRequest) (err error)
 }
 
 type chatService struct {
@@ -52,4 +54,13 @@ func (p *chatService) GetChat(userID uuid.UUID, toUserID uuid.UUID) (model *inte
 	}
 
 	return user, nil
+}
+
+func (p *chatService) Create(request *internalDtos.ChatRequest) (err error) {
+	return p.chatRepository.Create(&models.Chat{
+		FromUserID: request.FromUserID,
+		ToUserID:   request.ToUserID,
+		Message:    request.Message,
+		MediaURL:   request.MediaURL,
+	})
 }

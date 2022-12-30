@@ -37,8 +37,9 @@ type ChatResponse struct {
 	Chats           []*Chat `json:"chats" gorm:"-"`
 }
 
-type ChatsRequest struct {
-	ToUserID string `json:"to_user_id" binding:"required"`
-	Message  string `json:"message" binding:"required"`
-	MediaURL string `json:"media_url"`
+type ChatRequest struct {
+	FromUserID uuid.UUID
+	ToUserID   uuid.UUID `json:"to_user_id" binding:"required"`
+	Message    string    `json:"message" binding:"required"`
+	MediaURL   string    `json:"media_url"`
 }
