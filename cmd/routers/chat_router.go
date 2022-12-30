@@ -11,5 +11,6 @@ func chat(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	privateRoute := private.Group(path)
 	{
 		privateRoute.GET("/", func(c *gin.Context) { middlewares.Role(c, "011") }, h.ChatGetAllChatList)
+		privateRoute.GET("/:to-user-id", func(c *gin.Context) { middlewares.Role(c, "011") }, h.ChatGetChat)
 	}
 }

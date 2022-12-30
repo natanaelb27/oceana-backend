@@ -13,6 +13,8 @@ import (
 type ChatRepository interface {
 	WithTx(tx *gorm.DB) *chatRepository
 	GetAllChatList(userID uuid.UUID) (models []*internalDtos.ChatList, err error)
+	GetProfileForToUserID(userID uuid.UUID) (model *internalDtos.ChatResponse, err error)
+	GetChatWithToUserID(userID, toUserID uuid.UUID) (models []*internalDtos.Chat, err error)
 }
 
 type chatRepository struct {
@@ -95,8 +97,77 @@ func (r *chatRepository) GetAllChatList(userID uuid.UUID) (models []*internalDto
 	`,
 		sql.Named("userID", userID),
 	).Find(&models)
-	if queryResult.Error != nil {
+	if queryResult.Error != nil && queryResult.Error != gorm.ErrRecordNotFound {
 		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *chatRepository) GetProfileForToUserID(userID uuid.UUID) (model *internalDtos.ChatResponse, err error) {
+	queryResult := r.db.
+		Select(`
+			u.id AS to_user_id,
+			u.photo AS to_user_photo,
+			u.full_name AS to_user_full_name,
+			m.id AS to_merchant_id,
+			m.name AS to_merchant_name,
+			m.photo AS to_merchant_photo
+		`).
+		Table("users u").
+		Joins("LEFT JOIN merchants m ON m.user_id = u.id").
+		Where("u.id = ?", userID).
+		Scan(&model)
+	if queryResult.Error != nil && queryResult.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+
+	return
+}
+
+func (r *chatRepository) GetChatWithToUserID(userID, toUserID uuid.UUID) (models []*internalDtos.Chat, err error) {
+	queryResult := r.db.
+		Raw(`
+			SELECT
+				id AS id,
+				from_user_id,
+				to_user_id, 
+				message, 
+				media_url, 
+				created_at
+			FROM
+				chats c
+			WHERE 
+				(from_user_id = (@userID)
+					OR
+				to_user_id = (@userID))
+				AND 
+				(from_user_id = (@toUserID)
+					OR
+				to_user_id = (@toUserID))
+			ORDER BY 
+				created_at ASC
+		`,
+			sql.Named("userID", userID),
+			sql.Named("toUserID", toUserID),
+		).
+		Find(&models)
+	if queryResult.Error != nil && queryResult.Error != gorm.ErrRecordNotFound {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
 		return
 	}
 
