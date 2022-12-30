@@ -8,7 +8,7 @@ import (
 
 type MerchantConfiguration struct {
 	ID           uint
-	MerchantID   uint
+	MerchantID   uint `gorm:"uniqueIndex:idx_merchant_id;"`
 	PreorderDay  uint
 	IsPrintLabel bool
 	CreatedAt    time.Time

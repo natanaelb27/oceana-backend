@@ -186,7 +186,6 @@ type ProductModel struct {
 	Condition   string         `json:"condition" binding:"required"`
 	Status      string         `json:"status" binding:"required"`
 	ProcessDay  uint           `json:"process_day"`
-	PreorderDay uint           `json:"preorder_day"`
 	Images      pq.StringArray `json:"images" gorm:"type:text[]" binding:"min=1"`
 	Videos      pq.StringArray `json:"videos" gorm:"type:text[]" binding:"min=0"`
 	// gorm:"-" tells gorm ignore this field when write and read with struct

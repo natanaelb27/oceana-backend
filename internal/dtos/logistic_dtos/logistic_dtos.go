@@ -16,35 +16,8 @@ type Courier struct {
 }
 
 type Logistic struct {
-	PreorderDay  uint       `json:"preorder_day"`
-	IsPrintLabel bool       `json:"is_print_label"`
-	Courier      []*Courier `json:"couriers"`
-}
-
-type CourierServiceCheck struct {
-	ID uint `json:"id"`
-}
-
-type CourierCheck struct {
-	ID             uint                   `json:"id"`
-	CourierService []*CourierServiceCheck `json:"courier_services"`
-}
-type LogisticCheck struct {
-	PreorderDay  uint            `json:"preorder_day"`
-	IsPrintLabel bool            `json:"is_print_label"`
-	Courier      []*CourierCheck `json:"couriers"`
-}
-
-func (source *Logistic) ToLogisticCheck() *LogisticCheck {
-	courierCheck := make([]*CourierCheck, 0)
-	for _, courier := range source.Courier {
-		courierCheck = append(courierCheck, &CourierCheck{
-			ID: courier.ID,
-		})
-	}
-	return &LogisticCheck{
-		PreorderDay:  source.PreorderDay,
-		IsPrintLabel: source.IsPrintLabel,
-		Courier:      courierCheck,
-	}
+	IsEditPreorderDay bool       `json:"is_edit_preorder_day"`
+	PreorderDay       uint       `json:"preorder_day"`
+	IsPrintLabel      bool       `json:"is_print_label"`
+	Courier           []*Courier `json:"couriers"`
 }
