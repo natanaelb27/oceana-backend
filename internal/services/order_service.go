@@ -12,12 +12,14 @@ import (
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"gorm.io/gorm"
 
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
 )
 
 type OrderService interface {
+	WithTx(tx *gorm.DB) *orderService
 	OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) ([]*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListGetAllByMerchantID(userID uuid.UUID, query *dtos.OrderListQuery) ([]*dtos.OrderListGetAllResponse, *utils.Pagination, error)
 	OrderListDetailsGetByID(userID uuid.UUID, orderID uuid.UUID) (*dtos.OrderListDetailsGetByIDResponse, error)
@@ -78,6 +80,23 @@ func NewOrderService(c *OrderServiceConfig) OrderService {
 		sealabsPayTransactionPaymentRepository: c.SealabsPayTransactionPaymentRepository,
 		sealabsPayService:                      c.SealabsPayService,
 	}
+}
+
+func (u orderService) WithTx(tx *gorm.DB) *orderService {
+	u.orderRepository = u.orderRepository.WithTx(tx)
+	u.orderDetailRepository = u.orderDetailRepository.WithTx(tx)
+	u.addressSnapshotRepository = u.addressSnapshotRepository.WithTx(tx)
+	u.orderTrackingRepository = u.orderTrackingRepository.WithTx(tx)
+	u.merchantRepository = u.merchantRepository.WithTx(tx)
+	u.refundRepository = u.refundRepository.WithTx(tx)
+	u.refundDetailRepository = u.refundDetailRepository.WithTx(tx)
+	u.transactionRepository = u.transactionRepository.WithTx(tx)
+	u.walletTransactionPaymentRepository = u.walletTransactionPaymentRepository.WithTx(tx)
+	u.walletRepository = u.walletRepository.WithTx(tx)
+	u.sealabsPayTransactionPaymentRepository = u.sealabsPayTransactionPaymentRepository.WithTx(tx)
+	u.sealabsPayService = u.sealabsPayService.WithTx(tx)
+
+	return &u
 }
 
 func (s *orderService) OrderListGetAll(id uuid.UUID, query *dtos.OrderListQuery) ([]*dtos.OrderListGetAllResponse, *utils.Pagination, error) {

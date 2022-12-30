@@ -7,6 +7,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	"gorm.io/gorm"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
@@ -16,6 +17,7 @@ import (
 )
 
 type ProductReviewService interface {
+	WithTx(tx *gorm.DB) *productReviewService
 	Create(*externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error)
 	GetByProductID(id uint, query *externalDtos.ProductReviewQuery) ([]*dtos.ProductReviewList, *utils.Pagination, error)
 }
@@ -38,6 +40,14 @@ func NewProductReviewService(c *ProductReviewServiceConfig) ProductReviewService
 		productReviewRepository:      c.ProductReviewRepository,
 		productReviewMediaRepository: c.ProductReviewMediaRepository,
 	}
+}
+
+func (u productReviewService) WithTx(tx *gorm.DB) *productReviewService {
+	u.orderDetailRepository = u.orderDetailRepository.WithTx(tx)
+	u.productReviewRepository = u.productReviewRepository.WithTx(tx)
+	u.productReviewMediaRepository = u.productReviewMediaRepository.WithTx(tx)
+
+	return &u
 }
 
 func (pr *productReviewService) Create(request *externalDtos.ProductReviewCreateRequest) (*externalDtos.ProductReviewCreateResponse, error) {

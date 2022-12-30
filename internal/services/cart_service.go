@@ -238,6 +238,17 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 			return nil, e.ErrMarketplaceVoucherQuotaFull
 		}
 
+		validateMarketplaceVoucherID, err := p.marketplaceVoucherRepository.ValidateMarketplaceVoucherByBuyer(*request.MarketplaceVoucherID, request.UserID)
+
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
+			return nil, err
+		}
+
+		if validateMarketplaceVoucherID != nil {
+			return nil, e.ErrMarketplaceVoucherUsedByUser
+		}
 	}
 
 	newTransaction := &models.Transaction{
@@ -447,9 +458,9 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 
 				if product.ProductMerchantPromotionID != nil {
 					newOrderDetailMerchantPromotion := &models.OrderDetailMerchantPromotion{
-						OrderDetailID:       newOrderDetail.ID,
-						MerchantPromotionID: productMerchantPromotion.ProductMerchantPromotionID,
-						TotalDiscount:       math.Round(totalDiscountODMP),
+						OrderDetailID:              newOrderDetail.ID,
+						ProductMerchantPromotionID: productMerchantPromotion.ProductMerchantPromotionID,
+						TotalDiscount:              math.Round(totalDiscountODMP),
 					}
 
 					newOrderDetailMerchantPromotionList = append(newOrderDetailMerchantPromotionList, newOrderDetailMerchantPromotion)

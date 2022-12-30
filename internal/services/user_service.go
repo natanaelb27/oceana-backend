@@ -7,9 +7,11 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
+	WithTx(tx *gorm.DB) *userService
 	UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUpdateRequest) (*dtos.UserProfileUpdateResponse, error)
 	UpdateProfileEmail(userProfileUpdateEmailRequest *dtos.UserProfileUpdateEmailRequest) (*dtos.UserProfileUpdateResponse, error)
 	UpdateProfileUsername(userProfileUpdateUsernameRequest *dtos.UserProfileUpdateUsernameRequest) (*dtos.UserProfileUpdateResponse, error)
@@ -31,6 +33,13 @@ func NewUserService(c *UserServiceConfig) UserService {
 		userRepository:  c.UserRepository,
 		emailRepository: c.EmailRepository,
 	}
+}
+
+func (u userService) WithTx(tx *gorm.DB) *userService {
+	u.userRepository = u.userRepository.WithTx(tx)
+	u.emailRepository = u.emailRepository.WithTx(tx)
+
+	return &u
 }
 
 func (u *userService) UpdateProfile(userProfileUpdateRequest *dtos.UserProfileUpdateRequest) (*dtos.UserProfileUpdateResponse, error) {

@@ -6,9 +6,11 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type MerchantService interface {
+	WithTx(tx *gorm.DB) *merchantService
 	Register(merchantCreateRequest *dtos.MerchantCreateRequest) (merchantCreateResponse *dtos.MerchantCreateResponse, err error)
 	GetInformationByID(id uint) (merchantGetInformationByIDResponse *dtos.MerchantGetInformationByIDResponse, err error)
 	MerchantGetProfile(id uuid.UUID) (merchantGetProfileResponse *dtos.MerchantGetProfileResponse, err error)
@@ -30,6 +32,13 @@ func NewMerchantService(c *MerchantServiceConfig) MerchantService {
 		merchantRepository: c.MerchantRepository,
 		userRepository:     c.UserRepository,
 	}
+}
+
+func (u merchantService) WithTx(tx *gorm.DB) *merchantService {
+	u.merchantRepository = u.merchantRepository.WithTx(tx)
+	u.userRepository = u.userRepository.WithTx(tx)
+
+	return &u
 }
 
 func (m *merchantService) Register(merchantCreateRequest *dtos.MerchantCreateRequest) (merchantCreateResponse *dtos.MerchantCreateResponse, err error) {

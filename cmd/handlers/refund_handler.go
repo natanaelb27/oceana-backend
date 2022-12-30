@@ -8,6 +8,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) CreateRefund(c *gin.Context) {
@@ -39,7 +40,9 @@ func (h *Handler) CreateRefund(c *gin.Context) {
 
 	request.OrderDetailRefund = orderDetailRefund
 
-	results, err := h.refundService.Create(id, orderID, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	results, err := h.refundService.WithTx(tx).Create(id, orderID, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -191,7 +194,9 @@ func (h *Handler) UpdateCompleteRefund(c *gin.Context) {
 		return
 	}
 
-	result, err := h.refundService.UpdateCompleteRefund(refundID, id)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.refundService.WithTx(tx).UpdateCompleteRefund(refundID, id)
 
 	if err != nil {
 		utils.ResponseError(c, err)

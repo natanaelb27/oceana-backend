@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type WalletTopupRepository interface {
+	WithTx(tx *gorm.DB) *walletTopupRepository
 	Create(newModel *models.WalletTopup) (model *models.WalletTopup, err error)
 }
 
@@ -22,6 +25,15 @@ func NewWalletTopupRepository(c *WalletTopupRepositoryConfig) WalletTopupReposit
 	return &walletTopupRepository{
 		db: c.DB,
 	}
+}
+
+func (u walletTopupRepository) WithTx(tx *gorm.DB) *walletTopupRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (w *walletTopupRepository) Create(newModel *models.WalletTopup) (model *models.WalletTopup, err error) {

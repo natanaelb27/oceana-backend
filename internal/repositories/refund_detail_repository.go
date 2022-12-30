@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"log"
 
 	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -12,6 +13,7 @@ import (
 )
 
 type RefundDetailRepository interface {
+	WithTx(tx *gorm.DB) *refundDetailRepository
 	CalculateRefundDetails(orderDetailID uuid.UUID, quantity uint) (model *models.RefundDetail, err error)
 	Create(newModel []*models.RefundDetail) (model []*models.RefundDetail, err error)
 	GetDetailsByRefundID(refundID uuid.UUID) ([]*dtos.RefundItems, error)
@@ -29,6 +31,15 @@ func NewRefundDetailRepository(c *RefundDetailRepositoryConfig) RefundDetailRepo
 	return &refundDetailRepository{
 		db: c.DB,
 	}
+}
+
+func (u refundDetailRepository) WithTx(tx *gorm.DB) *refundDetailRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *refundDetailRepository) CalculateRefundDetails(orderDetailID uuid.UUID, quantity uint) (model *models.RefundDetail, err error) {

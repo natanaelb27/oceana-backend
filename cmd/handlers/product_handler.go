@@ -336,7 +336,9 @@ func (h *Handler) DeleteFavoriteProducts(c *gin.Context) {
 		return
 	}
 
-	results, err := h.productService.DeleteFavoriteProducts(id, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	results, err := h.productService.WithTx(tx).DeleteFavoriteProducts(id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
