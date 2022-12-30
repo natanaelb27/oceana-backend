@@ -14,7 +14,7 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,7 +25,9 @@ type CartService interface {
 	WithTx(tx *gorm.DB) *cartService
 	Update(request *in_cart_dtos.CartRequest) (*models.Cart, error)
 	GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant, error)
-	PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.WalletPaymentResponse, error)
+	PayCartWithWallet(c *gin.Context, request *externalDtos.PayCartWithWalletRequest) (*externalDtos.PaymentResponse, error)
+	PayCartWithSealabsPay(c *gin.Context, request *externalDtos.PayCartWithSealabsPayRequest) (*externalDtos.PaymentResponse, error)
+	PayCartWithSealabsPaySuccess(c *gin.Context, request *externalDtos.PayCartWithSealabsPaySuccessRequest) error
 }
 
 type cartService struct {
@@ -52,6 +54,7 @@ type cartService struct {
 	userMerchantPromotionRepository         r.UserMerchantPromotionRepository
 	walletRepository                        r.WalletRepository
 	walletTransactionPaymentRepository      r.WalletTransactionPaymentRepository
+	sealabsPayTransactionPaymentRepository  r.SealabsPayTransactionPaymentRepository
 }
 
 type CartServiceConfig struct {
@@ -78,6 +81,7 @@ type CartServiceConfig struct {
 	UserMerchantPromotionRepository         r.UserMerchantPromotionRepository
 	WalletRepository                        r.WalletRepository
 	WalletTransactionPaymentRepository      r.WalletTransactionPaymentRepository
+	SealabsPayTransactionPaymentRepository  r.SealabsPayTransactionPaymentRepository
 }
 
 func NewCartService(c *CartServiceConfig) CartService {
@@ -105,6 +109,7 @@ func NewCartService(c *CartServiceConfig) CartService {
 		userMerchantPromotionRepository:         c.UserMerchantPromotionRepository,
 		walletRepository:                        c.WalletRepository,
 		walletTransactionPaymentRepository:      c.WalletTransactionPaymentRepository,
+		sealabsPayTransactionPaymentRepository:  c.SealabsPayTransactionPaymentRepository,
 	}
 }
 
@@ -131,6 +136,7 @@ func (u cartService) WithTx(tx *gorm.DB) *cartService {
 	u.userMerchantPromotionRepository = u.userMerchantPromotionRepository.WithTx(tx)
 	u.walletRepository = u.walletRepository.WithTx(tx)
 	u.walletTransactionPaymentRepository = u.walletTransactionPaymentRepository.WithTx(tx)
+	u.sealabsPayTransactionPaymentRepository = u.sealabsPayTransactionPaymentRepository.WithTx(tx)
 
 	return &u
 }
@@ -181,7 +187,7 @@ func (p *cartService) GetAllByUserId(userId uuid.UUID) ([]*in_cart_dtos.Merchant
 	return cartsMerchants, err
 }
 
-func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWithWalletRequest) (*dtos.WalletPaymentResponse, error) {
+func (p *cartService) PayCartWithWallet(c *gin.Context, request *externalDtos.PayCartWithWalletRequest) (*externalDtos.PaymentResponse, error) {
 	redisKey := "wallet-pin-failed-count:" + request.UserID.String()
 	redisValue, err := p.redisRepository.Get(c, redisKey)
 
@@ -584,8 +590,6 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
 	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
 
-	fmt.Println(newTransaction.TotalPriceWithShippingFee)
-
 	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
 		return nil, e.ErrDifferentTotalPayment
 	}
@@ -687,5 +691,513 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *dtos.PayCartWit
 		}
 	}
 
-	return dtos.NewWalletPaymentResponse(newTransactionCreated), nil
+	return externalDtos.NewPaymentResponse(newTransactionCreated), nil
+}
+
+func (p *cartService) PayCartWithSealabsPay(c *gin.Context, request *externalDtos.PayCartWithSealabsPayRequest) (*externalDtos.PaymentResponse, error) {
+	marketplaceVoucher := &internalDtos.MarketplaceVoucherDetails{}
+
+	if request.MarketplaceVoucherID != nil {
+		var err error
+		marketplaceVoucher, err = p.marketplaceVoucherRepository.GetDetailsByID(*request.MarketplaceVoucherID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if marketplaceVoucher.VoucherStatus != constants.OngoingPromotionOrVoucher {
+			return nil, e.ErrMarketplaceVoucherNotOngoing
+		}
+
+		if marketplaceVoucher.CurrentQuota >= marketplaceVoucher.MaximumQuota {
+			return nil, e.ErrMarketplaceVoucherQuotaFull
+		}
+
+		validateMarketplaceVoucherID, err := p.marketplaceVoucherRepository.ValidateMarketplaceVoucherByBuyer(*request.MarketplaceVoucherID, request.UserID)
+
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
+			return nil, err
+		}
+
+		if validateMarketplaceVoucherID != nil {
+			return nil, e.ErrMarketplaceVoucherUsedByUser
+		}
+	}
+
+	newTransaction := &models.Transaction{
+		ID:                  uuid.New(),
+		UserID:              request.UserID,
+		TransactionDatetime: time.Now(),
+		PaymentMethodID:     constants.SealabsPayID,
+		IsPaid:              false,
+	}
+
+	newOrderList := []*models.Order{}
+	newOrderDetailList := []*models.OrderDetail{}
+	newOrderDetailMerchantPromotionList := []*models.OrderDetailMerchantPromotion{}
+	newOrderMerchantVoucherList := []*models.OrderMerchantVoucher{}
+	newTransactionMarketplaceVoucher := &models.TransactionMarketplaceVoucher{}
+
+	var sumOrder float64 = 0
+	var sumShippingFee float64 = 0
+
+	addressSnapshot, err := p.addressSnapshotRepository.Create(request.AddressID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i, cartOrderItem := range request.CartOrderItems {
+		merchantVoucher := &internalDtos.MerchantVoucherDetails{}
+
+		if cartOrderItem.MerchantVoucherID != nil {
+			merchantVoucher, err = p.merchantVoucherRepository.GetDetailsByID(*cartOrderItem.MerchantVoucherID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			if cartOrderItem.MerchantID != merchantVoucher.MerchantID {
+				return nil, e.ErrRequestedVoucherNotMerchant
+			}
+
+			if merchantVoucher.VoucherStatus != constants.OngoingPromotionOrVoucher {
+				return nil, e.ErrMerchantVoucherNotOngoing
+			}
+
+			if merchantVoucher.CurrentQuota >= merchantVoucher.MaximumQuota {
+				return nil, e.ErrMerchantVoucherQuotaFull
+			}
+
+			validateMerchantVoucherID, err := p.merchantVoucherRepository.ValidateMerchantVoucherByBuyer(*cartOrderItem.MerchantVoucherID, request.UserID)
+
+			if errors.Is(err, e.ErrDataNotFound) {
+
+			} else if err != nil {
+				return nil, err
+			}
+
+			if validateMerchantVoucherID != nil {
+				return nil, e.ErrMerchantVoucherUsedByUser
+			}
+		}
+
+		countOrder, err := p.orderRepository.GetOrderCount()
+
+		if err != nil {
+			return nil, err
+		}
+
+		newOrder := &models.Order{
+			ID:                uuid.New(),
+			InvoiceNumber:     fmt.Sprintf("INV/%s/%s", time.Now().Format("20060201"), strconv.Itoa(int(*countOrder)+1+i)),
+			TransactionID:     newTransaction.ID,
+			MerchantID:        cartOrderItem.MerchantID,
+			AddressSnapshotID: addressSnapshot.ID,
+			CourierServiceID:  cartOrderItem.CourierServiceID,
+			ShippingFee:       cartOrderItem.ShippingFee,
+			Status:            constants.PendingPaymentStatus,
+			ClaimStatus:       false,
+		}
+
+		var sumProduct float64 = 0
+
+		for _, product := range cartOrderItem.Products {
+			_, err := p.productCourierServiceRepository.GetAllByProductIDAndCourierServiceID(product.ProductID, cartOrderItem.CourierServiceID)
+
+			if errors.Is(err, e.ErrDataNotFound) {
+				return nil, e.ErrCourierServiceNotSupportProduct
+			} else if err != nil {
+				return nil, err
+			}
+
+			productMerchantPromotion := &internalDtos.ProductMerchantPromotionDetails{}
+
+			if product.ProductMerchantPromotionID != nil {
+				productMerchantPromotion, err = p.productMerchantPromotionRepository.GetDetailsByID(*product.ProductMerchantPromotionID)
+
+				if err != nil {
+					return nil, err
+				}
+
+				if productMerchantPromotion.ProductID != product.ProductID {
+					return nil, e.ErrRequestedPromotionNotProduct
+				}
+
+				if productMerchantPromotion.PromotionStatus != constants.OngoingPromotionOrVoucher {
+					return nil, e.ErrMerchantPromotionNotOngoing
+				}
+			}
+
+			var sumProductItem float64 = 0
+			var sumQuantity uint = 0
+
+			for _, productItems := range product.ProductItems {
+				pi, err := p.productItemRepository.GetDetailsById(productItems.ProductItemID)
+
+				if err != nil {
+					return nil, err
+				}
+
+				if pi.MerchantID != cartOrderItem.MerchantID {
+					return nil, e.ErrMerchantDoesNotHaveThatProductItem
+				}
+
+				if pi.ProductID != product.ProductID {
+					return nil, e.ErrProductDoesNotHaveThatProductItem
+				}
+
+				if pi.Status != constants.ProductActiveStatus {
+					return nil, e.ErrProductStatusInactive
+				}
+
+				if pi.StockQuantity < productItems.Quantity {
+					return nil, e.ErrProductStockNotEnough
+				}
+
+				newProductSnapshot := &models.ProductSnapshot{
+					CategoryID:  pi.CategoryID,
+					ProductID:   pi.ProductID,
+					Name:        pi.Name,
+					Description: pi.Description,
+					IsHazardous: pi.IsHazardous,
+					Weight:      pi.Weight,
+					PackageSize: pi.PackageSize,
+					Condition:   pi.Condition,
+					ProcessDay:  pi.ProcessDay,
+					IsPreorder:  pi.IsPreorder,
+					SKU:         pi.SKU,
+					Price:       pi.Price,
+				}
+
+				productSnapshot, err := p.productSnapshotRepository.CreateProductSnapshot(newProductSnapshot)
+
+				if err != nil {
+					return nil, err
+				}
+
+				_, err = p.productVariationSnapshotRepository.CreateProductVariationSnapshot(productSnapshot.ID, pi.ProductItemID)
+
+				if err != nil {
+					return nil, err
+				}
+
+				_, err = p.productMediaSnapshotRepository.CreateProductMediaSnapshot(productSnapshot.ID, pi.ProductItemID, pi.ProductID)
+
+				if err != nil {
+					return nil, err
+				}
+
+				totalPriceOrderDetails := pi.Price * productItems.Quantity
+
+				sumQuantity += productItems.Quantity
+
+				totalPriceAfterDiscountOrderDetails := float64(totalPriceOrderDetails)
+				var totalDiscountODMP float64 = 0
+
+				if product.ProductMerchantPromotionID != nil {
+					if strings.EqualFold(productMerchantPromotion.DiscountType, constants.NominalDiscountType) {
+						totalDiscountODMP = float64(productMerchantPromotion.Discount * productItems.Quantity)
+						totalPriceAfterDiscountOrderDetails = math.Max((float64(totalPriceOrderDetails) - totalDiscountODMP), 0)
+					} else {
+						totalDiscountODMP = math.Min(float64(productMerchantPromotion.Discount)/100.0*float64(pi.Price), float64(productMerchantPromotion.MaximumDiscountAmount)) * float64(productItems.Quantity)
+						totalPriceAfterDiscountOrderDetails = float64(totalPriceOrderDetails) - totalDiscountODMP
+					}
+				}
+
+				sumProductItem += totalPriceAfterDiscountOrderDetails
+
+				newOrderDetail := &models.OrderDetail{
+					ID:                      uuid.New(),
+					OrderID:                 newOrder.ID,
+					Message:                 *productItems.Message,
+					ProductSnapshotID:       productSnapshot.ID,
+					Quantity:                productItems.Quantity,
+					TotalPrice:              totalPriceOrderDetails,
+					TotalPriceAfterDiscount: math.Round(totalPriceAfterDiscountOrderDetails),
+				}
+
+				newOrderDetailList = append(newOrderDetailList, newOrderDetail)
+
+				if product.ProductMerchantPromotionID != nil {
+					newOrderDetailMerchantPromotion := &models.OrderDetailMerchantPromotion{
+						OrderDetailID:              newOrderDetail.ID,
+						ProductMerchantPromotionID: productMerchantPromotion.ProductMerchantPromotionID,
+						TotalDiscount:              math.Round(totalDiscountODMP),
+					}
+
+					newOrderDetailMerchantPromotionList = append(newOrderDetailMerchantPromotionList, newOrderDetailMerchantPromotion)
+				}
+
+				_, err = p.productItemRepository.SubtractProductStock(productItems.ProductItemID, productItems.Quantity)
+
+				if err != nil {
+					return nil, err
+				}
+
+			}
+
+			if product.ProductMerchantPromotionID != nil {
+
+				if productMerchantPromotion.MaximumQuota != -1 && int(productMerchantPromotion.CurrentQuota+sumQuantity) > productMerchantPromotion.MaximumQuota {
+					return nil, e.ErrPurchasedQuantityExceedRemainingMerchantPromotionQuota
+				}
+
+				userMerchantPromotion, err := p.userMerchantPromotionRepository.GetUserUsage(request.UserID, *product.ProductMerchantPromotionID)
+
+				if errors.Is(err, e.ErrDataNotFound) {
+
+				} else if err != nil {
+					return nil, err
+				} else {
+					if productMerchantPromotion.MaximumUserLimit != -1 && int(userMerchantPromotion.Usage+sumQuantity) > productMerchantPromotion.MaximumUserLimit {
+						return nil, e.ErrPurchasedQuantityExceedRemainingUserLimit
+					}
+				}
+
+				newUserMerchantPromotionMap := map[string]any{
+					"user_id":                       request.UserID,
+					"product_merchant_promotion_id": product.ProductMerchantPromotionID,
+					"usage":                         userMerchantPromotion.Usage + sumQuantity,
+				}
+
+				_, err = p.productMerchantPromotionRepository.AddCurrentQuota(*product.ProductMerchantPromotionID, sumQuantity)
+
+				if err != nil {
+					return nil, err
+				}
+
+				_, err = p.userMerchantPromotionRepository.UpsertUsingMap(newUserMerchantPromotionMap)
+
+				if err != nil {
+					return nil, err
+				}
+
+			}
+
+			sumProduct += sumProductItem
+		}
+
+		var totalPriceAfterDiscountOrders float64 = sumProduct
+		var totalDiscountOMV float64 = 0
+
+		if cartOrderItem.MerchantVoucherID != nil {
+			if merchantVoucher.MinimumSpendAmount > uint(sumProduct) {
+				return nil, e.ErrPurchasedAmountNotExceedMerchantVoucherMinimumAmount
+			}
+
+			if strings.EqualFold(merchantVoucher.DiscountType, constants.NominalDiscountType) {
+				totalDiscountOMV = float64(merchantVoucher.Discount)
+				totalPriceAfterDiscountOrders = math.Max((sumProduct - totalDiscountOMV), 0)
+			} else {
+				totalDiscountOMV = math.Min(float64(merchantVoucher.Discount)/100.0*sumProduct, float64(merchantVoucher.MaximumDiscountAmount))
+				totalPriceAfterDiscountOrders = sumProduct - totalDiscountOMV
+			}
+		}
+
+		newOrder.TotalPrice = math.Round(sumProduct)
+		newOrder.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountOrders)
+
+		newOrderList = append(newOrderList, newOrder)
+
+		if cartOrderItem.MerchantVoucherID != nil {
+			_, err = p.merchantVoucherRepository.AddCurrentQuota(*cartOrderItem.MerchantVoucherID, 1)
+
+			if err != nil {
+				return nil, err
+			}
+
+			newOrderMerchantVoucher := &models.OrderMerchantVoucher{
+				OrderID:           newOrder.ID,
+				MerchantVoucherID: *cartOrderItem.MerchantVoucherID,
+				TotalDiscount:     math.Round(totalDiscountOMV),
+			}
+
+			newOrderMerchantVoucherList = append(newOrderMerchantVoucherList, newOrderMerchantVoucher)
+		}
+
+		sumOrder += totalPriceAfterDiscountOrders
+		sumShippingFee += float64(cartOrderItem.ShippingFee)
+	}
+
+	var totalPriceAfterDiscountTransactions float64 = sumOrder
+	var totalDiscountTMV float64 = 0
+
+	if request.MarketplaceVoucherID != nil {
+		if marketplaceVoucher.MinimumSpendAmount > uint(sumOrder) {
+			return nil, e.ErrPurchasedAmountNotExceedMarketplaceVoucherMinimumAmount
+		}
+
+		if strings.EqualFold(marketplaceVoucher.DiscountType, constants.NominalDiscountType) {
+			totalDiscountTMV = float64(marketplaceVoucher.Discount)
+			totalPriceAfterDiscountTransactions = math.Max((sumOrder - totalDiscountTMV), 0)
+		} else {
+			totalDiscountTMV = math.Min(float64(marketplaceVoucher.Discount)/100.0*sumOrder, float64(marketplaceVoucher.MaximumDiscountAmount))
+			totalPriceAfterDiscountTransactions = sumOrder - totalDiscountTMV
+		}
+
+		newTransactionMarketplaceVoucher = &models.TransactionMarketplaceVoucher{
+			TransactionID:        newTransaction.ID,
+			MarketplaceVoucherID: *request.MarketplaceVoucherID,
+			TotalDiscount:        math.Round(totalDiscountTMV),
+		}
+	}
+
+	newTransaction.TotalPrice = math.Round(sumOrder)
+	newTransaction.TotalPriceAfterDiscount = math.Round(totalPriceAfterDiscountTransactions)
+	newTransaction.TotalPriceWithShippingFee = math.Round(totalPriceAfterDiscountTransactions + sumShippingFee)
+
+	if request.TotalPayment != newTransaction.TotalPriceWithShippingFee {
+		return nil, e.ErrDifferentTotalPayment
+	}
+
+	newTransactionCreated, err := p.transactionRepository.Create(newTransaction)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newSealabsPayTransactionPayment := &models.SealabsPayTransactionPayment{
+		TransactionID:        newTransactionCreated.ID,
+		TxID:                 "",
+		SealabsPayCardNumber: request.CardNumber,
+	}
+	_, err = p.sealabsPayTransactionPaymentRepository.Create(newSealabsPayTransactionPayment)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.MarketplaceVoucherID != nil {
+		_, err = p.marketplaceVoucherRepository.AddCurrentQuota(*request.MarketplaceVoucherID, 1)
+
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = p.transactionMarketplaceVoucherRepository.Create(newTransactionMarketplaceVoucher)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = p.orderRepository.Create(newOrderList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(newOrderMerchantVoucherList) > 0 {
+		_, err = p.orderMerchantVoucherRepository.Create(newOrderMerchantVoucherList)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.orderDetailRepository.Create(newOrderDetailList)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(newOrderDetailMerchantPromotionList) > 0 {
+		_, err = p.orderDetailMerchantPromotionRepository.Create(newOrderDetailMerchantPromotionList)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, cartID := range request.CartIDs {
+		deletedCart, err := p.cartRepository.Delete(*cartID)
+
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
+			return nil, err
+		} else {
+			if deletedCart.UserID != request.UserID {
+				return nil, e.ErrForbiddenOrder
+			}
+		}
+	}
+
+	return externalDtos.NewPaymentResponse(newTransactionCreated), nil
+}
+
+func (p *cartService) PayCartWithSealabsPaySuccess(c *gin.Context, request *externalDtos.PayCartWithSealabsPaySuccessRequest) error {
+	// check if signature matches with the one in redis
+	_, err := p.redisRepository.Get(c, request.Signature)
+	if err != nil {
+		return e.ErrInvalidSignature
+	}
+	// clean up signature from redis
+	err = p.redisRepository.Delete(c, request.Signature)
+	if err != nil {
+		return err
+	}
+
+	// update sealabs_pay_transaction with txn_id
+	sealabsPayTransaction, err := p.sealabsPayTransactionPaymentRepository.GetByTransactionID(request.TransactionID)
+	if err != nil {
+		return err
+	}
+
+	sealabsPayTransaction.TxID = request.SealabsPayTxnID
+
+	err = p.sealabsPayTransactionPaymentRepository.Update(sealabsPayTransaction)
+	if err != nil {
+		return err
+	}
+
+	// update transaction with with transaction_id that is_paid=true
+	transaction, err := p.transactionRepository.GetByID(request.TransactionID)
+	if err != nil {
+		return err
+	}
+
+	transaction.IsPaid = true
+
+	err = p.transactionRepository.Update(transaction)
+	if err != nil {
+		return err
+	}
+
+	// update order_status to pending seller
+	order, err := p.orderRepository.GetByTransactionID(transaction.ID)
+	if err != nil {
+		return err
+	}
+
+	order.Status = constants.PendingSellerStatus
+
+	_, err = p.orderRepository.Update(order.ID, order)
+	if err != nil {
+		return err
+	}
+
+	// create order_tracking
+	newOrderTrackingList := []*models.OrderTracking{}
+	newOrderTracking := &models.OrderTracking{
+		OrderID:         order.ID,
+		HistoryDatetime: time.Now(),
+		Title:           constants.PaymentVerifiedTitle,
+		Description:     constants.PaymentVerifiedDescription,
+	}
+
+	newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
+
+	_, err = p.orderTrackingRepository.Create(newOrderTrackingList)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

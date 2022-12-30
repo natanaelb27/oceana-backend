@@ -369,6 +369,7 @@ func Init() *Handler {
 		UserMerchantPromotionRepository:         userMerchantPromotionRepository,
 		WalletRepository:                        walletRepository,
 		WalletTransactionPaymentRepository:      walletTransactionPaymentRepository,
+		SealabsPayTransactionPaymentRepository:  sealabsPayTransactionPaymentRepository,
 	})
 
 	transactionService := services.NewTransactionService(&services.TransactionServiceConfig{
