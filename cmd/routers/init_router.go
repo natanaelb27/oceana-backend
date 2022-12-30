@@ -46,6 +46,7 @@ func Init(h *handlers.Handler) {
 	refund(public, private, h)
 	admin(public, private, h)
 	media(public, private, h)
+	chat(public, private, h)
 
 	r.NoRoute(h.NotFound)
 

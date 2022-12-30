@@ -399,6 +399,14 @@ func Init() *Handler {
 
 	mediaService := services.NewMediaService(&services.MediaServiceConfig{})
 
+	chatRepository := repositories.NewChatRepository(&repositories.ChatRepositoryConfig{
+		DB: db.Get(),
+	})
+
+	chatService := services.NewChatService(&services.ChatServiceConfig{
+		ChatRepository: chatRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
 		WalletService:             walletService,
@@ -424,6 +432,7 @@ func Init() *Handler {
 		CityService:               cityService,
 		RefundService:             refundService,
 		MediaService:              mediaService,
+		ChatService:               chatService,
 	})
 
 	return h
