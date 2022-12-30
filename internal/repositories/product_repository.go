@@ -790,7 +790,6 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 			products.condition AS condition,
 			products.status AS status,
 			products.process_day AS process_day,
-			products.preorder_day AS preorder_day,
 			COALESCE((@sqProductMediaImage),'{}') AS images,
 			COALESCE((@sqProductMediaVideo),'{}') AS videos,
 			NULL AS product_items

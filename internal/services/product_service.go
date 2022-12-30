@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -343,7 +344,6 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 		Condition:   request.Condition,
 		Status:      request.Status,
 		ProcessDay:  request.ProcessDay,
-		PreorderDay: request.PreorderDay,
 	}
 	createdProduct, err := s.productRepository.CreateProduct(product)
 	if err != nil {
@@ -521,6 +521,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// check if product condition not its enum
 	if request.Condition != constants.ProductConditionNew &&
 		request.Condition != constants.ProductConditionUsed {
+		log.Println("err:1")
 		return nil, e.ErrInvalidModel
 	}
 	newProductMap := map[string]any{
@@ -535,7 +536,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		"condition":    request.Condition,
 		"status":       request.Status,
 		"process_day":  request.ProcessDay,
-		"preorder_day": request.PreorderDay,
 	}
 	// update product
 	err = s.productRepository.UpdateUsingMap(product.ID, newProductMap)
@@ -820,6 +820,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	// validation - product items length
 	if len(request.ProductItems) != piLengthValidation {
+		log.Println("err:2")
 		return nil, e.ErrInvalidModel
 	}
 
@@ -884,6 +885,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	rC := request.Couriers
 	// validate couriers length
 	if len(oC) != len(rC) {
+		log.Println("err:3")
 		return nil, e.ErrInvalidModel
 	}
 	for iVOC, vOC := range oC {
@@ -891,11 +893,13 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		rCS := request.Couriers[iVOC].CourierServices
 		// validate courier services length
 		if len(oCS) != len(rCS) {
+			log.Println("err:4")
 			return nil, e.ErrInvalidModel
 		}
 		for iVOCS, vOCS := range oCS {
 			merchantCourierService, err := s.merchantCourierServiceRepository.GetByMerchantIDCourierServiceID(oriProductModel.MerchantID, vOCS.ID)
 			if err != nil {
+				log.Println("err:5")
 				return nil, e.ErrInvalidModel
 			}
 
@@ -1093,6 +1097,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	for iPI, vPI := range request.ProductItems {
 		// validate variant index length to request variant length (variant type length)
 		if len(vPI.VariantIndex) != len(request.Variants) {
+			log.Println("err:6")
 			return nil, e.ErrInvalidModel
 		}
 		choosenVariantIndexes := make([]uint, 0)
@@ -1101,7 +1106,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		for iVI, vVI := range vPI.VariantIndex {
 			// validate if value is less than request variant length (variant type length)
 			// if request variant index is more than variant type length then err
-			if int(vVI) > len(variantsMap) {
+			if int(iVI) > len(variantsMap) {
+				log.Println("err:7")
 				return nil, e.ErrInvalidModel
 			}
 			// append choosen variant indexes
@@ -1111,6 +1117,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 		// validate if combination already added before
 		if exists := viCombinationMap[viCombination]; exists {
+			log.Println("err:8")
 			return nil, e.ErrInvalidModel
 		}
 		// add combination to map

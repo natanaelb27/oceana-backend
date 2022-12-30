@@ -193,7 +193,7 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 				return nil, e.ErrInvalidModel
 			}
 
-			if oriCS.IsSelected == reqCS.IsSelected {
+			if oriCS.IsSelected == reqCS.IsSelected && reqCS.IsSelected {
 				// continue to next iteration
 				continue
 			}
@@ -223,7 +223,7 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 	// if preorderDay changes
 	if requestLogistics.PreorderDay != logistics.PreorderDay {
 		merchantConfigurationChanges = true
-		// fill merchan_configuration > preorder_day
+		// fill merchan_configuration > process_day
 		newMerchantConfiguration.PreorderDay = requestLogistics.PreorderDay
 	}
 	// if isPrintLabel changes
@@ -249,30 +249,41 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 		} else {
 			// update merchant_configuration with its struct
 			newMerchantConfigurationMap := map[string]any{
-				"preorder_day":   newMerchantConfiguration.PreorderDay,
-				"is_print_label": newMerchantConfiguration.IsPrintLabel,
+				"merchant_id":  merchant.ID,
+				"preorder_day": newMerchantConfiguration.PreorderDay,
 			}
-			newMerchantConfigurationConditionMap := map[string]any{
-				"merchant_id": merchant.ID,
+			if requestLogistics.IsEditPreorderDay {
+				newMerchantConfigurationMap["is_print_label"] = newMerchantConfiguration.IsPrintLabel
 			}
-			err = s.merchantConfigurationRepository.UpdateByConditionMap(newMerchantConfigurationConditionMap, newMerchantConfigurationMap)
-			if err != nil {
+			err = s.merchantConfigurationRepository.UpsertUsingMap(newMerchantConfigurationMap)
+			if err != nil && err != e.ErrDataNotFound {
 				return nil, err
 			}
 		}
 	}
 
-	// always update preorder day of all products by that merchant
-	productMap := map[string]any{
-		"preorder_day": requestLogistics.PreorderDay,
-	}
-	productMapCondition := map[string]any{
-		"merchant_id": merchant.ID,
-		"status":      "active",
-	}
-	err = s.productRepository.UpdateUsingMapByMapCondition(productMapCondition, productMap)
-	if err != nil {
-		return nil, err
+	if requestLogistics.IsEditPreorderDay {
+		fmt.Println("EDIT PREORDER DAY")
+		// always update preorder day of all products by that merchant
+		productMap := map[string]any{
+			"process_day": requestLogistics.PreorderDay,
+		}
+		if requestLogistics.PreorderDay < 7 {
+			productMap["is_preorder"] = false
+		} else if requestLogistics.PreorderDay >= 7 {
+			productMap["is_preorder"] = true
+		}
+		productMapCondition := map[string]any{
+			"merchant_id": merchant.ID,
+			"status":      "active",
+		}
+		if requestLogistics.PreorderDay == 2 {
+			productMapCondition["is_preorder"] = true
+		}
+		err = s.productRepository.UpdateUsingMapByMapCondition(productMapCondition, productMap)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// get latest model
