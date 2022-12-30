@@ -165,7 +165,7 @@ func (p *sealabsPayService) SetDefault(id uuid.UUID, userID uuid.UUID) error {
 }
 
 func (p *sealabsPayService) StoreSignature(c *gin.Context, request *externalDtos.SealabsPayCallbackRequest) error {
-	signatureMinutesDuration, err := strconv.Atoi(os.Getenv("SEALABSPAY_TOPUP_SIGNATURE_MINUTES_DURATION"))
+	signatureMinutesDuration, err := strconv.Atoi(os.Getenv("SEALABSPAY_SIGNATURE_MINUTES_DURATION"))
 	if err != nil {
 		return err
 	}
