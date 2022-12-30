@@ -21,9 +21,11 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type SealabsPayService interface {
+	WithTx(tx *gorm.DB) *sealabsPayService
 	Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error)
 	GetAll(userID uuid.UUID) (model []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
@@ -52,6 +54,12 @@ func NewSealabsPayService(c *SealabsPayServiceConfig) SealabsPayService {
 		sealabsPayRepository: c.SealabsPayRepository,
 		redisRepository:      c.RedisRepository,
 	}
+}
+
+func (u sealabsPayService) WithTx(tx *gorm.DB) *sealabsPayService {
+	u.sealabsPayRepository = u.sealabsPayRepository.WithTx(tx)
+
+	return &u
 }
 
 func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {

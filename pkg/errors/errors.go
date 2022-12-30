@@ -61,6 +61,7 @@ var (
 	ErrInvalidParams                  = errors.New("invalid params")
 	ErrInvalidResetPasswordID         = errors.New("invalid reset password id")
 	ErrInvalidModel                   = errors.New("invalid model")
+	ErrInvalidModelProductItems       = errors.New("invalid model product items")
 	ErrInvalidModelStatus             = errors.New("invalid model status")
 	ErrInvalidVariantsMedia           = errors.New("invalid variants media")
 	ErrInvalidDiscountType            = errors.New("invalid discount type")
@@ -245,6 +246,7 @@ func GetStatusCode(err error) int {
 		errors.Is(err, ErrInvalidResetPasswordID) ||
 		errors.Is(err, ErrInvalidModel) ||
 		errors.Is(err, ErrInvalidModelStatus) ||
+		errors.Is(err, ErrInvalidModelProductItems) ||
 		errors.Is(err, ErrInvalidVariantsMedia) ||
 		errors.Is(err, ErrInvalidDiscountType) ||
 		errors.Is(err, ErrInvalidDiscount) ||

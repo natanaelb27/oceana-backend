@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) WalletActivate(c *gin.Context) {
@@ -87,7 +88,9 @@ func (h *Handler) WalletTopup(c *gin.Context) {
 		return
 	}
 
-	err := h.walletService.CreateWalletTopup(c, id, request)
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	err := h.walletService.WithTx(tx).CreateWalletTopup(c, id, request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

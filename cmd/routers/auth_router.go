@@ -10,9 +10,9 @@ func auth(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler
 	path := "/auth"
 	publicRoute := public.Group(path)
 	{
-		publicRoute.POST("/register", h.UserCreate)
+		publicRoute.POST("/register", middlewares.DBTransactionMiddleware(), h.UserCreate)
 		publicRoute.POST("/login", h.UserLogin)
-		publicRoute.POST("/register-google", h.UserRegisterWithGoogle)
+		publicRoute.POST("/register-google", middlewares.DBTransactionMiddleware(), h.UserRegisterWithGoogle)
 		publicRoute.POST("/login-google", h.UserLoginWithGoogle)
 		publicRoute.POST("/reset-password/verify", h.UserVerifyResetPassword)
 		publicRoute.POST("/reset-password/:reset-password-id", h.UserResetPassword)

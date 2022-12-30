@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -9,6 +11,7 @@ import (
 )
 
 type SealabsPayRepository interface {
+	WithTx(tx *gorm.DB) *sealabsPayRepository
 	Create(sealabsPay *models.SealabsPay) (model *models.SealabsPay, err error)
 	GetAll(userID uuid.UUID) (models []*models.SealabsPay, err error)
 	GetById(id uuid.UUID) (model *models.SealabsPay, err error)
@@ -32,6 +35,15 @@ func NewSealabsPayRepository(c *SealabsPayRepositoryConfig) SealabsPayRepository
 	return &sealabsPayRepository{
 		db: c.DB,
 	}
+}
+
+func (u sealabsPayRepository) WithTx(tx *gorm.DB) *sealabsPayRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *sealabsPayRepository) Create(newModel *models.SealabsPay) (model *models.SealabsPay, err error) {

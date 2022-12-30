@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) UserUpdateProfile(c *gin.Context) {
@@ -40,7 +41,10 @@ func (h *Handler) UserUpdateEmail(c *gin.Context) {
 		return
 	}
 	request.ID = id
-	responseData, err := h.userService.UpdateProfileEmail(request)
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	responseData, err := h.userService.WithTx(tx).UpdateProfileEmail(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return
@@ -94,7 +98,10 @@ func (h *Handler) UserRegisterMerchant(c *gin.Context) {
 		return
 	}
 	request.UserID = id
-	responseData, err := h.merchantService.Register(request)
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	responseData, err := h.merchantService.WithTx(tx).Register(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

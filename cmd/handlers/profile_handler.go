@@ -83,8 +83,8 @@ func (h *Handler) UserLogout(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("access_token", "", -1, "/", os.Getenv("DOMAIN"), true, true)
-	c.SetCookie("refresh_token", "", -1, "/", os.Getenv("DOMAIN"), true, true)
-	c.SetCookie("access_token_verifier", "", -1, "/", os.Getenv("DOMAIN"), true, true)
+	c.SetCookie("access_token", "", -1, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("refresh_token", "", -1, "/", os.Getenv("DOMAIN"), false, true)
+	c.SetCookie("access_token_verifier", "", -1, "/", os.Getenv("DOMAIN"), false, true)
 	utils.ResponseSuccess(c, nil, nil)
 }

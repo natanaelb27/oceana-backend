@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"database/sql"
 	"log"
 
 	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
@@ -133,16 +132,20 @@ func (r *productVariantRepository) Delete(id uint) (model *models.ProductVariant
 
 func (r *productVariantRepository) GetAllVariantIndexByProductID(productID uint) (productModel []*internalDtos.ProductVariationTypeListOfVariants, err error) {
 	sqProductVariants := r.db.Model(&models.ProductVariant{}).
-		Select("ARRAY_AGG(product_variants.id)").
+		Select(`
+			ARRAY_AGG(product_variants.id ORDER BY product_variants.id) AS agg,
+			product_variants.product_variant_type_id AS product_variant_type_id
+		`).
 		Joins("JOIN product_variant_types ON product_variants.product_variant_type_id = product_variant_types.id").
-		Where("product_variants.product_variant_type_id = pvt.id")
-	result := r.db.
+		Where("product_variants.product_variant_type_id = pvt.id").
+		Group("product_variants.product_variant_type_id")
+	result := r.db.Debug().
 		Table("product_variant_types pvt").
 		Select(`
-			(@sqProductVariants) AS variants
+			pv.agg AS variants
 		`,
-			sql.Named("sqProductVariants", sqProductVariants),
 		).
+		Joins("JOIN LATERAL (?) pv ON pvt.id = pv.product_variant_type_id", sqProductVariants).
 		Where("pvt.product_id = ?", productID).
 		Find(&productModel)
 	if result.Error != nil && result.Error != gorm.ErrRecordNotFound {

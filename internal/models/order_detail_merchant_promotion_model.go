@@ -8,13 +8,13 @@ import (
 )
 
 type OrderDetailMerchantPromotion struct {
-	ID                  uint
-	OrderDetailID       uuid.UUID
-	OrderDetail         OrderDetail
+	ID                         uint
+	OrderDetailID              uuid.UUID
+	OrderDetail                OrderDetail
 	ProductMerchantPromotionID uint
 	ProductMerchantPromotion   ProductMerchantPromotion
-	TotalDiscount       float64
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
-	DeletedAt           gorm.DeletedAt
+	TotalDiscount              float64
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	DeletedAt                  gorm.DeletedAt
 }

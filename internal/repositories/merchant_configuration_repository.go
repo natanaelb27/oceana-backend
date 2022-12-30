@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type MerchantConfigurationRepository interface {
+	WithTx(tx *gorm.DB) *merchantConfigurationRepository
 	GetByMerchantID(id uint) (model *models.MerchantConfiguration, err error)
 	Create(newModel *models.MerchantConfiguration) (model *models.MerchantConfiguration, err error)
 	UpdateByConditionMap(conditionMap map[string]any, modelMap map[string]any) (err error)
@@ -24,6 +27,15 @@ func NewMerchantConfigurationRepository(c *MerchantConfigurationRepositoryConfig
 	return &merchantConfigurationRepository{
 		db: c.DB,
 	}
+}
+
+func (u merchantConfigurationRepository) WithTx(tx *gorm.DB) *merchantConfigurationRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *merchantConfigurationRepository) GetByMerchantID(id uint) (model *models.MerchantConfiguration, err error) {

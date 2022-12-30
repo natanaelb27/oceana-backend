@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -8,6 +10,7 @@ import (
 )
 
 type UserRepository interface {
+	WithTx(tx *gorm.DB) *userRepository
 	Create(user *models.User) (*models.User, error)
 	GetByPhoneNumber(phoneNumber string) (model *models.User, err error)
 	GetByUsername(username string) (model *models.User, err error)
@@ -30,6 +33,15 @@ func NewUserRepository(c *UserRepositoryConfig) UserRepository {
 	return &userRepository{
 		db: c.DB,
 	}
+}
+
+func (u userRepository) WithTx(tx *gorm.DB) *userRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (u *userRepository) Create(newModel *models.User) (model *models.User, err error) {

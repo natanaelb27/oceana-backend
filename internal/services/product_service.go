@@ -630,7 +630,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		piLengthValidation = 1
 	}
 
-	var pvtCreates = []*productInternalDtos.PvtUpdateInfo{}
 	var pvtUpdates = []*productInternalDtos.PvtUpdateInfo{}
 	var pvtDeletes = []*productInternalDtos.PvtUpdateInfo{}
 
@@ -652,17 +651,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	//* product variant types - check changes
 	// product variant types - req to ori comparison - append creates
-	if len(request.Variants) > len(oriProductModel.Variants) {
-		for i := len(oriProductModel.Variants); i < len(request.Variants); i++ {
-			pvtCreates = append(pvtCreates, &productInternalDtos.PvtUpdateInfo{
-				ID: 0,
-				NewPVT: &models.ProductVariantType{
-					Name:      request.Variants[i].Name,
-					ProductID: product.ID,
-				},
-			})
-		}
-	}
 	// product variant types - ori to req comparison - append updates and deletes
 	for iOV, oV := range oriProductModel.Variants {
 		// if current array index exceed request variants length
@@ -670,7 +658,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			pvtDeletes = append(pvtDeletes, &productInternalDtos.PvtUpdateInfo{
 				ID: pvts[iOV].ID,
 			})
-			break
+			continue
 		}
 		// request variants on original variants current index
 		var rV = request.Variants[iOV]
@@ -697,6 +685,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		if err != nil {
 			return nil, err
 		}
+
 		// product variants - req to ori comparison - append creates
 		if len(rV.Options) > len(oV.Options) {
 			for i := len(oV.Options); i < len(rV.Options); i++ {
@@ -752,43 +741,79 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		for _, v := range pv {
 			pvIDs = append(pvIDs, v.ID)
 		}
-		// get all product variant medias from db by
-		pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
-		if err != nil && err != e.ErrDataNotFound {
-			return nil, err
+		// if first variant
+		if iOV == 0 {
+			// get all product variant medias from db by
+			pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
+			if err != nil && err != e.ErrDataNotFound {
+				return nil, err
+			}
+			// product variant medias - req to ori comparison - append creates
+			if len(rV.Images) > len(oV.Images) {
+				for i := len(oV.Images); i < len(rV.Images); i++ {
+					pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
+						After: &models.ProductVariantMedia{
+							MediaURL: rV.Images[i],
+						},
+					})
+				}
+			}
+			// product variant medias - ori to req comparison - append updates and deletes
+			// ? how to get variant id?
+			for iOI, oI := range oV.Images {
+				rI := rV.Images
+				// if index not exist then append deletes
+				if len(rI)-1 < iOI {
+					pvmDeletes = append(pvmDeletes, &productInternalDtos.PvmUpdateInfo{
+						Before: &models.ProductVariantMedia{
+							ID: pvm[iOI].ID,
+						},
+					})
+					continue
+				} else if oI != rI[iOI] {
+					// if there is changes then append updates
+					pvmUpdates = append(pvmUpdates, &productInternalDtos.PvmUpdateInfo{
+						Before: &models.ProductVariantMedia{
+							ID: pvm[iOI].ID,
+						},
+						After: &models.ProductVariantMedia{
+							MediaURL: rI[iOI],
+						},
+					})
+				}
+			}
 		}
-		// product variant medias - req to ori comparison - append creates
-		if len(rV.Images) > len(oV.Images) {
-			for i := len(oV.Images); i < len(rV.Images); i++ {
-				pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
-					After: &models.ProductVariantMedia{
-						MediaURL: rV.Images[i],
+	}
+	// create product variants, options, options medias
+	if len(request.Variants) > len(oriProductModel.Variants) {
+		for i := len(oriProductModel.Variants); i < len(request.Variants); i++ {
+			piLengthValidation *= len(request.Variants[i].Options)
+
+			newPVT, err := s.productVariantTypeRepository.Create(&models.ProductVariantType{
+				Name:      request.Variants[i].Name,
+				ProductID: product.ID,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			for iRVO := 0; iRVO < len(request.Variants[i].Options); iRVO++ {
+				pvCreates = append(pvCreates, &productInternalDtos.PvUpdateInfo{
+					After: &models.ProductVariant{
+						Name:                 request.Variants[i].Options[iRVO],
+						ProductVariantTypeID: newPVT.ID,
 					},
 				})
 			}
-		}
-		// product variant medias - ori to req comparison - append updates and deletes
-		// ? how to get variant id?
-		for iOI, oI := range oV.Images {
-			rI := rV.Images
-			// if index not exist then append deletes
-			if len(rI)-1 < iOI {
-				pvmDeletes = append(pvmDeletes, &productInternalDtos.PvmUpdateInfo{
-					Before: &models.ProductVariantMedia{
-						ID: pvm[iOI].ID,
-					},
-				})
-				continue
-			} else if oI != rI[iOI] {
-				// if there is changes then append updates
-				pvmUpdates = append(pvmUpdates, &productInternalDtos.PvmUpdateInfo{
-					Before: &models.ProductVariantMedia{
-						ID: pvm[iOI].ID,
-					},
-					After: &models.ProductVariantMedia{
-						MediaURL: rI[iOI],
-					},
-				})
+			// if first variants
+			if i == 0 {
+				for _, vRVI := range request.Variants[i].Images {
+					pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
+						After: &models.ProductVariantMedia{
+							MediaURL: vRVI,
+						},
+					})
+				}
 			}
 		}
 	}
@@ -922,13 +947,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 
 	//* product variant types - update operations
-	for _, v := range pvtCreates {
-		fmt.Println("pvtCreates", v.NewPVT.Name)
-		_, err := s.productVariantTypeRepository.Create(v.NewPVT)
-		if err != nil {
-			return nil, err
-		}
-	}
 	for _, v := range pvtUpdates {
 		fmt.Println("pvtUpdates", v.ID)
 		_, err := s.productVariantTypeRepository.Update(v.ID, v.NewPVT)
@@ -947,7 +965,6 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	//* product variant - update operations
 	newPvIds := make([]uint, 0)
 	for _, v := range pvCreates {
-		fmt.Println("pvtCreates", v.After.Name)
 		newPv, err := s.productVariantRepository.Create(v.After)
 		if err != nil {
 			return nil, err
@@ -1052,6 +1069,10 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	if err != nil {
 		return nil, err
 	}
+	// validate if original req pi is > ori pi
+	if len(productItems) != len(request.ProductItems) {
+		return nil, e.ErrInvalidModelProductItems
+	}
 	// get all product variants as index
 	productVariantsType, err := s.productVariantRepository.GetAllVariantIndexByProductID(product.ID)
 	if err != nil {
@@ -1064,6 +1085,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			variantsMap[i][iV] = uint(vV)
 		}
 	}
+	fmt.Println("variantsMap")
+	fmt.Println(variantsMap)
 	var pVarCreates = make([]*productInternalDtos.PvarUpdateInfo, 0)
 	// variant indexes combination map for validate and making sure combination not duplicate
 	var viCombinationMap = map[string]bool{}

@@ -27,7 +27,6 @@ type MarketplaceVoucherRepository interface {
 	AddCurrentQuota(ID uint, amount uint) (*models.MarketplaceVoucher, error)
 	GetAllDetailsByBuyer(id uuid.UUID, query *externalDtos.BuyerMarketplaceVoucherQuery, pagination *utils.Pagination) ([]*dtos.MarketplaceVoucherDetails, *utils.Pagination, error)
 	ValidateMarketplaceVoucherByBuyer(marketplaceVoucherID uint, userID uuid.UUID) (resultMarketplaceVoucherID *uint, err error)
-
 }
 
 type marketplaceVoucherRepository struct {
@@ -318,7 +317,6 @@ func (r *marketplaceVoucherRepository) GetAllDetailsByBuyer(id uuid.UUID, query 
 	return marketplaceVoucherDetails, pagination, nil
 }
 
-
 func (r *marketplaceVoucherRepository) ValidateMarketplaceVoucherByBuyer(marketplaceVoucherID uint, userID uuid.UUID) (resultMarketplaceVoucherID *uint, err error) {
 	queryResult := r.db.Model(&models.Transaction{}).
 		Select(`
@@ -341,4 +339,3 @@ func (r *marketplaceVoucherRepository) ValidateMarketplaceVoucherByBuyer(marketp
 
 	return
 }
-

@@ -244,6 +244,17 @@ func (p *cartService) PayCartWithWallet(c *gin.Context, request *externalDtos.Pa
 			return nil, e.ErrMarketplaceVoucherQuotaFull
 		}
 
+		validateMarketplaceVoucherID, err := p.marketplaceVoucherRepository.ValidateMarketplaceVoucherByBuyer(*request.MarketplaceVoucherID, request.UserID)
+
+		if errors.Is(err, e.ErrDataNotFound) {
+
+		} else if err != nil {
+			return nil, err
+		}
+
+		if validateMarketplaceVoucherID != nil {
+			return nil, e.ErrMarketplaceVoucherUsedByUser
+		}
 	}
 
 	newTransaction := &models.Transaction{
