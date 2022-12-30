@@ -741,43 +741,46 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		for _, v := range pv {
 			pvIDs = append(pvIDs, v.ID)
 		}
-		// get all product variant medias from db by
-		pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
-		if err != nil && err != e.ErrDataNotFound {
-			return nil, err
-		}
-		// product variant medias - req to ori comparison - append creates
-		if len(rV.Images) > len(oV.Images) {
-			for i := len(oV.Images); i < len(rV.Images); i++ {
-				pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
-					After: &models.ProductVariantMedia{
-						MediaURL: rV.Images[i],
-					},
-				})
+		// if first variant
+		if iOV == 0 {
+			// get all product variant medias from db by
+			pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
+			if err != nil && err != e.ErrDataNotFound {
+				return nil, err
 			}
-		}
-		// product variant medias - ori to req comparison - append updates and deletes
-		// ? how to get variant id?
-		for iOI, oI := range oV.Images {
-			rI := rV.Images
-			// if index not exist then append deletes
-			if len(rI)-1 < iOI {
-				pvmDeletes = append(pvmDeletes, &productInternalDtos.PvmUpdateInfo{
-					Before: &models.ProductVariantMedia{
-						ID: pvm[iOI].ID,
-					},
-				})
-				continue
-			} else if oI != rI[iOI] {
-				// if there is changes then append updates
-				pvmUpdates = append(pvmUpdates, &productInternalDtos.PvmUpdateInfo{
-					Before: &models.ProductVariantMedia{
-						ID: pvm[iOI].ID,
-					},
-					After: &models.ProductVariantMedia{
-						MediaURL: rI[iOI],
-					},
-				})
+			// product variant medias - req to ori comparison - append creates
+			if len(rV.Images) > len(oV.Images) {
+				for i := len(oV.Images); i < len(rV.Images); i++ {
+					pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
+						After: &models.ProductVariantMedia{
+							MediaURL: rV.Images[i],
+						},
+					})
+				}
+			}
+			// product variant medias - ori to req comparison - append updates and deletes
+			// ? how to get variant id?
+			for iOI, oI := range oV.Images {
+				rI := rV.Images
+				// if index not exist then append deletes
+				if len(rI)-1 < iOI {
+					pvmDeletes = append(pvmDeletes, &productInternalDtos.PvmUpdateInfo{
+						Before: &models.ProductVariantMedia{
+							ID: pvm[iOI].ID,
+						},
+					})
+					continue
+				} else if oI != rI[iOI] {
+					// if there is changes then append updates
+					pvmUpdates = append(pvmUpdates, &productInternalDtos.PvmUpdateInfo{
+						Before: &models.ProductVariantMedia{
+							ID: pvm[iOI].ID,
+						},
+						After: &models.ProductVariantMedia{
+							MediaURL: rI[iOI],
+						},
+					})
+				}
 			}
 		}
 	}
@@ -801,15 +804,15 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 						ProductVariantTypeID: newPVT.ID,
 					},
 				})
-				// if first variants
-				if i == 0 {
-					for _, vRVI := range request.Variants[i].Images {
-						pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
-							After: &models.ProductVariantMedia{
-								MediaURL: vRVI,
-							},
-						})
-					}
+			}
+			// if first variants
+			if i == 0 {
+				for _, vRVI := range request.Variants[i].Images {
+					pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
+						After: &models.ProductVariantMedia{
+							MediaURL: vRVI,
+						},
+					})
 				}
 			}
 		}
