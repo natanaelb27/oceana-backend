@@ -6,6 +6,7 @@ import (
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) ProductReviewCreate(c *gin.Context) {
@@ -26,7 +27,10 @@ func (h *Handler) ProductReviewCreate(c *gin.Context) {
 	}
 	request.UserID = id
 	request.OrderDetailID = orderDetailID
-	response, err := h.productReviewService.Create(request)
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	response, err := h.productReviewService.WithTx(tx).Create(request)
 	if err != nil {
 		utils.ResponseError(c, err)
 		return

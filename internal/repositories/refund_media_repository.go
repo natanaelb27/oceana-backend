@@ -1,12 +1,15 @@
 package repositories
 
 import (
+	"log"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type RefundMediaRepository interface {
+	WithTx(tx *gorm.DB) *refundMediaRepository
 	Create(newModel []*models.RefundMedia) (model []*models.RefundMedia, err error)
 }
 
@@ -22,6 +25,15 @@ func NewRefundMediaRepository(c *RefundMediaRepositoryConfig) RefundMediaReposit
 	return &refundMediaRepository{
 		db: c.DB,
 	}
+}
+
+func (u refundMediaRepository) WithTx(tx *gorm.DB) *refundMediaRepository {
+	if tx == nil {
+		log.Print("Transaction Database not found")
+		return &u
+	}
+	u.db = tx
+	return &u
 }
 
 func (r *refundMediaRepository) Create(newModel []*models.RefundMedia) (model []*models.RefundMedia, err error) {
