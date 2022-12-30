@@ -69,3 +69,43 @@ func (h *Handler) PayCartWithWallet(c *gin.Context) {
 
 	utils.ResponseSuccess(c, result, nil)
 }
+
+func (h *Handler) PayCartWithSealabsPay(c *gin.Context) {
+	id := utils.GinGetUUID(c, "id")
+
+	var request *dtos.PayCartWithSealabsPayRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	request.UserID = id
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	result, err := h.cartService.WithTx(tx).PayCartWithSealabsPay(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, result, nil)
+}
+
+func (h *Handler) PayCartWithSealabsPaySuccess(c *gin.Context) {
+	var request *dtos.PayCartWithSealabsPaySuccessRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	tx := c.MustGet("tx").(*gorm.DB)
+
+	err := h.cartService.WithTx(tx).PayCartWithSealabsPaySuccess(c, request)
+	if err != nil {
+		utils.ResponseError(c, err)
+		return
+	}
+
+	utils.ResponseSuccess(c, nil, nil)
+}

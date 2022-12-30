@@ -22,6 +22,7 @@ type OrderRepository interface {
 	OrderListGetAll(id uuid.UUID, query *externalDtos.OrderListQuery, pagination *utils.Pagination) ([]*dtos.OrderList, *utils.Pagination, error)
 	OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderListDetails, error)
 	GetByID(id uuid.UUID) (model *models.Order, err error)
+	GetByTransactionID(transactionID uuid.UUID) (model *models.Order, err error)
 	Update(id uuid.UUID, newModel *models.Order) (model *models.Order, err error)
 	GetOrderCount() (*int64, error)
 	Create(newModel []*models.Order) (model []*models.Order, err error)
@@ -738,6 +739,22 @@ func (r *orderRepository) GetByID(id uuid.UUID) (model *models.Order, err error)
 	queryResult := r.db.Model(&models.Order{}).
 		Preload("Transaction").
 		First(&model, id)
+	if queryResult.Error == gorm.ErrRecordNotFound {
+		err = e.ErrDataNotFound
+		return
+	}
+	if queryResult.Error != nil {
+		err = e.ErrDatabaseOperationFailed
+		return
+	}
+
+	return
+}
+
+func (r *orderRepository) GetByTransactionID(transactionID uuid.UUID) (model *models.Order, err error) {
+	queryResult := r.db.
+		Where("transaction_id = ?", transactionID).
+		First(&model)
 	if queryResult.Error == gorm.ErrRecordNotFound {
 		err = e.ErrDataNotFound
 		return
