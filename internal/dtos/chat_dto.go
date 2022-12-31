@@ -20,7 +20,7 @@ type ChatList struct {
 	ToUserID        string    `json:"to_user_id"`
 	ToUserPhoto     string    `json:"to_user_photo"`
 	ToUserFullName  string    `json:"to_user_full_name"`
-	ToMerchantID    string    `json:"to_merchant_id"`
+	ToMerchantID    uint      `json:"to_merchant_id"`
 	ToMerchantName  string    `json:"to_merchant_name"`
 	ToMerchantPhoto string    `json:"to_merchant_photo"`
 	LastMessage     string    `json:"last_message"`
@@ -31,7 +31,7 @@ type ChatResponse struct {
 	ToUserID        string  `json:"to_user_id"`
 	ToUserPhoto     string  `json:"to_user_photo"`
 	ToUserFullName  string  `json:"to_user_full_name"`
-	ToMerchantID    string  `json:"to_merchant_id"`
+	ToMerchantID    uint    `json:"to_merchant_id"`
 	ToMerchantName  string  `json:"to_merchant_name"`
 	ToMerchantPhoto string  `json:"to_merchant_photo"`
 	Chats           []*Chat `json:"chats" gorm:"-"`
