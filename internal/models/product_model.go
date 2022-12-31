@@ -20,7 +20,6 @@ type Product struct {
 	Condition   string
 	Status      string
 	ProcessDay  uint
-	PreorderDay uint
 	IsPreorder  bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

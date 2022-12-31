@@ -6,13 +6,14 @@ import (
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type MerchantConfigurationRepository interface {
 	WithTx(tx *gorm.DB) *merchantConfigurationRepository
 	GetByMerchantID(id uint) (model *models.MerchantConfiguration, err error)
 	Create(newModel *models.MerchantConfiguration) (model *models.MerchantConfiguration, err error)
-	UpdateByConditionMap(conditionMap map[string]any, modelMap map[string]any) (err error)
+	UpsertUsingMap(modelMap map[string]any) (err error)
 }
 
 type merchantConfigurationRepository struct {
@@ -52,11 +53,13 @@ func (r *merchantConfigurationRepository) GetByMerchantID(id uint) (model *model
 	return
 }
 
-func (r *merchantConfigurationRepository) UpdateByConditionMap(conditionMap map[string]any, modelMap map[string]any) (err error) {
+func (r *merchantConfigurationRepository) UpsertUsingMap(modelMap map[string]any) (err error) {
 	result := r.db.
 		Model(&models.MerchantConfiguration{}).
-		Where(conditionMap).
-		Updates(&modelMap)
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "merchant_id"}},
+			DoUpdates: clause.Assignments(modelMap),
+		}).Create(modelMap)
 	if result.Error != nil {
 		err = e.ErrDatabaseOperationFailed
 		return
