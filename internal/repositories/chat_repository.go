@@ -158,7 +158,7 @@ func (r *chatRepository) GetChatWithToUserID(userID, toUserID uuid.UUID) (models
 					OR
 				to_user_id = (@toUserID))
 			ORDER BY 
-				created_at ASC
+				created_at DESC
 		`,
 			sql.Named("userID", userID),
 			sql.Named("toUserID", toUserID),

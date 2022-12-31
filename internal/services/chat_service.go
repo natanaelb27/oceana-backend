@@ -42,7 +42,7 @@ func (p *chatService) GetAllChatList(userID uuid.UUID) ([]*internalDtos.ChatList
 }
 
 func (p *chatService) GetChat(userID uuid.UUID, toUserID uuid.UUID) (model *internalDtos.ChatResponse, err error) {
-	user, err := p.chatRepository.GetProfileForToUserID(userID)
+	user, err := p.chatRepository.GetProfileForToUserID(toUserID)
 	if err != nil {
 		return nil, err
 	}
