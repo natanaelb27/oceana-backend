@@ -64,7 +64,7 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 
 	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
+		autoCompleteDeliveredExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
 	}
 
 	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
@@ -290,7 +290,7 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 
 	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
+		autoCompleteDeliveredExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
 	}
 
 	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
@@ -517,7 +517,7 @@ func (r *orderRepository) OrderListDetailsGetByID(id uuid.UUID) (*dtos.OrderList
 
 	autoCompleteDeliveredExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_DELIVERED_EXPIRATION_INTERVAL"))
 	if err != nil {
-		sellerConfirmationExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
+		autoCompleteDeliveredExpirationInterval = constants.CronAutoCompleteDeliveredExpirationInterval
 	}
 
 	autoCompleteOrderRejectedRefundExpirationInterval, err := strconv.Atoi(os.Getenv("CRON_AUTO_COMPLETE_ORDER_REJECTED_REFUND_EXPIRATION_INTERVAL"))
