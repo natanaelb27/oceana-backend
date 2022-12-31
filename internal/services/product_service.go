@@ -345,6 +345,10 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 		Status:      request.Status,
 		ProcessDay:  request.ProcessDay,
 	}
+	if request.ProcessDay < 2 {
+		product.ProcessDay = 2
+	}
+
 	createdProduct, err := s.productRepository.CreateProduct(product)
 	if err != nil {
 		return nil, err
@@ -535,8 +539,13 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		"package_size": request.PackageSize,
 		"condition":    request.Condition,
 		"status":       request.Status,
-		"process_day":  request.ProcessDay,
 	}
+	if request.ProcessDay < 2 {
+		newProductMap["process_day"] = 2
+	} else {
+		newProductMap["process_day"] = request.ProcessDay
+	}
+
 	// update product
 	err = s.productRepository.UpdateUsingMap(product.ID, newProductMap)
 	if err != nil {
