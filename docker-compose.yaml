@@ -22,6 +22,7 @@ services:
     # since we choose to build the golang app then we don't need to map sync file to docker volume which is better to use if we run the main.go or use nodemon to run the file and hot reload if there are changes in any files
     # volumes:
     #   - ./group-project-backend:/app
+    restart: always
   db:
     image: postgres:14.6-alpine
     environment:
