@@ -737,7 +737,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		if iOV == 0 {
 			// if length of images not equal options then invalid model
 			if len(rV.Images) != len(rV.Options) {
-				return nil, e.ErrInvalidVariantsMedia
+				return nil, e.ErrEmptyVariantImages
 			}
 		} else {
 			// if iteration more than 0 then don't allow image to exists
@@ -976,12 +976,13 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 
 	//* product variant - update operations
+	newPvIds := make([]uint, 0)
 	for _, v := range pvCreates {
-		fmt.Println("pvCreates", v.After.Name)
-		_, err := s.productVariantRepository.Create(v.After)
+		newPv, err := s.productVariantRepository.Create(v.After)
 		if err != nil {
 			return nil, err
 		}
+		newPvIds = append(newPvIds, newPv.ID)
 	}
 	for _, v := range pvUpdates {
 		fmt.Println("pvUpdates", v.Before.Name, v.After.Name)
@@ -1000,25 +1001,13 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	//* product variant medias - update operations
 	if len(pvmCreates) > 0 {
-		newPvts, err := s.productVariantTypeRepository.GetAllByProductID(product.ID)
-		if err != nil && err != e.ErrDataNotFound {
-			return nil, err
-		}
-		var newPvs []*models.ProductVariant = make([]*models.ProductVariant, 0)
-		if len(newPvts) > 0 {
-			newPvs, err = s.productVariantRepository.GetAllByProductVariantTypeID(newPvts[0].ID)
-			if err != nil {
-				return nil, err
-			}
-		}
-		fmt.Println("newPvs")
-		for _, v := range newPvs {
-			fmt.Println(v.ID)
-		}
-		fmt.Println("len(newPvs)", len(newPvs))
+		fmt.Println("newPvs", newPvIds)
 		for i, v := range pvmCreates {
-			if i < len(newPvs) {
-				v.After.ProductVariantID = newPvs[i].ID
+			if i < len(newPvIds) {
+				if v.After.MediaURL == "" {
+					return nil, e.ErrEmptyFirstVariantImages
+				}
+				v.After.ProductVariantID = newPvIds[i]
 				fmt.Println(v.After.ProductVariantID)
 				_, err := s.productVariantMediaRepository.Create(v.After)
 				if err != nil {
@@ -1030,6 +1019,9 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 	for _, v := range pvmUpdates {
+		if v.After.MediaURL == "" {
+			return nil, e.ErrEmptyFirstVariantImages
+		}
 		fmt.Println("pvmUpdates", v.Before.ID, v.After.MediaURL)
 		_, err := s.productVariantMediaRepository.Update(v.Before.ID, v.After)
 		if err != nil {

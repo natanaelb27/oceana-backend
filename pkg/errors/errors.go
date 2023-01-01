@@ -26,6 +26,7 @@ var (
 	ErrRequestBodyTooLarge     = errors.New("request body must not be larger than 1MB")
 	ErrEmptyVariants           = errors.New("variants cannot be empty")
 	ErrEmptyFirstVariantImages = errors.New("first variant images cannot be empty")
+	ErrEmptyVariantImages      = errors.New("variant images cannot be empty")
 
 	ErrInvalidEmailAddress            = errors.New("invalid email address")
 	ErrInvalidPassword                = errors.New("invalid password")
