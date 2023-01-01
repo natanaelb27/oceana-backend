@@ -737,7 +737,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		if iOV == 0 {
 			// if length of images not equal options then invalid model
 			if len(rV.Images) != len(rV.Options) {
-				return nil, e.ErrInvalidVariantsMedia
+				return nil, e.ErrEmptyVariantImages
 			}
 		} else {
 			// if iteration more than 0 then don't allow image to exists
@@ -1018,6 +1018,9 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		fmt.Println("len(newPvs)", len(newPvs))
 		for i, v := range pvmCreates {
 			if i < len(newPvs) {
+				if v.After.MediaURL == "" {
+					return nil, e.ErrEmptyFirstVariantImages
+				}
 				v.After.ProductVariantID = newPvs[i].ID
 				fmt.Println(v.After.ProductVariantID)
 				_, err := s.productVariantMediaRepository.Create(v.After)
@@ -1030,6 +1033,9 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 	}
 	for _, v := range pvmUpdates {
+		if v.After.MediaURL == "" {
+			return nil, e.ErrEmptyFirstVariantImages
+		}
 		fmt.Println("pvmUpdates", v.Before.ID, v.After.MediaURL)
 		_, err := s.productVariantMediaRepository.Update(v.Before.ID, v.After)
 		if err != nil {
