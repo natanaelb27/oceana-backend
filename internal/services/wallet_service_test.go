@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/mocks"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
@@ -25,7 +25,7 @@ func Test_walletService_Activate(t *testing.T) {
 	}
 
 	type fields struct {
-		walletRepository *mocks.WalletRepository
+		walletRepository *repositories.MockWalletRepository
 	}
 	type args struct {
 		args1 uuid.UUID
@@ -44,7 +44,7 @@ func Test_walletService_Activate(t *testing.T) {
 				args2: model,
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
-				r.walletRepository.On("GetByUserID", mock.Anything).Return(modelBefore, nil)
+				r.walletRepository.On("GetByUserId", mock.Anything).Return(modelBefore, nil)
 				r.walletRepository.On("Activate", mock.Anything, mock.Anything).Return(model, nil)
 			},
 			want: model,
@@ -54,7 +54,7 @@ func Test_walletService_Activate(t *testing.T) {
 				args2: model,
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
-				r.walletRepository.On("GetByUserID", mock.Anything).Return(nil, e.ErrDatabaseOperationFailed)
+				r.walletRepository.On("GetByUserId", mock.Anything).Return(nil, e.ErrDatabaseOperationFailed)
 			},
 			wantErr: true,
 		},
@@ -67,7 +67,7 @@ func Test_walletService_Activate(t *testing.T) {
 				},
 			},
 			mock: func(r *fields, a args, w *models.Wallet) {
-				r.walletRepository.On("GetByUserID", mock.Anything).Return(a.args2, nil)
+				r.walletRepository.On("GetByUserId", mock.Anything).Return(a.args2, nil)
 			},
 			wantErr: true,
 		},
@@ -75,7 +75,7 @@ func Test_walletService_Activate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.fields = fields{
-				mocks.NewWalletRepository(t),
+				repositories.NewMockWalletRepository(t),
 			}
 
 			walletService := services.NewWalletService(&services.WalletServiceConfig{
