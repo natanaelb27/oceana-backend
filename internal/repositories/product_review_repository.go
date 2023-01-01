@@ -110,8 +110,8 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 			product_reviews.rating, 
 			product_reviews.review, 
 			(?) AS product_variations, 
-			tbl_review_image.review_images AS review_images,
-			tbl_review_video.review_videos AS review_videos,
+			COALESCE(tbl_review_image.review_images, '{}') AS review_images,
+			COALESCE(tbl_review_video.review_videos, '{}') AS review_videos,
 			product_reviews.created_at
 		`, productVariantSubQuery).
 		Joins("JOIN users ON product_reviews.user_id = users.id").
