@@ -14,6 +14,7 @@ type ProductSnapshotDetails struct {
 	ProductID           uint           `json:"product_id"`
 	MerchantPhoto       string         `json:"merchant_photo"`
 	MerchantID          uint           `json:"merchant_id"`
+	ShopName            string         `json:"shop_name"`
 	Name                string         `json:"name"`
 	IsHazardous         bool           `json:"is_hazardous"`
 	Weight              uint           `json:"weight"`

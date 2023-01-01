@@ -90,6 +90,7 @@ func (r *productSnapshotRepository) GetByOrderDetailID(orderDetailID uuid.UUID) 
 			product_snapshots.product_id AS product_id,
 			merchants.photo AS merchant_photo,
 			merchants.id AS merchant_id,
+			merchants.name AS shop_name,
 			product_snapshots.name AS name,
 			product_snapshots.is_hazardous AS is_hazardous,
 			product_snapshots.weight AS weight,
