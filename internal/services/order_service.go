@@ -422,6 +422,14 @@ func (s *orderService) RefundCanceledOrder(orderID uuid.UUID) error {
 		sumUserRefundAmount += math.Round(refundDetail.AmountUserGet)
 	}
 
+	order, err := s.orderRepository.GetByID(orderID)
+
+	if err != nil {
+		return err
+	}
+
+	sumUserRefundAmount += float64(order.ShippingFee)
+
 	_, err = s.refundDetailRepository.Create(refundDetailList)
 
 	if err != nil {

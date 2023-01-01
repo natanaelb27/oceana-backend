@@ -153,7 +153,13 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 		Select(`
 				refunds.id AS id,
 				wallet_transaction_payments.wallet_id,
-				subQueryRefund.amount AS amount, 
+				(
+					CASE
+						WHEN orders.status = @canceled_by_system THEN subQueryRefund.amount + orders.shipping_fee
+						WHEN orders.status = @canceled_by_seller THEN subQueryRefund.amount + orders.shipping_fee
+						ELSE subQueryRefund.amount
+					END
+				) AS amount, 
 				refunds.completed_datetime AS transaction_datetime, 
 				(
 					CASE
