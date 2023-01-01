@@ -976,13 +976,12 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 
 	//* product variant - update operations
-	newPvIds := make([]uint, 0)
 	for _, v := range pvCreates {
-		newPv, err := s.productVariantRepository.Create(v.After)
+		fmt.Println("pvCreates", v.After.Name)
+		_, err := s.productVariantRepository.Create(v.After)
 		if err != nil {
 			return nil, err
 		}
-		newPvIds = append(newPvIds, newPv.ID)
 	}
 	for _, v := range pvUpdates {
 		fmt.Println("pvUpdates", v.Before.Name, v.After.Name)
@@ -1000,12 +999,34 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 
 	//* product variant medias - update operations
-	for i, v := range pvmCreates {
-		fmt.Println("pvmCreates", v.After.MediaURL)
-		v.After.ProductVariantID = newPvIds[i]
-		_, err := s.productVariantMediaRepository.Create(v.After)
-		if err != nil {
+	if len(pvmCreates) > 0 {
+		newPvts, err := s.productVariantTypeRepository.GetAllByProductID(product.ID)
+		if err != nil && err != e.ErrDataNotFound {
 			return nil, err
+		}
+		var newPvs []*models.ProductVariant = make([]*models.ProductVariant, 0)
+		if len(newPvts) > 0 {
+			newPvs, err = s.productVariantRepository.GetAllByProductVariantTypeID(newPvts[0].ID)
+			if err != nil {
+				return nil, err
+			}
+		}
+		fmt.Println("newPvs")
+		for _, v := range newPvs {
+			fmt.Println(v.ID)
+		}
+		fmt.Println("len(newPvs)", len(newPvs))
+		for i, v := range pvmCreates {
+			if i < len(newPvs) {
+				v.After.ProductVariantID = newPvs[i].ID
+				fmt.Println(v.After.ProductVariantID)
+				_, err := s.productVariantMediaRepository.Create(v.After)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				log.Println("pvmCreates exceed newPv length")
+			}
 		}
 	}
 	for _, v := range pvmUpdates {
