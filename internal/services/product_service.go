@@ -412,7 +412,10 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 			// create product variant media on first variant only
 			if iVariant == 0 {
 				if len(variant.Images) != len(variant.Options) {
-					return nil, e.ErrEmptyVariants
+					return nil, e.ErrEmptyFirstVariantImages
+				}
+				if variant.Images[iOption] == "" {
+					return nil, e.ErrEmptyFirstVariantImages
 				}
 
 				productVariantMedia := &models.ProductVariantMedia{
@@ -752,6 +755,16 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 		// if first variant
 		if iOV == 0 {
+			// validate if images length not match options length
+			if len(rV.Images) != len(rV.Options) {
+				return nil, e.ErrEmptyFirstVariantImages
+			}
+			// check if images is empty string
+			for _, v := range rV.Images {
+				if v == "" {
+					return nil, e.ErrEmptyFirstVariantImages
+				}
+			}
 			// get all product variant medias from db by
 			pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
 			if err != nil && err != e.ErrDataNotFound {
@@ -767,6 +780,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 					})
 				}
 			}
+
 			// product variant medias - ori to req comparison - append updates and deletes
 			// ? how to get variant id?
 			for iOI, oI := range oV.Images {
@@ -817,6 +831,14 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			// if first variants
 			if i == 0 {
 				for _, vRVI := range request.Variants[i].Images {
+					if len(request.Variants[i].Images) != len(request.Variants[i].Options) {
+						return nil, e.ErrEmptyFirstVariantImages
+					}
+					for _, v := range request.Variants[i].Images {
+						if v == "" {
+							return nil, e.ErrEmptyFirstVariantImages
+						}
+					}
 					pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
 						After: &models.ProductVariantMedia{
 							MediaURL: vRVI,
@@ -1001,12 +1023,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	//* product variant medias - update operations
 	if len(pvmCreates) > 0 {
-		fmt.Println("newPvs", newPvIds)
 		for i, v := range pvmCreates {
 			if i < len(newPvIds) {
-				if v.After.MediaURL == "" {
-					return nil, e.ErrEmptyFirstVariantImages
-				}
 				v.After.ProductVariantID = newPvIds[i]
 				fmt.Println(v.After.ProductVariantID)
 				_, err := s.productVariantMediaRepository.Create(v.After)
@@ -1014,14 +1032,11 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 					return nil, err
 				}
 			} else {
-				log.Println("pvmCreates exceed newPv length")
+				return nil, e.ErrVariantImagesExceededFirstVariantLength
 			}
 		}
 	}
 	for _, v := range pvmUpdates {
-		if v.After.MediaURL == "" {
-			return nil, e.ErrEmptyFirstVariantImages
-		}
 		fmt.Println("pvmUpdates", v.Before.ID, v.After.MediaURL)
 		_, err := s.productVariantMediaRepository.Update(v.Before.ID, v.After)
 		if err != nil {
