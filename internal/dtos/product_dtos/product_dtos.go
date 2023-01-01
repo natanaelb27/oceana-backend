@@ -118,6 +118,8 @@ func NewProductQuery(c *gin.Context) *ProductQuery {
 		query.SortBy = "price_minimum_after_discount"
 	case "most-buy":
 		query.SortBy = "total_purchase_count"
+	case "updated-at":
+		query.SortBy = "products.updated_at"
 	default:
 		query.SortBy = "products.name"
 	}
