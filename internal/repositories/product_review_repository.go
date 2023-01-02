@@ -75,21 +75,21 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 
 	subQueryReviewImage := pr.db.Model(&models.ProductReviewMedia{}).
 		Select(`
-			product_reviews.product_id,
+			product_reviews.id AS product_review_id,
 			ARRAY_AGG(product_review_media.media_url) AS review_images
 		`).
 		Joins("JOIN product_reviews ON product_reviews.id = product_review_media.product_review_id").
 		Where("type = ?", product_media_constants.TypeImage).
-		Group("product_reviews.product_id")
+		Group("product_reviews.id")
 
 	subQueryReviewVideo := pr.db.Model(&models.ProductReviewMedia{}).
 		Select(`
-			product_reviews.product_id,
+			product_reviews.id AS product_review_id,
 			ARRAY_AGG(product_review_media.media_url) AS review_videos
 		`).
 		Joins("JOIN product_reviews ON product_reviews.id = product_review_media.product_review_id").
 		Where("type = ?", product_media_constants.TypeVideo).
-		Group("product_reviews.product_id")
+		Group("product_reviews.id")
 
 	// mediaSubQuery := pr.db.Model(&models.ProductReview{}).
 	// 	Select(`
@@ -99,7 +99,7 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 	// 	Joins("LEFT JOIN product_review_media ON product_review_media.product_review_id = product_reviews.id").
 	// 	Group("product_reviews.id")
 
-	queryResult := pr.db.Model(&models.ProductReview{}).
+	queryResult := pr.db.Debug().Model(&models.ProductReview{}).
 		Select(`
 			product_reviews.id, 
 			users.id AS user_id, 
@@ -117,13 +117,13 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 		Joins("JOIN users ON product_reviews.user_id = users.id").
 		Joins("JOIN order_details ON product_reviews.order_detail_id = order_details.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
-		Joins("LEFT JOIN (?) tbl_review_image ON product_reviews.product_id = tbl_review_image.product_id", subQueryReviewImage).
-		Joins("LEFT JOIN (?) tbl_review_video ON product_reviews.product_id = tbl_review_video.product_id", subQueryReviewVideo).
+		Joins("LEFT JOIN (?) tbl_review_image ON product_reviews.id = tbl_review_image.product_review_id", subQueryReviewImage).
+		Joins("LEFT JOIN (?) tbl_review_video ON product_reviews.id = tbl_review_video.product_review_id", subQueryReviewVideo).
 		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
 		Where("product_reviews.product_id = ?", id)
 
 	if query.Media {
-		queryResult = queryResult.Where("ARRAY_LENGTH(COALESCE(medias_agg.medias, '{}'), 1) > 0")
+		queryResult = queryResult.Where("ARRAY_LENGTH(COALESCE(tbl_review_image.review_images, '{}'), 1) + ARRAY_LENGTH(COALESCE(tbl_review_video.review_videos, '{}'), 1) > 0")
 	}
 
 	if query.Comment {
