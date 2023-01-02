@@ -99,6 +99,7 @@ func (u *authService) Register(userCreateRequest *externalDtos.UserCreateRequest
 		return nil, err
 	}
 	user.Password = hashedPassword
+	user.Role = "001"
 	createdUser, err := u.userRepository.Create(user)
 	if err != nil {
 		return nil, err
@@ -225,6 +226,7 @@ func (u *authService) RegisterWithGoogle(c *gin.Context, userRegisterWithGoogleR
 	}
 	user.Password = hashedPassword
 
+	user.Role = "001"
 	createdUser, err := u.userRepository.Create(user)
 	if err != nil {
 		return nil, err
