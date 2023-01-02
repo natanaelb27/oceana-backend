@@ -63,25 +63,29 @@ func (u sealabsPayService) WithTx(tx *gorm.DB) *sealabsPayService {
 }
 
 func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
+	fmt.Println("test 5")
 	// refund user
 	refundRequest, err := externalDtos.NewSealabsPayRefundRequest(request.TxnID)
 	if err != nil {
 		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-	
+	fmt.Println("test 6")
+
 	err = p.Refund(refundRequest)
 	if err != nil {
 		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-	
+
+	fmt.Println("test 7")
 	model := request.ToModel(userID)
-	
+
 	if !utils.ValidateSealabsPayCardNumber(model.AccountNumber) {
 		fmt.Println("SERVICE", e.ErrInvalidSealabsPayCardNumber)
 		return nil, e.ErrInvalidSealabsPayCardNumber
 	}
+	fmt.Println("test 8")
 
 	// set current card as default if none currently exists
 	_, err = p.sealabsPayRepository.GetAll(userID)
@@ -89,23 +93,27 @@ func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *ex
 		model.IsDefault = true
 	}
 
+	fmt.Println("test 9")
 	_, err = p.redisRepository.Get(c, request.Signature)
 	if err != nil {
 		fmt.Println("SERVICE", err)
 		return nil, e.ErrInvalidSignature
 	}
+	fmt.Println("test 10")
 	err = p.redisRepository.Delete(c, request.Signature)
 	if err != nil {
 		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-	
+
+	fmt.Println("test 11")
 	newModel, err := p.sealabsPayRepository.Create(model)
 	if err != nil {
 		fmt.Println("SERVICE", err)
 		return nil, err
 	}
 
+	fmt.Println("test 12")
 	response := externalDtos.NewSealabsPayCreateResponse(newModel)
 
 	fmt.Println("SERVICE SUCCESS")

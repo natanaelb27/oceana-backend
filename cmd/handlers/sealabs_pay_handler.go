@@ -12,6 +12,7 @@ import (
 )
 
 func (h *Handler) SealabsPayCreate(c *gin.Context) {
+	fmt.Println("test")
 	userID := utils.GinGetUUID(c, "id")
 	if userID == uuid.Nil {
 		fmt.Println("HANDLER", e.ErrInvalidIdentifier)
@@ -19,15 +20,19 @@ func (h *Handler) SealabsPayCreate(c *gin.Context) {
 		return
 	}
 
+	fmt.Println("test 2")
 	var request *dtos.SealabsPayCreateRequest
+	fmt.Println(request)
 	if err := c.ShouldBindJSON(&request); err != nil {
 		fmt.Println("HANDLER", err)
 		utils.ResponseError(c, err)
 		return
 	}
-	
+
+	fmt.Println("test 3")
 	tx := c.MustGet("tx").(*gorm.DB)
-	
+
+	fmt.Println("test 4")
 	_, err := h.sealabsPayService.WithTx(tx).Create(c, userID, request)
 	if err != nil {
 		fmt.Println("HANDLER", err)
