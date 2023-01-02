@@ -73,6 +73,7 @@ func NewMarketplaceVoucherCreateResponse(source *models.MarketplaceVoucher) (tar
 
 type MarketplaceVoucherGetResponse struct {
 	ID                    uint      `json:"id"`
+	BannerUrl             string    `json:"banner_url"`
 	Name                  string    `json:"name"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -88,6 +89,7 @@ type MarketplaceVoucherGetResponse struct {
 func NewMarketplaceVoucherGetResponse(source *models.MarketplaceVoucher) (target *MarketplaceVoucherGetResponse) {
 	target = &MarketplaceVoucherGetResponse{
 		ID:                    source.ID,
+		BannerUrl:             source.BannerUrl,
 		Name:                  source.Name,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,

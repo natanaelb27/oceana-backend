@@ -8,6 +8,7 @@ import (
 
 type MarketplaceVoucher struct {
 	ID                    uint
+	BannerUrl             string
 	Name                  string
 	StartDatetime         time.Time
 	EndDatetime           time.Time
