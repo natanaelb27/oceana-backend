@@ -265,21 +265,25 @@ func (p *sealabsPayService) PaymentOTP(inboundRequest *externalDtos.SealabsPayPa
 }
 
 func (p *sealabsPayService) Refund(refundRequest *externalDtos.SealabsPayRefundRequest) error {
+	fmt.Println("refund 1")
 	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayRegister, &externalDtos.SealabsPayPaymentInboundRequest{})
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("refund 2")
 	outboundRequest, err := p.generateRefundRequest(refundRequest, sealabsPayInfo)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("refund 3")
 	err = p.callSealabsPayRefundApi(outboundRequest)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("refund 4")
 	return nil
 }
 
