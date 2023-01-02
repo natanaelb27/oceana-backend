@@ -212,53 +212,35 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 	}
 
 	// identify if there are any changes in merchant configuration
-	merchantConfigurationChanges := false
 	// initiate merchant configuration struct
 	newMerchantConfiguration := &models.MerchantConfiguration{
 		MerchantID:   merchant.ID,
-		PreorderDay:  logistics.PreorderDay,
-		IsPrintLabel: logistics.IsPrintLabel,
-	}
-
-	// if preorderDay changes
-	if requestLogistics.PreorderDay != logistics.PreorderDay {
-		merchantConfigurationChanges = true
-		// fill merchan_configuration > process_day
-		newMerchantConfiguration.PreorderDay = requestLogistics.PreorderDay
-	}
-	// if isPrintLabel changes
-	if requestLogistics.IsPrintLabel != logistics.IsPrintLabel {
-		merchantConfigurationChanges = true
-		// fill merchant_configurations > IsPrintLabel
-		newMerchantConfiguration.IsPrintLabel = requestLogistics.IsPrintLabel
+		PreorderDay:  requestLogistics.PreorderDay,
+		IsPrintLabel: requestLogistics.IsPrintLabel,
 	}
 
 	// if there are any changes in merchant configuration
-	if merchantConfigurationChanges {
-		// get merchant_cnfiguration by merchant_id
-		_, err = s.merchantConfigurationRepository.GetByMerchantID(merchant.ID)
-		if err != nil && err != e.ErrDataNotFound {
+	// get merchant_cnfiguration by merchant_id
+	_, err = s.merchantConfigurationRepository.GetByMerchantID(merchant.ID)
+	if err != nil && err != e.ErrDataNotFound {
+		return nil, err
+	}
+	if err == e.ErrDataNotFound {
+		// create merchant_configuration with its struct value
+		_, err = s.merchantConfigurationRepository.Create(newMerchantConfiguration)
+		if err != nil {
 			return nil, err
 		}
-		if err == e.ErrDataNotFound {
-			// create merchant_configuration with its struct value
-			_, err = s.merchantConfigurationRepository.Create(newMerchantConfiguration)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// update merchant_configuration with its struct
-			newMerchantConfigurationMap := map[string]any{
-				"merchant_id":  merchant.ID,
-				"preorder_day": newMerchantConfiguration.PreorderDay,
-			}
-			if requestLogistics.IsEditPreorderDay {
-				newMerchantConfigurationMap["is_print_label"] = newMerchantConfiguration.IsPrintLabel
-			}
-			err = s.merchantConfigurationRepository.UpsertUsingMap(newMerchantConfigurationMap)
-			if err != nil && err != e.ErrDataNotFound {
-				return nil, err
-			}
+	} else {
+		// update merchant_configuration with its struct
+		newMerchantConfigurationMap := map[string]any{
+			"merchant_id":  merchant.ID,
+			"preorder_day": newMerchantConfiguration.PreorderDay,
+		}
+		newMerchantConfigurationMap["is_print_label"] = newMerchantConfiguration.IsPrintLabel
+		err = s.merchantConfigurationRepository.UpsertUsingMap(newMerchantConfigurationMap)
+		if err != nil && err != e.ErrDataNotFound {
+			return nil, err
 		}
 	}
 
@@ -276,6 +258,7 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 			"merchant_id": merchant.ID,
 			"status":      "active",
 		}
+		fmt.Println(productMapCondition)
 		if requestLogistics.PreorderDay == 2 {
 			productMapCondition["is_preorder"] = true
 		}
