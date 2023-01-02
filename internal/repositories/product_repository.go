@@ -790,7 +790,6 @@ func (r *productRepository) GetUpdateByProductID(id uint) (productModel *product
 			products.condition AS condition,
 			products.status AS status,
 			products.process_day AS process_day,
-			products.preorder_day AS preorder_day,
 			COALESCE((@sqProductMediaImage),'{}') AS images,
 			COALESCE((@sqProductMediaVideo),'{}') AS videos,
 			NULL AS product_items
@@ -912,7 +911,9 @@ func (r *productRepository) GetAvailableProductsByPromotionPeriod(merchantID uin
 			Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
 			Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", query.FilterEndDatetime).
 			Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", query.FilterStartDatetime).
-			Where("merchant_promotions.merchant_id = ?", merchantID)
+			Where("merchant_promotions.merchant_id = ?", merchantID).
+			Where("product_merchant_promotions.deleted_at IS NULL").
+			Where("merchant_promotions.deleted_at IS NULL")
 
 		result.Joins("LEFT JOIN product_merchant_promotions ON products.id = product_merchant_promotions.product_id").
 			Where("products.id NOT IN (?)", subQueryProductList)

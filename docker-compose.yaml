@@ -10,11 +10,19 @@ services:
     container_name: oceana_api_c
     ports:
       - '8080:8080'
+    expose:
+      - 8080
     depends_on:
-      - db
+      # depends on db that is healthy
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    entrypoint: ["/oceana-app"]
     # since we choose to build the golang app then we don't need to map sync file to docker volume which is better to use if we run the main.go or use nodemon to run the file and hot reload if there are changes in any files
     # volumes:
     #   - ./group-project-backend:/app
+    restart: always
   db:
     image: postgres:14.6-alpine
     environment:
@@ -24,8 +32,31 @@ services:
     # [container_port]:[host_port]
     ports:
       - 5445:5432
+    # healthcheck to make sure service_healthy is true
+    healthcheck:
+      test: "pg_isready --username=postgres && psql --username=postgres --list"
+      interval: 1s
+      timeout: 1s
+      retries: 20
     volumes:
       - postgres-db:/var/lib/postgresql/data
-  
+  cache:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - 6337:${REDIS_PORT}
+      # we use a custom redis-server command with --save 20 1 which instructs the server to save 1 or more writes every 20 seconds to disk in case the server restarts. We are using the --requirepass parameter to add authentication with the password to read/write data on the Redis server
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    volumes: 
+      - cache:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+# driver local means the volumes created on the same docker host where you run your container
 volumes:
   postgres-db:
+    driver: local
+  cache:
+    driver: local

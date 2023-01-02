@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -343,8 +344,11 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 		Condition:   request.Condition,
 		Status:      request.Status,
 		ProcessDay:  request.ProcessDay,
-		PreorderDay: request.PreorderDay,
 	}
+	if request.ProcessDay < 2 {
+		product.ProcessDay = 2
+	}
+
 	createdProduct, err := s.productRepository.CreateProduct(product)
 	if err != nil {
 		return nil, err
@@ -408,7 +412,10 @@ func (s *productService) CreateProduct(request *productInternalDtos.ProductModel
 			// create product variant media on first variant only
 			if iVariant == 0 {
 				if len(variant.Images) != len(variant.Options) {
-					return nil, e.ErrEmptyVariants
+					return nil, e.ErrEmptyFirstVariantImages
+				}
+				if variant.Images[iOption] == "" {
+					return nil, e.ErrEmptyFirstVariantImages
 				}
 
 				productVariantMedia := &models.ProductVariantMedia{
@@ -521,6 +528,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	// check if product condition not its enum
 	if request.Condition != constants.ProductConditionNew &&
 		request.Condition != constants.ProductConditionUsed {
+		log.Println("err:1")
 		return nil, e.ErrInvalidModel
 	}
 	newProductMap := map[string]any{
@@ -534,9 +542,13 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		"package_size": request.PackageSize,
 		"condition":    request.Condition,
 		"status":       request.Status,
-		"process_day":  request.ProcessDay,
-		"preorder_day": request.PreorderDay,
 	}
+	if request.ProcessDay < 2 {
+		newProductMap["process_day"] = 2
+	} else {
+		newProductMap["process_day"] = request.ProcessDay
+	}
+
 	// update product
 	err = s.productRepository.UpdateUsingMap(product.ID, newProductMap)
 	if err != nil {
@@ -728,7 +740,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		if iOV == 0 {
 			// if length of images not equal options then invalid model
 			if len(rV.Images) != len(rV.Options) {
-				return nil, e.ErrInvalidVariantsMedia
+				return nil, e.ErrEmptyVariantImages
 			}
 		} else {
 			// if iteration more than 0 then don't allow image to exists
@@ -743,6 +755,16 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 		// if first variant
 		if iOV == 0 {
+			// validate if images length not match options length
+			if len(rV.Images) != len(rV.Options) {
+				return nil, e.ErrEmptyFirstVariantImages
+			}
+			// check if images is empty string
+			for _, v := range rV.Images {
+				if v == "" {
+					return nil, e.ErrEmptyFirstVariantImages
+				}
+			}
 			// get all product variant medias from db by
 			pvm, err := s.productVariantMediaRepository.GetAllByProductVariantID(pvIDs)
 			if err != nil && err != e.ErrDataNotFound {
@@ -758,6 +780,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 					})
 				}
 			}
+
 			// product variant medias - ori to req comparison - append updates and deletes
 			// ? how to get variant id?
 			for iOI, oI := range oV.Images {
@@ -808,6 +831,14 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 			// if first variants
 			if i == 0 {
 				for _, vRVI := range request.Variants[i].Images {
+					if len(request.Variants[i].Images) != len(request.Variants[i].Options) {
+						return nil, e.ErrEmptyFirstVariantImages
+					}
+					for _, v := range request.Variants[i].Images {
+						if v == "" {
+							return nil, e.ErrEmptyFirstVariantImages
+						}
+					}
 					pvmCreates = append(pvmCreates, &productInternalDtos.PvmUpdateInfo{
 						After: &models.ProductVariantMedia{
 							MediaURL: vRVI,
@@ -820,6 +851,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 
 	// validation - product items length
 	if len(request.ProductItems) != piLengthValidation {
+		log.Println("err:2")
 		return nil, e.ErrInvalidModel
 	}
 
@@ -884,6 +916,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	rC := request.Couriers
 	// validate couriers length
 	if len(oC) != len(rC) {
+		log.Println("err:3")
 		return nil, e.ErrInvalidModel
 	}
 	for iVOC, vOC := range oC {
@@ -891,11 +924,13 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		rCS := request.Couriers[iVOC].CourierServices
 		// validate courier services length
 		if len(oCS) != len(rCS) {
+			log.Println("err:4")
 			return nil, e.ErrInvalidModel
 		}
 		for iVOCS, vOCS := range oCS {
 			merchantCourierService, err := s.merchantCourierServiceRepository.GetByMerchantIDCourierServiceID(oriProductModel.MerchantID, vOCS.ID)
 			if err != nil {
+				log.Println("err:5")
 				return nil, e.ErrInvalidModel
 			}
 
@@ -987,12 +1022,18 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	}
 
 	//* product variant medias - update operations
-	for i, v := range pvmCreates {
-		fmt.Println("pvmCreates", v.After.MediaURL)
-		v.After.ProductVariantID = newPvIds[i]
-		_, err := s.productVariantMediaRepository.Create(v.After)
-		if err != nil {
-			return nil, err
+	if len(pvmCreates) > 0 {
+		for i, v := range pvmCreates {
+			if i < len(newPvIds) {
+				v.After.ProductVariantID = newPvIds[i]
+				fmt.Println(v.After.ProductVariantID)
+				_, err := s.productVariantMediaRepository.Create(v.After)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, e.ErrVariantImagesExceededFirstVariantLength
+			}
 		}
 	}
 	for _, v := range pvmUpdates {
@@ -1093,6 +1134,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 	for iPI, vPI := range request.ProductItems {
 		// validate variant index length to request variant length (variant type length)
 		if len(vPI.VariantIndex) != len(request.Variants) {
+			log.Println("err:6")
 			return nil, e.ErrInvalidModel
 		}
 		choosenVariantIndexes := make([]uint, 0)
@@ -1101,7 +1143,8 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		for iVI, vVI := range vPI.VariantIndex {
 			// validate if value is less than request variant length (variant type length)
 			// if request variant index is more than variant type length then err
-			if int(vVI) > len(variantsMap) {
+			if int(iVI) > len(variantsMap) {
+				log.Println("err:7")
 				return nil, e.ErrInvalidModel
 			}
 			// append choosen variant indexes
@@ -1111,6 +1154,7 @@ func (s *productService) UpdateProductUsingModel(userID uuid.UUID, request *prod
 		}
 		// validate if combination already added before
 		if exists := viCombinationMap[viCombination]; exists {
+			log.Println("err:8")
 			return nil, e.ErrInvalidModel
 		}
 		// add combination to map

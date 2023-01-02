@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/mocks"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
@@ -27,7 +27,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 	}
 
 	type fields struct {
-		walletService *mocks.WalletService
+		walletService *services.MockWalletService
 	}
 
 	tests := []struct {
@@ -73,7 +73,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 				req, _ := http.NewRequest(http.MethodPatch, endpoint, body)
 				r.ServeHTTP(w, req)
 			},
-			want: `{"code":500,"data":null,"error":"Bad Request","message":"Pin is required. PinConfirmation is required.","metadata":null}`,
+			want: `{"code":400,"data":null,"error":"Bad Request","message":"Pin is required. PinConfirmation is required.","metadata":null}`,
 		},
 		{
 			mock: func(f *fields) {
@@ -120,7 +120,7 @@ func TestHandler_WalletActivate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.fields = fields{
-				mocks.NewWalletService(t),
+				services.NewMockWalletService(t),
 			}
 			h := handlers.New(&handlers.HandlerConfig{
 				WalletService: tt.fields.walletService,

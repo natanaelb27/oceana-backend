@@ -10,7 +10,7 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 	path := "/profile"
 	privateRoute := private.Group(path)
 	{
-		privateRoute.GET("", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserGetProfile)
+		privateRoute.GET("", func(c *gin.Context) { middlewares.Role(c, "101") }, h.UserGetProfile)
 		privateRoute.PUT("", func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserUpdateProfile)
 		privateRoute.POST("/logout", func(c *gin.Context) { middlewares.Role(c, "101") }, h.UserLogout)
 		privateRoute.PATCH("/email", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.UserUpdateEmail)

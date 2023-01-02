@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
@@ -71,22 +72,53 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 		Joins("JOIN product_variation_snapshots ON product_snapshots.id = product_variation_snapshots.product_snapshot_id").
 		Where("ps.id = product_snapshots.id").
 		Group("ps.id")
-	mediaSubQuery := pr.db.Model(&models.ProductReview{}).
+
+	subQueryReviewImage := pr.db.Model(&models.ProductReviewMedia{}).
 		Select(`
-			product_reviews.id AS product_review_id,
-			ARRAY_REMOVE(ARRAY_AGG(product_review_media.media_url), NULL) AS medias
+			product_reviews.product_id,
+			ARRAY_AGG(product_review_media.media_url) AS review_images
 		`).
-		Joins("LEFT JOIN product_review_media ON product_review_media.product_review_id = product_reviews.id").
-		Group("product_reviews.id")
+		Joins("JOIN product_reviews ON product_reviews.id = product_review_media.product_review_id").
+		Where("type = ?", product_media_constants.TypeImage).
+		Group("product_reviews.product_id")
+
+	subQueryReviewVideo := pr.db.Model(&models.ProductReviewMedia{}).
+		Select(`
+			product_reviews.product_id,
+			ARRAY_AGG(product_review_media.media_url) AS review_videos
+		`).
+		Joins("JOIN product_reviews ON product_reviews.id = product_review_media.product_review_id").
+		Where("type = ?", product_media_constants.TypeVideo).
+		Group("product_reviews.product_id")
+
+	// mediaSubQuery := pr.db.Model(&models.ProductReview{}).
+	// 	Select(`
+	// 		product_reviews.id AS product_review_id,
+	// 		ARRAY_REMOVE(ARRAY_AGG(product_review_media.media_url), NULL) AS medias
+	// 	`).
+	// 	Joins("LEFT JOIN product_review_media ON product_review_media.product_review_id = product_reviews.id").
+	// 	Group("product_reviews.id")
 
 	queryResult := pr.db.Model(&models.ProductReview{}).
 		Select(`
-			product_reviews.id, users.id AS user_id, users.full_name, users.username, users.photo, product_reviews.product_id, product_reviews.rating, product_reviews.review, (?) AS product_variations, COALESCE(medias_agg.medias, '{}') AS media,  product_reviews.created_at
+			product_reviews.id, 
+			users.id AS user_id, 
+			users.full_name, 
+			users.username, 
+			users.photo, 
+			product_reviews.product_id, 
+			product_reviews.rating, 
+			product_reviews.review, 
+			(?) AS product_variations, 
+			COALESCE(tbl_review_image.review_images, '{}') AS review_images,
+			COALESCE(tbl_review_video.review_videos, '{}') AS review_videos,
+			product_reviews.created_at
 		`, productVariantSubQuery).
 		Joins("JOIN users ON product_reviews.user_id = users.id").
 		Joins("JOIN order_details ON product_reviews.order_detail_id = order_details.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
-		Joins("LEFT JOIN (?) medias_agg ON product_reviews.id = medias_agg.product_review_id", mediaSubQuery).
+		Joins("LEFT JOIN (?) tbl_review_image ON product_reviews.product_id = tbl_review_image.product_id", subQueryReviewImage).
+		Joins("LEFT JOIN (?) tbl_review_video ON product_reviews.product_id = tbl_review_video.product_id", subQueryReviewVideo).
 		Order(fmt.Sprintf("%s %s", query.SortBy, query.Sort)).
 		Where("product_reviews.product_id = ?", id)
 

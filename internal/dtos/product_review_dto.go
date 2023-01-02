@@ -8,12 +8,14 @@ import (
 )
 
 type ProductReviewList struct {
-	ID                 uint           `json:"id"`
-	UserID             uuid.UUID      `json:"user_id"`
-	FullName           string         `json:"full_name"`
-	Username           string         `json:"username"`
-	Media              pq.StringArray `json:"media" gorm:"type:text[]"`
-	Photo              *string        `json:"photo"`
+	ID       uint           `json:"id"`
+	UserID   uuid.UUID      `json:"user_id"`
+	FullName string         `json:"full_name"`
+	Username string         `json:"username"`
+	Media    pq.StringArray `json:"media" gorm:"type:text[]"`
+	// Photo              *string        `json:"photo"`
+	ReviewImages       pq.StringArray `json:"review_images" gorm:"type:text[]"`
+	ReviewVideos       pq.StringArray `json:"review_videos" gorm:"type:text[]"`
 	ProductID          uint           `json:"product_id"`
 	Rating             uint           `json:"rating"`
 	Review             string         `json:"review"`

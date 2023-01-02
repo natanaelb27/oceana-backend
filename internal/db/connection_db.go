@@ -77,6 +77,7 @@ func Connect() {
 		&models.RefundMedia{},
 		&models.Cart{},
 		&models.MerchantConfiguration{},
+		&models.Chat{},
 	)
 	if err != nil {
 		log.Fatal("Database auto migration failed")
