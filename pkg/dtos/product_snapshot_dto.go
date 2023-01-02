@@ -16,7 +16,8 @@ type GetByOrderDetailIDResponse struct {
 	MerchantPhoto       string         `json:"merchant_photo"`
 	MerchantID          uint           `json:"merchant_id"`
 	ShopName            string         `json:"shop_name"`
-	Name                string         `json:"name"`
+	ProductName         string         `json:"product_name"`
+	CurrentProductName  string         `json:"current_product_name"`
 	IsHazardous         bool           `json:"is_hazardous"`
 	Weight              uint           `json:"weight"`
 	PackageSize         string         `json:"package_size"`
@@ -38,7 +39,8 @@ func NewGetByOrderDetailIDResponse(source *dtos.ProductSnapshotDetails) (target 
 		MerchantPhoto:       source.MerchantPhoto,
 		MerchantID:          source.MerchantID,
 		ShopName:            source.ShopName,
-		Name:                source.Name,
+		ProductName:         source.ProductName,
+		CurrentProductName:  source.CurrentProductName,
 		IsHazardous:         source.IsHazardous,
 		Weight:              source.Weight,
 		PackageSize:         source.PackageSize,

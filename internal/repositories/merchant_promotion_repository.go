@@ -51,8 +51,8 @@ func (mp *merchantPromotionRepository) CreateMyShopPromotion(newModel *models.Me
 	subQueryProductList := mp.db.Model(&models.ProductMerchantPromotion{}).
 		Select("ARRAY_AGG(product_merchant_promotions.product_id)").
 		Joins("JOIN merchant_promotions ON merchant_promotions.id = product_merchant_promotions.merchant_promotion_id").
-		Where("merchant_promotions.start_datetime::timestamp <= ?::timestamptz", newModel.EndDatetime).
-		Where("?::timestamptz <= merchant_promotions.end_datetime::timestamp", newModel.StartDatetime).
+		Where("merchant_promotions.start_datetime::timestamptz <= ?::timestamptz", newModel.EndDatetime).
+		Where("?::timestamptz <= merchant_promotions.end_datetime::timestamptz", newModel.StartDatetime).
 		Where("merchant_promotions.merchant_id = ?", newModel.MerchantId).
 		Where("product_merchant_promotions.deleted_at IS NULL").
 		Where("merchant_promotions.deleted_at IS NULL")
