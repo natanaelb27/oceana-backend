@@ -152,7 +152,6 @@ func (h *Handler) SealabsPayRegisterOTP(c *gin.Context) {
 	utils.ResponseSuccess(c, *otpURL, nil)
 }
 
-
 func (h *Handler) SealabsPayPaymentOTP(c *gin.Context) {
 	var inboundRequest *dtos.SealabsPayPaymentInboundRequest
 	err := c.ShouldBindJSON(&inboundRequest)
