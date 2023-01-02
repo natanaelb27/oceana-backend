@@ -407,6 +407,10 @@ func Init() *Handler {
 		ChatRepository: chatRepository,
 	})
 
+	productSnapshotService := services.NewProductSnapshotService(&services.ProductSnapshotServiceConfig{
+		ProductSnapshotRepository: productSnapshotRepository,
+	})
+
 	h := New(&HandlerConfig{
 		RoleService:               roleService,
 		WalletService:             walletService,
@@ -433,6 +437,7 @@ func Init() *Handler {
 		RefundService:             refundService,
 		MediaService:              mediaService,
 		ChatService:               chatService,
+		ProductSnapshotService:    productSnapshotService,
 	})
 
 	return h

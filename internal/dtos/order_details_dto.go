@@ -10,8 +10,10 @@ import (
 type OrderDetailList struct {
 	OrderDetailID         uuid.UUID      `json:"order_detail_id"`
 	Message               string         `json:"message"`
+	ProductID             uint           `json:"product_id"`
 	ProductImage          string         `json:"product_image"`
 	ProductName           string         `json:"product_name"`
+	CurrentProductName    string         `json:"current_product_name"`
 	ProductVariations     string         `json:"product_variations"`
 	Quantity              uint           `json:"quantity"`
 	Price                 uint           `json:"price"`
