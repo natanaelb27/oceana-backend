@@ -18,7 +18,7 @@ type UserCreateRequest struct {
 	Birthdate   *time.Time            `form:"birthdate" json:"birthdate"`
 	Photo       *multipart.FileHeader `form:"photo" json:"photo"`
 	GoogleID    *string               `form:"google_id" json:"google_id"`
-	Role        string                `form:"role" json:"role" binding:"required"`
+	Role        string                `form:"role" json:"role"`
 }
 
 func (source *UserCreateRequest) ToModel() (target *models.User) {
@@ -82,7 +82,7 @@ type UserRegisterWithGoogleRequest struct {
 	Email       string  `json:"email" binding:"required"`
 	Password    string  `json:"password" binding:"required"`
 	PhoneNumber string  `json:"phone_number" binding:"required"`
-	Role        string  `json:"role" binding:"required"`
+	Role        string  `json:"role"`
 	ImageURL    string  `json:"image_url"`
 }
 
