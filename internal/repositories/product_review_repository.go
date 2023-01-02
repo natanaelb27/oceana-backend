@@ -123,7 +123,7 @@ func (pr *productReviewRepository) GetByProductID(id uint, pagination *utils.Pag
 		Where("product_reviews.product_id = ?", id)
 
 	if query.Media {
-		queryResult = queryResult.Where("ARRAY_LENGTH(COALESCE(medias_agg.medias, '{}'), 1) > 0")
+		queryResult = queryResult.Where("ARRAY_LENGTH(COALESCE(tbl_review_image.review_images, '{}'), 1) + ARRAY_LENGTH(COALESCE(tbl_review_video.review_videos, '{}'), 1) > 0")
 	}
 
 	if query.Comment {
