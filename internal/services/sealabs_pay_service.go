@@ -66,17 +66,20 @@ func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *ex
 	// refund user
 	refundRequest, err := externalDtos.NewSealabsPayRefundRequest(request.TxnID)
 	if err != nil {
+		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-
+	
 	err = p.Refund(refundRequest)
 	if err != nil {
+		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-
+	
 	model := request.ToModel(userID)
-
+	
 	if !utils.ValidateSealabsPayCardNumber(model.AccountNumber) {
+		fmt.Println("SERVICE", e.ErrInvalidSealabsPayCardNumber)
 		return nil, e.ErrInvalidSealabsPayCardNumber
 	}
 
@@ -88,20 +91,24 @@ func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *ex
 
 	_, err = p.redisRepository.Get(c, request.Signature)
 	if err != nil {
+		fmt.Println("SERVICE", err)
 		return nil, e.ErrInvalidSignature
 	}
 	err = p.redisRepository.Delete(c, request.Signature)
 	if err != nil {
+		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-
+	
 	newModel, err := p.sealabsPayRepository.Create(model)
 	if err != nil {
+		fmt.Println("SERVICE", err)
 		return nil, err
 	}
 
 	response := externalDtos.NewSealabsPayCreateResponse(newModel)
 
+	fmt.Println("SERVICE SUCCESS")
 	return response, nil
 }
 

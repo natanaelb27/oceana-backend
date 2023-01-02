@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
@@ -12,24 +14,28 @@ import (
 func (h *Handler) SealabsPayCreate(c *gin.Context) {
 	userID := utils.GinGetUUID(c, "id")
 	if userID == uuid.Nil {
+		fmt.Println("HANDLER", e.ErrInvalidIdentifier)
 		utils.ResponseError(c, e.ErrInvalidIdentifier)
 		return
 	}
 
 	var request *dtos.SealabsPayCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
+		fmt.Println("HANDLER", err)
 		utils.ResponseError(c, err)
 		return
 	}
-
+	
 	tx := c.MustGet("tx").(*gorm.DB)
-
+	
 	_, err := h.sealabsPayService.WithTx(tx).Create(c, userID, request)
 	if err != nil {
+		fmt.Println("HANDLER", err)
 		utils.ResponseError(c, err)
 		return
 	}
 
+	fmt.Println("HANDLER SUCCESS")
 	utils.ResponseSuccess(c, nil, nil)
 }
 
@@ -151,7 +157,6 @@ func (h *Handler) SealabsPayRegisterOTP(c *gin.Context) {
 
 	utils.ResponseSuccess(c, *otpURL, nil)
 }
-
 
 func (h *Handler) SealabsPayPaymentOTP(c *gin.Context) {
 	var inboundRequest *dtos.SealabsPayPaymentInboundRequest
