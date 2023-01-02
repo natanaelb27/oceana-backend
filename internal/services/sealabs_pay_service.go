@@ -63,29 +63,22 @@ func (u sealabsPayService) WithTx(tx *gorm.DB) *sealabsPayService {
 }
 
 func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *externalDtos.SealabsPayCreateRequest) (*externalDtos.SealabsPayCreateResponse, error) {
-	fmt.Println("test 5")
 	// refund user
 	refundRequest, err := externalDtos.NewSealabsPayRefundRequest(request.TxnID)
 	if err != nil {
-		fmt.Println("SERVICE", err)
 		return nil, err
 	}
-	fmt.Println("test 6")
 
 	err = p.Refund(refundRequest)
 	if err != nil {
-		fmt.Println("SERVICE", err)
 		return nil, err
 	}
 
-	fmt.Println("test 7")
 	model := request.ToModel(userID)
 
 	if !utils.ValidateSealabsPayCardNumber(model.AccountNumber) {
-		fmt.Println("SERVICE", e.ErrInvalidSealabsPayCardNumber)
 		return nil, e.ErrInvalidSealabsPayCardNumber
 	}
-	fmt.Println("test 8")
 
 	// set current card as default if none currently exists
 	_, err = p.sealabsPayRepository.GetAll(userID)
@@ -93,30 +86,22 @@ func (p *sealabsPayService) Create(c *gin.Context, userID uuid.UUID, request *ex
 		model.IsDefault = true
 	}
 
-	fmt.Println("test 9")
 	_, err = p.redisRepository.Get(c, request.Signature)
 	if err != nil {
-		fmt.Println("SERVICE", err)
 		return nil, e.ErrInvalidSignature
 	}
-	fmt.Println("test 10")
 	err = p.redisRepository.Delete(c, request.Signature)
 	if err != nil {
-		fmt.Println("SERVICE", err)
 		return nil, err
 	}
 
-	fmt.Println("test 11")
 	newModel, err := p.sealabsPayRepository.Create(model)
 	if err != nil {
-		fmt.Println("SERVICE", err)
 		return nil, err
 	}
 
-	fmt.Println("test 12")
 	response := externalDtos.NewSealabsPayCreateResponse(newModel)
 
-	fmt.Println("SERVICE SUCCESS")
 	return response, nil
 }
 
@@ -265,26 +250,21 @@ func (p *sealabsPayService) PaymentOTP(inboundRequest *externalDtos.SealabsPayPa
 }
 
 func (p *sealabsPayService) Refund(refundRequest *externalDtos.SealabsPayRefundRequest) error {
-	fmt.Println("refund 1")
 	sealabsPayInfo, err := p.generateSealabsPayInfo(constants.SealabsPayRegister, &externalDtos.SealabsPayPaymentInboundRequest{})
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("refund 2")
 	outboundRequest, err := p.generateRefundRequest(refundRequest, sealabsPayInfo)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("refund 3")
 	err = p.callSealabsPayRefundApi(outboundRequest)
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("refund 4")
 	return nil
 }
 
@@ -412,7 +392,6 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 }
 
 func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error {
-	fmt.Println("callSealabsPayRefundApi 1")
 	client := &http.Client{
 		// turn off auto-redirect
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -420,31 +399,20 @@ func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error
 		},
 	}
 
-	fmt.Println("callSealabsPayRefundApi 2")
 	response, err := client.Do(request)
-	fmt.Println(response)
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("callSealabsPayRefundApi 3")
 	if response.StatusCode != http.StatusOK {
 		var errResponse *externalDtos.SealabsPayPaymentResponseError
 		responseBodyBytes, err := ioutil.ReadAll(response.Body)
-		fmt.Println("callSealabsPayRefundApi 4")
-		fmt.Println(responseBodyBytes)
-		fmt.Println(err)
 		if err != nil {
 			return err
 		}
 		json.Unmarshal(responseBodyBytes, &errResponse)
-		fmt.Println("callSealabsPayRefundApi 4.5")
-		fmt.Println(errResponse)
-		fmt.Println(errResponse.Message)
 		return fmt.Errorf("%s", errResponse.Message)
 	}
-	fmt.Println("callSealabsPayRefundApi 5")
 
 	return nil
 }
