@@ -104,6 +104,7 @@ func (r *marketplaceVoucherRepository) GetAllDetails(query *externalDtos.Marketp
 	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
 		Select(`
 			id, 
+			banner_url, 
 			name, 
 			start_datetime, 
 			end_datetime, 
@@ -207,6 +208,7 @@ func (r *marketplaceVoucherRepository) GetDetailsByID(id uint) (*dtos.Marketplac
 	queryResult := r.db.Model(&models.MarketplaceVoucher{}).
 		Select(`
 			id, 
+			banner_url, 
 			name, 
 			start_datetime, 
 			end_datetime, 

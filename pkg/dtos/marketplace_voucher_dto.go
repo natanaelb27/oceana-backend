@@ -12,6 +12,7 @@ import (
 )
 
 type MarketplaceVoucherCreateRequest struct {
+	BannerUrl             string    `json:"banner_url"`
 	Name                  string    `json:"name" binding:"required"`
 	StartDatetime         time.Time `json:"start_datetime" binding:"required"`
 	EndDatetime           time.Time `json:"end_datetime" binding:"required"`
@@ -24,6 +25,7 @@ type MarketplaceVoucherCreateRequest struct {
 
 func (source *MarketplaceVoucherCreateRequest) ToModel() (target *models.MarketplaceVoucher) {
 	target = &models.MarketplaceVoucher{
+		BannerUrl:             source.BannerUrl,
 		Name:                  source.Name,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -39,6 +41,7 @@ func (source *MarketplaceVoucherCreateRequest) ToModel() (target *models.Marketp
 
 type MarketplaceVoucherCreateResponse struct {
 	ID                    uint      `json:"id"`
+	BannerUrl             string    `json:"banner_url"`
 	Name                  string    `json:"name"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -55,6 +58,7 @@ type MarketplaceVoucherCreateResponse struct {
 func NewMarketplaceVoucherCreateResponse(source *models.MarketplaceVoucher) (target *MarketplaceVoucherCreateResponse) {
 	target = &MarketplaceVoucherCreateResponse{
 		ID:                    source.ID,
+		BannerUrl:             source.BannerUrl,
 		Name:                  source.Name,
 		StartDatetime:         source.StartDatetime,
 		EndDatetime:           source.EndDatetime,
@@ -119,6 +123,7 @@ func NewMarketplaceVoucherDeleteResponse(source *models.MarketplaceVoucher) (tar
 
 type MarketplaceVoucherGetAllResponse struct {
 	ID                    uint      `json:"id"`
+	BannerUrl             string    `json:"banner_url"`
 	Name                  string    `json:"name"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
@@ -135,6 +140,7 @@ func NewMarketplaceVoucherGetAllResponse(source []*dtos.MarketplaceVoucherDetail
 	for _, result := range source {
 		target = append(target, &MarketplaceVoucherGetAllResponse{
 			ID:                    result.ID,
+			BannerUrl:             result.BannerUrl,
 			Name:                  result.Name,
 			StartDatetime:         result.StartDatetime,
 			EndDatetime:           result.EndDatetime,

@@ -10,7 +10,7 @@ func media(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handle
 	path := "/medias"
 	privateRoute := private.Group(path)
 	{
-		privateRoute.POST("/upload", func(c *gin.Context) { middlewares.Role(c, "011") }, h.UploadMedia)
-		privateRoute.POST("/delete", func(c *gin.Context) { middlewares.Role(c, "011") }, h.DeleteMedia)
+		privateRoute.POST("/upload", func(c *gin.Context) { middlewares.Role(c, "111") }, h.UploadMedia)
+		privateRoute.POST("/delete", func(c *gin.Context) { middlewares.Role(c, "111") }, h.DeleteMedia)
 	}
 }
