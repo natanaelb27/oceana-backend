@@ -69,15 +69,15 @@ func (_m *MockOrderRepository) GetByID(id uuid.UUID) (*models.Order, error) {
 }
 
 // GetByTransactionID provides a mock function with given fields: transactionID
-func (_m *MockOrderRepository) GetByTransactionID(transactionID uuid.UUID) (*models.Order, error) {
+func (_m *MockOrderRepository) GetByTransactionID(transactionID uuid.UUID) ([]*models.Order, error) {
 	ret := _m.Called(transactionID)
 
-	var r0 *models.Order
-	if rf, ok := ret.Get(0).(func(uuid.UUID) *models.Order); ok {
+	var r0 []*models.Order
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []*models.Order); ok {
 		r0 = rf(transactionID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Order)
+			r0 = ret.Get(0).([]*models.Order)
 		}
 	}
 

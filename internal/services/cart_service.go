@@ -1171,28 +1171,30 @@ func (p *cartService) PayCartWithSealabsPaySuccess(c *gin.Context, request *exte
 	}
 
 	// update order_status to pending seller
-	order, err := p.orderRepository.GetByTransactionID(transaction.ID)
+	orders, err := p.orderRepository.GetByTransactionID(transaction.ID)
 	if err != nil {
 		return err
 	}
 
-	order.Status = constants.PendingSellerStatus
-
-	_, err = p.orderRepository.Update(order.ID, order)
-	if err != nil {
-		return err
-	}
-
-	// create order_tracking
+	// create order trackings
 	newOrderTrackingList := []*models.OrderTracking{}
-	newOrderTracking := &models.OrderTracking{
-		OrderID:         order.ID,
-		HistoryDatetime: time.Now(),
-		Title:           constants.PaymentVerifiedTitle,
-		Description:     constants.PaymentVerifiedDescription,
-	}
+	for _, order := range orders {
+		// update each order fomr pending payment to pending seller
+		order.Status = constants.PendingSellerStatus
 
-	newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
+		_, err = p.orderRepository.Update(order.ID, order)
+		if err != nil {
+			return err
+		}
+
+		newOrderTracking := &models.OrderTracking{
+			OrderID:         order.ID,
+			HistoryDatetime: time.Now(),
+			Title:           constants.PaymentVerifiedTitle,
+			Description:     constants.PaymentVerifiedDescription,
+		}
+		newOrderTrackingList = append(newOrderTrackingList, newOrderTracking)
+	}
 
 	_, err = p.orderTrackingRepository.Create(newOrderTrackingList)
 	if err != nil {

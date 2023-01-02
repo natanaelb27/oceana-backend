@@ -6,6 +6,7 @@ import (
 
 type MarketplaceVoucherDetails struct {
 	ID                    uint      `json:"id"`
+	BannerUrl             string    `json:"banner_url"`
 	Name                  string    `json:"name"`
 	StartDatetime         time.Time `json:"start_datetime"`
 	EndDatetime           time.Time `json:"end_datetime"`
