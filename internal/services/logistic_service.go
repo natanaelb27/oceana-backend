@@ -263,7 +263,6 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 	}
 
 	if requestLogistics.IsEditPreorderDay {
-		fmt.Println("EDIT PREORDER DAY")
 		// always update preorder day of all products by that merchant
 		productMap := map[string]any{
 			"process_day": requestLogistics.PreorderDay,
@@ -280,8 +279,9 @@ func (s *logisticService) Update(userID uuid.UUID, requestLogistics *internalLog
 		if requestLogistics.PreorderDay == 2 {
 			productMapCondition["is_preorder"] = true
 		}
+
 		err = s.productRepository.UpdateUsingMapByMapCondition(productMapCondition, productMap)
-		if err != nil {
+		if err != nil && err != e.ErrDataNotFound {
 			return nil, err
 		}
 	}
