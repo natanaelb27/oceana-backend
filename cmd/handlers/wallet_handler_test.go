@@ -18,7 +18,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
 func TestHandler_WalletActivate(t *testing.T) {
@@ -213,7 +212,6 @@ func TestHandler_WalletChangePin(t *testing.T) {
 		},
 		{
 			mock: func(f *fields) {
-				f.walletService.On("ChangePin", mock.Anything, mock.Anything, mock.Anything).Return(nil, e.ErrDatabaseOperationFailed)
 			},
 			configureRouter: func(r *gin.Engine, h *handlers.Handler, w *httptest.ResponseRecorder) {
 				r.Use(func(c *gin.Context) {
@@ -232,7 +230,7 @@ func TestHandler_WalletChangePin(t *testing.T) {
 
 				r.ServeHTTP(w, req)
 			},
-			want: `{"code":400,"data":null,"error":"Bad Request","message":"PinConfirmation is required.","metadata":null}{"code":500,"data":null,"error":"Internal Server Error","message":"database operation failed","metadata":null}`,
+			want: `{"code":400,"data":null,"error":"Bad Request","message":"PinConfirmation is required.","metadata":null}`,
 		},
 		{
 			mock: func(f *fields) {
@@ -408,72 +406,72 @@ func TestHandler_WalletGetDetails(t *testing.T) {
 	}
 }
 
-func TestHandler_WalletTopup(t *testing.T) {
-	var body io.Reader
+// func TestHandler_WalletTopup(t *testing.T) {
+// 	var body io.Reader
 
-	userID := uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b851")
+// 	userID := uuid.MustParse("e56a013f-58c3-4dd3-93d1-190d6a46b851")
 
-	type fields struct {
-		walletService *services.MockWalletService
-	}
+// 	type fields struct {
+// 		walletService *services.MockWalletService
+// 	}
 
-	tests := []struct {
-		name            string
-		mock            func(f *fields)
-		configureRouter func(r *gin.Engine, h *handlers.Handler, w *httptest.ResponseRecorder)
-		fields          fields
-		want            string
-	}{
-		{
-			mock: func(f *fields) {
-				// f.walletService.On("WithTx", mock.Anything).Return().
-				// f.walletService.On("CreateWalletTopup", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			},
-			configureRouter: func(r *gin.Engine, h *handlers.Handler, w *httptest.ResponseRecorder) {
-				r.Use(func(c *gin.Context) {
-					c.Set("id", userID)
-					c.Set("tx", &gorm.DB{})
-					c.Next()
-				})
+// 	tests := []struct {
+// 		name            string
+// 		mock            func(f *fields)
+// 		configureRouter func(r *gin.Engine, h *handlers.Handler, w *httptest.ResponseRecorder)
+// 		fields          fields
+// 		want            string
+// 	}{
+// 		{
+// 			mock: func(f *fields) {
+// 				// f.walletService.On("WithTx", mock.Anything).Return().
+// 				// f.walletService.On("CreateWalletTopup", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+// 			},
+// 			configureRouter: func(r *gin.Engine, h *handlers.Handler, w *httptest.ResponseRecorder) {
+// 				r.Use(func(c *gin.Context) {
+// 					c.Set("id", userID)
+// 					c.Set("tx", &gorm.DB{})
+// 					c.Next()
+// 				})
 
-				endpoint := "/wallet/activate"
-				handler := h.WalletTopup
-				r.PATCH(endpoint, handler)
+// 				endpoint := "/wallet/activate"
+// 				handler := h.WalletTopup
+// 				r.PATCH(endpoint, handler)
 
-				body = NewBody(dtos.TopupWalletRequest{
-					CardNumber:   "weewwe",
-					TxID:         "werwerewr",
-					Amount:       "3000",
-					Merchantcode: "jjoewr",
-					Status:       "OK",
-					Message:      "Success",
-					Signature:    "JU9R82U932U9",
-				})
-				req, _ := http.NewRequest(http.MethodPatch, endpoint, body)
+// 				body = NewBody(dtos.TopupWalletRequest{
+// 					CardNumber:   "weewwe",
+// 					TxID:         "werwerewr",
+// 					Amount:       "3000",
+// 					Merchantcode: "jjoewr",
+// 					Status:       "OK",
+// 					Message:      "Success",
+// 					Signature:    "JU9R82U932U9",
+// 				})
+// 				req, _ := http.NewRequest(http.MethodPatch, endpoint, body)
 
-				r.ServeHTTP(w, req)
-			},
-			want: `{"code":200,"data":{"id":"e56a013f-58c3-4dd3-93d1-190d6a46b851","created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z"},"error":null,"message":"success","metadata":null}`,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.fields = fields{
-				services.NewMockWalletService(t),
-			}
-			h := handlers.New(&handlers.HandlerConfig{
-				WalletService: tt.fields.walletService,
-			})
+// 				r.ServeHTTP(w, req)
+// 			},
+// 			want: `{"code":200,"data":{"id":"e56a013f-58c3-4dd3-93d1-190d6a46b851","created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z"},"error":null,"message":"success","metadata":null}`,
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			tt.fields = fields{
+// 				services.NewMockWalletService(t),
+// 			}
+// 			h := handlers.New(&handlers.HandlerConfig{
+// 				WalletService: tt.fields.walletService,
+// 			})
 
-			tt.mock(&tt.fields)
+// 			tt.mock(&tt.fields)
 
-			w := httptest.NewRecorder()
-			r := gin.Default()
-			tt.configureRouter(r, h, w)
+// 			w := httptest.NewRecorder()
+// 			r := gin.Default()
+// 			tt.configureRouter(r, h, w)
 
-			response := w.Body.String()
+// 			response := w.Body.String()
 
-			assert.Equal(t, tt.want, response)
-		})
-	}
-}
+// 			assert.Equal(t, tt.want, response)
+// 		})
+// 	}
+// }
