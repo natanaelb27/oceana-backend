@@ -422,6 +422,7 @@ func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error
 
 	fmt.Println("callSealabsPayRefundApi 2")
 	response, err := client.Do(request)
+	fmt.Println(response)
 	fmt.Println(err)
 	if err != nil {
 		return err
@@ -438,6 +439,9 @@ func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error
 			return err
 		}
 		json.Unmarshal(responseBodyBytes, &errResponse)
+		fmt.Println("callSealabsPayRefundApi 4.5")
+		fmt.Println(errResponse)
+		fmt.Println(errResponse.Message)
 		return fmt.Errorf("%s", errResponse.Message)
 	}
 	fmt.Println("callSealabsPayRefundApi 5")
