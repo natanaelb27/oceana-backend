@@ -3,9 +3,11 @@ package services_test
 import (
 	"testing"
 
+	logistics_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
+	"git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
@@ -36,9 +38,85 @@ func Test_logisticService_GetByMerchantId(t *testing.T) {
 			},
 			mock: func(r *fields) {
 				r.merchantRepository.On("GetByUserID", mock.Anything).Return(&models.Merchant{}, nil)
-				r.courierRepository.On("GetAll").Return([]*models.Courier{}, nil)
+				r.courierRepository.On("GetAll").Return([]*models.Courier{
+					{},
+				}, nil)
+				r.merchantCourierServiceRepository.On("GetAllByCourierID", mock.Anything, mock.Anything).Return([]*logistics_dtos.CourierService{
+					{
+						IsSelected: true,
+					},
+				}, nil)
 				r.merchantConfigurationRepository.On("GetByMerchantID", mock.Anything).Return(&models.MerchantConfiguration{}, nil)
 			},
+			wantErr: false,
+		},
+		{
+			args: args{
+				userID: uuid.UUID{},
+			},
+			mock: func(r *fields) {
+				r.merchantRepository.On("GetByUserID", mock.Anything).Return(&models.Merchant{}, nil)
+				r.courierRepository.On("GetAll").Return([]*models.Courier{
+					{},
+				}, nil)
+				r.merchantCourierServiceRepository.On("GetAllByCourierID", mock.Anything, mock.Anything).Return([]*logistics_dtos.CourierService{
+					{
+						IsSelected: true,
+					},
+				}, nil)
+				r.merchantConfigurationRepository.On("GetByMerchantID", mock.Anything).Return(nil, errors.ErrUnknown)
+			},
+			wantErr: true,
+		},
+		{
+			args: args{
+				userID: uuid.UUID{},
+			},
+			mock: func(r *fields) {
+				r.merchantRepository.On("GetByUserID", mock.Anything).Return(&models.Merchant{}, nil)
+				r.courierRepository.On("GetAll").Return([]*models.Courier{
+					{},
+				}, nil)
+				r.merchantCourierServiceRepository.On("GetAllByCourierID", mock.Anything, mock.Anything).Return([]*logistics_dtos.CourierService{
+					{
+						IsSelected: true,
+					},
+				}, nil)
+				r.merchantConfigurationRepository.On("GetByMerchantID", mock.Anything).Return(nil, errors.ErrUnknown)
+			},
+			wantErr: true,
+		},
+		{
+			args: args{
+				userID: uuid.UUID{},
+			},
+			mock: func(r *fields) {
+				r.merchantRepository.On("GetByUserID", mock.Anything).Return(&models.Merchant{}, nil)
+				r.courierRepository.On("GetAll").Return([]*models.Courier{
+					{},
+				}, nil)
+				r.merchantCourierServiceRepository.On("GetAllByCourierID", mock.Anything, mock.Anything).Return(nil, errors.ErrUnknown)
+			},
+			wantErr: true,
+		},
+		{
+			args: args{
+				userID: uuid.UUID{},
+			},
+			mock: func(r *fields) {
+				r.merchantRepository.On("GetByUserID", mock.Anything).Return(&models.Merchant{}, nil)
+				r.courierRepository.On("GetAll").Return(nil, errors.ErrUnknown)
+			},
+			wantErr: true,
+		},
+		{
+			args: args{
+				userID: uuid.UUID{},
+			},
+			mock: func(r *fields) {
+				r.merchantRepository.On("GetByUserID", mock.Anything).Return(&models.Merchant{}, errors.ErrUnknown)
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
