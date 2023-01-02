@@ -279,6 +279,7 @@ func (p *sealabsPayService) Refund(refundRequest *externalDtos.SealabsPayRefundR
 
 	fmt.Println("refund 3")
 	err = p.callSealabsPayRefundApi(outboundRequest)
+	fmt.Println(err)
 	if err != nil {
 		return err
 	}
@@ -411,6 +412,7 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 }
 
 func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error {
+	fmt.Println("callSealabsPayRefundApi 1")
 	client := &http.Client{
 		// turn off auto-redirect
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -418,20 +420,27 @@ func (p *sealabsPayService) callSealabsPayRefundApi(request *http.Request) error
 		},
 	}
 
+	fmt.Println("callSealabsPayRefundApi 2")
 	response, err := client.Do(request)
+	fmt.Println(err)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("callSealabsPayRefundApi 3")
 	if response.StatusCode != http.StatusOK {
 		var errResponse *externalDtos.SealabsPayPaymentResponseError
 		responseBodyBytes, err := ioutil.ReadAll(response.Body)
+		fmt.Println("callSealabsPayRefundApi 4")
+		fmt.Println(responseBodyBytes)
+		fmt.Println(err)
 		if err != nil {
 			return err
 		}
 		json.Unmarshal(responseBodyBytes, &errResponse)
 		return fmt.Errorf("%s", errResponse.Message)
 	}
+	fmt.Println("callSealabsPayRefundApi 5")
 
 	return nil
 }
