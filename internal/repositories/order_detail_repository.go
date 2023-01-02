@@ -84,8 +84,10 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		Select(`
 			order_details.id AS order_detail_id,
 			order_details.message AS message,
+			product_snapshots.product_id AS product_id,
 			(?) AS product_image,
 			product_snapshots.name AS product_name,
+			products.name AS current_product_name,
 			(?) AS product_variations,
 			order_details.quantity AS quantity,
 			product_snapshots.price AS price,
@@ -102,6 +104,7 @@ func (r *orderDetailRepository) OrderDetailListGetByOrderID(id uuid.UUID) ([]*dt
 		Joins("JOIN merchants ON orders.merchant_id = merchants.id").
 		Joins("JOIN transactions ON orders.transaction_id = transactions.id").
 		Joins("JOIN product_snapshots ON order_details.product_snapshot_id = product_snapshots.id").
+		Joins("JOIN products ON products.id = product_snapshots.product_id").
 		Joins("LEFT JOIN product_reviews ON order_details.id = product_reviews.order_detail_id").
 		Joins("LEFT JOIN (?) tbl_review_image ON order_details.id = tbl_review_image.order_detail_id", subQueryReviewImage).
 		Joins("LEFT JOIN (?) tbl_review_video ON order_details.id = tbl_review_video.order_detail_id", subQueryReviewVideo).

@@ -270,7 +270,9 @@ func (r *orderRepository) OrderListGetAll(id uuid.UUID, query *externalDtos.Orde
 		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
 	}
 
-	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
+	queryResult.
+		Order("transactions.transaction_datetime DESC").
+		Scopes(utils.Paginate(pagination, queryResult)).
 		Find(&orderList)
 
 	if queryResult.Error != nil {
@@ -497,7 +499,9 @@ func (r *orderRepository) OrderListGetAllByMerchantID(merchantID uint, query *ex
 		queryResult.Where("transactions.transaction_datetime::date BETWEEN ?::date AND ?::date", query.FilterStartTransactionDate, query.FilterEndTransactionDate)
 	}
 
-	queryResult.Scopes(utils.Paginate(pagination, queryResult)).
+	queryResult.
+		Order("transactions.transaction_datetime DESC").
+		Scopes(utils.Paginate(pagination, queryResult)).
 		Find(&orderList)
 
 	if queryResult.Error != nil {

@@ -30,6 +30,6 @@ func profile(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Hand
 		privateRoute.GET("/refunds", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllRefundDetailsByBuyer)
 		privateRoute.GET("/favorites", func(c *gin.Context) { middlewares.Role(c, "001") }, h.GetAllUserFavoriteProducts)
 		privateRoute.DELETE("/favorites/batch-delete", middlewares.DBTransactionMiddleware(), func(c *gin.Context) { middlewares.Role(c, "001") }, h.DeleteFavoriteProducts)
-
+		privateRoute.GET("/product-snapshot/:order-detail-id", func(c *gin.Context) { middlewares.Role(c, "001") }, h.ProductSnapshotDetailsGetByOrderDetailID)
 	}
 }

@@ -380,6 +380,7 @@ func (p *sealabsPayService) callSealabsPayPaymentApi(request *http.Request) (*st
 
 	json.Unmarshal(responseBodyBytes, &errResponse)
 	if response.StatusCode != http.StatusSeeOther {
+		fmt.Println(errResponse)
 		return nil, e.ErrInsufficientBalance
 	}
 

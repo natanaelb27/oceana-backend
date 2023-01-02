@@ -54,7 +54,7 @@ func (u merchantVoucherRepository) WithTx(tx *gorm.DB) *merchantVoucherRepositor
 func (r *merchantVoucherRepository) Create(newModel *models.MerchantVoucher) (model *models.MerchantVoucher, err error) {
 	queryResult := r.db.
 		Where("code = ?", newModel.Code).
-		Where("end_datetime::timestamp >= ?::timestamptz", time.Now()).
+		Where("end_datetime::timestamptz >= ?::timestamptz", time.Now()).
 		Where("merchant_id = ?", newModel.MerchantID).
 		FirstOrCreate(&newModel)
 
