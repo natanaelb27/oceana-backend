@@ -273,11 +273,12 @@ func (u *authService) LoginWithGoogle(c *gin.Context, userLoginWithGoogleRequest
 	if err != nil {
 		return nil, err
 	}
-	err = utils.CheckHash(*user.GoogleID, userLoginWithGoogleRequest.GoogleID)
-	if err != nil {
-		// TODO: possible error when user has registered regularly, but then
-		// logs in with Google, google_id field is empty
-		return nil, err
+
+	if user.GoogleID != nil {
+		err = utils.CheckHash(*user.GoogleID, userLoginWithGoogleRequest.GoogleID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	token, err := utils.GenerateUserTokenString(user)
