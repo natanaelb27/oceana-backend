@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"testing"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/internal/services"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"github.com/stretchr/testify/mock"
 )
 

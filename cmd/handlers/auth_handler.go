@@ -5,12 +5,12 @@ import (
 	"os"
 	"strconv"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	externalDtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 

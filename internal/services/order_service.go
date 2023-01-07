@@ -6,16 +6,16 @@ import (
 	"strconv"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
 )
 
 type OrderService interface {

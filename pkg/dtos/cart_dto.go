@@ -1,9 +1,9 @@
 package dtos
 
 import (
-	in_cart_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/cart_dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/google/uuid"
+	in_cart_dtos "github.com/natanaelb27/oceana-backend/internal/dtos/cart_dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
 )
 
 type CartUpsertRequest struct {

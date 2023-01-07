@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"log"
 
-	internalLogisticDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
-	internalProductDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	internalLogisticDtos "github.com/natanaelb27/oceana-backend/internal/dtos/logistic_dtos"
+	internalProductDtos "github.com/natanaelb27/oceana-backend/internal/dtos/product_dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

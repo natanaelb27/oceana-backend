@@ -3,8 +3,8 @@ package dtos
 import (
 	"strconv"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/models"
 )
 
 type SubDistrictResponse struct {

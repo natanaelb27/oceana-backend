@@ -1,9 +1,9 @@
 package services
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
 	"gorm.io/gorm"
 )
 

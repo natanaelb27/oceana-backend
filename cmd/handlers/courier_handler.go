@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
 )
 
 func (h *Handler) CourierGetAll(c *gin.Context) {

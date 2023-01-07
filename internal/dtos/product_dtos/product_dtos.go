@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 type Merchant struct {

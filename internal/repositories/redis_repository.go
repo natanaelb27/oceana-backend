@@ -3,9 +3,9 @@ package repositories
 import (
 	"time"
 
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 type RedisRepository interface {

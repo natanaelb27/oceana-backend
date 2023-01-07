@@ -1,8 +1,8 @@
 package routers
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/cmd/handlers"
 )
 
 func city(public *gin.RouterGroup, private *gin.RouterGroup, h *handlers.Handler) {

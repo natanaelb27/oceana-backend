@@ -3,8 +3,8 @@
 package repositories
 
 import (
-	internaldtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	dtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	internaldtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	dtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 
 	mock "github.com/stretchr/testify/mock"
 )

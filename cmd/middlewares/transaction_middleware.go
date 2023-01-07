@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/db"
 )
 
 // checks if the given status is in the list

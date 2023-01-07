@@ -3,13 +3,13 @@ package repositories
 import (
 	"log"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/lib/pq"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

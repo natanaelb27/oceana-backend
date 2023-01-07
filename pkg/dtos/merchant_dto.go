@@ -4,9 +4,9 @@ import (
 	"mime/multipart"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
 )
 
 type MerchantCreateRequest struct {

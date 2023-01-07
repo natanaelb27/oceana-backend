@@ -3,8 +3,8 @@ package utils
 import (
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 func ValidateMpCreateDatetime(startDatetime, endDatetime time.Time) error {

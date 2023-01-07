@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/middlewares"
 	"github.com/fvbock/endless"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/cmd/handlers"
+	"github.com/natanaelb27/oceana-backend/cmd/middlewares"
 )
 
 func Init(h *handlers.Handler) {

@@ -3,7 +3,7 @@
 package repositories
 
 import (
-	models "git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	models "github.com/natanaelb27/oceana-backend/internal/models"
 	mock "github.com/stretchr/testify/mock"
 	gorm "gorm.io/gorm"
 )

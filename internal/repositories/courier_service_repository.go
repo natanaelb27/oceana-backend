@@ -3,8 +3,8 @@ package repositories
 import (
 	"log"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 

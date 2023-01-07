@@ -1,6 +1,6 @@
 package dtos
 
-import "git.garena.com/azmi-adhani/group-project-backend/internal/models"
+import "github.com/natanaelb27/oceana-backend/internal/models"
 
 type DistrictResponse struct {
 	ID   uint   `json:"id"`

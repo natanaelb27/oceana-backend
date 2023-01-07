@@ -1,4 +1,4 @@
-module git.garena.com/azmi-adhani/group-project-backend
+module github.com/natanaelb27/oceana-backend
 
 go 1.18
 

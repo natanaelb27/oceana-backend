@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/natanaelb27/oceana-backend/internal/dtos"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 type JwtWrapper struct {

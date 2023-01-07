@@ -3,8 +3,8 @@ package utils
 import (
 	"net/http"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/dtos"
 )
 
 func Response(c *gin.Context, statusCode int, data any, metadata any, err any, message string) dtos.Response {

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"log"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 

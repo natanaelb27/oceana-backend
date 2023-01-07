@@ -1,8 +1,8 @@
 package services
 
 import (
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
 )
 
 type CityService interface {

@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 func (h *Handler) ChatGetAllChatList(c *gin.Context) {

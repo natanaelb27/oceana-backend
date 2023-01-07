@@ -3,9 +3,9 @@ package middlewares
 import (
 	"net/http"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 func Auth(c *gin.Context) {

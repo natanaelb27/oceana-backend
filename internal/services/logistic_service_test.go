@@ -3,12 +3,12 @@ package services_test
 import (
 	"testing"
 
-	logistics_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	logistics_dtos "github.com/natanaelb27/oceana-backend/internal/dtos/logistic_dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/internal/services"
+	"github.com/natanaelb27/oceana-backend/pkg/errors"
 	"github.com/stretchr/testify/mock"
 )
 

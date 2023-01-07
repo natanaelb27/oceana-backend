@@ -1,11 +1,11 @@
 package main
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/cronservice"
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/routers"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/cmd/cronservice"
+	"github.com/natanaelb27/oceana-backend/cmd/handlers"
+	"github.com/natanaelb27/oceana-backend/cmd/routers"
+	"github.com/natanaelb27/oceana-backend/internal/db"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
 )
 
 func main() {

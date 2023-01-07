@@ -1,10 +1,10 @@
 package utils
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/db"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 func GetUserRoleById(id string) (role string, err error) {

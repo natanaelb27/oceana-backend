@@ -3,8 +3,8 @@
 package services
 
 import (
-	cart_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/cart_dtos"
-	dtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	cart_dtos "github.com/natanaelb27/oceana-backend/internal/dtos/cart_dtos"
+	dtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 
 	gin "github.com/gin-gonic/gin"
 
@@ -12,7 +12,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	models "git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	models "github.com/natanaelb27/oceana-backend/internal/models"
 
 	uuid "github.com/google/uuid"
 )

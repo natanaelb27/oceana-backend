@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
 )
 
 func TestStringToUint(t *testing.T) {

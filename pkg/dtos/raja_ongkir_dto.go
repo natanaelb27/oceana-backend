@@ -1,7 +1,7 @@
 package dtos
 
 import (
-	in_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	in_dtos "github.com/natanaelb27/oceana-backend/internal/dtos"
 )
 
 type GetRajaOngkirShippingCostRequest struct {

@@ -1,8 +1,8 @@
 package cronservice
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
 	"github.com/go-co-op/gocron"
+	"github.com/natanaelb27/oceana-backend/internal/services"
 )
 
 type Cron struct {

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
 )
 
 type ProductReviewCreateRequest struct {

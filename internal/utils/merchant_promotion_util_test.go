@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
 )
 
 func TestValidateMpCreateDatetime(t *testing.T) {

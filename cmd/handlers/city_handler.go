@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/gin-gonic/gin"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
 )
 
 func (h *Handler) CitiesGetAll(c *gin.Context) {

@@ -1,9 +1,9 @@
 package utils
 
 import (
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 func AuthenticateUser(user *models.User, providedPassword string) (*internalDtos.UserLoginData, error) {

@@ -3,7 +3,7 @@ package utils
 import (
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
 )
 
 func IsDateMoreThanOneDay(date time.Time) bool {

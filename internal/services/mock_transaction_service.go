@@ -3,7 +3,7 @@
 package services
 
 import (
-	dtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	dtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"

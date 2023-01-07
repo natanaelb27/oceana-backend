@@ -1,11 +1,11 @@
 package services
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	"github.com/natanaelb27/oceana-backend/internal/dtos"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
+	externalDtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 )
 
 type TransactionService interface {

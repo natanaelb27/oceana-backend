@@ -3,7 +3,7 @@
 package repositories
 
 import (
-	dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	dtos "github.com/natanaelb27/oceana-backend/internal/dtos"
 	gorm "gorm.io/gorm"
 
 	mock "github.com/stretchr/testify/mock"

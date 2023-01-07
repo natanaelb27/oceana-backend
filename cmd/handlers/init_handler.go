@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
+	"github.com/natanaelb27/oceana-backend/internal/db"
+	"github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/internal/services"
 )
 
 func Init() *Handler {

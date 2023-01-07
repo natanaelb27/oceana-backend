@@ -3,12 +3,12 @@
 package services
 
 import (
-	dtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	dtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 	gin "github.com/gin-gonic/gin"
 
 	gorm "gorm.io/gorm"
 
-	internaldtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
+	internaldtos "github.com/natanaelb27/oceana-backend/internal/dtos"
 
 	mock "github.com/stretchr/testify/mock"
 

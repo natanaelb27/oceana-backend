@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	in_cart_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/cart_dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/gin-gonic/gin"
+	in_cart_dtos "github.com/natanaelb27/oceana-backend/internal/dtos/cart_dtos"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
 	"gorm.io/gorm"
 )
 

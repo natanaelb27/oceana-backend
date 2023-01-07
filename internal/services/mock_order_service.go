@@ -3,14 +3,14 @@
 package services
 
 import (
-	dtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
+	dtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 	gorm "gorm.io/gorm"
 
 	mock "github.com/stretchr/testify/mock"
 
-	models "git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	models "github.com/natanaelb27/oceana-backend/internal/models"
 
-	utils "git.garena.com/azmi-adhani/group-project-backend/internal/utils"
+	utils "github.com/natanaelb27/oceana-backend/internal/utils"
 
 	uuid "github.com/google/uuid"
 )

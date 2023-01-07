@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/go-playground/validator/v10"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 func newErrorMessage(ve validator.FieldError) (msg string) {

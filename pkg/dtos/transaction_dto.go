@@ -3,8 +3,8 @@ package dtos
 import (
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/dtos"
 )
 
 type PendingPaymentGetAllByUserResponse struct {

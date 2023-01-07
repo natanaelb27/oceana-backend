@@ -1,8 +1,8 @@
 package services
 
 import (
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
 )
 
 type CourierService interface {

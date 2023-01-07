@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/models"
 	"gorm.io/gorm"
 )
 

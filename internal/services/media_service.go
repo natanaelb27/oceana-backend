@@ -1,9 +1,9 @@
 package services
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	externalDtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
+	"github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 type MediaService interface {

@@ -3,10 +3,10 @@ package cronservice
 import (
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/db"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
 	"github.com/go-co-op/gocron"
+	"github.com/natanaelb27/oceana-backend/internal/db"
+	"github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/internal/services"
 )
 
 func Init() {

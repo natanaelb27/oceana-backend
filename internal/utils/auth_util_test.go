@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"testing"
 
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
 	"github.com/google/uuid"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
 )
 
 func TestAuthenticateUser(t *testing.T) {

@@ -3,13 +3,13 @@ package services
 import (
 	"time"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 type MarketplaceVoucherService interface {

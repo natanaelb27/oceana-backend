@@ -6,13 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.garena.com/azmi-adhani/group-project-backend/cmd/handlers"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/services"
-	"git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/cmd/handlers"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/services"
+	"github.com/natanaelb27/oceana-backend/pkg/dtos"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

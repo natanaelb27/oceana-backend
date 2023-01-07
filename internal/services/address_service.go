@@ -1,11 +1,11 @@
 package services
 
 import (
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	r "git.garena.com/azmi-adhani/group-project-backend/internal/repositories"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	r "github.com/natanaelb27/oceana-backend/internal/repositories"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 )
 
 type AddressService interface {

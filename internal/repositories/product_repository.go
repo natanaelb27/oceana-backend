@@ -6,16 +6,16 @@ import (
 
 	"fmt"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/constants/product_media_constants"
-	internalDtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos"
-	externalDtos "git.garena.com/azmi-adhani/group-project-backend/pkg/dtos"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/constants"
+	"github.com/natanaelb27/oceana-backend/internal/constants/product_media_constants"
+	internalDtos "github.com/natanaelb27/oceana-backend/internal/dtos"
+	externalDtos "github.com/natanaelb27/oceana-backend/pkg/dtos"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/dtos/product_dtos"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	"git.garena.com/azmi-adhani/group-project-backend/internal/utils"
-	e "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
+	"github.com/natanaelb27/oceana-backend/internal/dtos/product_dtos"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	"github.com/natanaelb27/oceana-backend/internal/utils"
+	e "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 

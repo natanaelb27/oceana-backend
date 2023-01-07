@@ -3,7 +3,7 @@
 package services
 
 import (
-	logistics_dtos "git.garena.com/azmi-adhani/group-project-backend/internal/dtos/logistic_dtos"
+	logistics_dtos "github.com/natanaelb27/oceana-backend/internal/dtos/logistic_dtos"
 	mock "github.com/stretchr/testify/mock"
 	gorm "gorm.io/gorm"
 

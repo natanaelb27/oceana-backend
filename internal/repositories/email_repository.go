@@ -3,9 +3,9 @@ package repositories
 import (
 	"log"
 
-	"git.garena.com/azmi-adhani/group-project-backend/internal/models"
-	er "git.garena.com/azmi-adhani/group-project-backend/pkg/errors"
 	"github.com/google/uuid"
+	"github.com/natanaelb27/oceana-backend/internal/models"
+	er "github.com/natanaelb27/oceana-backend/pkg/errors"
 	"gorm.io/gorm"
 )
 
