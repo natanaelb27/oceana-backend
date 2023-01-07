@@ -193,7 +193,7 @@ func (w *walletRepository) GetWalletTransactionHistory(id uuid.UUID, pagination 
 			Select(`
 				orders.id AS id, 
 				wallets.id AS wallet_id, 
-				(orders.total_price_after_discount - (?)) AS amount,
+				(orders.total_price_after_discount - COALESCE((?), 0)) AS amount,
 				orders.claim_datetime AS transaction_datetime, 
 				'Received Payment Transaction' AS transaction_type,
 				'Credit' AS type
